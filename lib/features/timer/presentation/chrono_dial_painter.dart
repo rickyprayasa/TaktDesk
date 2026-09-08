@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/takt_colors.dart';
 
 class ChronoDialPainter extends CustomPainter {
+  final double remainingSeconds;
   final double progressPercent;
   final int targetMinutes;
   final bool isRunning;
@@ -11,7 +12,8 @@ class ChronoDialPainter extends CustomPainter {
   static final Map<int, TextPainter> _numberPainters = {};
 
   ChronoDialPainter({
-    required this.progressPercent,
+    required this.remainingSeconds,
+    this.progressPercent = 0.0,
     required this.targetMinutes,
     required this.isRunning,
   });
@@ -144,7 +146,9 @@ class ChronoDialPainter extends CustomPainter {
     }
 
     // 6. Dynamic Cast Shadow of the Needle (Directional depth)
-    final handAngle = (progressPercent * 360.0) * math.pi / 180.0 - math.pi / 2;
+    // Synchronize needle directly with the 60-minute dial marks:
+    final currentMinutes = (remainingSeconds / 60.0);
+    final handAngle = (currentMinutes / 60.0) * 2 * math.pi - math.pi / 2;
     final shadowOffset = Offset(
       3.0 * math.cos(handAngle + math.pi / 4),
       3.5 * math.sin(handAngle + math.pi / 4),
@@ -219,7 +223,7 @@ class ChronoDialPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant ChronoDialPainter oldDelegate) {
-    return oldDelegate.progressPercent != progressPercent ||
+    return oldDelegate.remainingSeconds != remainingSeconds ||
         oldDelegate.targetMinutes != targetMinutes ||
         oldDelegate.isRunning != isRunning;
   }

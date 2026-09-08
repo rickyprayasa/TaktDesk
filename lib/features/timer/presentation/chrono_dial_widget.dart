@@ -19,7 +19,7 @@ class ChronoDialWidget extends ConsumerStatefulWidget {
 class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
     with SingleTickerProviderStateMixin {
   late final Ticker _ticker;
-  final ValueNotifier<double> _progressNotifier = ValueNotifier<double>(0.0);
+  final ValueNotifier<double> _remainingSecondsNotifier = ValueNotifier<double>(0.0);
   Duration? _lastElapsed;
   double _accumulatedDelta = 0.0;
 
@@ -27,20 +27,17 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
   void initState() {
     super.initState();
     final initialState = ref.read(chronoDialProvider);
-    _progressNotifier.value = initialState.progressPercent;
+    _remainingSecondsNotifier.value = initialState.remainingSeconds;
 
     _ticker = createTicker((elapsed) {
       if (!mounted) return;
       if (_lastElapsed != null) {
         final delta = (elapsed - _lastElapsed!).inMicroseconds / 1000000.0;
-        final currentState = ref.read(chronoDialProvider);
-        final totalSeconds = currentState.targetMinutes * 60.0;
-        if (totalSeconds > 0) {
-          _progressNotifier.value =
-              (_progressNotifier.value + delta / totalSeconds).clamp(0.0, 1.0);
-        }
+        _remainingSecondsNotifier.value =
+            (_remainingSecondsNotifier.value - delta).clamp(0.0, 90 * 60.0);
 
         _accumulatedDelta += delta;
+        final currentState = ref.read(chronoDialProvider);
         final remaining = currentState.remainingSeconds - _accumulatedDelta;
         if (_accumulatedDelta >= 1.0 || remaining <= 0) {
           final toTick = _accumulatedDelta;
@@ -61,7 +58,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
   @override
   void dispose() {
     _ticker.dispose();
-    _progressNotifier.dispose();
+    _remainingSecondsNotifier.dispose();
     super.dispose();
   }
 
@@ -88,14 +85,18 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
     final dy = localPos.dy - center.dy;
     final dist = math.sqrt(dx * dx + dy * dy);
 
-    // Only respond to drag along the outer rotary rim
-    if (dist < 40 || dist > dialSize.width / 2 + 30) return;
+    // Allow rotary interaction across the dial face
+    if (dist < 15 || dist > dialSize.width / 2 + 25) return;
 
     var angle = math.atan2(dy, dx) + math.pi / 2;
     if (angle < 0) angle += 2 * math.pi;
 
     final fraction = angle / (2 * math.pi);
-    final minutes = (fraction * 60).round().clamp(1, 90);
+    var minutes = (fraction * 60).round();
+    if (minutes == 0) minutes = 60;
+    minutes = minutes.clamp(1, 90);
+
+    _remainingSecondsNotifier.value = minutes * 60.0;
     if (minutes != state.targetMinutes) {
       ref.read(chronoDialProvider.notifier).setTargetMinutes(minutes);
     }
@@ -109,7 +110,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
         if (isRunning) {
           _lastElapsed = null;
           _accumulatedDelta = 0.0;
-          _progressNotifier.value = ref.read(chronoDialProvider).progressPercent;
+          _remainingSecondsNotifier.value = ref.read(chronoDialProvider).remainingSeconds;
           if (!_ticker.isActive) {
             _ticker.start();
           }
@@ -119,7 +120,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
           }
           _lastElapsed = null;
           _accumulatedDelta = 0.0;
-          _progressNotifier.value = ref.read(chronoDialProvider).progressPercent;
+          _remainingSecondsNotifier.value = ref.read(chronoDialProvider).remainingSeconds;
         }
       },
     );
@@ -128,7 +129,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
       chronoDialProvider.select((s) => s.remainingSeconds),
       (previous, nextRemaining) {
         if (!ref.read(chronoDialProvider).isRunning) {
-          _progressNotifier.value = ref.read(chronoDialProvider).progressPercent;
+          _remainingSecondsNotifier.value = nextRemaining;
         }
       },
     );
@@ -149,6 +150,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
         // 2. Main Dial Canvas with 3D Depth & Odometer Sub-Window
         GestureDetector(
           onTap: _handleToggle,
+          onPanStart: (details) => _handleRotaryPan(details.localPosition, dialDimensions),
           onPanUpdate: (details) => _handleRotaryPan(details.localPosition, dialDimensions),
           child: SizedBox(
             width: dialDimensions.width,
@@ -158,12 +160,13 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
               children: [
                 // 60/120 FPS continuous sweep Canvas painter
                 ValueListenableBuilder<double>(
-                  valueListenable: _progressNotifier,
-                  builder: (context, progress, _) {
+                  valueListenable: _remainingSecondsNotifier,
+                  builder: (context, seconds, _) {
                     return CustomPaint(
                       size: dialDimensions,
                       painter: ChronoDialPainter(
-                        progressPercent: progress,
+                        remainingSeconds: seconds,
+                        progressPercent: state.progressPercent,
                         targetMinutes: state.targetMinutes,
                         isRunning: state.isRunning,
                       ),

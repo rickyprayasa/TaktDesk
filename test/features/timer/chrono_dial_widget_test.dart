@@ -206,4 +206,37 @@ void main() {
     // Clean up
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('ChronoDialWidget sets target minutes via rotary pan drag', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Initial state is 25 MIN
+    expect(find.text('25 MIN'), findsOneWidget);
+
+    // Drag from center rightwards (3 o'clock position = 15 MIN)
+    final dialCenter = tester.getCenter(dialFinder);
+    final gesture = await tester.startGesture(dialCenter + const Offset(50, 0));
+    await tester.pump();
+    await gesture.moveBy(const Offset(25, 0));
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+
+    // The dial target minutes should update to 15 MIN
+    expect(find.text('15 MIN'), findsOneWidget);
+    expectDisplay(tester, 15, 0);
+
+    // Clean up
+    await tester.pumpWidget(const SizedBox());
+  });
 }
