@@ -18,22 +18,25 @@ class VinylPlayerWidget extends ConsumerStatefulWidget {
 class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
     with SingleTickerProviderStateMixin {
   late final Ticker _ticker;
-  double _rotationAngle = 0.0;
+  final ValueNotifier<double> _rotationNotifier = ValueNotifier<double>(0.0);
+  Duration _lastElapsed = Duration.zero;
 
   @override
   void initState() {
     super.initState();
-    _ticker = createTicker((_) {
+    _ticker = createTicker((elapsed) {
       if (!mounted) return;
-      final state = ref.read(vinylProvider);
-      if (state.needleOnRecord && state.turntableSpeed > 0) {
-        setState(() {
-          _rotationAngle = (_rotationAngle + 0.04) % (2 * math.pi);
-        });
+      if (_lastElapsed != Duration.zero) {
+        final delta = (elapsed - _lastElapsed).inMicroseconds / 1000000.0;
+        const speed = 3.49; // ~33 1/3 RPM in rad/sec
+        _rotationNotifier.value =
+            (_rotationNotifier.value + delta * speed) % (2 * math.pi);
       }
+      _lastElapsed = elapsed;
     });
 
     if (ref.read(vinylProvider).needleOnRecord) {
+      _lastElapsed = Duration.zero;
       _ticker.start();
     }
   }
@@ -41,6 +44,7 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
   @override
   void dispose() {
     _ticker.dispose();
+    _rotationNotifier.dispose();
     super.dispose();
   }
 
@@ -50,6 +54,7 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
       vinylProvider.select((s) => s.needleOnRecord),
       (previous, needleOnRecord) {
         if (needleOnRecord) {
+          _lastElapsed = Duration.zero;
           if (!_ticker.isActive) {
             _ticker.start();
           }
@@ -75,16 +80,25 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          GestureDetector(
-            onTap: () => controller.toggleNeedle(),
-            child: SizedBox(
-              width: 240,
-              height: 140,
-              child: CustomPaint(
-                painter: VinylDeckPainter(
-                  rotationAngle: _rotationAngle,
-                  needleOnRecord: state.needleOnRecord,
-                  labelColor: state.currentTrack.labelColor,
+          Semantics(
+            button: true,
+            label: state.needleOnRecord ? 'Lift tonearm' : 'Drop needle',
+            child: GestureDetector(
+              onTap: () => controller.toggleNeedle(),
+              child: SizedBox(
+                width: 240,
+                height: 140,
+                child: ValueListenableBuilder<double>(
+                  valueListenable: _rotationNotifier,
+                  builder: (context, angle, _) {
+                    return CustomPaint(
+                      painter: VinylDeckPainter(
+                        rotationAngle: angle,
+                        needleOnRecord: state.needleOnRecord,
+                        labelColor: state.currentTrack.labelColor,
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
