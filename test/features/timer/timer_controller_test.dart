@@ -1,6 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:takt_desk/core/audio/audio_service.dart';
+import 'package:takt_desk/core/audio/sound_effect.dart';
 import 'package:takt_desk/features/timer/domain/timer_state.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_controller.dart';
+
+class MockAudioService extends AudioService {
+  final List<SoundEffect> playedEffects = [];
+
+  @override
+  void playFoley(SoundEffect effect) {
+    playedEffects.add(effect);
+  }
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -119,6 +130,64 @@ void main() {
       final controller = ChronoDialController();
       controller.tick(10.0);
       expect(controller.state.remainingSeconds, 25 * 60.0);
+    });
+
+    test('start restarts expired timer by resetting remainingSeconds and lastTickMinute', () {
+      final controller = ChronoDialController();
+      controller.setTargetMinutes(25);
+      controller.start();
+
+      // Exhaust the timer
+      controller.tick(1500.0);
+      expect(controller.state.remainingSeconds, 0.0);
+      expect(controller.state.isRunning, isFalse);
+      expect(controller.state.lastTickMinute, 0);
+
+      // Restart expired timer
+      controller.start();
+      expect(controller.state.isRunning, isTrue);
+      expect(controller.state.remainingSeconds, 25 * 60.0);
+      expect(controller.state.lastTickMinute, 25);
+
+      // Ticks smoothly from reset time
+      controller.tick(1.0);
+      expect(controller.state.remainingSeconds, 25 * 60.0 - 1.0);
+    });
+
+    test('initial state and setTargetMinutes initialize lastTickMinute to prevent spurious first tick', () {
+      final controller = ChronoDialController();
+      expect(controller.state.lastTickMinute, 25);
+
+      controller.setTargetMinutes(40);
+      expect(controller.state.lastTickMinute, 40);
+
+      controller.reset();
+      expect(controller.state.lastTickMinute, 40);
+    });
+
+    test('triggers AudioService springButton on start and pause, and dialClick on minute tick', () {
+      final mockAudio = MockAudioService();
+      final controller = ChronoDialController(mockAudio);
+
+      // Start triggers springButton
+      controller.start();
+      expect(mockAudio.playedEffects, [SoundEffect.springButton]);
+
+      // Sub-minute tick should NOT trigger dialClick
+      controller.tick(0.5);
+      expect(mockAudio.playedEffects, [SoundEffect.springButton]);
+
+      // Ticking past the 24-minute boundary triggers dialClick
+      controller.tick(60.0);
+      expect(mockAudio.playedEffects, [SoundEffect.springButton, SoundEffect.dialClick]);
+
+      // Pause triggers springButton
+      controller.pause();
+      expect(mockAudio.playedEffects, [
+        SoundEffect.springButton,
+        SoundEffect.dialClick,
+        SoundEffect.springButton,
+      ]);
     });
   });
 }

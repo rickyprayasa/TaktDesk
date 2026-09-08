@@ -1,13 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/timer_state.dart';
 import '../../../core/haptics/haptic_service.dart';
+import '../../../core/audio/audio_service.dart';
+import '../../../core/audio/sound_effect.dart';
 
 class ChronoDialController extends StateNotifier<TimerState> {
-  ChronoDialController()
+  final AudioService? _audioService;
+
+  ChronoDialController([this._audioService])
       : super(const TimerState(
           targetMinutes: 25,
           remainingSeconds: 25 * 60.0,
           isRunning: false,
+          lastTickMinute: 25,
         ));
 
   void setTargetMinutes(int minutes) {
@@ -16,24 +21,36 @@ class ChronoDialController extends StateNotifier<TimerState> {
     state = state.copyWith(
       targetMinutes: clamped,
       remainingSeconds: clamped * 60.0,
+      lastTickMinute: clamped,
     );
     HapticService.dialTick();
   }
 
   void start() {
-    state = state.copyWith(isRunning: true);
+    if (state.remainingSeconds <= 0) {
+      state = state.copyWith(
+        remainingSeconds: state.targetMinutes * 60.0,
+        lastTickMinute: state.targetMinutes,
+        isRunning: true,
+      );
+    } else {
+      state = state.copyWith(isRunning: true);
+    }
     HapticService.mechanicalPress();
+    _audioService?.playFoley(SoundEffect.springButton);
   }
 
   void pause() {
     state = state.copyWith(isRunning: false);
     HapticService.mechanicalPress();
+    _audioService?.playFoley(SoundEffect.springButton);
   }
 
   void reset() {
     state = state.copyWith(
       isRunning: false,
       remainingSeconds: state.targetMinutes * 60.0,
+      lastTickMinute: state.targetMinutes,
     );
   }
 
@@ -44,6 +61,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
 
     if (currentMinute != state.lastTickMinute && nextRemaining > 0) {
       HapticService.dialTick();
+      _audioService?.playFoley(SoundEffect.dialClick);
     }
 
     if (nextRemaining <= 0) {
@@ -59,7 +77,8 @@ class ChronoDialController extends StateNotifier<TimerState> {
 }
 
 final chronoDialProvider = StateNotifierProvider<ChronoDialController, TimerState>((ref) {
-  return ChronoDialController();
+  final audioService = ref.watch(audioServiceProvider);
+  return ChronoDialController(audioService);
 });
 
 final chronoDialControllerProvider = chronoDialProvider;

@@ -102,4 +102,100 @@ void main() {
     // Clean up
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('ChronoDialWidget disables duration buttons while running', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Initial state: buttons enabled
+    final removeFinder = find.widgetWithIcon(IconButton, Icons.remove_circle_outline);
+    final addFinder = find.widgetWithIcon(IconButton, Icons.add_circle_outline);
+
+    IconButton removeButton = tester.widget(removeFinder);
+    IconButton addButton = tester.widget(addFinder);
+    expect(removeButton.onPressed, isNotNull);
+    expect(addButton.onPressed, isNotNull);
+
+    // Start timer
+    await tester.tap(find.text('25:00'));
+    await tester.pump();
+
+    // While running: buttons disabled
+    removeButton = tester.widget(removeFinder);
+    addButton = tester.widget(addFinder);
+    expect(removeButton.onPressed, isNull);
+    expect(addButton.onPressed, isNull);
+
+    // Tapping disabled button should have no effect
+    await tester.tap(addFinder);
+    await tester.pump();
+    expect(find.text('25 MIN'), findsOneWidget);
+
+    // Pause timer
+    await tester.tap(find.byWidgetPredicate(
+      (widget) => widget is CustomPaint && widget.painter is ChronoDialPainter,
+    ));
+    await tester.pump();
+
+    // Paused: buttons enabled again
+    removeButton = tester.widget(removeFinder);
+    addButton = tester.widget(addFinder);
+    expect(removeButton.onPressed, isNotNull);
+    expect(addButton.onPressed, isNotNull);
+
+    // Clean up
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('ChronoDialWidget restarts after expiration on dial tap', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Decrement to 5 MIN
+    final removeFinder = find.widgetWithIcon(IconButton, Icons.remove_circle_outline);
+    for (int i = 0; i < 4; i++) {
+      await tester.tap(removeFinder);
+      await tester.pump();
+    }
+    expect(find.text('5 MIN'), findsOneWidget);
+    expect(find.text('05:00'), findsOneWidget);
+
+    // Start timer
+    await tester.tap(find.text('05:00'));
+    await tester.pump();
+
+    // Advance 301 seconds to expire timer
+    await tester.pump(const Duration(seconds: 301));
+    expect(find.text('00:00'), findsOneWidget);
+
+    // Tap dial to restart expired timer
+    await tester.tap(find.text('00:00'));
+    await tester.pump();
+
+    // Should restart to full target duration (05:00) and continue ticking
+    expect(find.text('05:00'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('04:59'), findsOneWidget);
+
+    // Clean up
+    await tester.pumpWidget(const SizedBox());
+  });
 }

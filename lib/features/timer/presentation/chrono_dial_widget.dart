@@ -28,7 +28,11 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
       }
       _lastElapsed = elapsed;
     });
-    _ticker.start();
+
+    if (ref.read(chronoDialProvider).isRunning) {
+      _lastElapsed = Duration.zero;
+      _ticker.start();
+    }
   }
 
   @override
@@ -39,6 +43,22 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<bool>(
+      chronoDialProvider.select((s) => s.isRunning),
+      (previous, isRunning) {
+        if (isRunning) {
+          _lastElapsed = Duration.zero;
+          if (!_ticker.isActive) {
+            _ticker.start();
+          }
+        } else {
+          if (_ticker.isActive) {
+            _ticker.stop();
+          }
+        }
+      },
+    );
+
     final state = ref.watch(chronoDialProvider);
     final remainingMinutes = (state.remainingSeconds / 60).floor();
     final remainingSeconds = (state.remainingSeconds % 60).floor();
@@ -77,17 +97,27 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             IconButton(
-              icon: const Icon(Icons.remove_circle_outline, color: TaktColors.warmBone),
-              onPressed: () => ref
-                  .read(chronoDialProvider.notifier)
-                  .setTargetMinutes(state.targetMinutes - 5),
+              icon: Icon(
+                Icons.remove_circle_outline,
+                color: state.isRunning ? TaktColors.slateBorder : TaktColors.warmBone,
+              ),
+              onPressed: state.isRunning
+                  ? null
+                  : () => ref
+                      .read(chronoDialProvider.notifier)
+                      .setTargetMinutes(state.targetMinutes - 5),
             ),
             Text('${state.targetMinutes} MIN', style: TaktTypography.controlLabel),
             IconButton(
-              icon: const Icon(Icons.add_circle_outline, color: TaktColors.warmBone),
-              onPressed: () => ref
-                  .read(chronoDialProvider.notifier)
-                  .setTargetMinutes(state.targetMinutes + 5),
+              icon: Icon(
+                Icons.add_circle_outline,
+                color: state.isRunning ? TaktColors.slateBorder : TaktColors.warmBone,
+              ),
+              onPressed: state.isRunning
+                  ? null
+                  : () => ref
+                      .read(chronoDialProvider.notifier)
+                      .setTargetMinutes(state.targetMinutes + 5),
             ),
           ],
         ),
