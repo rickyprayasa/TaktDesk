@@ -3,8 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_painter.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_widget.dart';
+import 'package:takt_desk/features/timer/presentation/widgets/mechanical_flip_digit.dart';
 
 void main() {
+  final dialFinder = find.byWidgetPredicate(
+    (widget) => widget is CustomPaint && widget.painter is ChronoDialPainter,
+  );
+
+  void expectDisplay(WidgetTester tester, int minutes, int seconds) {
+    final display =
+        tester.widget<MechanicalCounterDisplay>(find.byType(MechanicalCounterDisplay));
+    expect(display.minutes, minutes);
+    expect(display.seconds, seconds);
+  }
+
   testWidgets('ChronoDialWidget renders initial state and custom painter', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
@@ -19,14 +31,12 @@ void main() {
     );
 
     // Verify initial time display (25:00) and target duration label (25 MIN)
-    expect(find.text('25:00'), findsOneWidget);
+    expect(find.byType(MechanicalCounterDisplay), findsOneWidget);
+    expectDisplay(tester, 25, 0);
     expect(find.text('25 MIN'), findsOneWidget);
 
     // Verify CustomPaint with ChronoDialPainter is rendered
-    final customPaintFinder = find.byWidgetPredicate(
-      (widget) => widget is CustomPaint && widget.painter is ChronoDialPainter,
-    );
-    expect(customPaintFinder, findsOneWidget);
+    expect(dialFinder, findsOneWidget);
 
     // Verify adjust duration buttons exist
     expect(find.byIcon(Icons.remove_circle_outline), findsOneWidget);
@@ -53,18 +63,18 @@ void main() {
     await tester.tap(find.byIcon(Icons.add_circle_outline));
     await tester.pump();
     expect(find.text('30 MIN'), findsOneWidget);
-    expect(find.text('30:00'), findsOneWidget);
+    expectDisplay(tester, 30, 0);
 
     // Tap '-' button twice
     await tester.tap(find.byIcon(Icons.remove_circle_outline));
     await tester.pump();
     expect(find.text('25 MIN'), findsOneWidget);
-    expect(find.text('25:00'), findsOneWidget);
+    expectDisplay(tester, 25, 0);
 
     await tester.tap(find.byIcon(Icons.remove_circle_outline));
     await tester.pump();
     expect(find.text('20 MIN'), findsOneWidget);
-    expect(find.text('20:00'), findsOneWidget);
+    expectDisplay(tester, 20, 0);
 
     // Clean up
     await tester.pumpWidget(const SizedBox());
@@ -84,20 +94,20 @@ void main() {
     );
 
     // Tap dial to start
-    await tester.tap(find.text('25:00'));
+    await tester.tap(dialFinder);
     await tester.pump();
 
     // Advance 1 second
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text('24:59'), findsOneWidget);
+    expectDisplay(tester, 24, 59);
 
     // Tap dial to pause
-    await tester.tap(find.text('24:59'));
+    await tester.tap(dialFinder);
     await tester.pump();
 
     // Advance 2 seconds and verify counter stays paused
     await tester.pump(const Duration(seconds: 2));
-    expect(find.text('24:59'), findsOneWidget);
+    expectDisplay(tester, 24, 59);
 
     // Clean up
     await tester.pumpWidget(const SizedBox());
@@ -126,7 +136,7 @@ void main() {
     expect(addButton.onPressed, isNotNull);
 
     // Start timer
-    await tester.tap(find.text('25:00'));
+    await tester.tap(dialFinder);
     await tester.pump();
 
     // While running: buttons disabled
@@ -141,9 +151,7 @@ void main() {
     expect(find.text('25 MIN'), findsOneWidget);
 
     // Pause timer
-    await tester.tap(find.byWidgetPredicate(
-      (widget) => widget is CustomPaint && widget.painter is ChronoDialPainter,
-    ));
+    await tester.tap(dialFinder);
     await tester.pump();
 
     // Paused: buttons enabled again
@@ -176,24 +184,24 @@ void main() {
       await tester.pump();
     }
     expect(find.text('5 MIN'), findsOneWidget);
-    expect(find.text('05:00'), findsOneWidget);
+    expectDisplay(tester, 5, 0);
 
     // Start timer
-    await tester.tap(find.text('05:00'));
+    await tester.tap(dialFinder);
     await tester.pump();
 
     // Advance 301 seconds to expire timer
     await tester.pump(const Duration(seconds: 301));
-    expect(find.text('00:00'), findsOneWidget);
+    expectDisplay(tester, 0, 0);
 
     // Tap dial to restart expired timer
-    await tester.tap(find.text('00:00'));
+    await tester.tap(dialFinder);
     await tester.pump();
 
     // Should restart to full target duration (05:00) and continue ticking
-    expect(find.text('05:00'), findsOneWidget);
+    expectDisplay(tester, 5, 0);
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text('04:59'), findsOneWidget);
+    expectDisplay(tester, 4, 59);
 
     // Clean up
     await tester.pumpWidget(const SizedBox());
