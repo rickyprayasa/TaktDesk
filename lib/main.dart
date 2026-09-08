@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'app/theme/takt_theme.dart';
+import 'features/desk/presentation/desk_canvas_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const ProviderScope(child: TaktApp()));
 }
 
@@ -10,18 +13,11 @@ class TaktApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       title: 'Takt Desk',
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        backgroundColor: Color(0xFF141517),
-        body: Center(
-          child: Text(
-            'TAKT DESK',
-            style: TextStyle(color: Color(0xFFEFECE6), letterSpacing: 4.0),
-          ),
-        ),
-      ),
+      theme: TaktTheme.darkThemeData,
+      home: const DeskCanvasScreen(),
     );
   }
 }
