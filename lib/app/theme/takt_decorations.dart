@@ -4,7 +4,7 @@ import 'takt_colors.dart';
 class TaktDecorations {
   const TaktDecorations._();
 
-  static BoxDecoration instrumentChassis = BoxDecoration(
+  static final BoxDecoration instrumentChassis = BoxDecoration(
     color: TaktColors.basaltSlate,
     borderRadius: BorderRadius.circular(12.0),
     border: Border.all(color: TaktColors.slateBorder, width: 1.5),
@@ -17,7 +17,7 @@ class TaktDecorations {
     ],
   );
 
-  static BoxDecoration paperReceipt = BoxDecoration(
+  static final BoxDecoration paperReceipt = BoxDecoration(
     color: TaktColors.warmBone,
     borderRadius: const BorderRadius.only(
       topLeft: Radius.circular(4.0),
