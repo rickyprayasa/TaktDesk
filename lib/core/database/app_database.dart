@@ -88,15 +88,20 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<int> recordTimerSession({
-    required int targetMinutes,
-    required int elapsedSeconds,
-    required bool isFinished,
+    int targetMinutes = 0,
+    int? elapsedSeconds,
+    int? durationSeconds,
+    bool isFinished = false,
+    bool? completed,
     required DateTime startedAt,
   }) {
+    final actualElapsed = elapsedSeconds ?? durationSeconds ?? 0;
+    final actualFinished = completed ?? isFinished;
+    final actualTarget = targetMinutes > 0 ? targetMinutes : (actualElapsed / 60).ceil();
     return into(timerSessions).insert(TimerSessionsCompanion.insert(
-      targetMinutes: targetMinutes,
-      elapsedSeconds: elapsedSeconds,
-      isFinished: Value(isFinished),
+      targetMinutes: actualTarget,
+      elapsedSeconds: actualElapsed,
+      isFinished: Value(actualFinished),
       startedAt: Value(startedAt),
       finishedAt: Value(DateTime.now()),
     ));

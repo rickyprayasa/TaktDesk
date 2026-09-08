@@ -8,4 +8,5 @@ enum SoundEffect {
   stylusStop,
   drawerSlide,
   drawerLatch,
+  switchClick,
 }

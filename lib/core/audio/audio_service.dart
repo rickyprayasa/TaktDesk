@@ -35,6 +35,8 @@ class AudioService {
     // When assets are provided, triggers flutter_soloud sample playback
   }
 
+  void play(SoundEffect effect) => playFoley(effect);
+
   void startAmbient(int trackIndex) {
     if (!_initialized) return;
     _activeTrackIndex = trackIndex;
