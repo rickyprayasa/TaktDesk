@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'receipt_runner_controller.dart';
 import 'task_input_sheet.dart';
 import 'widgets/animated_receipt_strip.dart';
+import 'widgets/archive_drawer_widget.dart';
 import 'widgets/dispenser_slot_header.dart';
 import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/takt_typography.dart';
@@ -77,6 +78,8 @@ class ReceiptRunnerWidget extends ConsumerWidget {
                 onStampToggle: () => controller.stampDone(task.id),
               );
             }),
+          // 3. Slide-Out Brass Archive Drawer
+          const ArchiveDrawerWidget(),
         ],
       ),
     );

@@ -6,4 +6,6 @@ enum SoundEffect {
   inkStamp,
   stylusDrop,
   stylusStop,
+  drawerSlide,
+  drawerLatch,
 }

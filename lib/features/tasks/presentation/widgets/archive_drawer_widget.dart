@@ -1,0 +1,262 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/receipt_task.dart';
+import '../receipt_runner_controller.dart';
+import '../../../../app/theme/takt_colors.dart';
+import '../../../../app/theme/takt_typography.dart';
+
+/// Industrial Slide-Out Brass Archive Drawer attached to the bottom of the Thermal Task Runner.
+class ArchiveDrawerWidget extends ConsumerWidget {
+  const ArchiveDrawerWidget({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(receiptRunnerProvider);
+    final controller = ref.read(receiptRunnerProvider.notifier);
+    final isOpen = state.isArchiveOpen;
+    final count = state.archivedTasks.length;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1B1E22),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: isOpen ? const Color(0xFFC89B59).withValues(alpha: 0.6) : TaktColors.slateBorder,
+          width: 1.0,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x55000000),
+            offset: Offset(0, 2),
+            blurRadius: 4,
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 1. Brushed Brass Handle Bar
+          InkWell(
+            onTap: controller.toggleArchiveDrawer,
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              height: 32,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(5),
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF383125),
+                    Color(0xFF24221C),
+                    Color(0xFF1E1C17),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+              child: Row(
+                children: [
+                  // Left brass rivet
+                  _buildBrassRivet(),
+                  const Spacer(),
+                  // Center Brass Plate Handle
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFC89B59).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(3),
+                      border: Border.all(
+                        color: const Color(0xFFC89B59).withValues(alpha: 0.7),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                          size: 14,
+                          color: const Color(0xFFC89B59),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'ARCHIVE // $count',
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 9.0,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFE8C88A),
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  // Right brass rivet
+                  _buildBrassRivet(),
+                ],
+              ),
+            ),
+          ),
+          // 2. Sliding Drawer Contents
+          AnimatedSize(
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOutCubic,
+            child: isOpen
+                ? Container(
+                    constraints: const BoxConstraints(maxHeight: 180),
+                    padding: const EdgeInsets.all(8),
+                    child: state.archivedTasks.isEmpty
+                        ? Container(
+                            height: 52,
+                            alignment: Alignment.center,
+                            child: Text(
+                              'DRAWER EMPTY',
+                              style: TaktTypography.receiptBody.copyWith(
+                                color: Colors.white24,
+                                fontSize: 10,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          )
+                        : Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                child: ListView.separated(
+                                  shrinkWrap: true,
+                                  itemCount: state.archivedTasks.length,
+                                  separatorBuilder: (_, __) => const SizedBox(height: 4),
+                                  itemBuilder: (context, index) {
+                                    final task = state.archivedTasks[index];
+                                    return _buildArchivedTaskItem(context, task, controller);
+                                  },
+                                ),
+                              ),
+                              if (state.archivedTasks.isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton(
+                                    style: TextButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      minimumSize: Size.zero,
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    onPressed: controller.clearArchive,
+                                    child: Text(
+                                      'PURGE ARCHIVE',
+                                      style: TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 8.0,
+                                        fontWeight: FontWeight.w600,
+                                        color: TaktColors.mutedOchre.withValues(alpha: 0.7),
+                                        letterSpacing: 0.8,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBrassRivet() {
+    return Container(
+      width: 6,
+      height: 6,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        color: Color(0xFFC89B59),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x66000000),
+            offset: Offset(0, 1),
+            blurRadius: 1,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildArchivedTaskItem(
+    BuildContext context,
+    ReceiptTask task,
+    ReceiptRunnerController controller,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFF25282E),
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(color: const Color(0xFF383C45), width: 0.8),
+      ),
+      child: Row(
+        children: [
+          // Ochre checked dot
+          Container(
+            width: 6,
+            height: 6,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xFFC85A32),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              task.title,
+              style: TaktTypography.receiptBody.copyWith(
+                fontSize: 10,
+                color: Colors.white70,
+                decoration: TextDecoration.lineThrough,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 6),
+          // Reprint button
+          InkWell(
+            onTap: () => controller.reprintTask(task),
+            borderRadius: BorderRadius.circular(3),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF333842),
+                borderRadius: BorderRadius.circular(2),
+              ),
+              child: const Text(
+                'REPRINT',
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 7.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFD99B59),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          // Delete button
+          InkWell(
+            onTap: () => controller.deleteArchivedTask(task.id),
+            borderRadius: BorderRadius.circular(3),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+              child: Icon(Icons.close, size: 12, color: Colors.white38),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

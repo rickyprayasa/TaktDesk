@@ -8,20 +8,28 @@ import '../../../core/database/app_database.dart';
 
 class ReceiptRunnerState {
   final List<ReceiptTask> tasks;
+  final List<ReceiptTask> archivedTasks;
   final double tearDragProgress; // 0.0 to 1.0
+  final bool isArchiveOpen;
 
   const ReceiptRunnerState({
     this.tasks = const [],
+    this.archivedTasks = const [],
     this.tearDragProgress = 0.0,
+    this.isArchiveOpen = false,
   });
 
   ReceiptRunnerState copyWith({
     List<ReceiptTask>? tasks,
+    List<ReceiptTask>? archivedTasks,
     double? tearDragProgress,
+    bool? isArchiveOpen,
   }) {
     return ReceiptRunnerState(
       tasks: tasks ?? this.tasks,
+      archivedTasks: archivedTasks ?? this.archivedTasks,
       tearDragProgress: tearDragProgress ?? this.tearDragProgress,
+      isArchiveOpen: isArchiveOpen ?? this.isArchiveOpen,
     );
   }
 }
@@ -34,7 +42,26 @@ class ReceiptRunnerController extends StateNotifier<ReceiptRunnerState> {
       : super(const ReceiptRunnerState()) {
     if (_database != null) {
       loadFromDatabase();
+      loadArchivedTasks();
     }
+  }
+
+  Future<void> loadArchivedTasks() async {
+    final db = _database;
+    if (db == null) return;
+    try {
+      final archived = await db.watchArchivedTasks().first;
+      state = state.copyWith(
+        archivedTasks: archived
+            .map((t) => ReceiptTask(
+                  id: t.id.toString(),
+                  title: t.title,
+                  isDone: t.isCompleted,
+                  createdAt: t.createdAt,
+                ))
+            .toList(),
+      );
+    } catch (_) {}
   }
 
   Future<void> loadFromDatabase() async {
@@ -106,8 +133,10 @@ class ReceiptRunnerController extends StateNotifier<ReceiptRunnerState> {
   }
 
   void tearTask(String id) {
+    final tornTask = state.tasks.where((t) => t.id == id).firstOrNull;
     state = state.copyWith(
       tasks: state.tasks.where((t) => t.id != id).toList(),
+      archivedTasks: tornTask != null ? [tornTask, ...state.archivedTasks] : state.archivedTasks,
       tearDragProgress: 0.0,
     );
     HapticService.paperTorn();
@@ -118,6 +147,44 @@ class ReceiptRunnerController extends StateNotifier<ReceiptRunnerState> {
       if (intId != null) {
         _database.archiveTask(intId).catchError((_) {});
       }
+    }
+  }
+
+  void toggleArchiveDrawer() {
+    final nextOpen = !state.isArchiveOpen;
+    state = state.copyWith(isArchiveOpen: nextOpen);
+    HapticService.mechanicalPress();
+    _audioService?.playFoley(
+      nextOpen ? SoundEffect.drawerSlide : SoundEffect.drawerLatch,
+    );
+    if (nextOpen) {
+      loadArchivedTasks();
+    }
+  }
+
+  Future<void> reprintTask(ReceiptTask task) async {
+    if (!canAddTask) return;
+    await addTask(task.title);
+  }
+
+  Future<void> deleteArchivedTask(String id) async {
+    state = state.copyWith(
+      archivedTasks: state.archivedTasks.where((t) => t.id != id).toList(),
+    );
+    final db = _database;
+    if (db != null) {
+      final intId = int.tryParse(id);
+      if (intId != null) {
+        await db.deleteTask(intId).catchError((_) {});
+      }
+    }
+  }
+
+  Future<void> clearArchive() async {
+    state = state.copyWith(archivedTasks: const []);
+    final db = _database;
+    if (db != null) {
+      await db.clearArchivedTasks().catchError((_) {});
     }
   }
 }

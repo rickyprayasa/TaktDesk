@@ -69,6 +69,24 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  Stream<List<Task>> watchArchivedTasks() {
+    return (select(tasks)
+          ..where((t) => t.isArchived.equals(true))
+          ..orderBy([
+            (t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc),
+            (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
+          ]))
+        .watch();
+  }
+
+  Future<void> deleteTask(int id) {
+    return (delete(tasks)..where((t) => t.id.equals(id))).go();
+  }
+
+  Future<void> clearArchivedTasks() {
+    return (delete(tasks)..where((t) => t.isArchived.equals(true))).go();
+  }
+
   Future<int> recordTimerSession({
     required int targetMinutes,
     required int elapsedSeconds,
