@@ -14,15 +14,18 @@ class MonasticSwitchWidget extends ConsumerWidget {
 
     return Semantics(
       button: true,
+      toggled: isLocked,
+      enabled: !isLocked,
       label: isLocked ? 'Monastic Focus Engaged' : 'Monastic Focus Inactive',
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: () {
           if (!isLocked) {
             ref.read(focusLockProvider.notifier).engageLock();
           }
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             color: TaktPalette.basalt,
             borderRadius: BorderRadius.circular(4),
