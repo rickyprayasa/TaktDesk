@@ -16,4 +16,10 @@ class TaktColors {
   static const Color slateBorder = Color(0xFF383D45);
   static const Color paperBorder = Color(0xFFD5D1C8);
   static const Color paperShadow = Color(0x33000000);
+
+  // Braun Audio Light Finish Palette
+  static const Color lightChassisCanvas = Color(0xFFD6D2C9);
+  static const Color lightChassisBasalt = Color(0xFFE8E5DD);
+  static const Color lightChassisFaceplate = Color(0xFFF4F2EC);
+  static const Color lightChassisBorder = Color(0xFFBDB8AD);
 }
