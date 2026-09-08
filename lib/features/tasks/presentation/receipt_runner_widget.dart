@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'receipt_runner_controller.dart';
-import 'receipt_runner_painter.dart';
 import 'task_input_sheet.dart';
+import 'widgets/animated_receipt_strip.dart';
+import 'widgets/dispenser_slot_header.dart';
 import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/takt_typography.dart';
 
@@ -18,103 +19,62 @@ class ReceiptRunnerWidget extends ConsumerWidget {
       width: 280,
       decoration: BoxDecoration(
         color: TaktColors.basaltSlate,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: TaktColors.slateBorder),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: TaktColors.slateBorder, width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x66000000),
+            offset: Offset(0, 6),
+            blurRadius: 14,
+          ),
+        ],
       ),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Expanded(
-                child: Text('DISPENSER: 5 MAX', style: TaktTypography.controlLabel),
-              ),
-              IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                icon: Icon(
-                  Icons.add,
-                  color: controller.canAddTask
-                      ? TaktColors.warmBone
-                      : TaktColors.warmBone.withValues(alpha: 0.3),
-                  size: 18,
-                ),
-                onPressed: controller.canAddTask
-                    ? () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          builder: (_) => TaskInputSheet(
-                            onSubmitted: (val) => controller.addTask(val),
-                          ),
-                        );
-                      }
-                    : null,
-              ),
-            ],
+          // 1. Dispenser Header with Aperture Slit and Capacity Meter
+          DispenserSlotHeader(
+            taskCount: state.tasks.length,
+            maxTasks: 5,
+            onAddTap: controller.canAddTask
+                ? () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      builder: (_) => TaskInputSheet(
+                        onSubmitted: (val) => controller.addTask(val),
+                      ),
+                    );
+                  }
+                : null,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
+          // 2. Receipt Paper Queue or Empty State
           if (state.tasks.isEmpty)
             Container(
-              height: 80,
+              height: 72,
               alignment: Alignment.center,
               child: Text(
                 'NO TASKS IN QUEUE',
-                style: TaktTypography.receiptBody.copyWith(color: Colors.white38),
+                style: TaktTypography.receiptBody.copyWith(
+                  color: Colors.white30,
+                  letterSpacing: 1.0,
+                ),
               ),
             )
           else
-            ...state.tasks.map((task) {
-              return Dismissible(
-                key: Key(task.id),
-                direction: DismissDirection.horizontal,
-                dismissThresholds: const {
-                  DismissDirection.startToEnd: 0.75,
-                  DismissDirection.endToStart: 0.75,
-                },
-                onUpdate: (details) => controller.updateTearProgress(details.progress),
-                onDismissed: (_) => controller.tearTask(task.id),
-                child: GestureDetector(
-                  onDoubleTap: () => controller.stampDone(task.id),
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    child: CustomPaint(
-                      painter: ReceiptRunnerPainter(tearProgress: state.tearDragProgress),
-                      child: Container(
-                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 16),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                task.title,
-                                style: TaktTypography.receiptBody.copyWith(
-                                  decoration: task.isDone ? TextDecoration.lineThrough : null,
-                                ),
-                              ),
-                            ),
-                            if (task.isDone)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: TaktColors.patinaOlive, width: 1.5),
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                                child: Text(
-                                  '[DONE]',
-                                  style: TaktTypography.receiptHeader.copyWith(
-                                    color: TaktColors.patinaOlive,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+            ...state.tasks.asMap().entries.map((entry) {
+              final index = entry.key;
+              final task = entry.value;
+              return AnimatedReceiptStrip(
+                task: task,
+                index: index,
+                currentTearProgress: state.tearDragProgress,
+                onTearUpdate: (p) => controller.updateTearProgress(p),
+                onTorn: () => controller.tearTask(task.id),
+                onStampToggle: () => controller.stampDone(task.id),
               );
             }),
         ],

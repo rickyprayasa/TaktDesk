@@ -1,0 +1,187 @@
+import 'package:flutter/material.dart';
+import '../../domain/receipt_task.dart';
+import '../receipt_runner_painter.dart';
+import 'physical_ink_stamp.dart';
+import '../../../../app/theme/takt_colors.dart';
+import '../../../../app/theme/takt_typography.dart';
+
+/// A physical thermal paper receipt strip with 3D extrusion, tear peel tilt, and ink stamp.
+class AnimatedReceiptStrip extends StatefulWidget {
+  final ReceiptTask task;
+  final int index;
+  final double currentTearProgress;
+  final ValueChanged<double> onTearUpdate;
+  final VoidCallback onTorn;
+  final VoidCallback onStampToggle;
+
+  const AnimatedReceiptStrip({
+    super.key,
+    required this.task,
+    required this.index,
+    required this.currentTearProgress,
+    required this.onTearUpdate,
+    required this.onTorn,
+    required this.onStampToggle,
+  });
+
+  @override
+  State<AnimatedReceiptStrip> createState() => _AnimatedReceiptStripState();
+}
+
+class _AnimatedReceiptStripState extends State<AnimatedReceiptStrip>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _extrusionController;
+  late final Animation<Offset> _slideAnimation;
+  late final Animation<double> _fadeAnimation;
+  double _localTearProgress = 0.0;
+  int _dragDirection = 1; // 1 for right, -1 for left
+
+  @override
+  void initState() {
+    super.initState();
+    _extrusionController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 380),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0.0, -0.28),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _extrusionController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _extrusionController,
+        curve: Curves.easeIn,
+      ),
+    );
+
+    _extrusionController.forward();
+  }
+
+  @override
+  void dispose() {
+    _extrusionController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SlideTransition(
+      position: _slideAnimation,
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Dismissible(
+          key: Key(widget.task.id),
+          direction: DismissDirection.horizontal,
+          dismissThresholds: const {
+            DismissDirection.startToEnd: 0.75,
+            DismissDirection.endToStart: 0.75,
+          },
+          onUpdate: (details) {
+            setState(() {
+              _localTearProgress = details.progress;
+              _dragDirection = details.direction == DismissDirection.startToEnd ? 1 : -1;
+            });
+            widget.onTearUpdate(details.progress);
+          },
+          onDismissed: (_) {
+            widget.onTorn();
+          },
+          child: GestureDetector(
+            onDoubleTap: widget.onStampToggle,
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 4),
+              child: Transform(
+                // 3D paper peel/curl effect as the user shears the paper along the blade
+                transform: Matrix4.identity()
+                  ..setEntry(3, 2, 0.0018) // perspective
+                  ..rotateZ(_localTearProgress * 0.12 * _dragDirection)
+                  ..rotateY(_localTearProgress * 0.22 * _dragDirection),
+                alignment: _dragDirection > 0 ? Alignment.centerLeft : Alignment.centerRight,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0x38000000),
+                        offset: Offset(0, 3),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: CustomPaint(
+                    painter: ReceiptRunnerPainter(
+                      tearProgress: _localTearProgress > 0
+                          ? _localTearProgress
+                          : widget.currentTearProgress,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Receipt Micro Header
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '#${(widget.index + 1).toString().padLeft(2, '0')} // TAKT DESK',
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: TaktColors.thermalCarbon.withValues(alpha: 0.55),
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              Text(
+                                '• • •',
+                                style: TextStyle(
+                                  fontSize: 8.0,
+                                  color: TaktColors.thermalCarbon.withValues(alpha: 0.3),
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          // Task Content & Rubber Stamp Mark
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  widget.task.title,
+                                  style: TaktTypography.receiptBody.copyWith(
+                                    decoration: widget.task.isDone
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              PhysicalInkStamp(
+                                isDone: widget.task.isDone,
+                                taskId: widget.task.id,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
