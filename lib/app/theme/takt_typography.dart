@@ -4,6 +4,14 @@ import 'takt_colors.dart';
 class TaktTypography {
   const TaktTypography._();
 
+  static const TextStyle labelSmall = TextStyle(
+    fontFamily: 'sans-serif',
+    fontWeight: FontWeight.w500,
+    fontSize: 10.0,
+    letterSpacing: 1.0,
+    color: TaktColors.warmBone,
+  );
+
   static const TextStyle controlLabel = TextStyle(
     fontFamily: 'sans-serif',
     fontWeight: FontWeight.w600,

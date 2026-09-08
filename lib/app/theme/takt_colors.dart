@@ -23,3 +23,14 @@ class TaktColors {
   static const Color lightChassisFaceplate = Color(0xFFF4F2EC);
   static const Color lightChassisBorder = Color(0xFFBDB8AD);
 }
+
+/// Shorthand palette names matching Braun design tokens
+abstract class TaktPalette {
+  static const Color obsidian = TaktColors.chassisObsidian;
+  static const Color basalt = TaktColors.basaltSlate;
+  static const Color warmBone = TaktColors.warmBone;
+  static const Color thermalCarbon = TaktColors.thermalCarbon;
+  static const Color mutedOchre = TaktColors.mutedOchre;
+  static const Color filamentAmber = TaktColors.filamentAmber;
+  static const Color patinaOlive = TaktColors.patinaOlive;
+}
