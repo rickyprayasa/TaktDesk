@@ -47,6 +47,7 @@ class _TaskInputSheetState extends State<TaskInputSheet> {
           TextField(
             controller: _controller,
             autofocus: true,
+            maxLength: 48,
             style: TaktTypography.receiptBody.copyWith(color: TaktColors.warmBone),
             decoration: const InputDecoration(
               hintText: 'Enter mission objective...',
@@ -54,6 +55,7 @@ class _TaskInputSheetState extends State<TaskInputSheet> {
               border: UnderlineInputBorder(
                 borderSide: BorderSide(color: TaktColors.mutedOchre),
               ),
+              counterStyle: TextStyle(color: Colors.white38, fontSize: 10),
             ),
             onSubmitted: (_) => _submit(),
           ),

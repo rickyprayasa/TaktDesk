@@ -34,7 +34,13 @@ class ReceiptRunnerWidget extends ConsumerWidget {
               IconButton(
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
-                icon: const Icon(Icons.add, color: TaktColors.warmBone, size: 18),
+                icon: Icon(
+                  Icons.add,
+                  color: controller.canAddTask
+                      ? TaktColors.warmBone
+                      : TaktColors.warmBone.withValues(alpha: 0.3),
+                  size: 18,
+                ),
                 onPressed: controller.canAddTask
                     ? () {
                         showModalBottomSheet(
@@ -64,6 +70,10 @@ class ReceiptRunnerWidget extends ConsumerWidget {
               return Dismissible(
                 key: Key(task.id),
                 direction: DismissDirection.horizontal,
+                dismissThresholds: const {
+                  DismissDirection.startToEnd: 0.75,
+                  DismissDirection.endToStart: 0.75,
+                },
                 onUpdate: (details) => controller.updateTearProgress(details.progress),
                 onDismissed: (_) => controller.tearTask(task.id),
                 child: GestureDetector(

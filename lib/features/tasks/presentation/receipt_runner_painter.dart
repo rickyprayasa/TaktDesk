@@ -17,13 +17,13 @@ class ReceiptRunnerPainter extends CustomPainter {
     path.lineTo(size.width, 0);
     path.lineTo(size.width, size.height - 10);
 
-    // Serration teeth
-    const toothWidth = 8.0;
+    // Serration teeth with exact proportional width
     const toothHeight = 6.0;
-    final teethCount = (size.width / toothWidth).floor();
+    final teethCount = (size.width / 8.0).floor().clamp(1, 100);
+    final effectiveToothWidth = size.width / teethCount;
 
     for (int i = teethCount; i >= 0; i--) {
-      final x = i * toothWidth;
+      final x = i * effectiveToothWidth;
       final y = (i % 2 == 0) ? size.height : size.height - toothHeight;
       path.lineTo(x, y);
     }
