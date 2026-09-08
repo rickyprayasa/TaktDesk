@@ -1,6 +1,8 @@
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/core/audio/audio_service.dart';
 import 'package:takt_desk/core/audio/sound_effect.dart';
+import 'package:takt_desk/core/database/app_database.dart';
 import 'package:takt_desk/features/tasks/domain/receipt_task.dart';
 import 'package:takt_desk/features/tasks/presentation/receipt_runner_controller.dart';
 
@@ -115,6 +117,30 @@ void main() {
       controller.tearTask(id);
       expect(mockAudio.playedEffects, contains(SoundEffect.paperTear));
       expect(controller.state.tearDragProgress, 0.0);
+    });
+
+    test('synchronizes addTask, stampDone, and tearTask with AppDatabase', () async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(db.close);
+      final controller = ReceiptRunnerController(null, db);
+      addTearDown(controller.dispose);
+
+      await controller.addTask('Database Task');
+      await Future.delayed(const Duration(milliseconds: 50));
+      expect(controller.state.tasks.length, 1);
+      final taskId = controller.state.tasks.first.id;
+      expect(controller.state.tasks.first.title, 'Database Task');
+
+      controller.stampDone(taskId);
+      await Future.delayed(const Duration(milliseconds: 50));
+      final dbTasks = await db.watchActiveTasks().first;
+      expect(dbTasks.first.isCompleted, isTrue);
+
+      controller.tearTask(taskId);
+      await Future.delayed(const Duration(milliseconds: 50));
+      final dbTasksAfterTear = await db.watchActiveTasks().first;
+      expect(dbTasksAfterTear, isEmpty);
+      expect(controller.state.tasks, isEmpty);
     });
   });
 }

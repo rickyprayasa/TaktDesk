@@ -3,11 +3,14 @@ import '../domain/timer_state.dart';
 import '../../../core/haptics/haptic_service.dart';
 import '../../../core/audio/audio_service.dart';
 import '../../../core/audio/sound_effect.dart';
+import '../../../core/database/app_database.dart';
 
 class ChronoDialController extends StateNotifier<TimerState> {
   final AudioService? _audioService;
+  final AppDatabase? _database;
+  DateTime? _sessionStartedAt;
 
-  ChronoDialController([this._audioService])
+  ChronoDialController([this._audioService, this._database])
       : super(const TimerState(
           targetMinutes: 25,
           remainingSeconds: 25 * 60.0,
@@ -18,6 +21,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
   void setTargetMinutes(int minutes) {
     if (state.isRunning) return;
     final clamped = minutes.clamp(1, 90);
+    _sessionStartedAt = null;
     state = state.copyWith(
       targetMinutes: clamped,
       remainingSeconds: clamped * 60.0,
@@ -33,8 +37,10 @@ class ChronoDialController extends StateNotifier<TimerState> {
         lastTickMinute: state.targetMinutes,
         isRunning: true,
       );
+      _sessionStartedAt = DateTime.now();
     } else {
       state = state.copyWith(isRunning: true);
+      _sessionStartedAt ??= DateTime.now();
     }
     HapticService.mechanicalPress();
     _audioService?.playFoley(SoundEffect.springButton);
@@ -52,6 +58,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
       remainingSeconds: state.targetMinutes * 60.0,
       lastTickMinute: state.targetMinutes,
     );
+    _sessionStartedAt = null;
   }
 
   void tick(double deltaSeconds) {
@@ -65,8 +72,21 @@ class ChronoDialController extends StateNotifier<TimerState> {
     }
 
     if (nextRemaining <= 0) {
+      final startedAt =
+          _sessionStartedAt ?? DateTime.now().subtract(Duration(minutes: state.targetMinutes));
+      final targetMins = state.targetMinutes;
+      final elapsed = targetMins * 60;
       state = state.copyWith(remainingSeconds: 0, isRunning: false, lastTickMinute: 0);
       HapticService.mechanicalPress();
+      if (_database != null) {
+        _database.recordTimerSession(
+          targetMinutes: targetMins,
+          elapsedSeconds: elapsed,
+          isFinished: true,
+          startedAt: startedAt,
+        ).catchError((_) => -1);
+      }
+      _sessionStartedAt = null;
     } else {
       state = state.copyWith(
         remainingSeconds: nextRemaining,
@@ -78,7 +98,8 @@ class ChronoDialController extends StateNotifier<TimerState> {
 
 final chronoDialProvider = StateNotifierProvider<ChronoDialController, TimerState>((ref) {
   final audioService = ref.watch(audioServiceProvider);
-  return ChronoDialController(audioService);
+  final database = ref.watch(appDatabaseProvider);
+  return ChronoDialController(audioService, database);
 });
 
 final chronoDialControllerProvider = chronoDialProvider;

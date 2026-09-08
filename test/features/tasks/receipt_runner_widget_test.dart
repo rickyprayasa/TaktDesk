@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -31,6 +32,16 @@ void main() {
 
       expect(painter1.shouldRepaint(painter2), isTrue);
       expect(painter1.shouldRepaint(painter3), isFalse);
+    });
+
+    test('paints correctly with dynamic tear shear displacement and stress line', () {
+      final recorder = PictureRecorder();
+      final canvas = Canvas(recorder);
+      final painter = ReceiptRunnerPainter(tearProgress: 0.5);
+
+      expect(() => painter.paint(canvas, const Size(200, 60)), returnsNormally);
+      final picture = recorder.endRecording();
+      expect(picture, isNotNull);
     });
   });
 

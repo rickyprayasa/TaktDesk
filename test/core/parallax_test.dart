@@ -68,5 +68,21 @@ void main() {
       expect(updatedState.tiltX, isNonZero);
       expect(updatedState.tiltY, isNonZero);
     });
+
+    test('updateTiltFromAccelerometer sustains tilt angle and clamps to +/- 0.05 rad', () {
+      final controller = ParallaxController();
+
+      for (int i = 0; i < 50; i++) {
+        controller.updateTiltFromAccelerometer(x: 0.3, y: 0.4, z: 9.8);
+      }
+      expect(controller.state.tiltX, greaterThan(0.02));
+      expect(controller.state.tiltY, greaterThan(0.02));
+      expect(controller.state.tiltX, lessThanOrEqualTo(0.05));
+      expect(controller.state.tiltY, lessThanOrEqualTo(0.05));
+
+      // Sustains tilt angle rather than decaying
+      controller.updateTiltFromAccelerometer(x: 0.3, y: 0.4, z: 9.8);
+      expect(controller.state.tiltX, greaterThan(0.02));
+    });
   });
 }

@@ -3,6 +3,7 @@ import 'sound_effect.dart';
 
 final audioServiceProvider = Provider<AudioService>((ref) {
   final service = AudioService();
+  service.init();
   ref.onDispose(service.dispose);
   return service;
 });

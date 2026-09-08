@@ -116,5 +116,54 @@ void main() {
       // Screen should still be rendered without throwing
       expect(find.byType(DeskCanvasScreen), findsOneWidget);
     });
+
+    testWidgets('DeskCanvasScreen updates parallaxProvider from accelerometer stream', (tester) async {
+      final streamController = StreamController<AccelerometerEvent>.broadcast();
+      addTearDown(streamController.close);
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: DeskCanvasScreen(accelerometerStream: streamController.stream),
+          ),
+        ),
+      );
+
+      expect(container.read(parallaxProvider).tiltX, 0.0);
+      expect(container.read(parallaxProvider).tiltY, 0.0);
+
+      // Emit an accelerometer event (phone tilted)
+      streamController.add(AccelerometerEvent(0.4, 0.3, 9.8));
+      await tester.pump();
+
+      expect(container.read(parallaxProvider).tiltX, isNonZero);
+      expect(container.read(parallaxProvider).tiltY, isNonZero);
+    });
+
+    testWidgets('DeskCanvasScreen handles accelerometer stream error gracefully without crashing', (tester) async {
+      final streamController = StreamController<AccelerometerEvent>.broadcast();
+      addTearDown(streamController.close);
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: DeskCanvasScreen(accelerometerStream: streamController.stream),
+          ),
+        ),
+      );
+
+      streamController.addError(Exception('Accelerometer not available'));
+      await tester.pump();
+
+      expect(find.byType(DeskCanvasScreen), findsOneWidget);
+    });
   });
 }

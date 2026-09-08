@@ -60,5 +60,6 @@ void main() {
     addTearDown(container.dispose);
     final service = container.read(audioServiceProvider);
     expect(service, isA<AudioService>());
+    expect(service.isInitialized, isTrue);
   });
 }

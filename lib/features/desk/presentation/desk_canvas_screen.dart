@@ -12,8 +12,13 @@ import 'isometric_desk_layout.dart';
 
 class DeskCanvasScreen extends ConsumerStatefulWidget {
   final Stream<GyroscopeEvent>? gyroscopeStream;
+  final Stream<AccelerometerEvent>? accelerometerStream;
 
-  const DeskCanvasScreen({super.key, this.gyroscopeStream});
+  const DeskCanvasScreen({
+    super.key,
+    this.gyroscopeStream,
+    this.accelerometerStream,
+  });
 
   @override
   ConsumerState<DeskCanvasScreen> createState() => _DeskCanvasScreenState();
@@ -21,37 +26,78 @@ class DeskCanvasScreen extends ConsumerStatefulWidget {
 
 class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
   StreamSubscription<GyroscopeEvent>? _gyroscopeSubscription;
+  StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
 
   @override
   void initState() {
     super.initState();
-    _initGyroscope();
+    _initSensors();
   }
 
-  void _initGyroscope() {
-    try {
-      final stream = widget.gyroscopeStream ?? gyroscopeEventStream();
-      _gyroscopeSubscription = stream.listen(
-        (event) {
-          if (!mounted) return;
-          ref.read(parallaxProvider.notifier).updateSensorInput(
-                rawX: event.x,
-                rawY: event.y,
-              );
-        },
-        onError: (Object error) {
-          // Handle platforms/environments without gyroscope gracefully without crashing
-        },
-        cancelOnError: false,
-      );
-    } catch (_) {
-      // Platform does not support gyroscope or sensor initialization failed
+  void _initSensors() {
+    if (widget.gyroscopeStream != null) {
+      try {
+        _gyroscopeSubscription = widget.gyroscopeStream!.listen(
+          (event) {
+            if (!mounted) return;
+            ref.read(parallaxProvider.notifier).updateSensorInput(
+                  rawX: event.x,
+                  rawY: event.y,
+                );
+          },
+          onError: (Object error) {
+            // Handle platforms/environments without gyroscope gracefully without crashing
+          },
+          cancelOnError: false,
+        );
+      } catch (_) {}
+    }
+
+    if (widget.accelerometerStream != null) {
+      try {
+        _accelerometerSubscription = widget.accelerometerStream!.listen(
+          (event) {
+            if (!mounted) return;
+            ref.read(parallaxProvider.notifier).updateTiltFromAccelerometer(
+                  x: event.x,
+                  y: event.y,
+                  z: event.z,
+                );
+          },
+          onError: (Object error) {
+            // Handle platforms/environments without accelerometer gracefully without crashing
+          },
+          cancelOnError: false,
+        );
+      } catch (_) {}
+    }
+
+    if (widget.gyroscopeStream == null && widget.accelerometerStream == null) {
+      try {
+        _accelerometerSubscription = accelerometerEventStream().listen(
+          (event) {
+            if (!mounted) return;
+            ref.read(parallaxProvider.notifier).updateTiltFromAccelerometer(
+                  x: event.x,
+                  y: event.y,
+                  z: event.z,
+                );
+          },
+          onError: (Object error) {
+            // Handle platforms/environments without accelerometer gracefully without crashing
+          },
+          cancelOnError: false,
+        );
+      } catch (_) {
+        // Platform does not support accelerometer or sensor initialization failed
+      }
     }
   }
 
   @override
   void dispose() {
     _gyroscopeSubscription?.cancel();
+    _accelerometerSubscription?.cancel();
     super.dispose();
   }
 

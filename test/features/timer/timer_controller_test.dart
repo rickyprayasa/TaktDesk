@@ -1,6 +1,8 @@
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/core/audio/audio_service.dart';
 import 'package:takt_desk/core/audio/sound_effect.dart';
+import 'package:takt_desk/core/database/app_database.dart';
 import 'package:takt_desk/features/timer/domain/timer_state.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_controller.dart';
 
@@ -188,6 +190,25 @@ void main() {
         SoundEffect.dialClick,
         SoundEffect.springButton,
       ]);
+    });
+
+    test('records timer session to AppDatabase when timer finishes', () async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(db.close);
+      final controller = ChronoDialController(null, db);
+
+      controller.setTargetMinutes(25);
+      controller.start();
+      // Tick until completion
+      controller.tick(1500.0);
+      expect(controller.state.remainingSeconds, 0.0);
+      expect(controller.state.isRunning, isFalse);
+
+      final sessions = await db.select(db.timerSessions).get();
+      expect(sessions.length, 1);
+      expect(sessions.first.targetMinutes, 25);
+      expect(sessions.first.elapsedSeconds, 1500);
+      expect(sessions.first.isFinished, isTrue);
     });
   });
 }

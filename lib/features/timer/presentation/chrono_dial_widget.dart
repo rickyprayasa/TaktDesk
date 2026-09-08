@@ -15,22 +15,42 @@ class ChronoDialWidget extends ConsumerStatefulWidget {
 
 class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
     with SingleTickerProviderStateMixin {
-  late Ticker _ticker;
+  late final Ticker _ticker;
+  final ValueNotifier<double> _progressNotifier = ValueNotifier<double>(0.0);
   Duration? _lastElapsed;
+  double _accumulatedDelta = 0.0;
 
   @override
   void initState() {
     super.initState();
+    final initialState = ref.read(chronoDialProvider);
+    _progressNotifier.value = initialState.progressPercent;
+
     _ticker = createTicker((elapsed) {
+      if (!mounted) return;
       if (_lastElapsed != null) {
         final delta = (elapsed - _lastElapsed!).inMicroseconds / 1000000.0;
-        ref.read(chronoDialProvider.notifier).tick(delta);
+        final currentState = ref.read(chronoDialProvider);
+        final totalSeconds = currentState.targetMinutes * 60.0;
+        if (totalSeconds > 0) {
+          _progressNotifier.value =
+              (_progressNotifier.value + delta / totalSeconds).clamp(0.0, 1.0);
+        }
+
+        _accumulatedDelta += delta;
+        final remaining = currentState.remainingSeconds - _accumulatedDelta;
+        if (_accumulatedDelta >= 1.0 || remaining <= 0) {
+          final toTick = _accumulatedDelta;
+          _accumulatedDelta = 0.0;
+          ref.read(chronoDialProvider.notifier).tick(toTick);
+        }
       }
       _lastElapsed = elapsed;
     });
 
-    if (ref.read(chronoDialProvider).isRunning) {
-      _lastElapsed = Duration.zero;
+    if (initialState.isRunning) {
+      _lastElapsed = null;
+      _accumulatedDelta = 0.0;
       _ticker.start();
     }
   }
@@ -38,6 +58,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
   @override
   void dispose() {
     _ticker.dispose();
+    _progressNotifier.dispose();
     super.dispose();
   }
 
@@ -47,7 +68,9 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
       chronoDialProvider.select((s) => s.isRunning),
       (previous, isRunning) {
         if (isRunning) {
-          _lastElapsed = Duration.zero;
+          _lastElapsed = null;
+          _accumulatedDelta = 0.0;
+          _progressNotifier.value = ref.read(chronoDialProvider).progressPercent;
           if (!_ticker.isActive) {
             _ticker.start();
           }
@@ -55,6 +78,18 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
           if (_ticker.isActive) {
             _ticker.stop();
           }
+          _lastElapsed = null;
+          _accumulatedDelta = 0.0;
+          _progressNotifier.value = ref.read(chronoDialProvider).progressPercent;
+        }
+      },
+    );
+
+    ref.listen<double>(
+      chronoDialProvider.select((s) => s.remainingSeconds),
+      (previous, nextRemaining) {
+        if (!ref.read(chronoDialProvider).isRunning) {
+          _progressNotifier.value = ref.read(chronoDialProvider).progressPercent;
         }
       },
     );
@@ -69,20 +104,31 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
         GestureDetector(
           onTap: () {
             if (state.isRunning) {
+              if (_accumulatedDelta > 0) {
+                ref.read(chronoDialProvider.notifier).tick(_accumulatedDelta);
+                _accumulatedDelta = 0.0;
+              }
               ref.read(chronoDialProvider.notifier).pause();
             } else {
+              _accumulatedDelta = 0.0;
               ref.read(chronoDialProvider.notifier).start();
             }
           },
           child: SizedBox(
             width: 220,
             height: 220,
-            child: CustomPaint(
-              painter: ChronoDialPainter(
-                progressPercent: state.progressPercent,
-                targetMinutes: state.targetMinutes,
-                isRunning: state.isRunning,
-              ),
+            child: ValueListenableBuilder<double>(
+              valueListenable: _progressNotifier,
+              builder: (context, progress, child) {
+                return CustomPaint(
+                  painter: ChronoDialPainter(
+                    progressPercent: progress,
+                    targetMinutes: state.targetMinutes,
+                    isRunning: state.isRunning,
+                  ),
+                  child: child,
+                );
+              },
               child: Center(
                 child: Text(
                   '${remainingMinutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}',

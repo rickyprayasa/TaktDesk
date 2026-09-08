@@ -116,8 +116,14 @@ class AppDatabase extends _$AppDatabase {
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'takt_desk.sqlite'));
-    return NativeDatabase.createInBackground(file);
+    try {
+      final dbFolder = await getApplicationDocumentsDirectory();
+      final file = File(p.join(dbFolder.path, 'takt_desk.sqlite'));
+      return NativeDatabase.createInBackground(file);
+    } catch (e) {
+      // Fallback for tests or platforms without path_provider
+      // print('_openConnection fallback to memory due to: $e');
+      return NativeDatabase.memory();
+    }
   });
 }

@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/receipt_task.dart';
 import '../../../core/haptics/haptic_service.dart';
 import '../../../core/audio/audio_service.dart';
 import '../../../core/audio/sound_effect.dart';
+import '../../../core/database/app_database.dart';
 
 class ReceiptRunnerState {
   final List<ReceiptTask> tasks;
@@ -26,20 +28,59 @@ class ReceiptRunnerState {
 
 class ReceiptRunnerController extends StateNotifier<ReceiptRunnerState> {
   final AudioService? _audioService;
+  final AppDatabase? _database;
 
-  ReceiptRunnerController([this._audioService]) : super(const ReceiptRunnerState());
+  ReceiptRunnerController([this._audioService, this._database])
+      : super(const ReceiptRunnerState()) {
+    if (_database != null) {
+      loadFromDatabase();
+    }
+  }
+
+  Future<void> loadFromDatabase() async {
+    final db = _database;
+    if (db == null) return;
+    try {
+      final active = await db.watchActiveTasks().first;
+      if (active.isNotEmpty) {
+        state = state.copyWith(
+          tasks: active
+              .map((t) => ReceiptTask(
+                    id: t.id.toString(),
+                    title: t.title,
+                    isDone: t.isCompleted,
+                    createdAt: t.createdAt,
+                  ))
+              .toList(),
+        );
+      }
+    } catch (_) {}
+  }
 
   bool get canAddTask => state.tasks.length < 5;
 
-  void addTask(String title) {
+  Future<void> addTask(String title) async {
     if (!canAddTask || title.trim().isEmpty) return;
+    final tempId = '${DateTime.now().microsecondsSinceEpoch}_${state.tasks.length}';
     final newTask = ReceiptTask(
-      id: '${DateTime.now().microsecondsSinceEpoch}_${state.tasks.length}',
+      id: tempId,
       title: title.trim(),
     );
     state = state.copyWith(tasks: [...state.tasks, newTask]);
     HapticService.mechanicalPress();
     _audioService?.playFoley(SoundEffect.stepperPrint);
+
+    final db = _database;
+    if (db != null) {
+      try {
+        final insertedId = await db.addTask(title.trim());
+        state = state.copyWith(
+          tasks: state.tasks
+              .map((t) => t.id == tempId ? t.copyWith(id: insertedId.toString()) : t)
+              .toList(),
+        );
+      } catch (_) {}
+    }
   }
 
   void stampDone(String id) {
@@ -48,6 +89,16 @@ class ReceiptRunnerController extends StateNotifier<ReceiptRunnerState> {
     );
     HapticService.stampDone();
     _audioService?.playFoley(SoundEffect.inkStamp);
+
+    if (_database != null) {
+      final intId = int.tryParse(id);
+      if (intId != null) {
+        final task = state.tasks.where((t) => t.id == id).firstOrNull;
+        if (task != null) {
+          _database.toggleTaskCompleted(intId, task.isDone).catchError((_) {});
+        }
+      }
+    }
   }
 
   void updateTearProgress(double progress) {
@@ -61,13 +112,21 @@ class ReceiptRunnerController extends StateNotifier<ReceiptRunnerState> {
     );
     HapticService.paperTorn();
     _audioService?.playFoley(SoundEffect.paperTear);
+
+    if (_database != null) {
+      final intId = int.tryParse(id);
+      if (intId != null) {
+        _database.archiveTask(intId).catchError((_) {});
+      }
+    }
   }
 }
 
 final receiptRunnerProvider =
     StateNotifierProvider<ReceiptRunnerController, ReceiptRunnerState>((ref) {
   final audioService = ref.watch(audioServiceProvider);
-  return ReceiptRunnerController(audioService);
+  final database = ref.watch(appDatabaseProvider);
+  return ReceiptRunnerController(audioService, database);
 });
 
 final receiptRunnerControllerProvider = receiptRunnerProvider;
