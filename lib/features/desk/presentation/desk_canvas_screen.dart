@@ -9,7 +9,6 @@ import '../../../core/sensors/parallax_controller.dart';
 import '../../tasks/presentation/receipt_runner_widget.dart';
 import '../../timer/presentation/chrono_dial_widget.dart';
 import '../../vinyl/presentation/vinyl_player_widget.dart';
-import '../../vumeter/presentation/analog_vu_meter_widget.dart';
 import 'ambient_lighting_layer.dart';
 import 'isometric_desk_layout.dart';
 import 'widgets/chassis_theme_switch.dart';
@@ -32,6 +31,7 @@ class DeskCanvasScreen extends ConsumerStatefulWidget {
 class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
   StreamSubscription<GyroscopeEvent>? _gyroscopeSubscription;
   StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
+  int _selectedInstrumentIndex = 0; // 0: Dial, 1: Tasks, 2: Vinyl
 
   @override
   void initState() {
@@ -50,9 +50,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                   rawY: event.y,
                 );
           },
-          onError: (Object error) {
-            // Handle platforms/environments without gyroscope gracefully without crashing
-          },
+          onError: (Object error) {},
           cancelOnError: false,
         );
       } catch (_) {}
@@ -69,9 +67,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                   z: event.z,
                 );
           },
-          onError: (Object error) {
-            // Handle platforms/environments without accelerometer gracefully without crashing
-          },
+          onError: (Object error) {},
           cancelOnError: false,
         );
       } catch (_) {}
@@ -88,14 +84,10 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                   z: event.z,
                 );
           },
-          onError: (Object error) {
-            // Handle platforms/environments without accelerometer gracefully without crashing
-          },
+          onError: (Object error) {},
           cancelOnError: false,
         );
-      } catch (_) {
-        // Platform does not support accelerometer or sensor initialization failed
-      }
+      } catch (_) {}
     }
   }
 
@@ -104,6 +96,65 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
     _gyroscopeSubscription?.cancel();
     _accelerometerSubscription?.cancel();
     super.dispose();
+  }
+
+  Widget _buildInstrumentSelector(ChassisThemeState theme) {
+    const labels = ['DIAL', 'TASKS', 'VINYL'];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: theme.isDarkMode ? TaktColors.basaltSlate : const Color(0xFFD2D6DC),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: theme.isDarkMode ? TaktColors.slateBorder : const Color(0xFFB0B5BC),
+          width: 0.8,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(labels.length, (index) {
+          final isSelected = _selectedInstrumentIndex == index;
+          return InkWell(
+            onTap: () {
+              setState(() {
+                _selectedInstrumentIndex = index;
+              });
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? (theme.isDarkMode ? TaktColors.chassisObsidian : Colors.white)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: isSelected
+                    ? const [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          offset: Offset(0, 1),
+                          blurRadius: 2,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Text(
+                labels[index],
+                style: TaktTypography.controlLabel.copyWith(
+                  fontSize: 10.5,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected
+                      ? (theme.isDarkMode ? TaktColors.filamentAmber : const Color(0xFF141517))
+                      : (theme.isDarkMode ? Colors.white54 : Colors.black45),
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
   }
 
   @override
@@ -129,14 +180,14 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
             child: IsometricDeskLayout(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final isWide = constraints.maxWidth >= 640;
+                  final isWide = constraints.maxWidth >= 720;
 
                   return SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                     child: Center(
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
-                          maxWidth: isWide ? 620 : 320,
+                          maxWidth: isWide ? 900 : 340,
                         ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -144,7 +195,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                           children: [
                             // Desk Spatial Header Bar with Theme Switch
                             Padding(
-                              padding: const EdgeInsets.only(bottom: 16.0),
+                              padding: const EdgeInsets.only(bottom: 12.0),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
@@ -161,46 +212,30 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                                 ],
                               ),
                             ),
-                            // Instruments Layout: 2x2 on Desktop Wide, Column on Mobile
+                            // Instruments Console
                             if (isWide) ...[
-                              // Row 1: Chrono Dial (Timer) + Analog Dual VU Meter
-                              const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Expanded(child: Center(child: ChronoDialWidget())),
-                                  ModularRackBracket(isVertical: false),
-                                  Expanded(child: Center(child: AnalogVuMeterWidget())),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              const Center(child: ModularRackBracket(isVertical: true)),
-                              const SizedBox(height: 8),
-                              // Row 2: Thermal Task Runner + Analog Vinyl Deck
+                              // Wide Viewport: 3 Instruments Side-by-Side in Horizontal Audio Rack
                               const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  Expanded(child: Center(child: ChronoDialWidget())),
+                                  ModularRackBracket(isVertical: false),
                                   Expanded(child: Center(child: ReceiptRunnerWidget())),
                                   ModularRackBracket(isVertical: false),
                                   Expanded(child: Center(child: VinylPlayerWidget())),
                                 ],
                               ),
                             ] else ...[
-                              // Single-Column Mobile Layout with Modular Brackets
-                              const Center(child: ChronoDialWidget()),
-                              const SizedBox(height: 4),
-                              const Center(child: ModularRackBracket(isVertical: true)),
-                              const SizedBox(height: 4),
-                              const Center(child: AnalogVuMeterWidget()),
-                              const SizedBox(height: 4),
-                              const Center(child: ModularRackBracket(isVertical: true)),
-                              const SizedBox(height: 4),
-                              const Center(child: ReceiptRunnerWidget()),
-                              const SizedBox(height: 4),
-                              const Center(child: ModularRackBracket(isVertical: true)),
-                              const SizedBox(height: 4),
-                              const Center(child: VinylPlayerWidget()),
+                              // Compact Viewport: Segmented Instrument Switcher + Active Instrument
+                              Center(child: _buildInstrumentSelector(theme)),
+                              const SizedBox(height: 6),
+                              if (_selectedInstrumentIndex == 0)
+                                const Center(child: ChronoDialWidget())
+                              else if (_selectedInstrumentIndex == 1)
+                                const Center(child: ReceiptRunnerWidget())
+                              else
+                                const Center(child: VinylPlayerWidget()),
                             ],
                           ],
                         ),

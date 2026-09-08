@@ -34,7 +34,6 @@ class _AnimatedReceiptStripState extends State<AnimatedReceiptStrip>
   late final Animation<Offset> _slideAnimation;
   late final Animation<double> _fadeAnimation;
   double _localTearProgress = 0.0;
-  int _dragDirection = 1; // 1 for right, -1 for left
 
   @override
   void initState() {
@@ -103,7 +102,6 @@ class _AnimatedReceiptStripState extends State<AnimatedReceiptStrip>
             onUpdate: (details) {
               setState(() {
                 _localTearProgress = details.progress;
-                _dragDirection = details.direction == DismissDirection.startToEnd ? 1 : -1;
               });
               widget.onTearUpdate(details.progress);
             },

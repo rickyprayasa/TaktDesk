@@ -4,6 +4,7 @@ import '../domain/receipt_task.dart';
 import '../../../core/haptics/haptic_service.dart';
 import '../../../core/audio/audio_service.dart';
 import '../../../core/audio/sound_effect.dart';
+import 'package:drift/drift.dart';
 import '../../../core/database/app_database.dart';
 
 class ReceiptRunnerState {
@@ -50,7 +51,13 @@ class ReceiptRunnerController extends StateNotifier<ReceiptRunnerState> {
     final db = _database;
     if (db == null) return;
     try {
-      final archived = await db.watchArchivedTasks().first;
+      final archived = await (db.select(db.tasks)
+            ..where((t) => t.isArchived.equals(true))
+            ..orderBy([
+              (t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc),
+              (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
+            ]))
+          .get();
       state = state.copyWith(
         archivedTasks: archived
             .map((t) => ReceiptTask(
@@ -68,7 +75,13 @@ class ReceiptRunnerController extends StateNotifier<ReceiptRunnerState> {
     final db = _database;
     if (db == null) return;
     try {
-      final active = await db.watchActiveTasks().first;
+      final active = await (db.select(db.tasks)
+            ..where((t) => t.isArchived.equals(false))
+            ..orderBy([
+              (t) => OrderingTerm(expression: t.sortOrder),
+              (t) => OrderingTerm(expression: t.id),
+            ]))
+          .get();
       if (active.isNotEmpty) {
         state = state.copyWith(
           tasks: active
