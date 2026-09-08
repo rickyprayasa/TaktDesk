@@ -103,24 +103,37 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: TaktColors.chassisObsidian,
-      body: AmbientLightingLayer(
-        child: SafeArea(
-          child: IsometricDeskLayout(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    ChronoDialWidget(),
-                    SizedBox(height: 24),
-                    ReceiptRunnerWidget(),
-                    SizedBox(height: 24),
-                    VinylPlayerWidget(),
-                  ],
+      body: MouseRegion(
+        onHover: (event) {
+          final size = MediaQuery.of(context).size;
+          if (size.width > 0 && size.height > 0) {
+            final normX = ((event.position.dx / size.width) - 0.5) * 2;
+            final normY = ((event.position.dy / size.height) - 0.5) * 2;
+            ref.read(parallaxProvider.notifier).updateSensorInput(
+                  rawX: normX * 3.0,
+                  rawY: -normY * 3.0,
+                );
+          }
+        },
+        child: const AmbientLightingLayer(
+          child: SafeArea(
+            child: IsometricDeskLayout(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      ChronoDialWidget(),
+                      SizedBox(height: 24),
+                      ReceiptRunnerWidget(),
+                      SizedBox(height: 24),
+                      VinylPlayerWidget(),
+                    ],
+                  ),
                 ),
               ),
             ),
