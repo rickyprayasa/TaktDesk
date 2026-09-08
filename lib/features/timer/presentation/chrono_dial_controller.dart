@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../domain/pomodoro_phase.dart';
 import '../domain/timer_state.dart';
 import '../../../core/haptics/haptic_service.dart';
 import '../../../core/audio/audio_service.dart';
@@ -93,6 +94,47 @@ class ChronoDialController extends StateNotifier<TimerState> {
         lastTickMinute: currentMinute,
       );
     }
+  }
+
+  void setPhase(PomodoroPhase nextPhase) {
+    if (state.isRunning) return;
+    final mins = nextPhase.defaultMinutes;
+    _sessionStartedAt = null;
+    state = state.copyWith(
+      phase: nextPhase,
+      targetMinutes: mins,
+      remainingSeconds: mins * 60.0,
+      lastTickMinute: mins,
+    );
+    HapticService.dialTick();
+    _audioService?.playFoley(SoundEffect.dialClick);
+  }
+
+  void advancePhase() {
+    if (state.isRunning) return;
+    PomodoroPhase nextPhase;
+    int nextCycle = state.cycleCount;
+
+    switch (state.phase) {
+      case PomodoroPhase.focus:
+        if (state.cycleCount < 4) {
+          nextPhase = PomodoroPhase.shortBreak;
+        } else {
+          nextPhase = PomodoroPhase.longBreak;
+        }
+        break;
+      case PomodoroPhase.shortBreak:
+        nextPhase = PomodoroPhase.focus;
+        nextCycle = (state.cycleCount + 1).clamp(1, 4);
+        break;
+      case PomodoroPhase.longBreak:
+        nextPhase = PomodoroPhase.focus;
+        nextCycle = 1;
+        break;
+    }
+
+    setPhase(nextPhase);
+    state = state.copyWith(cycleCount: nextCycle);
   }
 }
 

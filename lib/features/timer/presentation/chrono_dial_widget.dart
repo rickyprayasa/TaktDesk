@@ -6,6 +6,7 @@ import 'chrono_dial_controller.dart';
 import 'chrono_dial_painter.dart';
 import 'widgets/crown_push_button.dart';
 import 'widgets/mechanical_flip_digit.dart';
+import 'widgets/split_flap_board_widget.dart';
 import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/takt_typography.dart';
 
@@ -147,7 +148,9 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
           isPressed: state.isRunning,
           onTap: _handleToggle,
         ),
-        // 2. Main Dial Canvas with 3D Depth & Odometer Sub-Window
+        // 2. 3D Split-Flap Pomodoro Phase & Cycle Display
+        const SplitFlapBoardWidget(),
+        // 3. Main Dial Canvas with 3D Depth & Odometer Sub-Window
         GestureDetector(
           onTap: _handleToggle,
           onPanStart: (details) => _handleRotaryPan(details.localPosition, dialDimensions),
