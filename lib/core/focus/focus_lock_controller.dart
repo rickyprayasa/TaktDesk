@@ -21,6 +21,7 @@ class FocusLockController extends StateNotifier<FocusLockState> {
   final FocusLockService _service;
   final AudioService? _audioService;
   final AppDatabase? _database;
+  bool _isProcessing = false;
 
   FocusLockController({
     required FocusLockService service,
@@ -32,16 +33,21 @@ class FocusLockController extends StateNotifier<FocusLockState> {
         super(const FocusLockState());
 
   Future<void> engageLock() async {
-    if (state.isLocked) return;
-    _audioService?.play(SoundEffect.switchClick);
-    HapticService.heavyClick();
-    await _service.enableFocusLock();
-    state = state.copyWith(
-      isLocked: true,
-      unlockProgress: 0.0,
-      isHolding: false,
-      sessionStartTime: DateTime.now(),
-    );
+    if (state.isLocked || _isProcessing) return;
+    _isProcessing = true;
+    try {
+      _audioService?.play(SoundEffect.switchClick);
+      HapticService.heavyClick();
+      await _service.enableFocusLock();
+      state = state.copyWith(
+        isLocked: true,
+        unlockProgress: 0.0,
+        isHolding: false,
+        sessionStartTime: DateTime.now(),
+      );
+    } finally {
+      _isProcessing = false;
+    }
   }
 
   void updateHoldProgress(double progress) {
@@ -54,6 +60,7 @@ class FocusLockController extends StateNotifier<FocusLockState> {
 
   void cancelHold() {
     if (!state.isLocked) return;
+    if (!state.isHolding && state.unlockProgress == 0.0) return;
     state = state.copyWith(
       isHolding: false,
       unlockProgress: 0.0,
@@ -61,28 +68,36 @@ class FocusLockController extends StateNotifier<FocusLockState> {
   }
 
   Future<void> completeUnlock() async {
-    if (!state.isLocked) return;
-    _audioService?.play(SoundEffect.drawerLatch);
-    HapticService.heavyClick();
-    await _service.disableFocusLock();
+    if (!state.isLocked || _isProcessing) return;
+    _isProcessing = true;
+    try {
+      _audioService?.play(SoundEffect.drawerLatch);
+      HapticService.heavyClick();
+      await _service.disableFocusLock();
 
-    final start = state.sessionStartTime;
-    if (start != null && _database != null) {
-      final elapsedSeconds = DateTime.now().difference(start).inSeconds;
-      if (elapsedSeconds > 0) {
-        await _database.recordTimerSession(
-          startedAt: start,
-          durationSeconds: elapsedSeconds,
-          completed: true,
-        );
+      final start = state.sessionStartTime;
+      if (start != null && _database != null) {
+        final elapsedSeconds = DateTime.now().difference(start).inSeconds;
+        if (elapsedSeconds > 0) {
+          try {
+            await _database.recordTimerSession(
+              startedAt: start,
+              durationSeconds: elapsedSeconds,
+              completed: true,
+            );
+          } catch (_) {
+            // Non-fatal database persistence error
+          }
+        }
       }
+    } finally {
+      state = state.copyWith(
+        isLocked: false,
+        isHolding: false,
+        unlockProgress: 0.0,
+        clearStartTime: true,
+      );
+      _isProcessing = false;
     }
-
-    state = state.copyWith(
-      isLocked: false,
-      isHolding: false,
-      unlockProgress: 0.0,
-      clearStartTime: true,
-    );
   }
 }
