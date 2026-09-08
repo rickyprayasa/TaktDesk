@@ -16,14 +16,29 @@ class VinylPlayerWidget extends ConsumerStatefulWidget {
 }
 
 class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final Ticker _ticker;
+  late final AnimationController _armController;
+  late final Animation<double> _armAnimation;
   final ValueNotifier<double> _rotationNotifier = ValueNotifier<double>(0.0);
   Duration _lastElapsed = Duration.zero;
 
   @override
   void initState() {
     super.initState();
+    _armController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 550),
+    );
+    _armAnimation = CurvedAnimation(
+      parent: _armController,
+      curve: Curves.easeInOutCubic,
+    );
+
+    if (ref.read(vinylProvider).needleOnRecord) {
+      _armController.value = 1.0;
+    }
+
     _ticker = createTicker((elapsed) {
       if (!mounted) return;
       if (_lastElapsed != Duration.zero) {
@@ -44,6 +59,7 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
   @override
   void dispose() {
     _ticker.dispose();
+    _armController.dispose();
     _rotationNotifier.dispose();
     super.dispose();
   }
@@ -55,10 +71,12 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
       (previous, needleOnRecord) {
         if (needleOnRecord) {
           _lastElapsed = Duration.zero;
+          _armController.forward();
           if (!_ticker.isActive) {
             _ticker.start();
           }
         } else {
+          _armController.reverse();
           if (_ticker.isActive) {
             _ticker.stop();
           }
@@ -74,12 +92,71 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: TaktColors.basaltSlate,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: TaktColors.slateBorder),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: TaktColors.slateBorder, width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x66000000),
+            offset: Offset(0, 6),
+            blurRadius: 14,
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Turntable Deck Top Banner
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Expanded(
+                child: Text(
+                  'BRAUN TP-1',
+                  style: TaktTypography.controlLabel,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 4,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: state.needleOnRecord
+                          ? TaktColors.filamentAmber
+                          : const Color(0xFF2C3036),
+                      boxShadow: state.needleOnRecord
+                          ? [
+                              BoxShadow(
+                                color: TaktColors.filamentAmber.withValues(alpha: 0.8),
+                                blurRadius: 2.5,
+                                spreadRadius: 0.5,
+                              ),
+                            ]
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '33 RPM',
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w600,
+                      color: state.needleOnRecord
+                          ? TaktColors.filamentAmber
+                          : TaktColors.warmBone.withValues(alpha: 0.4),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          // Interactive Turntable Platter and Tonearm
           Semantics(
             button: true,
             label: state.needleOnRecord ? 'Lift tonearm' : 'Drop needle',
@@ -88,15 +165,21 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
               child: SizedBox(
                 width: 240,
                 height: 140,
-                child: ValueListenableBuilder<double>(
-                  valueListenable: _rotationNotifier,
-                  builder: (context, angle, _) {
-                    return CustomPaint(
-                      painter: VinylDeckPainter(
-                        rotationAngle: angle,
-                        needleOnRecord: state.needleOnRecord,
-                        labelColor: state.currentTrack.labelColor,
-                      ),
+                child: AnimatedBuilder(
+                  animation: _armAnimation,
+                  builder: (context, _) {
+                    return ValueListenableBuilder<double>(
+                      valueListenable: _rotationNotifier,
+                      builder: (context, angle, _) {
+                        return CustomPaint(
+                          painter: VinylDeckPainter(
+                            rotationAngle: angle,
+                            needleOnRecord: state.needleOnRecord,
+                            armProgress: _armAnimation.value,
+                            labelColor: state.currentTrack.labelColor,
+                          ),
+                        );
+                      },
                     );
                   },
                 ),
@@ -104,13 +187,19 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
             ),
           ),
           const SizedBox(height: 8),
+          // Track Name and Preset Dropdown
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
                 child: Text(
                   state.currentTrack.name.toUpperCase(),
-                  style: TaktTypography.controlLabel.copyWith(fontSize: 10),
+                  style: TaktTypography.controlLabel.copyWith(
+                    fontSize: 10,
+                    color: state.needleOnRecord
+                        ? TaktColors.filamentAmber
+                        : TaktColors.warmBone,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
