@@ -25,4 +25,5 @@ class HapticService {
   static Future<void> impactLight() async => HapticFeedback.lightImpact();
   static Future<void> impactHeavy() async => HapticFeedback.heavyImpact();
   static Future<void> heavyClick() async => HapticFeedback.heavyImpact();
+  static Future<void> lightClick() async => HapticFeedback.lightImpact();
 }

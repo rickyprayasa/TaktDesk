@@ -53,6 +53,8 @@ void main() {
     expect(() async => await HapticService.selectionClick(), returnsNormally);
     expect(() async => await HapticService.impactLight(), returnsNormally);
     expect(() async => await HapticService.impactHeavy(), returnsNormally);
+    expect(() async => await HapticService.heavyClick(), returnsNormally);
+    expect(() async => await HapticService.lightClick(), returnsNormally);
   });
 
   test('audioServiceProvider provides AudioService instance', () {
