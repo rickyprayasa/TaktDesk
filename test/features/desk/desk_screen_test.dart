@@ -10,10 +10,12 @@ import 'package:takt_desk/features/desk/presentation/isometric_desk_layout.dart'
 import 'package:takt_desk/features/timer/presentation/chrono_dial_widget.dart';
 import 'package:takt_desk/features/tasks/presentation/receipt_runner_widget.dart';
 import 'package:takt_desk/features/vinyl/presentation/vinyl_player_widget.dart';
+import 'package:takt_desk/features/vumeter/presentation/analog_vu_meter_widget.dart';
+import 'package:takt_desk/features/desk/presentation/widgets/chassis_theme_switch.dart';
 
 void main() {
   group('DeskCanvasScreen & IsometricDeskLayout', () {
-    testWidgets('DeskCanvasScreen renders all 3 analog instruments', (tester) async {
+    testWidgets('DeskCanvasScreen renders all 4 modular instruments and theme switch', (tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(
@@ -24,6 +26,28 @@ void main() {
 
       expect(find.byType(AmbientLightingLayer), findsOneWidget);
       expect(find.byType(IsometricDeskLayout), findsOneWidget);
+      expect(find.byType(ChronoDialWidget), findsOneWidget);
+      expect(find.byType(AnalogVuMeterWidget), findsOneWidget);
+      expect(find.byType(ReceiptRunnerWidget), findsOneWidget);
+      expect(find.byType(VinylPlayerWidget), findsOneWidget);
+      expect(find.byType(ChassisThemeSwitch), findsOneWidget);
+    });
+
+    testWidgets('DeskCanvasScreen adapts to 2x2 workbench layout on wide screens', (tester) async {
+      tester.view.physicalSize = const Size(1024, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: DeskCanvasScreen(),
+          ),
+        ),
+      );
+
+      expect(find.text('TAKT DESK // SPATIAL WORKBENCH'), findsOneWidget);
+      expect(find.byType(AnalogVuMeterWidget), findsOneWidget);
       expect(find.byType(ChronoDialWidget), findsOneWidget);
       expect(find.byType(ReceiptRunnerWidget), findsOneWidget);
       expect(find.byType(VinylPlayerWidget), findsOneWidget);
