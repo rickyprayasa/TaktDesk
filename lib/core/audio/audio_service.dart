@@ -1,7 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'sound_effect.dart';
 
-final audioServiceProvider = Provider<AudioService>((ref) => AudioService());
+final audioServiceProvider = Provider<AudioService>((ref) {
+  final service = AudioService();
+  ref.onDispose(service.dispose);
+  return service;
+});
 
 class AudioService {
   final bool isMock;
@@ -31,6 +35,7 @@ class AudioService {
   }
 
   void startAmbient(int trackIndex) {
+    if (!_initialized) return;
     _activeTrackIndex = trackIndex;
     _isAmbientPlaying = true;
   }

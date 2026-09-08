@@ -24,6 +24,7 @@ void main() {
 
   test('AudioService manages volume and ambient track state', () async {
     final audio = AudioService(isMock: true);
+    await audio.init();
     audio.setVolume(0.5);
     expect(audio.volume, 0.5);
     audio.setVolume(1.5);
