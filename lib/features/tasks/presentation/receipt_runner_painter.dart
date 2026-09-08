@@ -16,19 +16,18 @@ class ReceiptRunnerPainter extends CustomPainter {
     // Dynamic tear angle / shear displacement along the serrated edge
     final maxShear = 14.0 * tearProgress.clamp(0.0, 1.0);
 
-    final path = Path()..moveTo(0, 0);
-    path.lineTo(size.width, 0);
-    path.lineTo(size.width, size.height - 10 + maxShear);
-
-    // Serration teeth with exact proportional width and dynamic shear displacement
-    const toothHeight = 6.0;
+    // Serration teeth with exact proportional width
+    const toothHeight = 5.0;
     final teethCount = (size.width / 8.0).floor().clamp(1, 100);
     final effectiveToothWidth = size.width / teethCount;
 
+    final path = Path()..moveTo(0, 0);
+    path.lineTo(size.width, 0);
+    path.lineTo(size.width, size.height - toothHeight);
+
     for (int i = teethCount; i >= 0; i--) {
       final x = i * effectiveToothWidth;
-      final shearY = (x / size.width) * maxShear;
-      final y = ((i % 2 == 0) ? size.height : size.height - toothHeight) + shearY;
+      final y = (i % 2 == 0) ? size.height : size.height - toothHeight;
       path.lineTo(x, y);
     }
     path.close();

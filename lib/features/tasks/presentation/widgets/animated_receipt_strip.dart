@@ -76,80 +76,98 @@ class _AnimatedReceiptStripState extends State<AnimatedReceiptStrip>
       position: _slideAnimation,
       child: FadeTransition(
         opacity: _fadeAnimation,
-        child: Dismissible(
-          key: Key(widget.task.id),
-          direction: DismissDirection.horizontal,
-          dismissThresholds: const {
-            DismissDirection.startToEnd: 0.75,
-            DismissDirection.endToStart: 0.75,
+        child: Listener(
+          onPointerUp: (_) {
+            if (_localTearProgress > 0) {
+              setState(() {
+                _localTearProgress = 0.0;
+              });
+              widget.onTearUpdate(0.0);
+            }
           },
-          onUpdate: (details) {
-            setState(() {
-              _localTearProgress = details.progress;
-              _dragDirection = details.direction == DismissDirection.startToEnd ? 1 : -1;
-            });
-            widget.onTearUpdate(details.progress);
+          onPointerCancel: (_) {
+            if (_localTearProgress > 0) {
+              setState(() {
+                _localTearProgress = 0.0;
+              });
+              widget.onTearUpdate(0.0);
+            }
           },
-          onDismissed: (_) {
-            widget.onTorn();
-          },
-          child: GestureDetector(
-            onDoubleTap: widget.onStampToggle,
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 4),
-              child: Transform(
-                // 3D paper peel/curl effect as the user shears the paper along the blade
-                transform: Matrix4.identity()
-                  ..setEntry(3, 2, 0.0018) // perspective
-                  ..rotateZ(_localTearProgress * 0.12 * _dragDirection)
-                  ..rotateY(_localTearProgress * 0.22 * _dragDirection),
-                alignment: _dragDirection > 0 ? Alignment.centerLeft : Alignment.centerRight,
-                child: Container(
-                  decoration: const BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color(0x38000000),
-                        offset: Offset(0, 3),
-                        blurRadius: 4,
-                      ),
-                    ],
-                  ),
-                  child: CustomPaint(
-                    painter: ReceiptRunnerPainter(
-                      tearProgress: _localTearProgress > 0
-                          ? _localTearProgress
-                          : widget.currentTearProgress,
+          child: Dismissible(
+            key: Key(widget.task.id),
+            direction: DismissDirection.horizontal,
+            dismissThresholds: const {
+              DismissDirection.startToEnd: 0.60,
+              DismissDirection.endToStart: 0.60,
+            },
+            onUpdate: (details) {
+              setState(() {
+                _localTearProgress = details.progress;
+                _dragDirection = details.direction == DismissDirection.startToEnd ? 1 : -1;
+              });
+              widget.onTearUpdate(details.progress);
+            },
+            onDismissed: (_) {
+              widget.onTorn();
+            },
+            child: GestureDetector(
+              onDoubleTap: widget.onStampToggle,
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                decoration: const BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0x38000000),
+                      offset: Offset(0, 3),
+                      blurRadius: 4,
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 18),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Receipt Micro Header
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '#${(widget.index + 1).toString().padLeft(2, '0')} // TAKT DESK',
-                                style: TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 8.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: TaktColors.thermalCarbon.withValues(alpha: 0.55),
-                                  letterSpacing: 0.5,
+                  ],
+                ),
+                child: CustomPaint(
+                  painter: ReceiptRunnerPainter(
+                    tearProgress: _localTearProgress > 0
+                        ? _localTearProgress
+                        : widget.currentTearProgress,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Receipt Micro Header with Quick Tear Action
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '#${(widget.index + 1).toString().padLeft(2, '0')} // TAKT DESK',
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w600,
+                                color: TaktColors.thermalCarbon.withValues(alpha: 0.55),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            InkWell(
+                              onTap: widget.onTorn,
+                              borderRadius: BorderRadius.circular(4),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
+                                child: Text(
+                                  'TEAR ✕',
+                                  style: TextStyle(
+                                    fontFamily: 'monospace',
+                                    fontSize: 8.0,
+                                    fontWeight: FontWeight.w700,
+                                    color: TaktColors.thermalCarbon.withValues(alpha: 0.45),
+                                    letterSpacing: 0.8,
+                                  ),
                                 ),
                               ),
-                              Text(
-                                '• • •',
-                                style: TextStyle(
-                                  fontSize: 8.0,
-                                  color: TaktColors.thermalCarbon.withValues(alpha: 0.3),
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
+                        ),
                           const SizedBox(height: 4),
                           // Task Content & Rubber Stamp Mark
                           Row(
@@ -181,7 +199,6 @@ class _AnimatedReceiptStripState extends State<AnimatedReceiptStrip>
             ),
           ),
         ),
-      ),
-    );
-  }
+      );
+    }
 }
