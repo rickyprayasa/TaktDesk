@@ -1,34 +1,74 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'takt_colors.dart';
+import 'hardware_edition.dart';
 
 class ChassisThemeState {
   final bool isDarkMode;
+  final HardwareEdition edition;
+  final bool isProUnlocked;
 
-  const ChassisThemeState({this.isDarkMode = true});
+  const ChassisThemeState({
+    this.isDarkMode = true,
+    this.edition = HardwareEdition.braunClassic,
+    this.isProUnlocked = true,
+  });
 
   Color get canvasColor =>
-      isDarkMode ? TaktColors.chassisObsidian : TaktColors.lightChassisCanvas;
+      isDarkMode ? edition.darkCanvas : edition.lightCanvas;
 
   Color get moduleChassisColor =>
-      isDarkMode ? TaktColors.basaltSlate : TaktColors.lightChassisBasalt;
+      isDarkMode ? edition.darkModuleBg : edition.lightModuleBg;
 
   Color get borderColor =>
-      isDarkMode ? TaktColors.slateBorder : TaktColors.lightChassisBorder;
+      isDarkMode ? edition.darkBorder : edition.lightBorder;
 
   Color get textColor =>
-      isDarkMode ? TaktColors.warmBone : const Color(0xFF141618);
+      isDarkMode ? edition.lightCanvas : edition.darkCanvas;
+
+  Color get needleColor => edition.needleColor;
+
+  Color get filamentColor => edition.filamentColor;
+
+  ChassisThemeState copyWith({
+    bool? isDarkMode,
+    HardwareEdition? edition,
+    bool? isProUnlocked,
+  }) {
+    return ChassisThemeState(
+      isDarkMode: isDarkMode ?? this.isDarkMode,
+      edition: edition ?? this.edition,
+      isProUnlocked: isProUnlocked ?? this.isProUnlocked,
+    );
+  }
 }
 
 class ThemeController extends StateNotifier<ChassisThemeState> {
-  ThemeController() : super(const ChassisThemeState());
+  ThemeController({ChassisThemeState? initial})
+      : super(initial ?? const ChassisThemeState());
 
   void toggleTheme() {
-    state = ChassisThemeState(isDarkMode: !state.isDarkMode);
+    state = state.copyWith(isDarkMode: !state.isDarkMode);
   }
 
   void setDarkMode(bool value) {
-    state = ChassisThemeState(isDarkMode: value);
+    state = state.copyWith(isDarkMode: value);
+  }
+
+  bool setHardwareEdition(HardwareEditionType type) {
+    final nextEdition = HardwareEdition.fromType(type);
+    if (nextEdition.isPremium && !state.isProUnlocked) {
+      return false; // Locked
+    }
+    state = state.copyWith(edition: nextEdition);
+    return true;
+  }
+
+  void setProUnlocked(bool unlocked) {
+    state = state.copyWith(isProUnlocked: unlocked);
+    // If locked and current edition is premium, revert to braunClassic
+    if (!unlocked && state.edition.isPremium) {
+      state = state.copyWith(edition: HardwareEdition.braunClassic);
+    }
   }
 }
 
