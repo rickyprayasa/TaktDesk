@@ -61,12 +61,17 @@ void main() {
     expect(container.read(deskPreferencesControllerProvider).soundVolume, equals(0.42));
     expect(audioService.volume, equals(0.42));
 
+    await controller.setVolume(1.5);
+    expect(container.read(deskPreferencesControllerProvider).soundVolume, equals(1.0));
+    await controller.setVolume(-0.2);
+    expect(container.read(deskPreferencesControllerProvider).soundVolume, equals(0.0));
+
     await controller.setParallaxEnabled(false);
     expect(container.read(deskPreferencesControllerProvider).parallaxEnabled, isFalse);
 
     final persisted = await db.watchPreferences().first;
     expect(persisted, isNotNull);
-    expect(persisted!.soundVolume, equals(0.42));
+    expect(persisted!.soundVolume, equals(0.0));
     expect(persisted.parallaxEnabled, isFalse);
   });
 
@@ -200,6 +205,7 @@ void main() {
   });
 
   test('AudioService and HapticService respect enabled flags', () async {
+    await audioService.init();
     audioService.setFoleyEnabled(false);
     expect(audioService.foleyEnabled, isFalse);
     // Should not throw or crash when disabled

@@ -105,6 +105,7 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
     final db = _database;
     if (db == null) return;
     final pref = await (db.select(db.deskPreferences)..limit(1)).getSingleOrNull();
+    if (!mounted) return;
     if (pref != null) {
       state = state.copyWith(
         soundVolume: pref.soundVolume,
@@ -123,9 +124,10 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
   }
 
   Future<void> setVolume(double val) async {
-    state = state.copyWith(soundVolume: val);
-    _audioService?.setVolume(val);
-    await _database?.updatePreferences(soundVolume: val);
+    final clamped = val.clamp(0.0, 1.0);
+    state = state.copyWith(soundVolume: clamped);
+    _audioService?.setVolume(clamped);
+    await _database?.updatePreferences(soundVolume: clamped);
   }
 
   Future<void> setFoleyEnabled(bool val) async {
