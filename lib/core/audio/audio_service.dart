@@ -17,6 +17,7 @@ class AudioService {
   double _volume = 0.8;
   int _activeTrackIndex = 0;
   bool _isAmbientPlaying = false;
+  bool _foleyEnabled = true;
 
   AudioService({this.isMock = false});
 
@@ -24,6 +25,7 @@ class AudioService {
   double get volume => _volume;
   bool get isAmbientPlaying => _isAmbientPlaying;
   int get activeTrackIndex => _activeTrackIndex;
+  bool get foleyEnabled => _foleyEnabled;
 
   Future<void> init() async {
     _initialized = true;
@@ -36,8 +38,12 @@ class AudioService {
     }
   }
 
+  void setFoleyEnabled(bool val) {
+    _foleyEnabled = val;
+  }
+
   void playFoley(SoundEffect effect) {
-    if (!_initialized) return;
+    if (!_initialized || !_foleyEnabled) return;
     if (!isMock) {
       _channel.invokeMethod('playFoley', {'effect': effect.name}).catchError((_) {});
     }
