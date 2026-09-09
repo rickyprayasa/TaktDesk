@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:takt_desk/app/theme/takt_colors.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
 import 'package:takt_desk/core/audio/audio_service.dart';
 import 'package:takt_desk/core/audio/sound_effect.dart';
@@ -28,8 +29,8 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          todayFocusStatsProvider.overrideWithValue(
-            const AsyncValue.data(TodayFocusStats(
+          todayFocusStatsProvider.overrideWith(
+            (ref) => Stream.value(const TodayFocusStats(
               completedCount: 2,
               totalMinutes: 50,
             )),
@@ -42,6 +43,7 @@ void main() {
         ),
       ),
     );
+    await tester.pump();
 
     expect(find.textContaining('TAKT DESK'), findsOneWidget);
     expect(find.textContaining('MOD. 01'), findsOneWidget);
@@ -51,14 +53,26 @@ void main() {
     expect(find.textContaining('2 / 4 CYCLES'), findsOneWidget);
     expect(find.textContaining('50 MIN FOCUSED'), findsOneWidget);
     expect(find.byKey(const ValueKey('spec_plate_led_row')), findsOneWidget);
+
+    // Verify LED states: completedCount = 2 -> 2 active (filamentAmber), 2 inactive (basaltSlate)
+    for (int i = 0; i < 2; i++) {
+      final container = tester.widget<Container>(find.byKey(ValueKey('spec_plate_led_$i')));
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.color, equals(TaktColors.filamentAmber));
+    }
+    for (int i = 2; i < 4; i++) {
+      final container = tester.widget<Container>(find.byKey(ValueKey('spec_plate_led_$i')));
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.color, equals(TaktColors.basaltSlate));
+    }
   });
 
   testWidgets('DeskSpecPlateWidget handles loading / null state gracefully defaulting to 0', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          todayFocusStatsProvider.overrideWithValue(
-            const AsyncValue.loading(),
+          todayFocusStatsProvider.overrideWith(
+            (ref) => const Stream.empty(),
           ),
         ],
         child: const MaterialApp(
@@ -68,17 +82,25 @@ void main() {
         ),
       ),
     );
+    await tester.pump();
 
     expect(find.textContaining('0 / 4 CYCLES'), findsOneWidget);
     expect(find.textContaining('0 MIN FOCUSED'), findsOneWidget);
+
+    // All 4 LEDs should be inactive
+    for (int i = 0; i < 4; i++) {
+      final container = tester.widget<Container>(find.byKey(ValueKey('spec_plate_led_$i')));
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.color, equals(TaktColors.basaltSlate));
+    }
   });
 
   testWidgets('DeskSpecPlateWidget lights all 4 LEDs when completedCount is 4', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          todayFocusStatsProvider.overrideWithValue(
-            const AsyncValue.data(TodayFocusStats(
+          todayFocusStatsProvider.overrideWith(
+            (ref) => Stream.value(const TodayFocusStats(
               completedCount: 4,
               totalMinutes: 100,
             )),
@@ -91,12 +113,16 @@ void main() {
         ),
       ),
     );
+    await tester.pump();
 
     expect(find.textContaining('4 / 4 CYCLES'), findsOneWidget);
     expect(find.textContaining('100 MIN FOCUSED'), findsOneWidget);
 
     for (int i = 0; i < 4; i++) {
       expect(find.byKey(ValueKey('spec_plate_led_$i')), findsOneWidget);
+      final container = tester.widget<Container>(find.byKey(ValueKey('spec_plate_led_$i')));
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.color, equals(TaktColors.filamentAmber));
     }
   });
 
@@ -107,8 +133,8 @@ void main() {
       ProviderScope(
         overrides: [
           audioServiceProvider.overrideWithValue(mockAudio),
-          todayFocusStatsProvider.overrideWithValue(
-            const AsyncValue.data(TodayFocusStats(
+          todayFocusStatsProvider.overrideWith(
+            (ref) => Stream.value(const TodayFocusStats(
               completedCount: 1,
               totalMinutes: 25,
             )),
@@ -121,6 +147,14 @@ void main() {
         ),
       ),
     );
+    await tester.pump();
+
+    final led0 = tester.widget<Container>(find.byKey(const ValueKey('spec_plate_led_0')));
+    expect((led0.decoration as BoxDecoration).color, equals(TaktColors.filamentAmber));
+    for (int i = 1; i < 4; i++) {
+      final led = tester.widget<Container>(find.byKey(ValueKey('spec_plate_led_$i')));
+      expect((led.decoration as BoxDecoration).color, equals(TaktColors.basaltSlate));
+    }
 
     await tester.tap(find.byType(DeskSpecPlateWidget));
     await tester.pumpAndSettle();
@@ -133,8 +167,8 @@ void main() {
       ProviderScope(
         overrides: [
           chassisThemeProvider.overrideWith((ref) => ThemeController()..setDarkMode(false)),
-          todayFocusStatsProvider.overrideWithValue(
-            const AsyncValue.data(TodayFocusStats(
+          todayFocusStatsProvider.overrideWith(
+            (ref) => Stream.value(const TodayFocusStats(
               completedCount: 3,
               totalMinutes: 75,
             )),
@@ -147,8 +181,17 @@ void main() {
         ),
       ),
     );
+    await tester.pump();
 
     expect(find.textContaining('TAKT DESK'), findsOneWidget);
     expect(find.textContaining('3 / 4 CYCLES'), findsOneWidget);
+
+    for (int i = 0; i < 3; i++) {
+      final container = tester.widget<Container>(find.byKey(ValueKey('spec_plate_led_$i')));
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.color, equals(TaktColors.filamentAmber));
+    }
+    final inactiveLed = tester.widget<Container>(find.byKey(const ValueKey('spec_plate_led_3')));
+    expect((inactiveLed.decoration as BoxDecoration).color, equals(TaktColors.basaltSlate));
   });
 }

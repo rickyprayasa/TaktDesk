@@ -27,7 +27,7 @@ class DeskSpecPlateWidget extends ConsumerWidget {
         ? 4
         : (completedCount % 4);
 
-    final primaryTextColor = isDark ? TaktColors.warmBone : const Color(0xFF141618);
+    final primaryTextColor = isDark ? TaktColors.warmBone : TaktColors.chassisObsidian;
     final secondaryTextColor = isDark
         ? TaktColors.warmBone.withValues(alpha: 0.6)
         : const Color(0xFF5A5D64);
@@ -68,10 +68,10 @@ class DeskSpecPlateWidget extends ConsumerWidget {
               child: Stack(
                 children: [
                   // Corner mechanical rivets
-                  const Positioned(top: 4, left: 4, child: _RivetDot()),
-                  const Positioned(top: 4, right: 4, child: _RivetDot()),
-                  const Positioned(bottom: 4, left: 4, child: _RivetDot()),
-                  const Positioned(bottom: 4, right: 4, child: _RivetDot()),
+                  Positioned(top: 4, left: 4, child: _RivetDot(isDark: isDark)),
+                  Positioned(top: 4, right: 4, child: _RivetDot(isDark: isDark)),
+                  Positioned(bottom: 4, left: 4, child: _RivetDot(isDark: isDark)),
+                  Positioned(bottom: 4, right: 4, child: _RivetDot(isDark: isDark)),
 
                   // Main Plate Content
                   Padding(
@@ -89,6 +89,8 @@ class DeskSpecPlateWidget extends ConsumerWidget {
                             children: [
                               Text(
                                 'TAKT DESK · MOD. 01 · 2026',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontFamily: 'monospace',
                                   fontSize: 9.5,
@@ -100,6 +102,8 @@ class DeskSpecPlateWidget extends ConsumerWidget {
                               const SizedBox(height: 3),
                               Text(
                                 'GERMANIC MINIMALISM · STEREO 44.1kHz',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontFamily: 'monospace',
                                   fontSize: 8.0,
@@ -133,11 +137,11 @@ class DeskSpecPlateWidget extends ConsumerWidget {
                                     shape: BoxShape.circle,
                                     color: isLit
                                         ? TaktColors.filamentAmber
-                                        : (isDark ? const Color(0xFF181A1E) : const Color(0xFFBBB6AA)),
+                                        : TaktColors.basaltSlate,
                                     border: Border.all(
                                       color: isLit
                                           ? const Color(0xFFFFD59E)
-                                          : (isDark ? const Color(0xFF141517) : const Color(0xFF9E998E)),
+                                          : TaktColors.chassisObsidian,
                                       width: 0.8,
                                     ),
                                     boxShadow: isLit
@@ -156,6 +160,8 @@ class DeskSpecPlateWidget extends ConsumerWidget {
                             const SizedBox(height: 4),
                             Text(
                               'TODAY: ${stats.completedCount} / 4 CYCLES',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontFamily: 'monospace',
                                 fontSize: 9.0,
@@ -167,6 +173,8 @@ class DeskSpecPlateWidget extends ConsumerWidget {
                             const SizedBox(height: 1),
                             Text(
                               '${stats.totalMinutes} MIN FOCUSED',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontFamily: 'monospace',
                                 fontSize: 8.0,
@@ -190,12 +198,13 @@ class DeskSpecPlateWidget extends ConsumerWidget {
   }
 }
 
-class _RivetDot extends ConsumerWidget {
-  const _RivetDot();
+class _RivetDot extends StatelessWidget {
+  final bool isDark;
+
+  const _RivetDot({required this.isDark});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = ref.watch(chassisThemeProvider).isDarkMode;
+  Widget build(BuildContext context) {
     return Container(
       width: 3.5,
       height: 3.5,
