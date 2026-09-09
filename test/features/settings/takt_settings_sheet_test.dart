@@ -338,15 +338,31 @@ void main() {
 
       expect(find.text('HARDWARE EDITIONS // CHASSIS MATERIALITY'), findsOneWidget);
       expect(find.text('BRAUN CLASSIC'), findsOneWidget);
+      expect(find.byKey(const ValueKey('edition_next_button')), findsOneWidget);
+
+      // Advance through gallery carousel to inspect each edition
+      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+      await tester.pumpAndSettle();
       expect(find.text('TITANIUM STEALTH'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+      await tester.pumpAndSettle();
       expect(find.text('BAUHAUS HERITAGE'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+      await tester.pumpAndSettle();
       expect(find.text('RAW BRASS & PATINA'), findsOneWidget);
+
       expect(find.textContaining('SIMULATE STUDIO PRO CLEARANCE'), findsOneWidget);
     });
 
     testWidgets('Tapping unlocked edition equips it and triggers haptic click', (tester) async {
       await tester.pumpWidget(buildSheet());
       await tester.pump();
+
+      // Navigate to titanium stealth card in carousel
+      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+      await tester.pumpAndSettle();
 
       final titaniumFinder = find.byKey(const ValueKey('edition_card_titaniumStealth'));
       expect(titaniumFinder, findsOneWidget);
@@ -391,6 +407,10 @@ void main() {
 
       expect(find.text('LOCKED // PRO'), findsWidgets);
 
+      // Navigate to titanium stealth card in carousel
+      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+      await tester.pumpAndSettle();
+
       // Tap locked titanium card
       final titaniumFinder = find.byKey(const ValueKey('edition_card_titaniumStealth'));
       await tester.tap(titaniumFinder);
@@ -420,5 +440,59 @@ void main() {
         findsOneWidget,
       );
     });
+
+
+    testWidgets('TaktSettingsSheet displays gallery counter, arrows, and page dots', (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          deskPreferencesControllerProvider.overrideWith(
+            (ref) => DeskPreferencesController(
+              null,
+              AudioService(isMock: true),
+              ref.watch(chassisThemeProvider.notifier),
+            ),
+          ),
+          lifetimeFocusStatsProvider.overrideWith(
+            (ref) => Stream.value(const LifetimeFocusStats(
+              totalSessions: 10,
+              totalHours: 2.5,
+            )),
+          ),
+          todayFocusStatsProvider.overrideWith(
+            (ref) => Stream.value(const TodayFocusStats(completedCount: 1, totalMinutes: 25)),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: Scaffold(
+              body: TaktSettingsSheet(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Verify counter badge and arrow buttons exist
+      expect(find.textContaining('01 / 04'), findsOneWidget);
+      expect(find.byKey(const ValueKey('edition_prev_button')), findsOneWidget);
+      expect(find.byKey(const ValueKey('edition_next_button')), findsOneWidget);
+
+      // Verify 4 indicator dots exist
+      for (int i = 0; i < 4; i++) {
+        expect(find.byKey(ValueKey('edition_dot_$i')), findsOneWidget);
+      }
+
+      // Tap next button to advance to page 2
+      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('02 / 04'), findsOneWidget);
+    });
   });
 }
+

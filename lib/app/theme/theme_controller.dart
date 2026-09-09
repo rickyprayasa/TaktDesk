@@ -29,6 +29,14 @@ class ChassisThemeState {
 
   Color get filamentColor => edition.filamentColor;
 
+  List<Color> get plateGradient =>
+      isDarkMode ? edition.plateGradientDark : edition.plateGradientLight;
+
+  Color get rivetColor =>
+      isDarkMode ? edition.rivetDark : edition.rivetLight;
+
+  Color get accentColor => edition.accentColor;
+
   ChassisThemeState copyWith({
     bool? isDarkMode,
     HardwareEdition? edition,

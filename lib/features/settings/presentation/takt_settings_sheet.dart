@@ -689,7 +689,7 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _HardwareEditionsSection extends ConsumerWidget {
+class _HardwareEditionsSection extends ConsumerStatefulWidget {
   final DeskPreferencesState prefs;
   final bool isDark;
   final Color primaryTextColor;
@@ -707,75 +707,239 @@ class _HardwareEditionsSection extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_HardwareEditionsSection> createState() =>
+      _HardwareEditionsSectionState();
+}
+
+class _HardwareEditionsSectionState
+    extends ConsumerState<_HardwareEditionsSection> {
+  late final PageController _pageController;
+  late int _currentPage;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialIndex = HardwareEdition.all.indexWhere(
+      (e) => e.type.name == widget.prefs.selectedEdition,
+    );
+    _currentPage = initialIndex >= 0 ? initialIndex : 0;
+    _pageController = PageController(
+      initialPage: _currentPage,
+      viewportFraction: 0.82,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant _HardwareEditionsSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.prefs.selectedEdition != widget.prefs.selectedEdition) {
+      final newIndex = HardwareEdition.all.indexWhere(
+        (e) => e.type.name == widget.prefs.selectedEdition,
+      );
+      if (newIndex >= 0 &&
+          newIndex != _currentPage &&
+          _pageController.hasClients) {
+        _pageController.animateToPage(
+          newIndex,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _goToPrev() {
+    if (_currentPage > 0) {
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+      HapticService.selectionClick();
+    }
+  }
+
+  void _goToNext() {
+    if (_currentPage < HardwareEdition.all.length - 1) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+      HapticService.selectionClick();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final themeState = ref.watch(chassisThemeProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _SectionHeader(
-          title: 'HARDWARE EDITIONS // CHASSIS MATERIALITY',
-          textColor: secondaryTextColor,
+        // Section header with title, counter badge, and arrow buttons
+        Row(
+          children: [
+            Flexible(
+              child: Text(
+                'HARDWARE EDITIONS // CHASSIS MATERIALITY',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 10.0,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                  color: widget.secondaryTextColor,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Container(
+                height: 1.0,
+                color: widget.secondaryTextColor.withValues(alpha: 0.25),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '[ 0${_currentPage + 1} / 04 ]',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 10.0,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.0,
+                color: widget.secondaryTextColor,
+              ),
+            ),
+            const SizedBox(width: 6),
+            InkWell(
+              key: const ValueKey('edition_prev_button'),
+              borderRadius: BorderRadius.circular(3.0),
+              onTap: _goToPrev,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                child: Text(
+                  '◀',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 10,
+                    color: _currentPage > 0
+                        ? widget.primaryTextColor
+                        : widget.secondaryTextColor.withValues(alpha: 0.4),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 2),
+            InkWell(
+              key: const ValueKey('edition_next_button'),
+              borderRadius: BorderRadius.circular(3.0),
+              onTap: _goToNext,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                child: Text(
+                  '▶',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 10,
+                    color: _currentPage < HardwareEdition.all.length - 1
+                        ? widget.primaryTextColor
+                        : widget.secondaryTextColor.withValues(alpha: 0.4),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: panelBgColor,
+            color: widget.panelBgColor,
             borderRadius: BorderRadius.circular(6.0),
-            border: Border.all(color: borderColor, width: 0.8),
+            border: Border.all(color: widget.borderColor, width: 0.8),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Horizontal scrollable row of 4 _EditionCard widgets
+              // Snapping Carousel of 4 HardwareEdition cards
               SizedBox(
-                height: 148,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      for (int i = 0; i < HardwareEdition.all.length; i++) ...[
-                        if (i > 0) const SizedBox(width: 10),
-                        _EditionCard(
-                          edition: HardwareEdition.all[i],
-                          isSelected: prefs.selectedEdition ==
-                              HardwareEdition.all[i].type.name,
-                          isUnlocked: !HardwareEdition.all[i].isPremium ||
-                              prefs.isProSimulated,
-                          isDark: isDark,
-                          onTap: () {
-                            final ed = HardwareEdition.all[i];
-                            final isSel =
-                                prefs.selectedEdition == ed.type.name;
-                            final isUnl =
-                                !ed.isPremium || prefs.isProSimulated;
-                            if (!isUnl) {
-                              _showStudioProDialog(
-                                context,
-                                ref,
-                                ed,
-                                isDark: isDark,
-                                primaryTextColor: primaryTextColor,
-                                secondaryTextColor: secondaryTextColor,
-                              );
-                            } else if (!isSel) {
-                              ref
-                                  .read(
-                                      deskPreferencesControllerProvider
-                                          .notifier)
-                                  .setHardwareEdition(ed.type);
-                              HapticService.selectionClick();
-                            } else {
-                              HapticService.selectionClick();
-                            }
-                          },
-                        ),
-                      ],
-                    ],
-                  ),
+                height: 152,
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: HardwareEdition.all.length,
+                  onPageChanged: (idx) {
+                    setState(() {
+                      _currentPage = idx;
+                    });
+                  },
+                  itemBuilder: (context, i) {
+                    final ed = HardwareEdition.all[i];
+                    final isSel =
+                        widget.prefs.selectedEdition == ed.type.name;
+                    final isUnl =
+                        !ed.isPremium || widget.prefs.isProSimulated;
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                      child: _EditionCard(
+                        edition: ed,
+                        isSelected: isSel,
+                        isUnlocked: isUnl,
+                        isDark: widget.isDark,
+                        onTap: () {
+                          if (!isUnl) {
+                            _showStudioProDialog(
+                              context,
+                              ref,
+                              ed,
+                              isDark: widget.isDark,
+                              primaryTextColor: widget.primaryTextColor,
+                              secondaryTextColor: widget.secondaryTextColor,
+                            );
+                          } else if (!isSel) {
+                            ref
+                                .read(
+                                    deskPreferencesControllerProvider.notifier)
+                                .setHardwareEdition(ed.type);
+                            HapticService.selectionClick();
+                          } else {
+                            HapticService.selectionClick();
+                          }
+                        },
+                      ),
+                    );
+                  },
                 ),
               ),
+              const SizedBox(height: 10),
+              // Page indicator dots
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (int i = 0; i < HardwareEdition.all.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 6),
+                    Container(
+                      key: ValueKey('edition_dot_$i'),
+                      width: 5,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _currentPage == i
+                            ? themeState.filamentColor
+                            : widget.borderColor.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
               const SizedBox(height: 14),
-              Divider(height: 1, color: borderColor),
+              Divider(height: 1, color: widget.borderColor),
               const SizedBox(height: 12),
               // SIMULATE STUDIO PRO CLEARANCE switch row
               Row(
@@ -792,7 +956,7 @@ class _HardwareEditionsSection extends ConsumerWidget {
                             fontSize: 10.5,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 1.0,
-                            color: primaryTextColor,
+                            color: widget.primaryTextColor,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -801,7 +965,7 @@ class _HardwareEditionsSection extends ConsumerWidget {
                           style: TextStyle(
                             fontFamily: 'monospace',
                             fontSize: 9.0,
-                            color: secondaryTextColor,
+                            color: widget.secondaryTextColor,
                           ),
                         ),
                       ],
@@ -810,14 +974,14 @@ class _HardwareEditionsSection extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Switch(
                     key: const ValueKey('simulate_pro_switch'),
-                    value: prefs.isProSimulated,
+                    value: widget.prefs.isProSimulated,
                     activeThumbColor: TaktColors.filamentAmber,
                     activeTrackColor:
                         TaktColors.filamentAmber.withValues(alpha: 0.5),
-                    inactiveThumbColor: isDark
+                    inactiveThumbColor: widget.isDark
                         ? const Color(0xFF6B7280)
                         : const Color(0xFF9CA3AF),
-                    inactiveTrackColor: isDark
+                    inactiveTrackColor: widget.isDark
                         ? TaktColors.slateLight
                         : TaktColors.paperBorder,
                     onChanged: (val) {
@@ -835,6 +999,7 @@ class _HardwareEditionsSection extends ConsumerWidget {
     );
   }
 }
+
 
 class _EditionCard extends StatelessWidget {
   final HardwareEdition edition;
