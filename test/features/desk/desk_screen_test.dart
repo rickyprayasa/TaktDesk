@@ -12,8 +12,12 @@ import 'package:takt_desk/features/desk/presentation/ambient_lighting_layer.dart
 import 'package:takt_desk/features/desk/presentation/desk_canvas_screen.dart';
 import 'package:takt_desk/features/desk/presentation/isometric_desk_layout.dart';
 import 'package:takt_desk/features/desk/presentation/widgets/chassis_theme_switch.dart';
+import 'package:takt_desk/features/desk/presentation/widgets/desk_spec_plate_widget.dart';
 import 'package:takt_desk/features/desk/presentation/widgets/emergency_unlatch_widget.dart';
 import 'package:takt_desk/features/desk/presentation/widgets/monastic_switch_widget.dart';
+import 'package:takt_desk/features/desk/presentation/widgets/settings_rivet_button.dart';
+import 'package:takt_desk/features/settings/presentation/settings_controller.dart';
+import 'package:takt_desk/features/settings/presentation/takt_settings_sheet.dart';
 import 'package:takt_desk/features/tasks/presentation/receipt_runner_widget.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_widget.dart';
 import 'package:takt_desk/features/vinyl/presentation/vinyl_player_widget.dart';
@@ -24,6 +28,17 @@ class MockFocusLockService extends FocusLockService {
   @override
   Future<bool> disableFocusLock() async => true;
 }
+
+List<Override> deskTestOverrides(AppDatabase testDb) => [
+  appDatabaseProvider.overrideWithValue(testDb),
+  focusLockServiceProvider.overrideWithValue(MockFocusLockService()),
+  todayFocusStatsProvider.overrideWith(
+    (ref) => Stream.value(const TodayFocusStats(completedCount: 0, totalMinutes: 0)),
+  ),
+  lifetimeFocusStatsProvider.overrideWith(
+    (ref) => Stream.value(const LifetimeFocusStats(totalSessions: 0, totalHours: 0)),
+  ),
+];
 
 void main() {
   group('DeskCanvasScreen & IsometricDeskLayout', () {
@@ -44,10 +59,7 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            appDatabaseProvider.overrideWithValue(testDb),
-            focusLockServiceProvider.overrideWithValue(MockFocusLockService()),
-          ],
+          overrides: deskTestOverrides(testDb),
           child: const MaterialApp(
             home: DeskCanvasScreen(),
           ),
@@ -82,12 +94,32 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
+    testWidgets('DeskCanvasScreen renders Settings rivet button and DeskSpecPlateWidget', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: deskTestOverrides(testDb),
+          child: const MaterialApp(
+            home: DeskCanvasScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SettingsRivetButton), findsOneWidget);
+      expect(find.byType(DeskSpecPlateWidget), findsOneWidget);
+
+      // Tapping settings button displays TaktSettingsSheet
+      await tester.tap(find.byType(SettingsRivetButton));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TaktSettingsSheet), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
     testWidgets('DeskCanvasScreen enforces PopScope and shows EmergencyUnlatchWidget when focus is locked', (tester) async {
       final container = ProviderContainer(
-        overrides: [
-          appDatabaseProvider.overrideWithValue(testDb),
-          focusLockServiceProvider.overrideWithValue(MockFocusLockService()),
-        ],
+        overrides: deskTestOverrides(testDb),
       );
       addTearDown(container.dispose);
 
@@ -125,10 +157,7 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            appDatabaseProvider.overrideWithValue(testDb),
-            focusLockServiceProvider.overrideWithValue(MockFocusLockService()),
-          ],
+          overrides: deskTestOverrides(testDb),
           child: const MaterialApp(
             home: DeskCanvasScreen(),
           ),
@@ -194,9 +223,7 @@ void main() {
       addTearDown(streamController.close);
 
       final container = ProviderContainer(
-        overrides: [
-          appDatabaseProvider.overrideWithValue(testDb),
-        ],
+        overrides: deskTestOverrides(testDb),
       );
       addTearDown(container.dispose);
 
@@ -225,9 +252,7 @@ void main() {
       addTearDown(streamController.close);
 
       final container = ProviderContainer(
-        overrides: [
-          appDatabaseProvider.overrideWithValue(testDb),
-        ],
+        overrides: deskTestOverrides(testDb),
       );
       addTearDown(container.dispose);
 
@@ -252,9 +277,7 @@ void main() {
       addTearDown(streamController.close);
 
       final container = ProviderContainer(
-        overrides: [
-          appDatabaseProvider.overrideWithValue(testDb),
-        ],
+        overrides: deskTestOverrides(testDb),
       );
       addTearDown(container.dispose);
 
@@ -283,9 +306,7 @@ void main() {
       addTearDown(streamController.close);
 
       final container = ProviderContainer(
-        overrides: [
-          appDatabaseProvider.overrideWithValue(testDb),
-        ],
+        overrides: deskTestOverrides(testDb),
       );
       addTearDown(container.dispose);
 

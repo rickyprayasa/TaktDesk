@@ -14,7 +14,9 @@ import '../../vinyl/presentation/vinyl_player_widget.dart';
 import 'ambient_lighting_layer.dart';
 import 'isometric_desk_layout.dart';
 import 'widgets/chassis_theme_switch.dart';
+import 'widgets/desk_spec_plate_widget.dart';
 import 'widgets/emergency_unlatch_widget.dart';
+import 'widgets/settings_rivet_button.dart';
 
 class DeskCanvasScreen extends ConsumerStatefulWidget {
   final Stream<GyroscopeEvent>? gyroscopeStream;
@@ -241,7 +243,14 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                                     ),
                                   ],
                                 ),
-                                const ChassisThemeSwitch(),
+                                const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SettingsRivetButton(),
+                                    SizedBox(width: 8),
+                                    ChassisThemeSwitch(),
+                                  ],
+                                ),
                               ],
                             ),
                           ),
@@ -262,6 +271,8 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                           const SizedBox(height: 12),
                           // Emergency Unlatch Latch (renders when focus lock engaged)
                           const EmergencyUnlatchWidget(),
+                          const SizedBox(height: 16),
+                          const DeskSpecPlateWidget(),
                         ],
                       ),
                     ),
