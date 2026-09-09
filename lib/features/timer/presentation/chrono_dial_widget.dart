@@ -10,6 +10,7 @@ import 'widgets/split_flap_board_widget.dart';
 import '../../desk/presentation/widgets/monastic_switch_widget.dart';
 import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/takt_typography.dart';
+import '../../../app/theme/theme_controller.dart';
 
 class ChronoDialWidget extends ConsumerStatefulWidget {
   const ChronoDialWidget({super.key});
@@ -137,6 +138,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
     );
 
     final state = ref.watch(chronoDialProvider);
+    final themeState = ref.watch(chassisThemeProvider);
     final remainingMinutes = (state.remainingSeconds / 60).floor();
     final remainingSeconds = (state.remainingSeconds % 60).floor();
     const dialDimensions = Size(240, 240);
@@ -183,6 +185,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                             progressPercent: state.progressPercent,
                             targetMinutes: state.targetMinutes,
                             isRunning: state.isRunning,
+                            needleColor: themeState.needleColor,
                           ),
                         );
                       },

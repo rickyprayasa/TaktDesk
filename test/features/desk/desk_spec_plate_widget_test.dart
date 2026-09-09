@@ -222,5 +222,16 @@ void main() {
 
     expect(find.textContaining('TITANIUM STEALTH'), findsOneWidget);
     expect(find.textContaining('AEROSPACE PVD GRADE 5'), findsOneWidget);
+
+    final plateContainer = tester.widget<Container>(
+      find.descendant(of: find.byType(DeskSpecPlateWidget), matching: find.byType(Container)).first,
+    );
+    final decoration = plateContainer.decoration as BoxDecoration;
+    final gradient = decoration.gradient as LinearGradient;
+    expect(gradient.colors, equals(HardwareEdition.titaniumStealth.plateGradientDark));
+
+    final litLed = tester.widget<Container>(find.byKey(const ValueKey('spec_plate_led_0')));
+    final ledDecoration = litLed.decoration as BoxDecoration;
+    expect(ledDecoration.color, equals(HardwareEdition.titaniumStealth.filamentColor));
   });
 }

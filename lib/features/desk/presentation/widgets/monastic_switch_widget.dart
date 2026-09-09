@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:takt_desk/app/theme/takt_colors.dart';
 import 'package:takt_desk/app/theme/takt_typography.dart';
+import 'package:takt_desk/app/theme/theme_controller.dart';
 import 'package:takt_desk/core/focus/focus_lock_controller.dart';
 
 class MonasticSwitchWidget extends ConsumerWidget {
@@ -10,6 +11,7 @@ class MonasticSwitchWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final focusState = ref.watch(focusLockProvider);
+    final themeState = ref.watch(chassisThemeProvider);
     final isLocked = focusState.isLocked;
 
     return Semantics(
@@ -31,14 +33,14 @@ class MonasticSwitchWidget extends ConsumerWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isLocked
-                  ? TaktColors.filamentAmber.withValues(alpha: 0.8)
+                  ? themeState.filamentColor.withValues(alpha: 0.8)
                   : TaktColors.slateBorder,
               width: 1.0,
             ),
             boxShadow: isLocked
                 ? [
                     BoxShadow(
-                      color: TaktColors.filamentAmber.withValues(alpha: 0.3),
+                      color: themeState.filamentColor.withValues(alpha: 0.3),
                       blurRadius: 6,
                       spreadRadius: 0.5,
                     ),
@@ -56,12 +58,12 @@ class MonasticSwitchWidget extends ConsumerWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isLocked
-                      ? TaktColors.filamentAmber
+                      ? themeState.filamentColor
                       : const Color(0xFF4A4E55),
                   boxShadow: isLocked
                       ? [
                           BoxShadow(
-                            color: TaktColors.filamentAmber.withValues(alpha: 0.8),
+                            color: themeState.filamentColor.withValues(alpha: 0.8),
                             blurRadius: 4,
                           ),
                         ]
@@ -82,7 +84,7 @@ class MonasticSwitchWidget extends ConsumerWidget {
               Text(
                 isLocked ? 'ENGAGED' : 'LOCKDOWN',
                 style: TaktTypography.labelSmall.copyWith(
-                  color: isLocked ? TaktPalette.filamentAmber : TaktPalette.warmBone.withValues(alpha: 0.4),
+                  color: isLocked ? themeState.filamentColor : TaktPalette.warmBone.withValues(alpha: 0.4),
                   fontSize: 9,
                   letterSpacing: 1.0,
                   fontWeight: FontWeight.w600,

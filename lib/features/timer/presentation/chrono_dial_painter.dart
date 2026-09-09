@@ -7,6 +7,7 @@ class ChronoDialPainter extends CustomPainter {
   final double progressPercent;
   final int targetMinutes;
   final bool isRunning;
+  final Color needleColor;
 
   // Cached text painters for dial numbers
   static final Map<int, TextPainter> _numberPainters = {};
@@ -16,6 +17,7 @@ class ChronoDialPainter extends CustomPainter {
     this.progressPercent = 0.0,
     required this.targetMinutes,
     required this.isRunning,
+    this.needleColor = TaktColors.mutedOchre,
   });
 
   static TextPainter _getTextPainter(String text) {
@@ -167,7 +169,7 @@ class ChronoDialPainter extends CustomPainter {
 
     // 7. Tapered Needle Hand (Muted Ochre / Braun AW Design)
     final needlePaint = Paint()
-      ..color = TaktColors.mutedOchre
+      ..color = needleColor
       ..style = PaintingStyle.fill;
 
     final handPath = Path();
@@ -225,6 +227,7 @@ class ChronoDialPainter extends CustomPainter {
   bool shouldRepaint(covariant ChronoDialPainter oldDelegate) {
     return oldDelegate.remainingSeconds != remainingSeconds ||
         oldDelegate.targetMinutes != targetMinutes ||
-        oldDelegate.isRunning != isRunning;
+        oldDelegate.isRunning != isRunning ||
+        oldDelegate.needleColor != needleColor;
   }
 }

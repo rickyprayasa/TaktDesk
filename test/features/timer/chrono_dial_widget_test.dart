@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:takt_desk/app/theme/hardware_edition.dart';
+import 'package:takt_desk/app/theme/theme_controller.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_painter.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_widget.dart';
 import 'package:takt_desk/features/timer/presentation/widgets/mechanical_flip_digit.dart';
@@ -239,5 +241,29 @@ void main() {
 
     // Clean up
     await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('ChronoDialWidget passes themeState.needleColor to ChronoDialPainter when edition changes', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    container.read(chassisThemeProvider.notifier).setHardwareEdition(HardwareEditionType.titaniumStealth);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final customPaint = tester.widget<CustomPaint>(dialFinder);
+    final painter = customPaint.painter as ChronoDialPainter;
+    expect(painter.needleColor, equals(const Color(0xFF3A86FF)));
   });
 }
