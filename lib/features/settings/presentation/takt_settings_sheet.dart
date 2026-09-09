@@ -1254,15 +1254,17 @@ void _showStudioProDialog(
               borderRadius: BorderRadius.circular(4.0),
             ),
           ),
-          onPressed: () {
-            ref
+          onPressed: () async {
+            await ref
                 .read(deskPreferencesControllerProvider.notifier)
                 .setProSimulated(true);
-            ref
+            await ref
                 .read(deskPreferencesControllerProvider.notifier)
                 .setHardwareEdition(edition.type);
             HapticService.selectionClick();
-            Navigator.of(dialogCtx).pop();
+            if (dialogCtx.mounted) {
+              Navigator.of(dialogCtx).pop();
+            }
           },
           child: const Text(
             'UNLOCK NOW (SIMULATED)',
