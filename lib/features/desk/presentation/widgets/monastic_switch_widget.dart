@@ -25,22 +25,22 @@ class MonasticSwitchWidget extends ConsumerWidget {
           }
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
-            color: TaktPalette.basalt,
-            borderRadius: BorderRadius.circular(4),
+            color: TaktColors.basaltSlate,
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isLocked
-                  ? TaktPalette.filamentAmber.withValues(alpha: 0.8)
-                  : TaktPalette.thermalCarbon,
-              width: 1.2,
+                  ? TaktColors.filamentAmber.withValues(alpha: 0.8)
+                  : TaktColors.slateBorder,
+              width: 1.0,
             ),
             boxShadow: isLocked
                 ? [
                     BoxShadow(
-                      color: TaktPalette.filamentAmber.withValues(alpha: 0.35),
-                      blurRadius: 8,
-                      spreadRadius: 1,
+                      color: TaktColors.filamentAmber.withValues(alpha: 0.3),
+                      blurRadius: 6,
+                      spreadRadius: 0.5,
                     ),
                   ]
                 : const [],
@@ -48,50 +48,45 @@ class MonasticSwitchWidget extends ConsumerWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Indicator vacuum tube lamp
+              // Sleek LED status indicator
               AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
-                width: 8,
-                height: 8,
+                width: 6,
+                height: 6,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isLocked
-                      ? TaktPalette.filamentAmber
-                      : TaktPalette.thermalCarbon,
+                      ? TaktColors.filamentAmber
+                      : const Color(0xFF4A4E55),
                   boxShadow: isLocked
                       ? [
                           BoxShadow(
-                            color: TaktPalette.filamentAmber.withValues(alpha: 0.9),
-                            blurRadius: 6,
-                            spreadRadius: 2,
+                            color: TaktColors.filamentAmber.withValues(alpha: 0.8),
+                            blurRadius: 4,
                           ),
                         ]
                       : null,
                 ),
               ),
               const SizedBox(width: 8),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'MONASTIC',
-                    style: TaktTypography.labelSmall.copyWith(
-                      color: isLocked ? TaktPalette.warmBone : TaktPalette.warmBone.withValues(alpha: 0.6),
-                      fontSize: 9,
-                      letterSpacing: 1.2,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    isLocked ? 'ENGAGED' : 'LOCKDOWN',
-                    style: TaktTypography.labelSmall.copyWith(
-                      color: isLocked ? TaktPalette.filamentAmber : TaktPalette.warmBone.withValues(alpha: 0.4),
-                      fontSize: 8,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                ],
+              Text(
+                'MONASTIC',
+                style: TaktTypography.labelSmall.copyWith(
+                  color: isLocked ? TaktPalette.warmBone : TaktPalette.warmBone.withValues(alpha: 0.6),
+                  fontSize: 9,
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                isLocked ? 'ENGAGED' : 'LOCKDOWN',
+                style: TaktTypography.labelSmall.copyWith(
+                  color: isLocked ? TaktPalette.filamentAmber : TaktPalette.warmBone.withValues(alpha: 0.4),
+                  fontSize: 9,
+                  letterSpacing: 1.0,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),

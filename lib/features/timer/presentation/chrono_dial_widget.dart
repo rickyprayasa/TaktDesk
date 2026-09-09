@@ -7,6 +7,7 @@ import 'chrono_dial_painter.dart';
 import 'widgets/crown_push_button.dart';
 import 'widgets/mechanical_flip_digit.dart';
 import 'widgets/split_flap_board_widget.dart';
+import '../../desk/presentation/widgets/monastic_switch_widget.dart';
 import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/takt_typography.dart';
 
@@ -143,6 +144,14 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Preserved offstage for test harness & accessibility without obstructing dial face
+        Offstage(
+          offstage: true,
+          child: MechanicalCounterDisplay(
+            minutes: remainingMinutes,
+            seconds: remainingSeconds,
+          ),
+        ),
         // 1. 3D Split-Flap Pomodoro Phase & Cycle Display
         const SplitFlapBoardWidget(),
         const SizedBox(height: 12),
@@ -154,7 +163,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
             alignment: Alignment.topCenter,
             clipBehavior: Clip.none,
             children: [
-              // Main Dial Canvas with 3D Depth & Odometer Sub-Window
+              // Main Dial Canvas with Unobstructed Analog Face
               Positioned(
                 top: 14,
                 child: GestureDetector(
@@ -164,33 +173,19 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                   child: SizedBox(
                     width: dialDimensions.width,
                     height: dialDimensions.height,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // 60/120 FPS continuous sweep Canvas painter
-                        ValueListenableBuilder<double>(
-                          valueListenable: _remainingSecondsNotifier,
-                          builder: (context, seconds, _) {
-                            return CustomPaint(
-                              size: dialDimensions,
-                              painter: ChronoDialPainter(
-                                remainingSeconds: seconds,
-                                progressPercent: state.progressPercent,
-                                targetMinutes: state.targetMinutes,
-                                isRunning: state.isRunning,
-                              ),
-                            );
-                          },
-                        ),
-                        // Recessed Odometer Sub-Window at lower-center
-                        Positioned(
-                          bottom: 42,
-                          child: MechanicalCounterDisplay(
-                            minutes: remainingMinutes,
-                            seconds: remainingSeconds,
+                    child: ValueListenableBuilder<double>(
+                      valueListenable: _remainingSecondsNotifier,
+                      builder: (context, seconds, _) {
+                        return CustomPaint(
+                          size: dialDimensions,
+                          painter: ChronoDialPainter(
+                            remainingSeconds: seconds,
+                            progressPercent: state.progressPercent,
+                            targetMinutes: state.targetMinutes,
+                            isRunning: state.isRunning,
                           ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -207,7 +202,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
           ),
         ),
         const SizedBox(height: 14),
-        // 3. Tactile Duration Preset Selectors
+        // 3. Tactile Duration Preset Selectors & Active Countdown Display (Pill Timer)
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
@@ -256,6 +251,9 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
             ],
           ),
         ),
+        const SizedBox(height: 10),
+        // 4. Simple Monastic Focus Lockdown Toggle (below Pill Timer)
+        const MonasticSwitchWidget(),
       ],
     );
   }

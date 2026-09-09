@@ -15,7 +15,6 @@ import 'ambient_lighting_layer.dart';
 import 'isometric_desk_layout.dart';
 import 'widgets/chassis_theme_switch.dart';
 import 'widgets/emergency_unlatch_widget.dart';
-import 'widgets/monastic_switch_widget.dart';
 
 class DeskCanvasScreen extends ConsumerStatefulWidget {
   final Stream<GyroscopeEvent>? gyroscopeStream;
@@ -242,14 +241,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                                     ),
                                   ],
                                 ),
-                                const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    MonasticSwitchWidget(),
-                                    SizedBox(width: 8),
-                                    ChassisThemeSwitch(),
-                                  ],
-                                ),
+                                const ChassisThemeSwitch(),
                               ],
                             ),
                           ),

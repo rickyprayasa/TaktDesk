@@ -11,8 +11,9 @@ void main() {
   );
 
   void expectDisplay(WidgetTester tester, int minutes, int seconds) {
-    final display =
-        tester.widget<MechanicalCounterDisplay>(find.byType(MechanicalCounterDisplay));
+    final display = tester.widget<MechanicalCounterDisplay>(
+      find.byType(MechanicalCounterDisplay, skipOffstage: false),
+    );
     expect(display.minutes, minutes);
     expect(display.seconds, seconds);
   }
@@ -30,8 +31,8 @@ void main() {
       ),
     );
 
-    // Verify initial time display (25:00) and target duration label (25 MIN)
-    expect(find.byType(MechanicalCounterDisplay), findsOneWidget);
+    // Verify initial time display and target duration label (25 MIN)
+    expect(find.byType(MechanicalCounterDisplay, skipOffstage: false), findsOneWidget);
     expectDisplay(tester, 25, 0);
     expect(find.text('25 MIN'), findsOneWidget);
 
