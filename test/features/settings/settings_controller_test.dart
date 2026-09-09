@@ -314,4 +314,89 @@ void main() {
     expect(themeController.state.edition.type, equals(HardwareEditionType.bauhausHeritage));
     expect(themeController.state.isProUnlocked, isTrue);
   });
+
+  test('attempting setHardwareEdition to premium fails when isProSimulated is false', () async {
+    final themeController = ThemeController();
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        audioServiceProvider.overrideWithValue(audioService),
+        chassisThemeProvider.overrideWith((ref) => themeController),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(deskPreferencesControllerProvider.notifier);
+    await controller.init();
+    await controller.setProSimulated(false);
+
+    expect(container.read(deskPreferencesControllerProvider).isProSimulated, isFalse);
+    expect(themeController.state.isProUnlocked, isFalse);
+
+    final applied = await controller.setHardwareEdition(HardwareEditionType.titaniumStealth);
+
+    expect(applied, isFalse);
+    expect(container.read(deskPreferencesControllerProvider).selectedEdition, equals('braunClassic'));
+    expect(themeController.state.edition.type, equals(HardwareEditionType.braunClassic));
+
+    final persisted = await db.watchPreferences().first;
+    expect(persisted!.selectedEdition, equals('braunClassic'));
+  });
+
+  test('calling setProSimulated(false) on premium edition reverts to braunClassic across state, theme, and DB', () async {
+    final themeController = ThemeController();
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        audioServiceProvider.overrideWithValue(audioService),
+        chassisThemeProvider.overrideWith((ref) => themeController),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(deskPreferencesControllerProvider.notifier);
+    await controller.init();
+
+    final applied = await controller.setHardwareEdition(HardwareEditionType.titaniumStealth);
+    expect(applied, isTrue);
+    expect(container.read(deskPreferencesControllerProvider).selectedEdition, equals('titaniumStealth'));
+    expect(themeController.state.edition.type, equals(HardwareEditionType.titaniumStealth));
+
+    await controller.setProSimulated(false);
+
+    expect(container.read(deskPreferencesControllerProvider).isProSimulated, isFalse);
+    expect(container.read(deskPreferencesControllerProvider).selectedEdition, equals('braunClassic'));
+    expect(themeController.state.edition.type, equals(HardwareEditionType.braunClassic));
+    expect(themeController.state.isProUnlocked, isFalse);
+
+    final persisted = await db.watchPreferences().first;
+    expect(persisted!.selectedEdition, equals('braunClassic'));
+    expect(persisted.isProSimulated, isFalse);
+  });
+
+  test('restoring SQLite state with premium edition but isProSimulated false falls back to braunClassic', () async {
+    await db.updatePreferences(
+      selectedEdition: 'titaniumStealth',
+      isProSimulated: false,
+    );
+
+    final themeController = ThemeController();
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        audioServiceProvider.overrideWithValue(audioService),
+        chassisThemeProvider.overrideWith((ref) => themeController),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(deskPreferencesControllerProvider.notifier);
+    await controller.init();
+
+    final state = container.read(deskPreferencesControllerProvider);
+    expect(state.selectedEdition, equals('braunClassic'));
+    expect(state.isProSimulated, isFalse);
+    expect(themeController.state.edition.type, equals(HardwareEditionType.braunClassic));
+    expect(themeController.state.isProUnlocked, isFalse);
+  });
 }

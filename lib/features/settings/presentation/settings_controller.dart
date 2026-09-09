@@ -126,19 +126,25 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
     final pref = await (db.select(db.deskPreferences)..limit(1)).getSingleOrNull();
     if (!mounted) return;
     if (pref != null) {
+      _themeController?.setProUnlocked(pref.isProSimulated);
+      final applied = _themeController?.setHardwareEdition(
+        HardwareEdition.fromString(pref.selectedEdition).type,
+      ) ?? true;
+      final effectiveEdition = applied
+          ? pref.selectedEdition
+          : (_themeController?.state.edition.type.name ?? HardwareEditionType.braunClassic.name);
+
       state = state.copyWith(
         soundVolume: pref.soundVolume,
         parallaxEnabled: pref.parallaxEnabled,
         foleyEnabled: pref.foleyEnabled,
         hapticsEnabled: pref.hapticsEnabled,
-        selectedEdition: pref.selectedEdition,
+        selectedEdition: effectiveEdition,
         isProSimulated: pref.isProSimulated,
       );
       _audioService?.setVolume(pref.soundVolume);
       _audioService?.setFoleyEnabled(pref.foleyEnabled);
       HapticService.enabled = pref.hapticsEnabled;
-      _themeController?.setProUnlocked(pref.isProSimulated);
-      _themeController?.setHardwareEdition(HardwareEdition.fromString(pref.selectedEdition).type);
     } else {
       _audioService?.setVolume(state.soundVolume);
       _audioService?.setFoleyEnabled(state.foleyEnabled);
@@ -170,16 +176,25 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
     await _database?.updatePreferences(parallaxEnabled: val);
   }
 
-  Future<void> setHardwareEdition(HardwareEditionType type) async {
+  Future<bool> setHardwareEdition(HardwareEditionType type) async {
+    final applied = _themeController?.setHardwareEdition(type) ?? true;
+    if (!applied) return false;
     state = state.copyWith(selectedEdition: type.name);
-    _themeController?.setHardwareEdition(type);
     await _database?.updatePreferences(selectedEdition: type.name);
+    return true;
   }
 
   Future<void> setProSimulated(bool value) async {
-    state = state.copyWith(isProSimulated: value);
     _themeController?.setProUnlocked(value);
-    await _database?.updatePreferences(isProSimulated: value);
+    final activeEdition = _themeController?.state.edition.type.name ?? state.selectedEdition;
+    state = state.copyWith(
+      isProSimulated: value,
+      selectedEdition: activeEdition,
+    );
+    await _database?.updatePreferences(
+      isProSimulated: value,
+      selectedEdition: activeEdition,
+    );
   }
 
   Future<void> clearAllSessions() async {
@@ -191,7 +206,7 @@ final deskPreferencesControllerProvider =
     StateNotifierProvider<DeskPreferencesController, DeskPreferencesState>((ref) {
   final db = ref.watch(appDatabaseProvider);
   final audioService = ref.watch(audioServiceProvider);
-  final themeController = ref.read(chassisThemeProvider.notifier);
+  final themeController = ref.watch(chassisThemeProvider.notifier);
   return DeskPreferencesController(db, audioService, themeController);
 });
 
