@@ -69,4 +69,70 @@ void main() {
     expect(pref.parallaxEnabled, isTrue);
     expect(pref.activeAmbientTrackIndex, 0);
   });
+
+  test('watchTodayTimerSessions filters sessions for the current day only', () async {
+    final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(days: 1));
+
+    // Past session
+    await db.recordTimerSession(
+      targetMinutes: 25,
+      elapsedSeconds: 1500,
+      isFinished: true,
+      startedAt: yesterday,
+    );
+
+    // Today session 1
+    await db.recordTimerSession(
+      targetMinutes: 25,
+      elapsedSeconds: 1500,
+      isFinished: true,
+      startedAt: now.subtract(const Duration(hours: 1)),
+    );
+
+    // Today session 2 (unfinished)
+    await db.recordTimerSession(
+      targetMinutes: 5,
+      elapsedSeconds: 60,
+      isFinished: false,
+      startedAt: now,
+    );
+
+    final todaySessions = await db.watchTodayTimerSessions().first;
+    expect(todaySessions.length, equals(2));
+    expect(todaySessions.first.isFinished, isTrue);
+  });
+
+  test('clearTimerSessions removes all session records', () async {
+    await db.recordTimerSession(
+      targetMinutes: 25,
+      elapsedSeconds: 1500,
+      isFinished: true,
+      startedAt: DateTime.now(),
+    );
+
+    await db.clearTimerSessions();
+    final allSessions = await db.watchAllTimerSessions().first;
+    expect(allSessions, isEmpty);
+  });
+
+  test('can update preferences including foley and haptics', () async {
+    await db.updatePreferences(
+      soundVolume: 0.5,
+      foleyEnabled: false,
+      hapticsEnabled: false,
+    );
+    var pref = await db.watchPreferences().first;
+    expect(pref, isNotNull);
+    expect(pref!.soundVolume, 0.5);
+    expect(pref.foleyEnabled, isFalse);
+    expect(pref.hapticsEnabled, isFalse);
+
+    await db.updatePreferences(
+      foleyEnabled: true,
+    );
+    pref = await db.watchPreferences().first;
+    expect(pref!.foleyEnabled, isTrue);
+    expect(pref.hapticsEnabled, isFalse);
+  });
 }

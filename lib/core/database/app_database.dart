@@ -107,6 +107,28 @@ class AppDatabase extends _$AppDatabase {
     ));
   }
 
+  Stream<List<TimerSession>> watchTodayTimerSessions() {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+    return (select(timerSessions)
+          ..where((t) =>
+              t.startedAt.isBiggerOrEqualValue(startOfDay) &
+              t.startedAt.isSmallerThanValue(endOfDay))
+          ..orderBy([(t) => OrderingTerm(expression: t.startedAt, mode: OrderingMode.asc)]))
+        .watch();
+  }
+
+  Stream<List<TimerSession>> watchAllTimerSessions() {
+    return (select(timerSessions)
+          ..orderBy([(t) => OrderingTerm(expression: t.startedAt, mode: OrderingMode.desc)]))
+        .watch();
+  }
+
+  Future<void> clearTimerSessions() {
+    return delete(timerSessions).go();
+  }
+
   Stream<DeskPreference?> watchPreferences() {
     return (select(deskPreferences)..limit(1)).watchSingleOrNull();
   }
@@ -115,6 +137,8 @@ class AppDatabase extends _$AppDatabase {
     double? soundVolume,
     bool? parallaxEnabled,
     int? activeAmbientTrackIndex,
+    bool? foleyEnabled,
+    bool? hapticsEnabled,
   }) async {
     final existing = await (select(deskPreferences)..limit(1)).getSingleOrNull();
     if (existing == null) {
@@ -123,6 +147,8 @@ class AppDatabase extends _$AppDatabase {
         parallaxEnabled: parallaxEnabled != null ? Value(parallaxEnabled) : const Value.absent(),
         activeAmbientTrackIndex:
             activeAmbientTrackIndex != null ? Value(activeAmbientTrackIndex) : const Value.absent(),
+        foleyEnabled: foleyEnabled != null ? Value(foleyEnabled) : const Value.absent(),
+        hapticsEnabled: hapticsEnabled != null ? Value(hapticsEnabled) : const Value.absent(),
       ));
     } else {
       await (update(deskPreferences)..where((p) => p.id.equals(existing.id))).write(
@@ -131,6 +157,8 @@ class AppDatabase extends _$AppDatabase {
           parallaxEnabled: parallaxEnabled != null ? Value(parallaxEnabled) : const Value.absent(),
           activeAmbientTrackIndex:
               activeAmbientTrackIndex != null ? Value(activeAmbientTrackIndex) : const Value.absent(),
+          foleyEnabled: foleyEnabled != null ? Value(foleyEnabled) : const Value.absent(),
+          hapticsEnabled: hapticsEnabled != null ? Value(hapticsEnabled) : const Value.absent(),
         ),
       );
     }

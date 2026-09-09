@@ -5,4 +5,6 @@ class DeskPreferences extends Table {
   RealColumn get soundVolume => real().withDefault(const Constant(0.8))();
   BoolColumn get parallaxEnabled => boolean().withDefault(const Constant(true))();
   IntColumn get activeAmbientTrackIndex => integer().withDefault(const Constant(0))();
+  BoolColumn get foleyEnabled => boolean().withDefault(const Constant(true))();
+  BoolColumn get hapticsEnabled => boolean().withDefault(const Constant(true))();
 }

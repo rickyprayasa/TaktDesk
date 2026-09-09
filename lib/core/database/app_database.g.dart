@@ -781,9 +781,35 @@ class $DeskPreferencesTable extends DeskPreferences
           type: DriftSqlType.int,
           requiredDuringInsert: false,
           defaultValue: const Constant(0));
+  static const VerificationMeta _foleyEnabledMeta =
+      const VerificationMeta('foleyEnabled');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, soundVolume, parallaxEnabled, activeAmbientTrackIndex];
+  late final GeneratedColumn<bool> foleyEnabled = GeneratedColumn<bool>(
+      'foley_enabled', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("foley_enabled" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _hapticsEnabledMeta =
+      const VerificationMeta('hapticsEnabled');
+  @override
+  late final GeneratedColumn<bool> hapticsEnabled = GeneratedColumn<bool>(
+      'haptics_enabled', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("haptics_enabled" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        soundVolume,
+        parallaxEnabled,
+        activeAmbientTrackIndex,
+        foleyEnabled,
+        hapticsEnabled
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -816,6 +842,18 @@ class $DeskPreferencesTable extends DeskPreferences
               data['active_ambient_track_index']!,
               _activeAmbientTrackIndexMeta));
     }
+    if (data.containsKey('foley_enabled')) {
+      context.handle(
+          _foleyEnabledMeta,
+          foleyEnabled.isAcceptableOrUnknown(
+              data['foley_enabled']!, _foleyEnabledMeta));
+    }
+    if (data.containsKey('haptics_enabled')) {
+      context.handle(
+          _hapticsEnabledMeta,
+          hapticsEnabled.isAcceptableOrUnknown(
+              data['haptics_enabled']!, _hapticsEnabledMeta));
+    }
     return context;
   }
 
@@ -834,6 +872,10 @@ class $DeskPreferencesTable extends DeskPreferences
       activeAmbientTrackIndex: attachedDatabase.typeMapping.read(
           DriftSqlType.int,
           data['${effectivePrefix}active_ambient_track_index'])!,
+      foleyEnabled: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}foley_enabled'])!,
+      hapticsEnabled: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}haptics_enabled'])!,
     );
   }
 
@@ -848,11 +890,15 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
   final double soundVolume;
   final bool parallaxEnabled;
   final int activeAmbientTrackIndex;
+  final bool foleyEnabled;
+  final bool hapticsEnabled;
   const DeskPreference(
       {required this.id,
       required this.soundVolume,
       required this.parallaxEnabled,
-      required this.activeAmbientTrackIndex});
+      required this.activeAmbientTrackIndex,
+      required this.foleyEnabled,
+      required this.hapticsEnabled});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -860,6 +906,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
     map['sound_volume'] = Variable<double>(soundVolume);
     map['parallax_enabled'] = Variable<bool>(parallaxEnabled);
     map['active_ambient_track_index'] = Variable<int>(activeAmbientTrackIndex);
+    map['foley_enabled'] = Variable<bool>(foleyEnabled);
+    map['haptics_enabled'] = Variable<bool>(hapticsEnabled);
     return map;
   }
 
@@ -869,6 +917,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       soundVolume: Value(soundVolume),
       parallaxEnabled: Value(parallaxEnabled),
       activeAmbientTrackIndex: Value(activeAmbientTrackIndex),
+      foleyEnabled: Value(foleyEnabled),
+      hapticsEnabled: Value(hapticsEnabled),
     );
   }
 
@@ -881,6 +931,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       parallaxEnabled: serializer.fromJson<bool>(json['parallaxEnabled']),
       activeAmbientTrackIndex:
           serializer.fromJson<int>(json['activeAmbientTrackIndex']),
+      foleyEnabled: serializer.fromJson<bool>(json['foleyEnabled']),
+      hapticsEnabled: serializer.fromJson<bool>(json['hapticsEnabled']),
     );
   }
   @override
@@ -892,6 +944,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       'parallaxEnabled': serializer.toJson<bool>(parallaxEnabled),
       'activeAmbientTrackIndex':
           serializer.toJson<int>(activeAmbientTrackIndex),
+      'foleyEnabled': serializer.toJson<bool>(foleyEnabled),
+      'hapticsEnabled': serializer.toJson<bool>(hapticsEnabled),
     };
   }
 
@@ -899,13 +953,17 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           {int? id,
           double? soundVolume,
           bool? parallaxEnabled,
-          int? activeAmbientTrackIndex}) =>
+          int? activeAmbientTrackIndex,
+          bool? foleyEnabled,
+          bool? hapticsEnabled}) =>
       DeskPreference(
         id: id ?? this.id,
         soundVolume: soundVolume ?? this.soundVolume,
         parallaxEnabled: parallaxEnabled ?? this.parallaxEnabled,
         activeAmbientTrackIndex:
             activeAmbientTrackIndex ?? this.activeAmbientTrackIndex,
+        foleyEnabled: foleyEnabled ?? this.foleyEnabled,
+        hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
       );
   DeskPreference copyWithCompanion(DeskPreferencesCompanion data) {
     return DeskPreference(
@@ -918,6 +976,12 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       activeAmbientTrackIndex: data.activeAmbientTrackIndex.present
           ? data.activeAmbientTrackIndex.value
           : this.activeAmbientTrackIndex,
+      foleyEnabled: data.foleyEnabled.present
+          ? data.foleyEnabled.value
+          : this.foleyEnabled,
+      hapticsEnabled: data.hapticsEnabled.present
+          ? data.hapticsEnabled.value
+          : this.hapticsEnabled,
     );
   }
 
@@ -927,14 +991,16 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           ..write('id: $id, ')
           ..write('soundVolume: $soundVolume, ')
           ..write('parallaxEnabled: $parallaxEnabled, ')
-          ..write('activeAmbientTrackIndex: $activeAmbientTrackIndex')
+          ..write('activeAmbientTrackIndex: $activeAmbientTrackIndex, ')
+          ..write('foleyEnabled: $foleyEnabled, ')
+          ..write('hapticsEnabled: $hapticsEnabled')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, soundVolume, parallaxEnabled, activeAmbientTrackIndex);
+  int get hashCode => Object.hash(id, soundVolume, parallaxEnabled,
+      activeAmbientTrackIndex, foleyEnabled, hapticsEnabled);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -942,7 +1008,9 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           other.id == this.id &&
           other.soundVolume == this.soundVolume &&
           other.parallaxEnabled == this.parallaxEnabled &&
-          other.activeAmbientTrackIndex == this.activeAmbientTrackIndex);
+          other.activeAmbientTrackIndex == this.activeAmbientTrackIndex &&
+          other.foleyEnabled == this.foleyEnabled &&
+          other.hapticsEnabled == this.hapticsEnabled);
 }
 
 class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
@@ -950,23 +1018,31 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
   final Value<double> soundVolume;
   final Value<bool> parallaxEnabled;
   final Value<int> activeAmbientTrackIndex;
+  final Value<bool> foleyEnabled;
+  final Value<bool> hapticsEnabled;
   const DeskPreferencesCompanion({
     this.id = const Value.absent(),
     this.soundVolume = const Value.absent(),
     this.parallaxEnabled = const Value.absent(),
     this.activeAmbientTrackIndex = const Value.absent(),
+    this.foleyEnabled = const Value.absent(),
+    this.hapticsEnabled = const Value.absent(),
   });
   DeskPreferencesCompanion.insert({
     this.id = const Value.absent(),
     this.soundVolume = const Value.absent(),
     this.parallaxEnabled = const Value.absent(),
     this.activeAmbientTrackIndex = const Value.absent(),
+    this.foleyEnabled = const Value.absent(),
+    this.hapticsEnabled = const Value.absent(),
   });
   static Insertable<DeskPreference> custom({
     Expression<int>? id,
     Expression<double>? soundVolume,
     Expression<bool>? parallaxEnabled,
     Expression<int>? activeAmbientTrackIndex,
+    Expression<bool>? foleyEnabled,
+    Expression<bool>? hapticsEnabled,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -974,6 +1050,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       if (parallaxEnabled != null) 'parallax_enabled': parallaxEnabled,
       if (activeAmbientTrackIndex != null)
         'active_ambient_track_index': activeAmbientTrackIndex,
+      if (foleyEnabled != null) 'foley_enabled': foleyEnabled,
+      if (hapticsEnabled != null) 'haptics_enabled': hapticsEnabled,
     });
   }
 
@@ -981,13 +1059,17 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       {Value<int>? id,
       Value<double>? soundVolume,
       Value<bool>? parallaxEnabled,
-      Value<int>? activeAmbientTrackIndex}) {
+      Value<int>? activeAmbientTrackIndex,
+      Value<bool>? foleyEnabled,
+      Value<bool>? hapticsEnabled}) {
     return DeskPreferencesCompanion(
       id: id ?? this.id,
       soundVolume: soundVolume ?? this.soundVolume,
       parallaxEnabled: parallaxEnabled ?? this.parallaxEnabled,
       activeAmbientTrackIndex:
           activeAmbientTrackIndex ?? this.activeAmbientTrackIndex,
+      foleyEnabled: foleyEnabled ?? this.foleyEnabled,
+      hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
     );
   }
 
@@ -1007,6 +1089,12 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       map['active_ambient_track_index'] =
           Variable<int>(activeAmbientTrackIndex.value);
     }
+    if (foleyEnabled.present) {
+      map['foley_enabled'] = Variable<bool>(foleyEnabled.value);
+    }
+    if (hapticsEnabled.present) {
+      map['haptics_enabled'] = Variable<bool>(hapticsEnabled.value);
+    }
     return map;
   }
 
@@ -1016,7 +1104,9 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
           ..write('id: $id, ')
           ..write('soundVolume: $soundVolume, ')
           ..write('parallaxEnabled: $parallaxEnabled, ')
-          ..write('activeAmbientTrackIndex: $activeAmbientTrackIndex')
+          ..write('activeAmbientTrackIndex: $activeAmbientTrackIndex, ')
+          ..write('foleyEnabled: $foleyEnabled, ')
+          ..write('hapticsEnabled: $hapticsEnabled')
           ..write(')'))
         .toString();
   }
@@ -1424,6 +1514,8 @@ typedef $$DeskPreferencesTableCreateCompanionBuilder = DeskPreferencesCompanion
   Value<double> soundVolume,
   Value<bool> parallaxEnabled,
   Value<int> activeAmbientTrackIndex,
+  Value<bool> foleyEnabled,
+  Value<bool> hapticsEnabled,
 });
 typedef $$DeskPreferencesTableUpdateCompanionBuilder = DeskPreferencesCompanion
     Function({
@@ -1431,6 +1523,8 @@ typedef $$DeskPreferencesTableUpdateCompanionBuilder = DeskPreferencesCompanion
   Value<double> soundVolume,
   Value<bool> parallaxEnabled,
   Value<int> activeAmbientTrackIndex,
+  Value<bool> foleyEnabled,
+  Value<bool> hapticsEnabled,
 });
 
 class $$DeskPreferencesTableFilterComposer
@@ -1454,6 +1548,13 @@ class $$DeskPreferencesTableFilterComposer
 
   ColumnFilters<int> get activeAmbientTrackIndex => $composableBuilder(
       column: $table.activeAmbientTrackIndex,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get foleyEnabled => $composableBuilder(
+      column: $table.foleyEnabled, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get hapticsEnabled => $composableBuilder(
+      column: $table.hapticsEnabled,
       builder: (column) => ColumnFilters(column));
 }
 
@@ -1479,6 +1580,14 @@ class $$DeskPreferencesTableOrderingComposer
   ColumnOrderings<int> get activeAmbientTrackIndex => $composableBuilder(
       column: $table.activeAmbientTrackIndex,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get foleyEnabled => $composableBuilder(
+      column: $table.foleyEnabled,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get hapticsEnabled => $composableBuilder(
+      column: $table.hapticsEnabled,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$DeskPreferencesTableAnnotationComposer
@@ -1501,6 +1610,12 @@ class $$DeskPreferencesTableAnnotationComposer
 
   GeneratedColumn<int> get activeAmbientTrackIndex => $composableBuilder(
       column: $table.activeAmbientTrackIndex, builder: (column) => column);
+
+  GeneratedColumn<bool> get foleyEnabled => $composableBuilder(
+      column: $table.foleyEnabled, builder: (column) => column);
+
+  GeneratedColumn<bool> get hapticsEnabled => $composableBuilder(
+      column: $table.hapticsEnabled, builder: (column) => column);
 }
 
 class $$DeskPreferencesTableTableManager extends RootTableManager<
@@ -1534,24 +1649,32 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             Value<double> soundVolume = const Value.absent(),
             Value<bool> parallaxEnabled = const Value.absent(),
             Value<int> activeAmbientTrackIndex = const Value.absent(),
+            Value<bool> foleyEnabled = const Value.absent(),
+            Value<bool> hapticsEnabled = const Value.absent(),
           }) =>
               DeskPreferencesCompanion(
             id: id,
             soundVolume: soundVolume,
             parallaxEnabled: parallaxEnabled,
             activeAmbientTrackIndex: activeAmbientTrackIndex,
+            foleyEnabled: foleyEnabled,
+            hapticsEnabled: hapticsEnabled,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<double> soundVolume = const Value.absent(),
             Value<bool> parallaxEnabled = const Value.absent(),
             Value<int> activeAmbientTrackIndex = const Value.absent(),
+            Value<bool> foleyEnabled = const Value.absent(),
+            Value<bool> hapticsEnabled = const Value.absent(),
           }) =>
               DeskPreferencesCompanion.insert(
             id: id,
             soundVolume: soundVolume,
             parallaxEnabled: parallaxEnabled,
             activeAmbientTrackIndex: activeAmbientTrackIndex,
+            foleyEnabled: foleyEnabled,
+            hapticsEnabled: hapticsEnabled,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (
