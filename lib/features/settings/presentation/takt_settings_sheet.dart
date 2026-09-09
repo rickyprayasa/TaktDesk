@@ -25,7 +25,7 @@ class TaktSettingsSheet extends ConsumerWidget {
     final panelBgColor =
         isDark ? TaktColors.basaltSlate : const Color(0xFFEDEAE2);
     final borderColor =
-        isDark ? TaktColors.slateBorder : const Color(0xFFBDB8AD);
+        isDark ? TaktColors.slateBorder : TaktColors.lightChassisBorder;
     final primaryTextColor =
         isDark ? TaktColors.warmBone : const Color(0xFF141618);
     final secondaryTextColor =
@@ -64,7 +64,7 @@ class TaktSettingsSheet extends ConsumerWidget {
                       height: 4,
                       decoration: BoxDecoration(
                         color: isDark
-                            ? const Color(0xFF383D45)
+                            ? TaktColors.slateBorder
                             : const Color(0xFFB5B0A4),
                         borderRadius: BorderRadius.circular(2.0),
                       ),
@@ -106,16 +106,21 @@ class TaktSettingsSheet extends ConsumerWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'MASTER VOLUME',
-                              style: TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 1.0,
-                                color: primaryTextColor,
+                            Expanded(
+                              child: Text(
+                                'MASTER VOLUME',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 1.0,
+                                  color: primaryTextColor,
+                                ),
                               ),
                             ),
+                            const SizedBox(width: 8),
                             Text(
                               '${(prefs.soundVolume * 100).round()}%',
                               style: const TextStyle(
@@ -131,8 +136,8 @@ class TaktSettingsSheet extends ConsumerWidget {
                           data: SliderThemeData(
                             activeTrackColor: TaktColors.filamentAmber,
                             inactiveTrackColor: isDark
-                                ? const Color(0xFF2E3238)
-                                : const Color(0xFFD5D1C8),
+                                ? TaktColors.slateLight
+                                : TaktColors.paperBorder,
                             thumbColor: TaktColors.filamentAmber,
                             overlayColor:
                                 TaktColors.filamentAmber.withValues(alpha: 0.2),
@@ -147,6 +152,12 @@ class TaktSettingsSheet extends ConsumerWidget {
                             min: 0.0,
                             max: 1.0,
                             onChanged: (val) {
+                              ref
+                                  .read(deskPreferencesControllerProvider
+                                      .notifier)
+                                  .setVolume(val);
+                            },
+                            onChangeEnd: (val) {
                               ref
                                   .read(deskPreferencesControllerProvider
                                       .notifier)
@@ -197,8 +208,8 @@ class TaktSettingsSheet extends ConsumerWidget {
                                   ? const Color(0xFF6B7280)
                                   : const Color(0xFF9CA3AF),
                               inactiveTrackColor: isDark
-                                  ? const Color(0xFF2E3238)
-                                  : const Color(0xFFD5D1C8),
+                                  ? TaktColors.slateLight
+                                  : TaktColors.paperBorder,
                               onChanged: (val) {
                                 ref
                                     .read(deskPreferencesControllerProvider
@@ -251,8 +262,8 @@ class TaktSettingsSheet extends ConsumerWidget {
                                   ? const Color(0xFF6B7280)
                                   : const Color(0xFF9CA3AF),
                               inactiveTrackColor: isDark
-                                  ? const Color(0xFF2E3238)
-                                  : const Color(0xFFD5D1C8),
+                                  ? TaktColors.slateLight
+                                  : TaktColors.paperBorder,
                               onChanged: (val) {
                                 ref
                                     .read(deskPreferencesControllerProvider
@@ -285,6 +296,7 @@ class TaktSettingsSheet extends ConsumerWidget {
                       children: [
                         // Status Badge
                         Row(
+                          key: const ValueKey('clearance_status_badge'),
                           children: [
                             Container(
                               width: 8,
@@ -560,7 +572,7 @@ class TaktSettingsSheet extends ConsumerWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8.0),
           side: BorderSide(
-            color: isDark ? TaktColors.slateBorder : const Color(0xFFBDB8AD),
+            color: isDark ? TaktColors.slateBorder : TaktColors.lightChassisBorder,
           ),
         ),
         title: Text(
@@ -638,14 +650,18 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontFamily: 'monospace',
-            fontSize: 10.0,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-            color: textColor,
+        Flexible(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 10.0,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.2,
+              color: textColor,
+            ),
           ),
         ),
         const SizedBox(width: 8),
