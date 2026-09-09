@@ -492,6 +492,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('02 / 04'), findsOneWidget);
+
+      // Tap prev button to return to page 1
+      await tester.tap(find.byKey(const ValueKey('edition_prev_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('01 / 04'), findsOneWidget);
     });
   });
 }

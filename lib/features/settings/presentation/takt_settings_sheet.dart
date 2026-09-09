@@ -755,23 +755,21 @@ class _HardwareEditionsSectionState
   }
 
   void _goToPrev() {
-    if (_currentPage > 0) {
-      _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-      HapticService.selectionClick();
-    }
+    if (!_pageController.hasClients || _currentPage <= 0) return;
+    _pageController.previousPage(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+    HapticService.selectionClick();
   }
 
   void _goToNext() {
-    if (_currentPage < HardwareEdition.all.length - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-      HapticService.selectionClick();
-    }
+    if (!_pageController.hasClients || _currentPage >= HardwareEdition.all.length - 1) return;
+    _pageController.nextPage(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+    HapticService.selectionClick();
   }
 
   @override
@@ -785,6 +783,7 @@ class _HardwareEditionsSectionState
         Row(
           children: [
             Flexible(
+              flex: 4,
               child: Text(
                 'HARDWARE EDITIONS // CHASSIS MATERIALITY',
                 maxLines: 1,
@@ -800,6 +799,7 @@ class _HardwareEditionsSectionState
             ),
             const SizedBox(width: 8),
             Expanded(
+              flex: 1,
               child: Container(
                 height: 1.0,
                 color: widget.secondaryTextColor.withValues(alpha: 0.25),
@@ -807,7 +807,7 @@ class _HardwareEditionsSectionState
             ),
             const SizedBox(width: 8),
             Text(
-              '[ 0${_currentPage + 1} / 04 ]',
+              '[ ${(_currentPage + 1).toString().padLeft(2, '0')} / ${HardwareEdition.all.length.toString().padLeft(2, '0')} ]',
               style: TextStyle(
                 fontFamily: 'monospace',
                 fontSize: 10.0,
@@ -817,39 +817,49 @@ class _HardwareEditionsSectionState
               ),
             ),
             const SizedBox(width: 6),
-            InkWell(
-              key: const ValueKey('edition_prev_button'),
-              borderRadius: BorderRadius.circular(3.0),
-              onTap: _goToPrev,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                child: Text(
-                  '◀',
-                  style: TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 10,
-                    color: _currentPage > 0
-                        ? widget.primaryTextColor
-                        : widget.secondaryTextColor.withValues(alpha: 0.4),
+            Semantics(
+              label: 'Previous hardware edition',
+              button: true,
+              enabled: _currentPage > 0,
+              child: InkWell(
+                key: const ValueKey('edition_prev_button'),
+                borderRadius: BorderRadius.circular(3.0),
+                onTap: _currentPage > 0 ? _goToPrev : null,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Text(
+                    '◀',
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 10,
+                      color: _currentPage > 0
+                          ? widget.primaryTextColor
+                          : widget.secondaryTextColor.withValues(alpha: 0.4),
+                    ),
                   ),
                 ),
               ),
             ),
             const SizedBox(width: 2),
-            InkWell(
-              key: const ValueKey('edition_next_button'),
-              borderRadius: BorderRadius.circular(3.0),
-              onTap: _goToNext,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                child: Text(
-                  '▶',
-                  style: TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 10,
-                    color: _currentPage < HardwareEdition.all.length - 1
-                        ? widget.primaryTextColor
-                        : widget.secondaryTextColor.withValues(alpha: 0.4),
+            Semantics(
+              label: 'Next hardware edition',
+              button: true,
+              enabled: _currentPage < HardwareEdition.all.length - 1,
+              child: InkWell(
+                key: const ValueKey('edition_next_button'),
+                borderRadius: BorderRadius.circular(3.0),
+                onTap: _currentPage < HardwareEdition.all.length - 1 ? _goToNext : null,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Text(
+                    '▶',
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 10,
+                      color: _currentPage < HardwareEdition.all.length - 1
+                          ? widget.primaryTextColor
+                          : widget.secondaryTextColor.withValues(alpha: 0.4),
+                    ),
                   ),
                 ),
               ),

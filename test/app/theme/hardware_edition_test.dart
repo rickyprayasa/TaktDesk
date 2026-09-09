@@ -103,11 +103,17 @@ void main() {
       expect(stateDark.canvasColor, equals(HardwareEdition.braunClassic.darkCanvas));
       expect(stateDark.moduleChassisColor, equals(HardwareEdition.braunClassic.darkModuleBg));
       expect(stateDark.borderColor, equals(HardwareEdition.braunClassic.darkBorder));
+      expect(stateDark.plateGradient, equals(HardwareEdition.braunClassic.plateGradientDark));
+      expect(stateDark.rivetColor, equals(HardwareEdition.braunClassic.rivetDark));
+      expect(stateDark.accentColor, equals(HardwareEdition.braunClassic.accentColor));
 
       const stateLight = ChassisThemeState(isDarkMode: false);
       expect(stateLight.canvasColor, equals(HardwareEdition.braunClassic.lightCanvas));
       expect(stateLight.moduleChassisColor, equals(HardwareEdition.braunClassic.lightModuleBg));
       expect(stateLight.borderColor, equals(HardwareEdition.braunClassic.lightBorder));
+      expect(stateLight.plateGradient, equals(HardwareEdition.braunClassic.plateGradientLight));
+      expect(stateLight.rivetColor, equals(HardwareEdition.braunClassic.rivetLight));
+      expect(stateLight.accentColor, equals(HardwareEdition.braunClassic.accentColor));
     });
   });
 }
