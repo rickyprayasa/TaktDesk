@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../app/theme/hardware_edition.dart';
 import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/theme_controller.dart';
+import '../../../core/haptics/haptic_service.dart';
 import 'settings_controller.dart';
 
 /// The Industrial Service Hatch Modal Sheet (Settings, About & Legal).
@@ -83,6 +85,17 @@ class TaktSettingsSheet extends ConsumerWidget {
                       letterSpacing: 1.5,
                       color: primaryTextColor,
                     ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Section: Hardware Editions // Chassis Materiality
+                  _HardwareEditionsSection(
+                    prefs: prefs,
+                    isDark: isDark,
+                    primaryTextColor: primaryTextColor,
+                    secondaryTextColor: secondaryTextColor,
+                    panelBgColor: panelBgColor,
+                    borderColor: borderColor,
                   ),
                   const SizedBox(height: 20),
 
@@ -674,4 +687,593 @@ class _SectionHeader extends StatelessWidget {
       ],
     );
   }
+}
+
+class _HardwareEditionsSection extends ConsumerWidget {
+  final DeskPreferencesState prefs;
+  final bool isDark;
+  final Color primaryTextColor;
+  final Color secondaryTextColor;
+  final Color panelBgColor;
+  final Color borderColor;
+
+  const _HardwareEditionsSection({
+    required this.prefs,
+    required this.isDark,
+    required this.primaryTextColor,
+    required this.secondaryTextColor,
+    required this.panelBgColor,
+    required this.borderColor,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionHeader(
+          title: 'HARDWARE EDITIONS // CHASSIS MATERIALITY',
+          textColor: secondaryTextColor,
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: panelBgColor,
+            borderRadius: BorderRadius.circular(6.0),
+            border: Border.all(color: borderColor, width: 0.8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Horizontal scrollable row of 4 _EditionCard widgets
+              SizedBox(
+                height: 148,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (int i = 0; i < HardwareEdition.all.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 10),
+                        _EditionCard(
+                          edition: HardwareEdition.all[i],
+                          isSelected: prefs.selectedEdition ==
+                              HardwareEdition.all[i].type.name,
+                          isUnlocked: !HardwareEdition.all[i].isPremium ||
+                              prefs.isProSimulated,
+                          isDark: isDark,
+                          onTap: () {
+                            final ed = HardwareEdition.all[i];
+                            final isSel =
+                                prefs.selectedEdition == ed.type.name;
+                            final isUnl =
+                                !ed.isPremium || prefs.isProSimulated;
+                            if (!isUnl) {
+                              _showStudioProDialog(
+                                context,
+                                ref,
+                                ed,
+                                isDark: isDark,
+                                primaryTextColor: primaryTextColor,
+                                secondaryTextColor: secondaryTextColor,
+                              );
+                            } else if (!isSel) {
+                              ref
+                                  .read(
+                                      deskPreferencesControllerProvider
+                                          .notifier)
+                                  .setHardwareEdition(ed.type);
+                              HapticService.selectionClick();
+                            } else {
+                              HapticService.selectionClick();
+                            }
+                          },
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Divider(height: 1, color: borderColor),
+              const SizedBox(height: 12),
+              // SIMULATE STUDIO PRO CLEARANCE switch row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'SIMULATE STUDIO PRO CLEARANCE',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1.0,
+                            color: primaryTextColor,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Developer preview override for all hardware finishes',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 9.0,
+                            color: secondaryTextColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Switch(
+                    key: const ValueKey('simulate_pro_switch'),
+                    value: prefs.isProSimulated,
+                    activeThumbColor: TaktColors.filamentAmber,
+                    activeTrackColor:
+                        TaktColors.filamentAmber.withValues(alpha: 0.5),
+                    inactiveThumbColor: isDark
+                        ? const Color(0xFF6B7280)
+                        : const Color(0xFF9CA3AF),
+                    inactiveTrackColor: isDark
+                        ? TaktColors.slateLight
+                        : TaktColors.paperBorder,
+                    onChanged: (val) {
+                      ref
+                          .read(deskPreferencesControllerProvider.notifier)
+                          .setProSimulated(val);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EditionCard extends StatelessWidget {
+  final HardwareEdition edition;
+  final bool isSelected;
+  final bool isUnlocked;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _EditionCard({
+    required this.edition,
+    required this.isSelected,
+    required this.isUnlocked,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final rivetColor = isDark ? edition.rivetDark : edition.rivetLight;
+    final borderColor = isSelected
+        ? TaktColors.filamentAmber
+        : (isDark ? edition.darkBorder : edition.lightBorder);
+    final titleColor = isDark ? TaktColors.warmBone : const Color(0xFF141618);
+    final subtitleColor =
+        isDark ? const Color(0xFF9E9B93) : const Color(0xFF5A5D64);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: ValueKey('edition_card_${edition.type.name}'),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6.0),
+        child: Container(
+          width: 180,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(6.0),
+            border: Border.all(
+              color: borderColor,
+              width: isSelected ? 1.4 : 1.0,
+            ),
+            gradient: LinearGradient(
+              colors: isDark
+                  ? edition.plateGradientDark
+                  : edition.plateGradientLight,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Stack(
+            children: [
+              // 4 Corner Rivets (4x4 circular containers)
+              Positioned(
+                top: 5,
+                left: 5,
+                child: _RivetDot(color: rivetColor),
+              ),
+              Positioned(
+                top: 5,
+                right: 5,
+                child: _RivetDot(color: rivetColor),
+              ),
+              Positioned(
+                bottom: 5,
+                left: 5,
+                child: _RivetDot(color: rivetColor),
+              ),
+              Positioned(
+                bottom: 5,
+                right: 5,
+                child: _RivetDot(color: rivetColor),
+              ),
+
+              // Content
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 10,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Top: Tier badge & Swatch chips
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Badge: FREE or STUDIO PRO
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 5,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: edition.isPremium
+                                  ? TaktColors.filamentAmber
+                                      .withValues(alpha: 0.2)
+                                  : (isDark
+                                      ? TaktColors.warmBone
+                                          .withValues(alpha: 0.15)
+                                      : const Color(0xFF141618)
+                                          .withValues(alpha: 0.08)),
+                              borderRadius: BorderRadius.circular(3.0),
+                              border: Border.all(
+                                color: edition.isPremium
+                                    ? TaktColors.filamentAmber
+                                    : (isDark
+                                        ? TaktColors.warmBone
+                                        : const Color(0xFF5A5D64)),
+                                width: 0.6,
+                              ),
+                            ),
+                            child: Text(
+                              edition.isPremium ? 'STUDIO PRO' : 'FREE',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 7.5,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: edition.isPremium
+                                    ? TaktColors.filamentAmber
+                                    : (isDark
+                                        ? TaktColors.warmBone
+                                        : const Color(0xFF141618)),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        // Swatch chips
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _SwatchDot(
+                              color: edition.needleColor,
+                              isDark: isDark,
+                            ),
+                            const SizedBox(width: 4),
+                            _SwatchDot(
+                              color: edition.filamentColor,
+                              isDark: isDark,
+                            ),
+                            const SizedBox(width: 4),
+                            _SwatchDot(
+                              color: edition.accentColor,
+                              isDark: isDark,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                    // Middle: Title, Year & Subtitle
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          edition.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 10.0,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                            color: titleColor,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${edition.yearLabel} · ${edition.subtitle}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.4,
+                            color: subtitleColor,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Bottom: Action indicator / button
+                    _buildActionButton(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton() {
+    if (isSelected) {
+      return Container(
+        width: double.infinity,
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        decoration: BoxDecoration(
+          color: TaktColors.filamentAmber.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(3.0),
+          border: Border.all(
+            color: TaktColors.filamentAmber,
+            width: 0.8,
+          ),
+        ),
+        child: const Text(
+          'EQUIPPED',
+          style: TextStyle(
+            fontFamily: 'monospace',
+            fontSize: 8.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+            color: TaktColors.filamentAmber,
+          ),
+        ),
+      );
+    }
+
+    if (isUnlocked) {
+      return Container(
+        width: double.infinity,
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.black.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(3.0),
+          border: Border.all(
+            color: isDark ? Colors.white24 : Colors.black26,
+            width: 0.8,
+          ),
+        ),
+        child: Text(
+          'EQUIP',
+          style: TextStyle(
+            fontFamily: 'monospace',
+            fontSize: 8.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+            color: isDark ? TaktColors.warmBone : const Color(0xFF141618),
+          ),
+        ),
+      );
+    }
+
+    // Locked
+    return Container(
+      width: double.infinity,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(3.0),
+        border: Border.all(
+          color: TaktColors.mutedOchre.withValues(alpha: 0.6),
+          width: 0.8,
+        ),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.lock,
+            size: 9,
+            color: TaktColors.mutedOchre,
+          ),
+          SizedBox(width: 4),
+          Text(
+            'LOCKED // PRO',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 8.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+              color: TaktColors.mutedOchre,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RivetDot extends StatelessWidget {
+  final Color color;
+
+  const _RivetDot({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 4,
+      height: 4,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
+    );
+  }
+}
+
+class _SwatchDot extends StatelessWidget {
+  final Color color;
+  final bool isDark;
+
+  const _SwatchDot({
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: isDark ? Colors.white24 : Colors.black26,
+          width: 0.5,
+        ),
+      ),
+    );
+  }
+}
+
+void _showStudioProDialog(
+  BuildContext context,
+  WidgetRef ref,
+  HardwareEdition edition, {
+  bool? isDark,
+  Color? primaryTextColor,
+  Color? secondaryTextColor,
+}) {
+  final dark = isDark ?? ref.read(chassisThemeProvider).isDarkMode;
+  final primary = primaryTextColor ??
+      (dark ? TaktColors.warmBone : const Color(0xFF141618));
+  final secondary = secondaryTextColor ??
+      (dark ? const Color(0xFF9E9B93) : const Color(0xFF5A5D64));
+
+  showDialog<void>(
+    context: context,
+    builder: (dialogCtx) => AlertDialog(
+      backgroundColor:
+          dark ? TaktColors.basaltSlate : const Color(0xFFEDEAE2),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8.0),
+        side: BorderSide(
+          color: dark ? TaktColors.slateBorder : TaktColors.lightChassisBorder,
+        ),
+      ),
+      title: Text(
+        'TAKT DESK STUDIO PRO',
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.0,
+          color: primary,
+        ),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'UNLOCK ${edition.title} & ALL HARDWARE FINISHES',
+            style: const TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+              color: TaktColors.filamentAmber,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Lifetime clearance gives you access to aerospace titanium, Bauhaus primary palettes, burnished marine brass, and all future hardware materials.',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 10,
+              color: secondary,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogCtx).pop(),
+          child: Text(
+            'CANCEL',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              color: secondary,
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            ),
+          ),
+        ),
+        ElevatedButton(
+          key: const ValueKey('pro_dialog_unlock_button'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: TaktColors.filamentAmber,
+            foregroundColor: TaktColors.chassisObsidian,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4.0),
+            ),
+          ),
+          onPressed: () {
+            ref
+                .read(deskPreferencesControllerProvider.notifier)
+                .setProSimulated(true);
+            ref
+                .read(deskPreferencesControllerProvider.notifier)
+                .setHardwareEdition(edition.type);
+            HapticService.selectionClick();
+            Navigator.of(dialogCtx).pop();
+          },
+          child: const Text(
+            'UNLOCK NOW (SIMULATED)',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontWeight: FontWeight.w700,
+              fontSize: 11,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }

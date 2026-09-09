@@ -14,7 +14,11 @@ void main() {
       return ProviderScope(
         overrides: [
           deskPreferencesControllerProvider.overrideWith(
-            (ref) => DeskPreferencesController(null, AudioService(isMock: true)),
+            (ref) => DeskPreferencesController(
+              null,
+              AudioService(isMock: true),
+              ref.watch(chassisThemeProvider.notifier),
+            ),
           ),
           lifetimeFocusStatsProvider.overrideWith(
             (ref) => Stream.value(const LifetimeFocusStats(
@@ -326,6 +330,95 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.textContaining('SERVICE HATCH'), findsOneWidget);
+    });
+
+    testWidgets('TaktSettingsSheet renders Hardware Editions section with 4 swatches', (tester) async {
+      await tester.pumpWidget(buildSheet());
+      await tester.pump();
+
+      expect(find.text('HARDWARE EDITIONS // CHASSIS MATERIALITY'), findsOneWidget);
+      expect(find.text('BRAUN CLASSIC'), findsOneWidget);
+      expect(find.text('TITANIUM STEALTH'), findsOneWidget);
+      expect(find.text('BAUHAUS HERITAGE'), findsOneWidget);
+      expect(find.text('RAW BRASS & PATINA'), findsOneWidget);
+      expect(find.textContaining('SIMULATE STUDIO PRO CLEARANCE'), findsOneWidget);
+    });
+
+    testWidgets('Tapping unlocked edition equips it and triggers haptic click', (tester) async {
+      await tester.pumpWidget(buildSheet());
+      await tester.pump();
+
+      final titaniumFinder = find.byKey(const ValueKey('edition_card_titaniumStealth'));
+      expect(titaniumFinder, findsOneWidget);
+
+      await tester.tap(titaniumFinder);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: titaniumFinder,
+          matching: find.text('EQUIPPED'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('Toggling simulate_pro_switch updates simulated pro status', (tester) async {
+      await tester.pumpWidget(buildSheet());
+      await tester.pump();
+
+      final switchFinder = find.byKey(const ValueKey('simulate_pro_switch'));
+      expect(switchFinder, findsOneWidget);
+
+      final switchWidgetBefore = tester.widget<Switch>(switchFinder);
+      expect(switchWidgetBefore.value, isTrue);
+
+      await tester.tap(switchFinder);
+      await tester.pumpAndSettle();
+
+      final switchWidgetAfter = tester.widget<Switch>(switchFinder);
+      expect(switchWidgetAfter.value, isFalse);
+    });
+
+    testWidgets('Tapping locked card when pro is disabled opens Studio Pro dialog, and tapping unlock activates pro and equips edition', (tester) async {
+      await tester.pumpWidget(buildSheet());
+      await tester.pump();
+
+      // Disable simulated pro
+      final switchFinder = find.byKey(const ValueKey('simulate_pro_switch'));
+      await tester.tap(switchFinder);
+      await tester.pumpAndSettle();
+
+      expect(find.text('LOCKED // PRO'), findsWidgets);
+
+      // Tap locked titanium card
+      final titaniumFinder = find.byKey(const ValueKey('edition_card_titaniumStealth'));
+      await tester.tap(titaniumFinder);
+      await tester.pumpAndSettle();
+
+      // Verify Studio Pro dialog appears
+      expect(find.text('TAKT DESK STUDIO PRO'), findsOneWidget);
+      expect(find.textContaining('TITANIUM STEALTH'), findsWidgets);
+
+      final unlockButton = find.byKey(const ValueKey('pro_dialog_unlock_button'));
+      expect(unlockButton, findsOneWidget);
+
+      await tester.tap(unlockButton);
+      await tester.pumpAndSettle();
+
+      // Dialog should be dismissed
+      expect(find.text('TAKT DESK STUDIO PRO'), findsNothing);
+
+      // Pro is now unlocked and titaniumStealth is equipped
+      final switchWidgetAfter = tester.widget<Switch>(switchFinder);
+      expect(switchWidgetAfter.value, isTrue);
+      expect(
+        find.descendant(
+          of: titaniumFinder,
+          matching: find.text('EQUIPPED'),
+        ),
+        findsOneWidget,
+      );
     });
   });
 }
