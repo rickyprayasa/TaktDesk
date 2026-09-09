@@ -68,11 +68,16 @@ void main() {
     expect(pref!.soundVolume, 0.8);
     expect(pref.parallaxEnabled, isTrue);
     expect(pref.activeAmbientTrackIndex, 0);
+    expect(pref.foleyEnabled, isTrue);
+    expect(pref.hapticsEnabled, isTrue);
   });
 
   test('watchTodayTimerSessions filters sessions for the current day only', () async {
     final now = DateTime.now();
-    final yesterday = now.subtract(const Duration(days: 1));
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final yesterday = startOfDay.subtract(const Duration(hours: 2));
+    final todaySession1 = startOfDay.add(const Duration(minutes: 10));
+    final todaySession2 = startOfDay.add(const Duration(minutes: 40));
 
     // Past session
     await db.recordTimerSession(
@@ -87,7 +92,7 @@ void main() {
       targetMinutes: 25,
       elapsedSeconds: 1500,
       isFinished: true,
-      startedAt: now.subtract(const Duration(hours: 1)),
+      startedAt: todaySession1,
     );
 
     // Today session 2 (unfinished)
@@ -95,12 +100,43 @@ void main() {
       targetMinutes: 5,
       elapsedSeconds: 60,
       isFinished: false,
-      startedAt: now,
+      startedAt: todaySession2,
     );
 
     final todaySessions = await db.watchTodayTimerSessions().first;
     expect(todaySessions.length, equals(2));
     expect(todaySessions.first.isFinished, isTrue);
+  });
+
+  test('watchAllTimerSessions returns multiple sessions in descending timestamp order', () async {
+    final t1 = DateTime(2026, 1, 1, 10, 0);
+    final t2 = DateTime(2026, 1, 1, 11, 0);
+    final t3 = DateTime(2026, 1, 1, 12, 0);
+
+    await db.recordTimerSession(
+      targetMinutes: 25,
+      elapsedSeconds: 1500,
+      isFinished: true,
+      startedAt: t1,
+    );
+    await db.recordTimerSession(
+      targetMinutes: 15,
+      elapsedSeconds: 900,
+      isFinished: true,
+      startedAt: t3,
+    );
+    await db.recordTimerSession(
+      targetMinutes: 30,
+      elapsedSeconds: 1800,
+      isFinished: false,
+      startedAt: t2,
+    );
+
+    final all = await db.watchAllTimerSessions().first;
+    expect(all.length, 3);
+    expect(all[0].startedAt, equals(t3));
+    expect(all[1].startedAt, equals(t2));
+    expect(all[2].startedAt, equals(t1));
   });
 
   test('clearTimerSessions removes all session records', () async {

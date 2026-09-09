@@ -110,7 +110,7 @@ class AppDatabase extends _$AppDatabase {
   Stream<List<TimerSession>> watchTodayTimerSessions() {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
+    final endOfDay = DateTime(now.year, now.month, now.day + 1);
     return (select(timerSessions)
           ..where((t) =>
               t.startedAt.isBiggerOrEqualValue(startOfDay) &
