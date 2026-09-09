@@ -32,7 +32,7 @@
   - `AppDatabase.clearTimerSessions()`: `Future<void>`
   - `AppDatabase.updatePreferences({double? soundVolume, bool? parallaxEnabled, int? activeAmbientTrackIndex, bool? foleyEnabled, bool? hapticsEnabled})`: `Future<void>`
 
-- [ ] **Step 1: Write failing database unit tests**
+- [x] **Step 1: Write failing database unit tests**
 
 Add tests to `test/core/database_test.dart` verifying `watchTodayTimerSessions`, `watchAllTimerSessions`, `clearTimerSessions`, and updated preferences:
 
@@ -84,12 +84,12 @@ test('clearTimerSessions removes all session records', () async {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter test test/core/database_test.dart`
 Expected: FAIL with compilation error: method `watchTodayTimerSessions` not defined.
 
-- [ ] **Step 3: Implement database extensions and regenerate Drift code**
+- [x] **Step 3: Implement database extensions and regenerate Drift code**
 
 In `lib/core/database/tables/desk_preferences_table.dart`:
 ```dart
@@ -165,12 +165,12 @@ Future<void> updatePreferences({
 Run build_runner:
 `dart run build_runner build --delete-conflicting-outputs`
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter test test/core/database_test.dart`
 Expected: PASS
 
-- [ ] **Step 5: Commit changes**
+- [x] **Step 5: Commit changes**
 
 ```bash
 git add lib/core/database/ test/core/database_test.dart
@@ -196,7 +196,7 @@ git commit -m "feat(database): add today/all timer queries and foley/haptic pref
   - `todayFocusStatsProvider`: `Provider<AsyncValue<TodayFocusStats>>`
   - `lifetimeFocusStatsProvider`: `Provider<AsyncValue<LifetimeFocusStats>>`
 
-- [ ] **Step 1: Write failing tests for settings controller and telemetry**
+- [x] **Step 1: Write failing tests for settings controller and telemetry**
 
 Create `test/features/settings/settings_controller_test.dart`:
 ```dart
@@ -248,12 +248,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter test test/features/settings/settings_controller_test.dart`
 Expected: FAIL with compilation error: file not found.
 
-- [ ] **Step 3: Implement AudioService foleyEnabled, HapticService.enabled, and settings controller**
+- [x] **Step 3: Implement AudioService foleyEnabled, HapticService.enabled, and settings controller**
 
 In `lib/core/audio/audio_service.dart`:
 Add `bool _foleyEnabled = true;` getter `foleyEnabled`, setter `setFoleyEnabled(bool v)`, and in `playFoley`:
@@ -288,12 +288,12 @@ static Future<void> dialTick() async {
 In `lib/features/settings/presentation/settings_controller.dart`:
 Define `DeskPreferencesState`, `DeskPreferencesController`, `todayFocusStatsProvider`, and `lifetimeFocusStatsProvider`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter test test/features/settings/settings_controller_test.dart`
 Expected: PASS
 
-- [ ] **Step 5: Commit changes**
+- [x] **Step 5: Commit changes**
 
 ```bash
 git add lib/core/audio/ lib/core/haptics/ lib/features/settings/ test/features/settings/
@@ -313,7 +313,7 @@ git commit -m "feat(settings): wire preferences controller and telemetry provide
 - Produces:
   - `DeskSpecPlateWidget`: `ConsumerWidget`
 
-- [ ] **Step 1: Write failing widget test for DeskSpecPlateWidget**
+- [x] **Step 1: Write failing widget test for DeskSpecPlateWidget**
 
 Create `test/features/desk/desk_spec_plate_widget_test.dart`:
 ```dart
@@ -352,12 +352,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter test test/features/desk/desk_spec_plate_widget_test.dart`
 Expected: FAIL with compilation error: `DeskSpecPlateWidget` not found.
 
-- [ ] **Step 3: Implement DeskSpecPlateWidget**
+- [x] **Step 3: Implement DeskSpecPlateWidget**
 
 In `lib/features/desk/presentation/widgets/desk_spec_plate_widget.dart`:
 - Implement debossed apparatus plate container with corner screw indicators.
@@ -365,12 +365,12 @@ In `lib/features/desk/presentation/widgets/desk_spec_plate_widget.dart`:
 - Right column: 4 micro-LED dots (`filamentAmber` when active, `basaltSlate` with dark outline when inactive) + `TODAY: X / 4 CYCLES` and `Y MIN FOCUSED`.
 - Wrap in `InkWell` / `GestureDetector` that plays `dialClick` and `HapticService.lightClick()`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter test test/features/desk/desk_spec_plate_widget_test.dart`
 Expected: PASS
 
-- [ ] **Step 5: Commit changes**
+- [x] **Step 5: Commit changes**
 
 ```bash
 git add lib/features/desk/presentation/widgets/desk_spec_plate_widget.dart test/features/desk/desk_spec_plate_widget_test.dart
@@ -390,7 +390,7 @@ git commit -m "feat(desk): implement DeskSpecPlateWidget with daily focus tally 
 - Produces:
   - `TaktSettingsSheet`: `ConsumerWidget`
 
-- [ ] **Step 1: Write failing widget test for TaktSettingsSheet**
+- [x] **Step 1: Write failing widget test for TaktSettingsSheet**
 
 Create `test/features/settings/takt_settings_sheet_test.dart`:
 ```dart
@@ -422,12 +422,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter test test/features/settings/takt_settings_sheet_test.dart`
 Expected: FAIL with compilation error: `TaktSettingsSheet` not found.
 
-- [ ] **Step 3: Implement TaktSettingsSheet**
+- [x] **Step 3: Implement TaktSettingsSheet**
 
 In `lib/features/settings/presentation/takt_settings_sheet.dart`:
 - Top knurled textured grip bar.
@@ -436,12 +436,12 @@ In `lib/features/settings/presentation/takt_settings_sheet.dart`:
 - Section 3: Lifetime sessions count and hours focused, plus "PURGE SESSION LOGS" button with dialog.
 - Section 4: Dieter Rams quote *"Weniger, aber besser"*, version metadata `v1.0.0 (Build 2026)`, 100% offline privacy pledge, and "OPEN SOURCE LICENSES" calling `showLicensePage(context: context)`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter test test/features/settings/takt_settings_sheet_test.dart`
 Expected: PASS
 
-- [ ] **Step 5: Commit changes**
+- [x] **Step 5: Commit changes**
 
 ```bash
 git add lib/features/settings/presentation/takt_settings_sheet.dart test/features/settings/takt_settings_sheet_test.dart
@@ -461,7 +461,7 @@ git commit -m "feat(settings): implement TaktSettingsSheet service hatch modal s
 - Consumes: `SettingsRivetButton`, `DeskSpecPlateWidget`, `TaktSettingsSheet`
 - Produces: Integrated desk console layout with bottom anchor and header settings trigger
 
-- [ ] **Step 1: Write failing widget test in desk_screen_test.dart**
+- [x] **Step 1: Write failing widget test in desk_screen_test.dart**
 
 Add test to `test/features/desk/desk_screen_test.dart`:
 ```dart
@@ -486,12 +486,12 @@ testWidgets('DeskCanvasScreen renders Settings rivet button and DeskSpecPlateWid
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter test test/features/desk/desk_screen_test.dart`
 Expected: FAIL with compilation error: `SettingsRivetButton` not found.
 
-- [ ] **Step 3: Implement SettingsRivetButton and wire into DeskCanvasScreen**
+- [x] **Step 3: Implement SettingsRivetButton and wire into DeskCanvasScreen**
 
 Create `lib/features/desk/presentation/widgets/settings_rivet_button.dart`:
 - Circular machine screw / knurled gear button with tactile press feedback.
@@ -501,14 +501,14 @@ In `lib/features/desk/presentation/desk_canvas_screen.dart`:
 - In Row 1 (Header): place `SettingsRivetButton` alongside `ChassisThemeSwitch`.
 - At the bottom of the column: place `const DeskSpecPlateWidget()`.
 
-- [ ] **Step 4: Run all tests and analyzer**
+- [x] **Step 4: Run all tests and analyzer**
 
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter test`
 Expected: ALL PASS (100%)
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter analyze`
 Expected: 0 issues
 
-- [ ] **Step 5: Commit changes**
+- [x] **Step 5: Commit changes**
 
 ```bash
 git add lib/features/desk/ presentation/ test/features/desk/
