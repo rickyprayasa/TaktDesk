@@ -6,6 +6,7 @@ import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/takt_typography.dart';
 import '../../../app/theme/theme_controller.dart';
 import '../../../core/focus/focus_lock_controller.dart';
+import '../../../core/haptics/haptic_service.dart';
 import '../../../core/sensors/parallax_controller.dart';
 import '../../tasks/presentation/receipt_runner_widget.dart';
 import '../../timer/presentation/chrono_dial_widget.dart';
@@ -166,6 +167,11 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
 
     return PopScope(
       canPop: !focusState.isLocked,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          HapticService.lightClick();
+        }
+      },
       child: Scaffold(
         backgroundColor: theme.canvasColor,
         body: MouseRegion(

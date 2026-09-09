@@ -61,7 +61,7 @@ void main() {
       expect(find.byType(MonasticSwitchWidget), findsOneWidget);
 
       // PopScope should initially allow pop when unlocked
-      final popScopeFinder = find.byType(PopScope);
+      final popScopeFinder = find.byWidgetPredicate((w) => w is PopScope);
       expect(popScopeFinder, findsOneWidget);
       final popScopeWidget = tester.widget<PopScope>(popScopeFinder);
       expect(popScopeWidget.canPop, isTrue);
@@ -108,7 +108,7 @@ void main() {
       await tester.pump();
 
       // Now PopScope blocks popping
-      final popScopeWidget = tester.widget<PopScope>(find.byType(PopScope));
+      final popScopeWidget = tester.widget<PopScope>(find.byWidgetPredicate((w) => w is PopScope));
       expect(popScopeWidget.canPop, isFalse);
 
       // Emergency unlatch widget is now visible

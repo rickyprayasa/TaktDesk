@@ -13,6 +13,7 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.tuneeca.takt_desk/focus_lock"
+    private var previousInterruptionFilter: Int? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -38,6 +39,7 @@ class MainActivity : FlutterActivity() {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             val notifManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                             if (notifManager != null && notifManager.isNotificationPolicyAccessGranted) {
+                                previousInterruptionFilter = notifManager.currentInterruptionFilter
                                 notifManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
                             }
                         }
@@ -64,7 +66,9 @@ class MainActivity : FlutterActivity() {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             val notifManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                             if (notifManager != null && notifManager.isNotificationPolicyAccessGranted) {
-                                notifManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
+                                val restoreFilter = previousInterruptionFilter ?: NotificationManager.INTERRUPTION_FILTER_ALL
+                                notifManager.setInterruptionFilter(restoreFilter)
+                                previousInterruptionFilter = null
                             }
                         }
                         result.success(true)

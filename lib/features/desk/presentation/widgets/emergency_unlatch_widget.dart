@@ -33,9 +33,9 @@ class _EmergencyUnlatchWidgetState extends ConsumerState<EmergencyUnlatchWidget>
       final progress = _holdController.value;
       ref.read(focusLockProvider.notifier).updateHoldProgress(progress);
 
-      final currentSecond = (progress * 5).floor();
-      if (currentSecond != _lastTickSecond && currentSecond > 0) {
-        _lastTickSecond = currentSecond;
+      final currentTick = (progress * 10).floor();
+      if (currentTick != _lastTickSecond && currentTick > 0 && currentTick < 10) {
+        _lastTickSecond = currentTick;
         ref.read(audioServiceProvider).play(SoundEffect.dialClick);
         HapticService.lightClick();
       }

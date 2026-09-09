@@ -51,7 +51,7 @@ class FocusLockController extends StateNotifier<FocusLockState> {
   }
 
   void updateHoldProgress(double progress) {
-    if (!state.isLocked) return;
+    if (!state.isLocked || _isProcessing) return;
     state = state.copyWith(
       isHolding: true,
       unlockProgress: progress.clamp(0.0, 1.0),
@@ -59,8 +59,11 @@ class FocusLockController extends StateNotifier<FocusLockState> {
   }
 
   void cancelHold() {
-    if (!state.isLocked) return;
+    if (!state.isLocked || _isProcessing) return;
     if (!state.isHolding && state.unlockProgress == 0.0) return;
+    if (state.isHolding) {
+      _audioService?.play(SoundEffect.springButton);
+    }
     state = state.copyWith(
       isHolding: false,
       unlockProgress: 0.0,
