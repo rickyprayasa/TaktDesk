@@ -1,13 +1,20 @@
+import 'package:drift/drift.dart' hide isNull, isNotNull;
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/app/theme/hardware_edition.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
+import 'package:takt_desk/core/database/app_database.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_painter.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_widget.dart';
 import 'package:takt_desk/features/timer/presentation/widgets/mechanical_flip_digit.dart';
 
 void main() {
+  setUpAll(() {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  });
+
   final dialFinder = find.byWidgetPredicate(
     (widget) => widget is CustomPaint && widget.painter is ChronoDialPainter,
   );
@@ -243,11 +250,15 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('ChronoDialWidget passes themeState.needleColor to ChronoDialPainter when edition changes', (tester) async {
-    final container = ProviderContainer();
+  testWidgets('ChronoDialWidget passes themeState.needleColor and filamentColor to ChronoDialPainter and updates on live edition change', (tester) async {
+    final testDb = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(testDb.close);
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(testDb),
+      ],
+    );
     addTearDown(container.dispose);
-
-    container.read(chassisThemeProvider.notifier).setHardwareEdition(HardwareEditionType.titaniumStealth);
 
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -262,8 +273,19 @@ void main() {
       ),
     );
 
-    final customPaint = tester.widget<CustomPaint>(dialFinder);
-    final painter = customPaint.painter as ChronoDialPainter;
-    expect(painter.needleColor, equals(const Color(0xFF3A86FF)));
+    // Initial default: Braun Classic
+    var customPaint = tester.widget<CustomPaint>(dialFinder);
+    var painter = customPaint.painter as ChronoDialPainter;
+    expect(painter.needleColor, equals(const Color(0xFFC85A32))); // mutedOchre
+    expect(painter.filamentColor, equals(const Color(0xFFD99B59))); // filamentAmber
+
+    // Live update to Titanium Stealth
+    container.read(chassisThemeProvider.notifier).setHardwareEdition(HardwareEditionType.titaniumStealth);
+    await tester.pump();
+
+    customPaint = tester.widget<CustomPaint>(dialFinder);
+    painter = customPaint.painter as ChronoDialPainter;
+    expect(painter.needleColor, equals(const Color(0xFF3A86FF))); // electric cobalt
+    expect(painter.filamentColor, equals(const Color(0xFFFF9E00))); // vivid amber neon
   });
 }

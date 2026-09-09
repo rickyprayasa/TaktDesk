@@ -8,6 +8,7 @@ class ChronoDialPainter extends CustomPainter {
   final int targetMinutes;
   final bool isRunning;
   final Color needleColor;
+  final Color filamentColor;
 
   // Cached text painters for dial numbers
   static final Map<int, TextPainter> _numberPainters = {};
@@ -18,6 +19,7 @@ class ChronoDialPainter extends CustomPainter {
     required this.targetMinutes,
     required this.isRunning,
     this.needleColor = TaktColors.mutedOchre,
+    this.filamentColor = TaktColors.filamentAmber,
   });
 
   static TextPainter _getTextPainter(String text) {
@@ -100,7 +102,7 @@ class ChronoDialPainter extends CustomPainter {
     // 4. Amber Halo Ring (if running)
     if (isRunning) {
       final haloPaint = Paint()
-        ..color = TaktColors.filamentAmber.withValues(alpha: 0.30)
+        ..color = filamentColor.withValues(alpha: 0.30)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 6.0
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10.0);
@@ -228,6 +230,7 @@ class ChronoDialPainter extends CustomPainter {
     return oldDelegate.remainingSeconds != remainingSeconds ||
         oldDelegate.targetMinutes != targetMinutes ||
         oldDelegate.isRunning != isRunning ||
-        oldDelegate.needleColor != needleColor;
+        oldDelegate.needleColor != needleColor ||
+        oldDelegate.filamentColor != filamentColor;
   }
 }

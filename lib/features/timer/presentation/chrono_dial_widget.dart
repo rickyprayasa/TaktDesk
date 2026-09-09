@@ -186,6 +186,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                             targetMinutes: state.targetMinutes,
                             isRunning: state.isRunning,
                             needleColor: themeState.needleColor,
+                            filamentColor: themeState.filamentColor,
                           ),
                         );
                       },
@@ -234,7 +235,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                 child: Text(
                   '${state.targetMinutes} MIN',
                   style: TaktTypography.controlLabel.copyWith(
-                    color: state.isRunning ? TaktColors.filamentAmber : TaktColors.warmBone,
+                    color: state.isRunning ? themeState.filamentColor : TaktColors.warmBone,
                   ),
                 ),
               ),
