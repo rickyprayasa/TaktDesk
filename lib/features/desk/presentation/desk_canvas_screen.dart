@@ -5,6 +5,7 @@ import 'package:sensors_plus/sensors_plus.dart';
 import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/takt_typography.dart';
 import '../../../app/theme/theme_controller.dart';
+import '../../../core/focus/focus_lock_controller.dart';
 import '../../../core/sensors/parallax_controller.dart';
 import '../../tasks/presentation/receipt_runner_widget.dart';
 import '../../timer/presentation/chrono_dial_widget.dart';
@@ -12,7 +13,8 @@ import '../../vinyl/presentation/vinyl_player_widget.dart';
 import 'ambient_lighting_layer.dart';
 import 'isometric_desk_layout.dart';
 import 'widgets/chassis_theme_switch.dart';
-import 'widgets/modular_rack_bracket.dart';
+import 'widgets/emergency_unlatch_widget.dart';
+import 'widgets/monastic_switch_widget.dart';
 
 class DeskCanvasScreen extends ConsumerStatefulWidget {
   final Stream<GyroscopeEvent>? gyroscopeStream;
@@ -160,89 +162,88 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = ref.watch(chassisThemeProvider);
+    final focusState = ref.watch(focusLockProvider);
 
-    return Scaffold(
-      backgroundColor: theme.canvasColor,
-      body: MouseRegion(
-        onHover: (event) {
-          final size = MediaQuery.of(context).size;
-          if (size.width > 0 && size.height > 0) {
-            final normX = ((event.position.dx / size.width) - 0.5) * 2;
-            final normY = ((event.position.dy / size.height) - 0.5) * 2;
-            ref.read(parallaxProvider.notifier).updateSensorInput(
-                  rawX: normX * 3.0,
-                  rawY: -normY * 3.0,
-                );
-          }
-        },
-        child: AmbientLightingLayer(
-          child: SafeArea(
-            child: IsometricDeskLayout(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final isWide = constraints.maxWidth >= 720;
-
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: isWide ? 900 : 340,
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Desk Spatial Header Bar with Theme Switch
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    isWide ? 'TAKT DESK // SPATIAL WORKBENCH' : 'TAKT DESK',
-                                    style: TaktTypography.controlLabel.copyWith(
-                                      color: theme.isDarkMode
-                                          ? TaktColors.warmBone.withValues(alpha: 0.6)
-                                          : const Color(0xFF2C3038),
-                                      letterSpacing: 1.2,
-                                    ),
+    return PopScope(
+      canPop: !focusState.isLocked,
+      child: Scaffold(
+        backgroundColor: theme.canvasColor,
+        body: MouseRegion(
+          onHover: (event) {
+            final size = MediaQuery.of(context).size;
+            if (size.width > 0 && size.height > 0) {
+              final normX = ((event.position.dx / size.width) - 0.5) * 2;
+              final normY = ((event.position.dy / size.height) - 0.5) * 2;
+              ref.read(parallaxProvider.notifier).updateSensorInput(
+                    rawX: normX * 3.0,
+                    rawY: -normY * 3.0,
+                  );
+            }
+          },
+          child: AmbientLightingLayer(
+            child: SafeArea(
+              child: IsometricDeskLayout(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 360),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Header: Branding and Chassis Theme Switch
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'TAKT DESK',
+                                  style: TaktTypography.controlLabel.copyWith(
+                                    color: theme.isDarkMode
+                                        ? TaktColors.warmBone.withValues(alpha: 0.6)
+                                        : const Color(0xFF2C3038),
+                                    letterSpacing: 1.2,
+                                    fontSize: 11,
                                   ),
-                                  const ChassisThemeSwitch(),
+                                ),
+                                const ChassisThemeSwitch(),
+                              ],
+                            ),
+                          ),
+                          // Compact Tactile Segmented Instrument Switcher + Monastic Focus Toggle
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6.0),
+                            child: Center(
+                              child: Wrap(
+                                alignment: WrapAlignment.center,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 8,
+                                runSpacing: 6,
+                                children: [
+                                  _buildInstrumentSelector(theme),
+                                  const MonasticSwitchWidget(),
                                 ],
                               ),
                             ),
-                            // Instruments Console
-                            if (isWide) ...[
-                              // Wide Viewport: 3 Instruments Side-by-Side in Horizontal Audio Rack
-                              const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(child: Center(child: ChronoDialWidget())),
-                                  ModularRackBracket(isVertical: false),
-                                  Expanded(child: Center(child: ReceiptRunnerWidget())),
-                                  ModularRackBracket(isVertical: false),
-                                  Expanded(child: Center(child: VinylPlayerWidget())),
-                                ],
-                              ),
-                            ] else ...[
-                              // Compact Viewport: Segmented Instrument Switcher + Active Instrument
-                              Center(child: _buildInstrumentSelector(theme)),
-                              const SizedBox(height: 6),
-                              if (_selectedInstrumentIndex == 0)
-                                const Center(child: ChronoDialWidget())
-                              else if (_selectedInstrumentIndex == 1)
-                                const Center(child: ReceiptRunnerWidget())
-                              else
-                                const Center(child: VinylPlayerWidget()),
-                            ],
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 2),
+                          // Active Instrument Console
+                          if (_selectedInstrumentIndex == 0)
+                            const Center(child: ChronoDialWidget())
+                          else if (_selectedInstrumentIndex == 1)
+                            const Center(child: ReceiptRunnerWidget())
+                          else
+                            const Center(child: VinylPlayerWidget()),
+                          const SizedBox(height: 8),
+                          // Emergency Unlatch Latch (renders when focus lock engaged)
+                          const EmergencyUnlatchWidget(),
+                        ],
                       ),
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
             ),
           ),

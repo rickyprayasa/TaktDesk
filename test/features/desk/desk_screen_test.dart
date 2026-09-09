@@ -5,14 +5,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:takt_desk/core/database/app_database.dart';
+import 'package:takt_desk/core/focus/focus_lock_controller.dart';
+import 'package:takt_desk/core/focus/focus_lock_service.dart';
 import 'package:takt_desk/core/sensors/parallax_controller.dart';
 import 'package:takt_desk/features/desk/presentation/ambient_lighting_layer.dart';
 import 'package:takt_desk/features/desk/presentation/desk_canvas_screen.dart';
 import 'package:takt_desk/features/desk/presentation/isometric_desk_layout.dart';
-import 'package:takt_desk/features/timer/presentation/chrono_dial_widget.dart';
-import 'package:takt_desk/features/tasks/presentation/receipt_runner_widget.dart';
-import 'package:takt_desk/features/vinyl/presentation/vinyl_player_widget.dart';
 import 'package:takt_desk/features/desk/presentation/widgets/chassis_theme_switch.dart';
+import 'package:takt_desk/features/desk/presentation/widgets/emergency_unlatch_widget.dart';
+import 'package:takt_desk/features/desk/presentation/widgets/monastic_switch_widget.dart';
+import 'package:takt_desk/features/tasks/presentation/receipt_runner_widget.dart';
+import 'package:takt_desk/features/timer/presentation/chrono_dial_widget.dart';
+import 'package:takt_desk/features/vinyl/presentation/vinyl_player_widget.dart';
+
+class MockFocusLockService extends FocusLockService {
+  @override
+  Future<bool> enableFocusLock() async => true;
+  @override
+  Future<bool> disableFocusLock() async => true;
+}
 
 void main() {
   group('DeskCanvasScreen & IsometricDeskLayout', () {
@@ -26,7 +37,7 @@ void main() {
       await testDb.close();
     });
 
-    testWidgets('DeskCanvasScreen renders 3 core instruments and switcher on narrow screens', (tester) async {
+    testWidgets('DeskCanvasScreen renders pure mobile console with switcher, MonasticSwitchWidget, and theme switch', (tester) async {
       tester.view.physicalSize = const Size(400, 700);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -35,6 +46,7 @@ void main() {
         ProviderScope(
           overrides: [
             appDatabaseProvider.overrideWithValue(testDb),
+            focusLockServiceProvider.overrideWithValue(MockFocusLockService()),
           ],
           child: const MaterialApp(
             home: DeskCanvasScreen(),
@@ -46,8 +58,15 @@ void main() {
       expect(find.byType(IsometricDeskLayout), findsOneWidget);
       expect(find.byType(ChronoDialWidget), findsOneWidget);
       expect(find.byType(ChassisThemeSwitch), findsOneWidget);
+      expect(find.byType(MonasticSwitchWidget), findsOneWidget);
 
-      // In narrow mode, switcher allows viewing tasks and vinyl
+      // PopScope should initially allow pop when unlocked
+      final popScopeFinder = find.byType(PopScope);
+      expect(popScopeFinder, findsOneWidget);
+      final popScopeWidget = tester.widget<PopScope>(popScopeFinder);
+      expect(popScopeWidget.canPop, isTrue);
+
+      // Switcher allows viewing tasks and vinyl
       expect(find.text('DIAL'), findsOneWidget);
       expect(find.text('TASKS'), findsOneWidget);
       expect(find.text('VINYL'), findsOneWidget);
@@ -63,7 +82,43 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
-    testWidgets('DeskCanvasScreen adapts to 3-instrument rack layout on wide screens', (tester) async {
+    testWidgets('DeskCanvasScreen enforces PopScope and shows EmergencyUnlatchWidget when focus is locked', (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(testDb),
+          focusLockServiceProvider.overrideWithValue(MockFocusLockService()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: DeskCanvasScreen(),
+          ),
+        ),
+      );
+
+      // Initially no unlatch widget label visible
+      expect(find.text('HOLD 5s TO UNLATCH'), findsNothing);
+
+      // Engage Monastic Focus Lock
+      await container.read(focusLockProvider.notifier).engageLock();
+      await tester.pump();
+
+      // Now PopScope blocks popping
+      final popScopeWidget = tester.widget<PopScope>(find.byType(PopScope));
+      expect(popScopeWidget.canPop, isFalse);
+
+      // Emergency unlatch widget is now visible
+      expect(find.byType(EmergencyUnlatchWidget), findsOneWidget);
+      expect(find.text('HOLD 5s TO UNLATCH'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('DeskCanvasScreen retains pure mobile handheld layout on wide screens without horizontal multi-column rack', (tester) async {
       tester.view.physicalSize = const Size(1024, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -72,6 +127,7 @@ void main() {
         ProviderScope(
           overrides: [
             appDatabaseProvider.overrideWithValue(testDb),
+            focusLockServiceProvider.overrideWithValue(MockFocusLockService()),
           ],
           child: const MaterialApp(
             home: DeskCanvasScreen(),
@@ -79,10 +135,17 @@ void main() {
         ),
       );
 
-      expect(find.text('TAKT DESK // SPATIAL WORKBENCH'), findsOneWidget);
+      // Verifies pure mobile console branding and presence of MonasticSwitchWidget
+      expect(find.text('TAKT DESK'), findsOneWidget);
+      expect(find.byType(MonasticSwitchWidget), findsOneWidget);
+      expect(find.text('DIAL'), findsOneWidget);
+      expect(find.text('TASKS'), findsOneWidget);
+      expect(find.text('VINYL'), findsOneWidget);
+
+      // Only the selected instrument is displayed at a time
       expect(find.byType(ChronoDialWidget), findsOneWidget);
-      expect(find.byType(ReceiptRunnerWidget), findsOneWidget);
-      expect(find.byType(VinylPlayerWidget), findsOneWidget);
+      expect(find.byType(ReceiptRunnerWidget), findsNothing);
+      expect(find.byType(VinylPlayerWidget), findsNothing);
 
       await tester.pumpWidget(const SizedBox());
     });
