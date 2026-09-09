@@ -171,4 +171,22 @@ void main() {
     expect(pref!.foleyEnabled, isTrue);
     expect(pref.hapticsEnabled, isFalse);
   });
+
+  test('can persist and update selectedEdition and isProSimulated in preferences', () async {
+    await db.into(db.deskPreferences).insert(
+      const DeskPreferencesCompanion(),
+    );
+    final initialPref = await db.watchPreferences().first;
+    expect(initialPref!.selectedEdition, equals('braunClassic'));
+    expect(initialPref.isProSimulated, isTrue);
+
+    await db.updatePreferences(
+      selectedEdition: 'titaniumStealth',
+      isProSimulated: false,
+    );
+
+    final updatedPref = await db.watchPreferences().first;
+    expect(updatedPref!.selectedEdition, equals('titaniumStealth'));
+    expect(updatedPref.isProSimulated, isFalse);
+  });
 }

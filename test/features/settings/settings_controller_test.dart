@@ -1,6 +1,8 @@
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:takt_desk/app/theme/hardware_edition.dart';
+import 'package:takt_desk/app/theme/theme_controller.dart';
 import 'package:takt_desk/core/audio/audio_service.dart';
 import 'package:takt_desk/core/audio/sound_effect.dart';
 import 'package:takt_desk/core/database/app_database.dart';
@@ -223,5 +225,93 @@ void main() {
     await HapticService.impactHeavy();
     await HapticService.lightClick();
     await HapticService.heavyClick();
+  });
+
+  test('SettingsController initializes default selectedEdition and isProSimulated', () async {
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        audioServiceProvider.overrideWithValue(audioService),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final state = container.read(deskPreferencesControllerProvider);
+    expect(state.selectedEdition, equals('braunClassic'));
+    expect(state.isProSimulated, isTrue);
+  });
+
+  test('SettingsController setHardwareEdition updates state, ThemeController, and database', () async {
+    final themeController = ThemeController();
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        audioServiceProvider.overrideWithValue(audioService),
+        chassisThemeProvider.overrideWith((ref) => themeController),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(deskPreferencesControllerProvider.notifier);
+    await controller.init();
+
+    await controller.setHardwareEdition(HardwareEditionType.titaniumStealth);
+
+    expect(container.read(deskPreferencesControllerProvider).selectedEdition, equals('titaniumStealth'));
+    expect(themeController.state.edition.type, equals(HardwareEditionType.titaniumStealth));
+
+    final persisted = await db.watchPreferences().first;
+    expect(persisted, isNotNull);
+    expect(persisted!.selectedEdition, equals('titaniumStealth'));
+  });
+
+  test('SettingsController setProSimulated updates state, ThemeController, and database', () async {
+    final themeController = ThemeController();
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        audioServiceProvider.overrideWithValue(audioService),
+        chassisThemeProvider.overrideWith((ref) => themeController),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(deskPreferencesControllerProvider.notifier);
+    await controller.init();
+
+    await controller.setProSimulated(false);
+
+    expect(container.read(deskPreferencesControllerProvider).isProSimulated, isFalse);
+    expect(themeController.state.isProUnlocked, isFalse);
+
+    final persisted = await db.watchPreferences().first;
+    expect(persisted, isNotNull);
+    expect(persisted!.isProSimulated, isFalse);
+  });
+
+  test('SettingsController restores selectedEdition and isProSimulated on init', () async {
+    await db.updatePreferences(
+      selectedEdition: 'bauhausHeritage',
+      isProSimulated: true,
+    );
+
+    final themeController = ThemeController();
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        audioServiceProvider.overrideWithValue(audioService),
+        chassisThemeProvider.overrideWith((ref) => themeController),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(deskPreferencesControllerProvider.notifier);
+    await controller.init();
+
+    final state = container.read(deskPreferencesControllerProvider);
+    expect(state.selectedEdition, equals('bauhausHeritage'));
+    expect(state.isProSimulated, isTrue);
+    expect(themeController.state.edition.type, equals(HardwareEditionType.bauhausHeritage));
+    expect(themeController.state.isProUnlocked, isTrue);
   });
 }

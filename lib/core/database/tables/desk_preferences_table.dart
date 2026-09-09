@@ -7,4 +7,6 @@ class DeskPreferences extends Table {
   IntColumn get activeAmbientTrackIndex => integer().withDefault(const Constant(0))();
   BoolColumn get foleyEnabled => boolean().withDefault(const Constant(true))();
   BoolColumn get hapticsEnabled => boolean().withDefault(const Constant(true))();
+  TextColumn get selectedEdition => text().withDefault(const Constant('braunClassic'))();
+  BoolColumn get isProSimulated => boolean().withDefault(const Constant(true))();
 }

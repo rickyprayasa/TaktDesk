@@ -25,7 +25,20 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (Migrator m) async {
+          await m.createAll();
+        },
+        onUpgrade: (Migrator m, int from, int to) async {
+          if (from < 2) {
+            await m.addColumn(deskPreferences, deskPreferences.selectedEdition);
+            await m.addColumn(deskPreferences, deskPreferences.isProSimulated);
+          }
+        },
+      );
 
   Stream<List<Task>> watchActiveTasks() {
     return (select(tasks)
@@ -139,28 +152,25 @@ class AppDatabase extends _$AppDatabase {
     int? activeAmbientTrackIndex,
     bool? foleyEnabled,
     bool? hapticsEnabled,
+    String? selectedEdition,
+    bool? isProSimulated,
   }) async {
     final existing = await (select(deskPreferences)..limit(1)).getSingleOrNull();
+    final companion = DeskPreferencesCompanion(
+      soundVolume: soundVolume != null ? Value(soundVolume) : const Value.absent(),
+      parallaxEnabled: parallaxEnabled != null ? Value(parallaxEnabled) : const Value.absent(),
+      activeAmbientTrackIndex:
+          activeAmbientTrackIndex != null ? Value(activeAmbientTrackIndex) : const Value.absent(),
+      foleyEnabled: foleyEnabled != null ? Value(foleyEnabled) : const Value.absent(),
+      hapticsEnabled: hapticsEnabled != null ? Value(hapticsEnabled) : const Value.absent(),
+      selectedEdition: selectedEdition != null ? Value(selectedEdition) : const Value.absent(),
+      isProSimulated: isProSimulated != null ? Value(isProSimulated) : const Value.absent(),
+    );
+
     if (existing == null) {
-      await into(deskPreferences).insert(DeskPreferencesCompanion.insert(
-        soundVolume: soundVolume != null ? Value(soundVolume) : const Value.absent(),
-        parallaxEnabled: parallaxEnabled != null ? Value(parallaxEnabled) : const Value.absent(),
-        activeAmbientTrackIndex:
-            activeAmbientTrackIndex != null ? Value(activeAmbientTrackIndex) : const Value.absent(),
-        foleyEnabled: foleyEnabled != null ? Value(foleyEnabled) : const Value.absent(),
-        hapticsEnabled: hapticsEnabled != null ? Value(hapticsEnabled) : const Value.absent(),
-      ));
+      await into(deskPreferences).insert(companion);
     } else {
-      await (update(deskPreferences)..where((p) => p.id.equals(existing.id))).write(
-        DeskPreferencesCompanion(
-          soundVolume: soundVolume != null ? Value(soundVolume) : const Value.absent(),
-          parallaxEnabled: parallaxEnabled != null ? Value(parallaxEnabled) : const Value.absent(),
-          activeAmbientTrackIndex:
-              activeAmbientTrackIndex != null ? Value(activeAmbientTrackIndex) : const Value.absent(),
-          foleyEnabled: foleyEnabled != null ? Value(foleyEnabled) : const Value.absent(),
-          hapticsEnabled: hapticsEnabled != null ? Value(hapticsEnabled) : const Value.absent(),
-        ),
-      );
+      await (update(deskPreferences)..where((t) => t.id.equals(existing.id))).write(companion);
     }
   }
 }

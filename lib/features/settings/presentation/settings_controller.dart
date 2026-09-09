@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../app/theme/hardware_edition.dart';
+import '../../../app/theme/theme_controller.dart';
 import '../../../core/audio/audio_service.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/haptics/haptic_service.dart';
@@ -53,12 +55,16 @@ class DeskPreferencesState {
   final bool foleyEnabled;
   final bool hapticsEnabled;
   final bool parallaxEnabled;
+  final String selectedEdition;
+  final bool isProSimulated;
 
   const DeskPreferencesState({
     this.soundVolume = 0.8,
     this.foleyEnabled = true,
     this.hapticsEnabled = true,
     this.parallaxEnabled = true,
+    this.selectedEdition = 'braunClassic',
+    this.isProSimulated = true,
   });
 
   DeskPreferencesState copyWith({
@@ -66,12 +72,16 @@ class DeskPreferencesState {
     bool? foleyEnabled,
     bool? hapticsEnabled,
     bool? parallaxEnabled,
+    String? selectedEdition,
+    bool? isProSimulated,
   }) {
     return DeskPreferencesState(
       soundVolume: soundVolume ?? this.soundVolume,
       foleyEnabled: foleyEnabled ?? this.foleyEnabled,
       hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
       parallaxEnabled: parallaxEnabled ?? this.parallaxEnabled,
+      selectedEdition: selectedEdition ?? this.selectedEdition,
+      isProSimulated: isProSimulated ?? this.isProSimulated,
     );
   }
 
@@ -83,22 +93,30 @@ class DeskPreferencesState {
           soundVolume == other.soundVolume &&
           foleyEnabled == other.foleyEnabled &&
           hapticsEnabled == other.hapticsEnabled &&
-          parallaxEnabled == other.parallaxEnabled;
+          parallaxEnabled == other.parallaxEnabled &&
+          selectedEdition == other.selectedEdition &&
+          isProSimulated == other.isProSimulated;
 
   @override
   int get hashCode =>
       soundVolume.hashCode ^
       foleyEnabled.hashCode ^
       hapticsEnabled.hashCode ^
-      parallaxEnabled.hashCode;
+      parallaxEnabled.hashCode ^
+      selectedEdition.hashCode ^
+      isProSimulated.hashCode;
 }
 
 class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
   final AppDatabase? _database;
   final AudioService? _audioService;
+  final ThemeController? _themeController;
 
-  DeskPreferencesController([this._database, this._audioService])
-      : super(const DeskPreferencesState()) {
+  DeskPreferencesController([
+    this._database,
+    this._audioService,
+    this._themeController,
+  ]) : super(const DeskPreferencesState()) {
     init();
   }
 
@@ -113,10 +131,14 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
         parallaxEnabled: pref.parallaxEnabled,
         foleyEnabled: pref.foleyEnabled,
         hapticsEnabled: pref.hapticsEnabled,
+        selectedEdition: pref.selectedEdition,
+        isProSimulated: pref.isProSimulated,
       );
       _audioService?.setVolume(pref.soundVolume);
       _audioService?.setFoleyEnabled(pref.foleyEnabled);
       HapticService.enabled = pref.hapticsEnabled;
+      _themeController?.setProUnlocked(pref.isProSimulated);
+      _themeController?.setHardwareEdition(HardwareEdition.fromString(pref.selectedEdition).type);
     } else {
       _audioService?.setVolume(state.soundVolume);
       _audioService?.setFoleyEnabled(state.foleyEnabled);
@@ -148,6 +170,18 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
     await _database?.updatePreferences(parallaxEnabled: val);
   }
 
+  Future<void> setHardwareEdition(HardwareEditionType type) async {
+    state = state.copyWith(selectedEdition: type.name);
+    _themeController?.setHardwareEdition(type);
+    await _database?.updatePreferences(selectedEdition: type.name);
+  }
+
+  Future<void> setProSimulated(bool value) async {
+    state = state.copyWith(isProSimulated: value);
+    _themeController?.setProUnlocked(value);
+    await _database?.updatePreferences(isProSimulated: value);
+  }
+
   Future<void> clearAllSessions() async {
     await _database?.clearTimerSessions();
   }
@@ -157,7 +191,8 @@ final deskPreferencesControllerProvider =
     StateNotifierProvider<DeskPreferencesController, DeskPreferencesState>((ref) {
   final db = ref.watch(appDatabaseProvider);
   final audioService = ref.watch(audioServiceProvider);
-  return DeskPreferencesController(db, audioService);
+  final themeController = ref.read(chassisThemeProvider.notifier);
+  return DeskPreferencesController(db, audioService, themeController);
 });
 
 final todayFocusStatsProvider = StreamProvider<TodayFocusStats>((ref) {

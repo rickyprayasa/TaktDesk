@@ -801,6 +801,24 @@ class $DeskPreferencesTable extends DeskPreferences
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'CHECK ("haptics_enabled" IN (0, 1))'),
       defaultValue: const Constant(true));
+  static const VerificationMeta _selectedEditionMeta =
+      const VerificationMeta('selectedEdition');
+  @override
+  late final GeneratedColumn<String> selectedEdition = GeneratedColumn<String>(
+      'selected_edition', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('braunClassic'));
+  static const VerificationMeta _isProSimulatedMeta =
+      const VerificationMeta('isProSimulated');
+  @override
+  late final GeneratedColumn<bool> isProSimulated = GeneratedColumn<bool>(
+      'is_pro_simulated', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("is_pro_simulated" IN (0, 1))'),
+      defaultValue: const Constant(true));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -808,7 +826,9 @@ class $DeskPreferencesTable extends DeskPreferences
         parallaxEnabled,
         activeAmbientTrackIndex,
         foleyEnabled,
-        hapticsEnabled
+        hapticsEnabled,
+        selectedEdition,
+        isProSimulated
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -854,6 +874,18 @@ class $DeskPreferencesTable extends DeskPreferences
           hapticsEnabled.isAcceptableOrUnknown(
               data['haptics_enabled']!, _hapticsEnabledMeta));
     }
+    if (data.containsKey('selected_edition')) {
+      context.handle(
+          _selectedEditionMeta,
+          selectedEdition.isAcceptableOrUnknown(
+              data['selected_edition']!, _selectedEditionMeta));
+    }
+    if (data.containsKey('is_pro_simulated')) {
+      context.handle(
+          _isProSimulatedMeta,
+          isProSimulated.isAcceptableOrUnknown(
+              data['is_pro_simulated']!, _isProSimulatedMeta));
+    }
     return context;
   }
 
@@ -876,6 +908,10 @@ class $DeskPreferencesTable extends DeskPreferences
           .read(DriftSqlType.bool, data['${effectivePrefix}foley_enabled'])!,
       hapticsEnabled: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}haptics_enabled'])!,
+      selectedEdition: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}selected_edition'])!,
+      isProSimulated: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_pro_simulated'])!,
     );
   }
 
@@ -892,13 +928,17 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
   final int activeAmbientTrackIndex;
   final bool foleyEnabled;
   final bool hapticsEnabled;
+  final String selectedEdition;
+  final bool isProSimulated;
   const DeskPreference(
       {required this.id,
       required this.soundVolume,
       required this.parallaxEnabled,
       required this.activeAmbientTrackIndex,
       required this.foleyEnabled,
-      required this.hapticsEnabled});
+      required this.hapticsEnabled,
+      required this.selectedEdition,
+      required this.isProSimulated});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -908,6 +948,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
     map['active_ambient_track_index'] = Variable<int>(activeAmbientTrackIndex);
     map['foley_enabled'] = Variable<bool>(foleyEnabled);
     map['haptics_enabled'] = Variable<bool>(hapticsEnabled);
+    map['selected_edition'] = Variable<String>(selectedEdition);
+    map['is_pro_simulated'] = Variable<bool>(isProSimulated);
     return map;
   }
 
@@ -919,6 +961,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       activeAmbientTrackIndex: Value(activeAmbientTrackIndex),
       foleyEnabled: Value(foleyEnabled),
       hapticsEnabled: Value(hapticsEnabled),
+      selectedEdition: Value(selectedEdition),
+      isProSimulated: Value(isProSimulated),
     );
   }
 
@@ -933,6 +977,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           serializer.fromJson<int>(json['activeAmbientTrackIndex']),
       foleyEnabled: serializer.fromJson<bool>(json['foleyEnabled']),
       hapticsEnabled: serializer.fromJson<bool>(json['hapticsEnabled']),
+      selectedEdition: serializer.fromJson<String>(json['selectedEdition']),
+      isProSimulated: serializer.fromJson<bool>(json['isProSimulated']),
     );
   }
   @override
@@ -946,6 +992,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           serializer.toJson<int>(activeAmbientTrackIndex),
       'foleyEnabled': serializer.toJson<bool>(foleyEnabled),
       'hapticsEnabled': serializer.toJson<bool>(hapticsEnabled),
+      'selectedEdition': serializer.toJson<String>(selectedEdition),
+      'isProSimulated': serializer.toJson<bool>(isProSimulated),
     };
   }
 
@@ -955,7 +1003,9 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           bool? parallaxEnabled,
           int? activeAmbientTrackIndex,
           bool? foleyEnabled,
-          bool? hapticsEnabled}) =>
+          bool? hapticsEnabled,
+          String? selectedEdition,
+          bool? isProSimulated}) =>
       DeskPreference(
         id: id ?? this.id,
         soundVolume: soundVolume ?? this.soundVolume,
@@ -964,6 +1014,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
             activeAmbientTrackIndex ?? this.activeAmbientTrackIndex,
         foleyEnabled: foleyEnabled ?? this.foleyEnabled,
         hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
+        selectedEdition: selectedEdition ?? this.selectedEdition,
+        isProSimulated: isProSimulated ?? this.isProSimulated,
       );
   DeskPreference copyWithCompanion(DeskPreferencesCompanion data) {
     return DeskPreference(
@@ -982,6 +1034,12 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       hapticsEnabled: data.hapticsEnabled.present
           ? data.hapticsEnabled.value
           : this.hapticsEnabled,
+      selectedEdition: data.selectedEdition.present
+          ? data.selectedEdition.value
+          : this.selectedEdition,
+      isProSimulated: data.isProSimulated.present
+          ? data.isProSimulated.value
+          : this.isProSimulated,
     );
   }
 
@@ -993,14 +1051,23 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           ..write('parallaxEnabled: $parallaxEnabled, ')
           ..write('activeAmbientTrackIndex: $activeAmbientTrackIndex, ')
           ..write('foleyEnabled: $foleyEnabled, ')
-          ..write('hapticsEnabled: $hapticsEnabled')
+          ..write('hapticsEnabled: $hapticsEnabled, ')
+          ..write('selectedEdition: $selectedEdition, ')
+          ..write('isProSimulated: $isProSimulated')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, soundVolume, parallaxEnabled,
-      activeAmbientTrackIndex, foleyEnabled, hapticsEnabled);
+  int get hashCode => Object.hash(
+      id,
+      soundVolume,
+      parallaxEnabled,
+      activeAmbientTrackIndex,
+      foleyEnabled,
+      hapticsEnabled,
+      selectedEdition,
+      isProSimulated);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1010,7 +1077,9 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           other.parallaxEnabled == this.parallaxEnabled &&
           other.activeAmbientTrackIndex == this.activeAmbientTrackIndex &&
           other.foleyEnabled == this.foleyEnabled &&
-          other.hapticsEnabled == this.hapticsEnabled);
+          other.hapticsEnabled == this.hapticsEnabled &&
+          other.selectedEdition == this.selectedEdition &&
+          other.isProSimulated == this.isProSimulated);
 }
 
 class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
@@ -1020,6 +1089,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
   final Value<int> activeAmbientTrackIndex;
   final Value<bool> foleyEnabled;
   final Value<bool> hapticsEnabled;
+  final Value<String> selectedEdition;
+  final Value<bool> isProSimulated;
   const DeskPreferencesCompanion({
     this.id = const Value.absent(),
     this.soundVolume = const Value.absent(),
@@ -1027,6 +1098,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     this.activeAmbientTrackIndex = const Value.absent(),
     this.foleyEnabled = const Value.absent(),
     this.hapticsEnabled = const Value.absent(),
+    this.selectedEdition = const Value.absent(),
+    this.isProSimulated = const Value.absent(),
   });
   DeskPreferencesCompanion.insert({
     this.id = const Value.absent(),
@@ -1035,6 +1108,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     this.activeAmbientTrackIndex = const Value.absent(),
     this.foleyEnabled = const Value.absent(),
     this.hapticsEnabled = const Value.absent(),
+    this.selectedEdition = const Value.absent(),
+    this.isProSimulated = const Value.absent(),
   });
   static Insertable<DeskPreference> custom({
     Expression<int>? id,
@@ -1043,6 +1118,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     Expression<int>? activeAmbientTrackIndex,
     Expression<bool>? foleyEnabled,
     Expression<bool>? hapticsEnabled,
+    Expression<String>? selectedEdition,
+    Expression<bool>? isProSimulated,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1052,6 +1129,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
         'active_ambient_track_index': activeAmbientTrackIndex,
       if (foleyEnabled != null) 'foley_enabled': foleyEnabled,
       if (hapticsEnabled != null) 'haptics_enabled': hapticsEnabled,
+      if (selectedEdition != null) 'selected_edition': selectedEdition,
+      if (isProSimulated != null) 'is_pro_simulated': isProSimulated,
     });
   }
 
@@ -1061,7 +1140,9 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       Value<bool>? parallaxEnabled,
       Value<int>? activeAmbientTrackIndex,
       Value<bool>? foleyEnabled,
-      Value<bool>? hapticsEnabled}) {
+      Value<bool>? hapticsEnabled,
+      Value<String>? selectedEdition,
+      Value<bool>? isProSimulated}) {
     return DeskPreferencesCompanion(
       id: id ?? this.id,
       soundVolume: soundVolume ?? this.soundVolume,
@@ -1070,6 +1151,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
           activeAmbientTrackIndex ?? this.activeAmbientTrackIndex,
       foleyEnabled: foleyEnabled ?? this.foleyEnabled,
       hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
+      selectedEdition: selectedEdition ?? this.selectedEdition,
+      isProSimulated: isProSimulated ?? this.isProSimulated,
     );
   }
 
@@ -1095,6 +1178,12 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     if (hapticsEnabled.present) {
       map['haptics_enabled'] = Variable<bool>(hapticsEnabled.value);
     }
+    if (selectedEdition.present) {
+      map['selected_edition'] = Variable<String>(selectedEdition.value);
+    }
+    if (isProSimulated.present) {
+      map['is_pro_simulated'] = Variable<bool>(isProSimulated.value);
+    }
     return map;
   }
 
@@ -1106,7 +1195,9 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
           ..write('parallaxEnabled: $parallaxEnabled, ')
           ..write('activeAmbientTrackIndex: $activeAmbientTrackIndex, ')
           ..write('foleyEnabled: $foleyEnabled, ')
-          ..write('hapticsEnabled: $hapticsEnabled')
+          ..write('hapticsEnabled: $hapticsEnabled, ')
+          ..write('selectedEdition: $selectedEdition, ')
+          ..write('isProSimulated: $isProSimulated')
           ..write(')'))
         .toString();
   }
@@ -1516,6 +1607,8 @@ typedef $$DeskPreferencesTableCreateCompanionBuilder = DeskPreferencesCompanion
   Value<int> activeAmbientTrackIndex,
   Value<bool> foleyEnabled,
   Value<bool> hapticsEnabled,
+  Value<String> selectedEdition,
+  Value<bool> isProSimulated,
 });
 typedef $$DeskPreferencesTableUpdateCompanionBuilder = DeskPreferencesCompanion
     Function({
@@ -1525,6 +1618,8 @@ typedef $$DeskPreferencesTableUpdateCompanionBuilder = DeskPreferencesCompanion
   Value<int> activeAmbientTrackIndex,
   Value<bool> foleyEnabled,
   Value<bool> hapticsEnabled,
+  Value<String> selectedEdition,
+  Value<bool> isProSimulated,
 });
 
 class $$DeskPreferencesTableFilterComposer
@@ -1555,6 +1650,14 @@ class $$DeskPreferencesTableFilterComposer
 
   ColumnFilters<bool> get hapticsEnabled => $composableBuilder(
       column: $table.hapticsEnabled,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get selectedEdition => $composableBuilder(
+      column: $table.selectedEdition,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isProSimulated => $composableBuilder(
+      column: $table.isProSimulated,
       builder: (column) => ColumnFilters(column));
 }
 
@@ -1588,6 +1691,14 @@ class $$DeskPreferencesTableOrderingComposer
   ColumnOrderings<bool> get hapticsEnabled => $composableBuilder(
       column: $table.hapticsEnabled,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get selectedEdition => $composableBuilder(
+      column: $table.selectedEdition,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isProSimulated => $composableBuilder(
+      column: $table.isProSimulated,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$DeskPreferencesTableAnnotationComposer
@@ -1616,6 +1727,12 @@ class $$DeskPreferencesTableAnnotationComposer
 
   GeneratedColumn<bool> get hapticsEnabled => $composableBuilder(
       column: $table.hapticsEnabled, builder: (column) => column);
+
+  GeneratedColumn<String> get selectedEdition => $composableBuilder(
+      column: $table.selectedEdition, builder: (column) => column);
+
+  GeneratedColumn<bool> get isProSimulated => $composableBuilder(
+      column: $table.isProSimulated, builder: (column) => column);
 }
 
 class $$DeskPreferencesTableTableManager extends RootTableManager<
@@ -1651,6 +1768,8 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             Value<int> activeAmbientTrackIndex = const Value.absent(),
             Value<bool> foleyEnabled = const Value.absent(),
             Value<bool> hapticsEnabled = const Value.absent(),
+            Value<String> selectedEdition = const Value.absent(),
+            Value<bool> isProSimulated = const Value.absent(),
           }) =>
               DeskPreferencesCompanion(
             id: id,
@@ -1659,6 +1778,8 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             activeAmbientTrackIndex: activeAmbientTrackIndex,
             foleyEnabled: foleyEnabled,
             hapticsEnabled: hapticsEnabled,
+            selectedEdition: selectedEdition,
+            isProSimulated: isProSimulated,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -1667,6 +1788,8 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             Value<int> activeAmbientTrackIndex = const Value.absent(),
             Value<bool> foleyEnabled = const Value.absent(),
             Value<bool> hapticsEnabled = const Value.absent(),
+            Value<String> selectedEdition = const Value.absent(),
+            Value<bool> isProSimulated = const Value.absent(),
           }) =>
               DeskPreferencesCompanion.insert(
             id: id,
@@ -1675,6 +1798,8 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             activeAmbientTrackIndex: activeAmbientTrackIndex,
             foleyEnabled: foleyEnabled,
             hapticsEnabled: hapticsEnabled,
+            selectedEdition: selectedEdition,
+            isProSimulated: isProSimulated,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (
