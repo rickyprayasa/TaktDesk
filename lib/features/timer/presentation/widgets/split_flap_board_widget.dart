@@ -35,7 +35,7 @@ class SplitFlapBoardWidget extends ConsumerWidget {
       onTap: state.isRunning ? null : controller.advancePhase,
       borderRadius: BorderRadius.circular(6),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
+        margin: EdgeInsets.zero,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: const Color(0xFF181B1F),

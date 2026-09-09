@@ -143,49 +143,67 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // 1. Top Crown Push-Button (Physical Stopwatch Crown)
-        CrownPushButton(
-          isPressed: state.isRunning,
-          onTap: _handleToggle,
-        ),
-        // 2. 3D Split-Flap Pomodoro Phase & Cycle Display
+        // 1. 3D Split-Flap Pomodoro Phase & Cycle Display
         const SplitFlapBoardWidget(),
-        // 3. Main Dial Canvas with 3D Depth & Odometer Sub-Window
-        GestureDetector(
-          onTap: _handleToggle,
-          onPanStart: (details) => _handleRotaryPan(details.localPosition, dialDimensions),
-          onPanUpdate: (details) => _handleRotaryPan(details.localPosition, dialDimensions),
-          child: SizedBox(
-            width: dialDimensions.width,
-            height: dialDimensions.height,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // 60/120 FPS continuous sweep Canvas painter
-                ValueListenableBuilder<double>(
-                  valueListenable: _remainingSecondsNotifier,
-                  builder: (context, seconds, _) {
-                    return CustomPaint(
-                      size: dialDimensions,
-                      painter: ChronoDialPainter(
-                        remainingSeconds: seconds,
-                        progressPercent: state.progressPercent,
-                        targetMinutes: state.targetMinutes,
-                        isRunning: state.isRunning,
-                      ),
-                    );
-                  },
-                ),
-                // Recessed Odometer Sub-Window at lower-center
-                Positioned(
-                  bottom: 42,
-                  child: MechanicalCounterDisplay(
-                    minutes: remainingMinutes,
-                    seconds: remainingSeconds,
+        const SizedBox(height: 12),
+        // 2. Main Dial Canvas with 12 o'clock Crown Push-Button directly seated on bezel
+        SizedBox(
+          width: dialDimensions.width,
+          height: dialDimensions.height + 14,
+          child: Stack(
+            alignment: Alignment.topCenter,
+            clipBehavior: Clip.none,
+            children: [
+              // Main Dial Canvas with 3D Depth & Odometer Sub-Window
+              Positioned(
+                top: 14,
+                child: GestureDetector(
+                  onTap: _handleToggle,
+                  onPanStart: (details) => _handleRotaryPan(details.localPosition, dialDimensions),
+                  onPanUpdate: (details) => _handleRotaryPan(details.localPosition, dialDimensions),
+                  child: SizedBox(
+                    width: dialDimensions.width,
+                    height: dialDimensions.height,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // 60/120 FPS continuous sweep Canvas painter
+                        ValueListenableBuilder<double>(
+                          valueListenable: _remainingSecondsNotifier,
+                          builder: (context, seconds, _) {
+                            return CustomPaint(
+                              size: dialDimensions,
+                              painter: ChronoDialPainter(
+                                remainingSeconds: seconds,
+                                progressPercent: state.progressPercent,
+                                targetMinutes: state.targetMinutes,
+                                isRunning: state.isRunning,
+                              ),
+                            );
+                          },
+                        ),
+                        // Recessed Odometer Sub-Window at lower-center
+                        Positioned(
+                          bottom: 42,
+                          child: MechanicalCounterDisplay(
+                            minutes: remainingMinutes,
+                            seconds: remainingSeconds,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ],
-            ),
+              ),
+              // Top Crown Push-Button seated directly on the 12 o'clock dial bezel
+              Positioned(
+                top: 6,
+                child: CrownPushButton(
+                  isPressed: state.isRunning,
+                  onTap: _handleToggle,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 14),

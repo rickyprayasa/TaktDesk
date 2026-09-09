@@ -60,7 +60,7 @@ class ChassisThemeSwitch extends ConsumerWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              isDark ? 'CHASSIS: DARK' : 'CHASSIS: LIGHT',
+              isDark ? 'DARK' : 'LIGHT',
               style: TextStyle(
                 fontFamily: 'monospace',
                 fontSize: 8.5,
