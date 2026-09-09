@@ -74,5 +74,40 @@ void main() {
       expect(controller.state.edition.type, equals(HardwareEditionType.bauhausHeritage));
       expect(controller.state.needleColor, equals(const Color(0xFFD62828))); // bauhaus crimson
     });
+
+    test('setProUnlocked(false) atomically reverts active premium edition to braunClassic', () {
+      final controller = ThemeController();
+      controller.setHardwareEdition(HardwareEditionType.titaniumStealth);
+      expect(controller.state.edition.type, equals(HardwareEditionType.titaniumStealth));
+
+      controller.setProUnlocked(false);
+      expect(controller.state.isProUnlocked, isFalse);
+      expect(controller.state.edition.type, equals(HardwareEditionType.braunClassic));
+    });
+
+    test('setHardwareEdition returns true early if edition is already equipped', () {
+      final controller = ThemeController();
+      expect(controller.setHardwareEdition(HardwareEditionType.braunClassic), isTrue);
+    });
+
+    test('fromString parses valid names and falls back safely to braunClassic', () {
+      expect(HardwareEdition.fromString('titaniumStealth').type, equals(HardwareEditionType.titaniumStealth));
+      expect(HardwareEdition.fromString('bauhausHeritage').type, equals(HardwareEditionType.bauhausHeritage));
+      expect(HardwareEdition.fromString('rawBrassPatina').type, equals(HardwareEditionType.rawBrassPatina));
+      expect(HardwareEdition.fromString('invalid').type, equals(HardwareEditionType.braunClassic));
+      expect(HardwareEdition.fromString(null).type, equals(HardwareEditionType.braunClassic));
+    });
+
+    test('ChassisThemeState dynamic getters resolve dark and light tokens accurately', () {
+      const stateDark = ChassisThemeState(isDarkMode: true);
+      expect(stateDark.canvasColor, equals(HardwareEdition.braunClassic.darkCanvas));
+      expect(stateDark.moduleChassisColor, equals(HardwareEdition.braunClassic.darkModuleBg));
+      expect(stateDark.borderColor, equals(HardwareEdition.braunClassic.darkBorder));
+
+      const stateLight = ChassisThemeState(isDarkMode: false);
+      expect(stateLight.canvasColor, equals(HardwareEdition.braunClassic.lightCanvas));
+      expect(stateLight.moduleChassisColor, equals(HardwareEdition.braunClassic.lightModuleBg));
+      expect(stateLight.borderColor, equals(HardwareEdition.braunClassic.lightBorder));
+    });
   });
 }

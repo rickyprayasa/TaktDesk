@@ -55,6 +55,7 @@ class ThemeController extends StateNotifier<ChassisThemeState> {
   }
 
   bool setHardwareEdition(HardwareEditionType type) {
+    if (state.edition.type == type) return true;
     final nextEdition = HardwareEdition.fromType(type);
     if (nextEdition.isPremium && !state.isProUnlocked) {
       return false; // Locked
@@ -64,11 +65,11 @@ class ThemeController extends StateNotifier<ChassisThemeState> {
   }
 
   void setProUnlocked(bool unlocked) {
-    state = state.copyWith(isProUnlocked: unlocked);
-    // If locked and current edition is premium, revert to braunClassic
-    if (!unlocked && state.edition.isPremium) {
-      state = state.copyWith(edition: HardwareEdition.braunClassic);
-    }
+    final shouldRevert = !unlocked && state.edition.isPremium;
+    state = state.copyWith(
+      isProUnlocked: unlocked,
+      edition: shouldRevert ? HardwareEdition.braunClassic : state.edition,
+    );
   }
 }
 
