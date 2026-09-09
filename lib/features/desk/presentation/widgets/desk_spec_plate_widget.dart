@@ -32,7 +32,8 @@ class DeskSpecPlateWidget extends ConsumerWidget {
         ? TaktColors.warmBone.withValues(alpha: 0.6)
         : const Color(0xFF5A5D64);
 
-    final borderColor = isDark ? TaktColors.slateBorder : const Color(0xFFC4C8D0);
+    final borderColor = isDark ? themeState.edition.darkBorder : themeState.edition.lightBorder;
+    final rivetColor = isDark ? themeState.edition.rivetDark : themeState.edition.rivetLight;
 
     return Container(
       width: double.infinity,
@@ -43,8 +44,8 @@ class DeskSpecPlateWidget extends ConsumerWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isDark
-                  ? const [Color(0xFF282B32), Color(0xFF1E2126), Color(0xFF17191C)]
-                  : const [Color(0xFFE4E1D9), Color(0xFFDDD9D0), Color(0xFFCFCAC0)],
+                  ? themeState.edition.plateGradientDark
+                  : themeState.edition.plateGradientLight,
             ),
             boxShadow: [
               BoxShadow(
@@ -65,10 +66,10 @@ class DeskSpecPlateWidget extends ConsumerWidget {
               child: Stack(
                 children: [
                   // Corner mechanical rivets
-                  Positioned(top: 4, left: 4, child: _RivetDot(isDark: isDark)),
-                  Positioned(top: 4, right: 4, child: _RivetDot(isDark: isDark)),
-                  Positioned(bottom: 4, left: 4, child: _RivetDot(isDark: isDark)),
-                  Positioned(bottom: 4, right: 4, child: _RivetDot(isDark: isDark)),
+                  Positioned(top: 4, left: 4, child: _RivetDot(color: rivetColor, isDark: isDark)),
+                  Positioned(top: 4, right: 4, child: _RivetDot(color: rivetColor, isDark: isDark)),
+                  Positioned(bottom: 4, left: 4, child: _RivetDot(color: rivetColor, isDark: isDark)),
+                  Positioned(bottom: 4, right: 4, child: _RivetDot(color: rivetColor, isDark: isDark)),
 
                   // Main Plate Content
                   Padding(
@@ -85,7 +86,7 @@ class DeskSpecPlateWidget extends ConsumerWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'TAKT DESK · MOD. 01 · 2026',
+                                '${themeState.edition.title} · ${themeState.edition.yearLabel}',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -98,7 +99,7 @@ class DeskSpecPlateWidget extends ConsumerWidget {
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                'GERMANIC MINIMALISM · STEREO 44.1kHz',
+                                '${themeState.edition.subtitle} · STEREO 44.1kHz',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -133,7 +134,7 @@ class DeskSpecPlateWidget extends ConsumerWidget {
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     color: isLit
-                                        ? TaktColors.filamentAmber
+                                        ? themeState.filamentColor
                                         : TaktColors.basaltSlate,
                                     border: Border.all(
                                       color: isLit
@@ -144,7 +145,7 @@ class DeskSpecPlateWidget extends ConsumerWidget {
                                     boxShadow: isLit
                                         ? [
                                             BoxShadow(
-                                              color: TaktColors.filamentAmber.withValues(alpha: 0.8),
+                                              color: themeState.filamentColor.withValues(alpha: 0.8),
                                               blurRadius: 4.0,
                                               spreadRadius: 1.0,
                                             ),
@@ -194,9 +195,10 @@ class DeskSpecPlateWidget extends ConsumerWidget {
 }
 
 class _RivetDot extends StatelessWidget {
+  final Color color;
   final bool isDark;
 
-  const _RivetDot({required this.isDark});
+  const _RivetDot({required this.color, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -205,7 +207,7 @@ class _RivetDot extends StatelessWidget {
       height: 3.5,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: isDark ? const Color(0xFF101214) : const Color(0xFFA8A398),
+        color: color,
         boxShadow: [
           BoxShadow(
             color: isDark ? const Color(0x33FFFFFF) : const Color(0x66FFFFFF),

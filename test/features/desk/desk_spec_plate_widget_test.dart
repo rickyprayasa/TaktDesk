@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:takt_desk/app/theme/hardware_edition.dart';
 import 'package:takt_desk/app/theme/takt_colors.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
 import 'package:takt_desk/core/audio/audio_service.dart';
@@ -45,9 +46,9 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.textContaining('TAKT DESK'), findsOneWidget);
+    expect(find.textContaining('BRAUN CLASSIC'), findsOneWidget);
     expect(find.textContaining('MOD. 01'), findsOneWidget);
-    expect(find.textContaining('2026'), findsOneWidget);
+    expect(find.textContaining('1960'), findsOneWidget);
     expect(find.textContaining('GERMANIC MINIMALISM'), findsOneWidget);
     expect(find.textContaining('STEREO 44.1kHz'), findsOneWidget);
     expect(find.textContaining('2 / 4 CYCLES'), findsOneWidget);
@@ -183,7 +184,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.textContaining('TAKT DESK'), findsOneWidget);
+    expect(find.textContaining('BRAUN CLASSIC'), findsOneWidget);
     expect(find.textContaining('3 / 4 CYCLES'), findsOneWidget);
 
     for (int i = 0; i < 3; i++) {
@@ -193,5 +194,33 @@ void main() {
     }
     final inactiveLed = tester.widget<Container>(find.byKey(const ValueKey('spec_plate_led_3')));
     expect((inactiveLed.decoration as BoxDecoration).color, equals(TaktColors.basaltSlate));
+  });
+
+  testWidgets('DeskSpecPlateWidget updates stamp title and gradient based on active edition', (tester) async {
+    final container = ProviderContainer(
+      overrides: [
+        todayFocusStatsProvider.overrideWith(
+          (ref) => Stream.value(const TodayFocusStats(completedCount: 1, totalMinutes: 25)),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    container.read(chassisThemeProvider.notifier).setHardwareEdition(HardwareEditionType.titaniumStealth);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: DeskSpecPlateWidget(),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.textContaining('TITANIUM STEALTH'), findsOneWidget);
+    expect(find.textContaining('AEROSPACE PVD GRADE 5'), findsOneWidget);
   });
 }
