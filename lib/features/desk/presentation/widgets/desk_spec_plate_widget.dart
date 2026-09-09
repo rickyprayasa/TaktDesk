@@ -34,12 +34,9 @@ class DeskSpecPlateWidget extends ConsumerWidget {
 
     final borderColor = isDark ? TaktColors.slateBorder : const Color(0xFFC4C8D0);
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 440),
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(7.0),
             border: Border.all(color: borderColor, width: 1.0),
             gradient: LinearGradient(
@@ -95,7 +92,7 @@ class DeskSpecPlateWidget extends ConsumerWidget {
                                   fontFamily: 'monospace',
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.w700,
-                                  letterSpacing: 1.2,
+                                  letterSpacing: 0.9,
                                   color: primaryTextColor,
                                 ),
                               ),
@@ -108,7 +105,7 @@ class DeskSpecPlateWidget extends ConsumerWidget {
                                   fontFamily: 'monospace',
                                   fontSize: 8.0,
                                   fontWeight: FontWeight.w500,
-                                  letterSpacing: 0.8,
+                                  letterSpacing: 0.6,
                                   color: secondaryTextColor,
                                 ),
                               ),
@@ -192,9 +189,7 @@ class DeskSpecPlateWidget extends ConsumerWidget {
               ),
             ),
           ),
-        ),
-      ),
-    );
+        );
   }
 }
 

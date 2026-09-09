@@ -94,7 +94,11 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
-    testWidgets('DeskCanvasScreen renders Settings rivet button and DeskSpecPlateWidget', (tester) async {
+    testWidgets('DeskCanvasScreen renders Settings rivet button and DeskSpecPlateWidget anchored at bottom across tabs', (tester) async {
+      tester.view.physicalSize = const Size(400, 850);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
       await tester.pumpWidget(
         ProviderScope(
           overrides: deskTestOverrides(testDb),
@@ -107,6 +111,20 @@ void main() {
 
       expect(find.byType(SettingsRivetButton), findsOneWidget);
       expect(find.byType(DeskSpecPlateWidget), findsOneWidget);
+
+      final plateInitialY = tester.getTopLeft(find.byType(DeskSpecPlateWidget)).dy;
+
+      // Switch to TASKS tab: plate stays at the exact same bottom position
+      await tester.tap(find.text('TASKS'));
+      await tester.pumpAndSettle();
+      final plateTasksY = tester.getTopLeft(find.byType(DeskSpecPlateWidget)).dy;
+      expect(plateTasksY, equals(plateInitialY));
+
+      // Switch to VINYL tab: plate stays at the exact same bottom position
+      await tester.tap(find.text('VINYL'));
+      await tester.pumpAndSettle();
+      final plateVinylY = tester.getTopLeft(find.byType(DeskSpecPlateWidget)).dy;
+      expect(plateVinylY, equals(plateInitialY));
 
       // Tapping settings button displays TaktSettingsSheet
       await tester.tap(find.byType(SettingsRivetButton));
