@@ -4,12 +4,10 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'vinyl_controller.dart';
 import 'vinyl_deck_painter.dart';
-import '../domain/vinyl_track.dart';
 import '../../../app/theme/takt_typography.dart';
 import '../../../app/theme/theme_controller.dart';
 import '../../../app/theme/widgets/material_chassis_box.dart';
-import '../../../core/haptics/haptic_service.dart';
-import 'widgets/vinyl_record_crate_sheet.dart';
+import 'widgets/vinyl_disc_drawer_widget.dart';
 
 class VinylPlayerWidget extends ConsumerStatefulWidget {
   const VinylPlayerWidget({super.key});
@@ -186,7 +184,7 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
             ),
           ),
           const SizedBox(height: 8),
-          // Track Name and Preset Dropdown
+          // Track Name and Status Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -203,52 +201,20 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
                 ),
               ),
               const SizedBox(width: 8),
-              const _CrateTriggerBadge(
-                key: ValueKey('vinyl_crate_trigger_button'),
+              Text(
+                state.needleOnRecord ? '33 RPM // ON' : '33 RPM // STANDBY',
+                style: TaktTypography.controlLabel.copyWith(
+                  fontSize: 9,
+                  color: state.needleOnRecord
+                      ? themeState.filamentColor
+                      : themeState.chassisMutedTextColor,
+                ),
               ),
             ],
           ),
+          // Slide-Out Archival Disc Drawer
+          const VinylDiscDrawerWidget(),
         ],
-      ),
-    );
-  }
-}
-
-class _CrateTriggerBadge extends ConsumerWidget {
-  const _CrateTriggerBadge({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final themeState = ref.watch(chassisThemeProvider);
-
-    return Semantics(
-      button: true,
-      label: 'Open vinyl crate',
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            HapticService.selectionClick();
-            VinylRecordCrateSheet.show(context);
-          },
-          borderRadius: BorderRadius.circular(4),
-          child: Ink(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-            decoration: BoxDecoration(
-              color: themeState.moduleChassisColor,
-              border: Border.all(color: themeState.borderColor, width: 1.0),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              '[ CRATE // ${VinylTrack.presets.length.toString().padLeft(2, '0')} DISCS ▾ ]',
-              style: TaktTypography.controlLabel.copyWith(
-                color: themeState.chassisTextColor,
-                fontSize: 9,
-                letterSpacing: 0.2,
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
