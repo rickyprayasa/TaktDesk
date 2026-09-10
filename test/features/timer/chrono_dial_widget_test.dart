@@ -635,4 +635,35 @@ void main() {
     expect(dialPainter.needleColor, equals(TaktColors.patinaOlive));
     expect(dialPainter.filamentColor, equals(TaktColors.patinaOlive));
   });
+
+  testWidgets('ChronoDialWidget renders Patina Olive colors and LONG BRK split flap during long break', (tester) async {
+    final container = ProviderContainer(
+      overrides: [
+        chronoDialProvider.overrideWith((ref) {
+          final ctrl = ChronoDialController();
+          ctrl.setPhase(PomodoroPhase.longBreak);
+          return ctrl;
+        }),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: Scaffold(body: ChronoDialWidget())),
+      ),
+    );
+    await tester.pump();
+
+    // Split-flap displays LONG  BRK
+    final longBrkChars = 'LONG  BRK'.split('');
+    final tiles = tester.widgetList<SplitFlapTile>(find.byType(SplitFlapTile));
+    final displayedPhase = tiles.take(longBrkChars.length).map((t) => t.char).join();
+    expect(displayedPhase, equals('LONG  BRK'));
+
+    final dialPainter = tester.widget<CustomPaint>(dialFinder).painter as ChronoDialPainter;
+    expect(dialPainter.needleColor, equals(TaktColors.patinaOlive));
+    expect(dialPainter.filamentColor, equals(TaktColors.patinaOlive));
+  });
 }
