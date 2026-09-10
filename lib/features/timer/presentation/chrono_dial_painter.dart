@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../../app/theme/hardware_edition.dart';
 import '../../../app/theme/takt_colors.dart';
 
 class ChronoDialPainter extends CustomPainter {
@@ -12,6 +13,7 @@ class ChronoDialPainter extends CustomPainter {
   final Color filamentColor;
   final List<Color> outerBezelGradient;
   final Color innerBezelColor;
+  final HardwareTextureType textureType;
 
   // Cached text painters for dial numbers
   static final Map<int, TextPainter> _numberPainters = {};
@@ -29,6 +31,7 @@ class ChronoDialPainter extends CustomPainter {
       Color(0xFF181A1D),
     ],
     this.innerBezelColor = const Color(0xFF141517),
+    this.textureType = HardwareTextureType.matteAbsGrain,
   });
 
   static TextPainter _getTextPainter(String text) {
@@ -69,8 +72,23 @@ class ChronoDialPainter extends CustomPainter {
     canvas.drawCircle(center, outerRadius, outerBezelPaint);
 
     // 2b. Diamond Knurling Pattern on Outer Rim
+    final Color knurlColor;
+    switch (textureType) {
+      case HardwareTextureType.burnishedBrass:
+        knurlColor = Colors.white.withValues(alpha: 0.14);
+        break;
+      case HardwareTextureType.brushedTitanium:
+        knurlColor = Colors.white.withValues(alpha: 0.12);
+        break;
+      case HardwareTextureType.tubularChrome:
+        knurlColor = Colors.white.withValues(alpha: 0.16);
+        break;
+      case HardwareTextureType.matteAbsGrain:
+        knurlColor = Colors.white.withValues(alpha: 0.08);
+        break;
+    }
     final knurlPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.08)
+      ..color = knurlColor
       ..strokeWidth = 1.0;
     for (int i = 0; i < 90; i++) {
       final angle = (i * 4) * math.pi / 180.0;
@@ -238,6 +256,7 @@ class ChronoDialPainter extends CustomPainter {
         oldDelegate.needleColor != needleColor ||
         oldDelegate.filamentColor != filamentColor ||
         !listEquals(oldDelegate.outerBezelGradient, outerBezelGradient) ||
-        oldDelegate.innerBezelColor != innerBezelColor;
+        oldDelegate.innerBezelColor != innerBezelColor ||
+        oldDelegate.textureType != textureType;
   }
 }

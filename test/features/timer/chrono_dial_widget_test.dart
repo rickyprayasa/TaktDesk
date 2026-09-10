@@ -386,4 +386,92 @@ void main() {
     expect((splitFlapDeco.border as Border).top.color, equals(HardwareEdition.rawBrassPatina.darkBorder));
     expect(splitFlapDeco.color, equals(HardwareEdition.rawBrassPatina.darkModuleBg));
   });
+
+  testWidgets('ChronoDialWidget applies chassisTextColor in light mode and forwards textureType to painter', (tester) async {
+    final testDb = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(testDb.close);
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(testDb),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    // Switch to Light Mode
+    container.read(chassisThemeProvider.notifier).setDarkMode(false);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final themeState = container.read(chassisThemeProvider);
+    expect(themeState.isDarkMode, isFalse);
+    expect(themeState.chassisTextColor, equals(const Color(0xFF1B1E23)));
+
+    // Stopped state: Duration text '25 MIN' and icons use chassisTextColor
+    final durationText = tester.widget<Text>(find.text('25 MIN'));
+    expect(durationText.style?.color, equals(const Color(0xFF1B1E23)));
+
+    final removeIcon = tester.widget<Icon>(find.byIcon(Icons.remove_circle_outline));
+    expect(removeIcon.color, equals(const Color(0xFF1B1E23)));
+
+    final addIcon = tester.widget<Icon>(find.byIcon(Icons.add_circle_outline));
+    expect(addIcon.color, equals(const Color(0xFF1B1E23)));
+
+    // ChronoDialPainter receives textureType matching active edition (braunClassic -> matteAbsGrain)
+    var customPaint = tester.widget<CustomPaint>(dialFinder);
+    var painter = customPaint.painter as ChronoDialPainter;
+    expect(painter.textureType, equals(HardwareTextureType.matteAbsGrain));
+
+    // When running: Duration text uses filamentColor, icons use borderColor
+    await tester.tap(dialFinder);
+    await tester.pump();
+
+    final runningThemeState = container.read(chassisThemeProvider);
+    final runningDurationText = tester.widget<Text>(find.text('25 MIN'));
+    expect(runningDurationText.style?.color, equals(runningThemeState.filamentColor));
+
+    final runningRemoveIcon = tester.widget<Icon>(find.byIcon(Icons.remove_circle_outline));
+    expect(runningRemoveIcon.color, equals(runningThemeState.borderColor));
+
+    final runningAddIcon = tester.widget<Icon>(find.byIcon(Icons.add_circle_outline));
+    expect(runningAddIcon.color, equals(runningThemeState.borderColor));
+
+    // Pause timer
+    await tester.tap(dialFinder);
+    await tester.pump();
+
+    // Verify textureType forwards when changing edition
+    container.read(chassisThemeProvider.notifier).setHardwareEdition(HardwareEditionType.rawBrassPatina);
+    await tester.pump();
+
+    customPaint = tester.widget<CustomPaint>(dialFinder);
+    painter = customPaint.painter as ChronoDialPainter;
+    expect(painter.textureType, equals(HardwareTextureType.burnishedBrass));
+  });
+
+  test('ChronoDialPainter shouldRepaint returns true when textureType changes', () {
+    final painter1 = ChronoDialPainter(
+      remainingSeconds: 1500,
+      targetMinutes: 25,
+      isRunning: false,
+      textureType: HardwareTextureType.matteAbsGrain,
+    );
+    final painter2 = ChronoDialPainter(
+      remainingSeconds: 1500,
+      targetMinutes: 25,
+      isRunning: false,
+      textureType: HardwareTextureType.burnishedBrass,
+    );
+    expect(painter1.shouldRepaint(painter2), isTrue);
+  });
 }

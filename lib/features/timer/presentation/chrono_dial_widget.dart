@@ -8,7 +8,6 @@ import 'widgets/crown_push_button.dart';
 import 'widgets/mechanical_flip_digit.dart';
 import 'widgets/split_flap_board_widget.dart';
 import '../../desk/presentation/widgets/monastic_switch_widget.dart';
-import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/takt_typography.dart';
 import '../../../app/theme/theme_controller.dart';
 
@@ -189,6 +188,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                             filamentColor: themeState.filamentColor,
                             outerBezelGradient: themeState.plateGradient,
                             innerBezelColor: themeState.borderColor,
+                            textureType: themeState.textureType,
                           ),
                         );
                       },
@@ -226,7 +226,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                 visualDensity: VisualDensity.compact,
                 icon: Icon(
                   Icons.remove_circle_outline,
-                  color: state.isRunning ? TaktColors.slateBorder : TaktColors.warmBone,
+                  color: state.isRunning ? themeState.borderColor : themeState.chassisTextColor,
                   size: 18,
                 ),
                 onPressed: state.isRunning
@@ -240,7 +240,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                 child: Text(
                   '${state.targetMinutes} MIN',
                   style: TaktTypography.controlLabel.copyWith(
-                    color: state.isRunning ? themeState.filamentColor : TaktColors.warmBone,
+                    color: state.isRunning ? themeState.filamentColor : themeState.chassisTextColor,
                   ),
                 ),
               ),
@@ -248,7 +248,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                 visualDensity: VisualDensity.compact,
                 icon: Icon(
                   Icons.add_circle_outline,
-                  color: state.isRunning ? TaktColors.slateBorder : TaktColors.warmBone,
+                  color: state.isRunning ? themeState.borderColor : themeState.chassisTextColor,
                   size: 18,
                 ),
                 onPressed: state.isRunning
