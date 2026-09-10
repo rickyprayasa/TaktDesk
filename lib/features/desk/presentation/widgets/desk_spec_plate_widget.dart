@@ -32,6 +32,13 @@ class _DeskSpecPlateWidgetState extends ConsumerState<DeskSpecPlateWidget> {
     HapticService.selectionClick();
   }
 
+  void _collapseTelemetry() {
+    if (!_isTelemetryExpanded) return;
+    setState(() {
+      _isTelemetryExpanded = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeState = ref.watch(chassisThemeProvider);
@@ -267,11 +274,7 @@ class _DeskSpecPlateWidgetState extends ConsumerState<DeskSpecPlateWidget> {
             plateContainer,
             DeskTelemetrySlipWidget(
               isExpanded: _isTelemetryExpanded,
-              onRetract: () {
-                setState(() {
-                  _isTelemetryExpanded = false;
-                });
-              },
+              onRetract: _collapseTelemetry,
             ),
           ],
         ),
