@@ -204,16 +204,13 @@ void main() {
     await tester.tap(dialFinder);
     await tester.pump();
 
-    // Advance 301 seconds to expire timer
+    // Advance 301 seconds to expire timer -> auto-advances to Short Break (5 mins) in Standby
     await tester.pump(const Duration(seconds: 301));
-    expectDisplay(tester, 0, 0);
+    expectDisplay(tester, 5, 0);
 
-    // Tap dial to restart expired timer
+    // Tap dial to start the standby short break session
     await tester.tap(dialFinder);
     await tester.pump();
-
-    // Should restart to full target duration (05:00) and continue ticking
-    expectDisplay(tester, 5, 0);
     await tester.pump(const Duration(seconds: 1));
     expectDisplay(tester, 4, 59);
 

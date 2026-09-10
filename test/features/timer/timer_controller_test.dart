@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/core/audio/audio_service.dart';
 import 'package:takt_desk/core/audio/sound_effect.dart';
 import 'package:takt_desk/core/database/app_database.dart';
+import 'package:takt_desk/features/timer/domain/pomodoro_phase.dart';
 import 'package:takt_desk/features/timer/domain/timer_state.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_controller.dart';
 
@@ -111,7 +112,7 @@ void main() {
       expect(controller.state.isRunning, isFalse);
     });
 
-    test('tick decrements remainingSeconds and stops at 0', () {
+    test('tick decrements remainingSeconds and auto-advances to Short Break in standby on completion', () {
       final controller = ChronoDialController();
       controller.setTargetMinutes(1);
       controller.start();
@@ -123,9 +124,10 @@ void main() {
 
       // Tick 35 more seconds (exceeding remaining)
       controller.tick(35.0);
-      expect(controller.state.remainingSeconds, 0.0);
+      // Auto-advances to Short Break (5 mins = 300s) in Standby
+      expect(controller.state.phase, PomodoroPhase.shortBreak);
+      expect(controller.state.remainingSeconds, 300.0);
       expect(controller.state.isRunning, isFalse);
-      expect(controller.state.lastTickMinute, 0);
     });
 
     test('tick does nothing if not running', () {
@@ -134,26 +136,26 @@ void main() {
       expect(controller.state.remainingSeconds, 25 * 60.0);
     });
 
-    test('start restarts expired timer by resetting remainingSeconds and lastTickMinute', () {
+    test('start begins ticking the standby phase after previous session completed', () {
       final controller = ChronoDialController();
       controller.setTargetMinutes(25);
       controller.start();
 
-      // Exhaust the timer
+      // Exhaust the focus session
       controller.tick(1500.0);
-      expect(controller.state.remainingSeconds, 0.0);
+      // Auto-advances to Short Break in Standby
+      expect(controller.state.phase, PomodoroPhase.shortBreak);
+      expect(controller.state.remainingSeconds, 300.0);
       expect(controller.state.isRunning, isFalse);
-      expect(controller.state.lastTickMinute, 0);
 
-      // Restart expired timer
+      // Start the short break session
       controller.start();
       expect(controller.state.isRunning, isTrue);
-      expect(controller.state.remainingSeconds, 25 * 60.0);
-      expect(controller.state.lastTickMinute, 25);
+      expect(controller.state.remainingSeconds, 300.0);
 
-      // Ticks smoothly from reset time
+      // Ticks smoothly from short break time
       controller.tick(1.0);
-      expect(controller.state.remainingSeconds, 25 * 60.0 - 1.0);
+      expect(controller.state.remainingSeconds, 299.0);
     });
 
     test('initial state and setTargetMinutes initialize lastTickMinute to prevent spurious first tick', () {
@@ -201,7 +203,8 @@ void main() {
       controller.start();
       // Tick until completion
       controller.tick(1500.0);
-      expect(controller.state.remainingSeconds, 0.0);
+      expect(controller.state.phase, PomodoroPhase.shortBreak);
+      expect(controller.state.remainingSeconds, 300.0);
       expect(controller.state.isRunning, isFalse);
 
       final sessions = await db.select(db.timerSessions).get();
