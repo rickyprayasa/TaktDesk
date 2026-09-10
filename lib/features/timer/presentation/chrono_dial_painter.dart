@@ -9,6 +9,8 @@ class ChronoDialPainter extends CustomPainter {
   final bool isRunning;
   final Color needleColor;
   final Color filamentColor;
+  final List<Color> outerBezelGradient;
+  final Color innerBezelColor;
 
   // Cached text painters for dial numbers
   static final Map<int, TextPainter> _numberPainters = {};
@@ -20,6 +22,12 @@ class ChronoDialPainter extends CustomPainter {
     required this.isRunning,
     this.needleColor = TaktColors.mutedOchre,
     this.filamentColor = TaktColors.filamentAmber,
+    this.outerBezelGradient = const [
+      Color(0xFF353940),
+      Color(0xFF22252A),
+      Color(0xFF181A1D),
+    ],
+    this.innerBezelColor = const Color(0xFF141517),
   });
 
   static TextPainter _getTextPainter(String text) {
@@ -53,13 +61,9 @@ class ChronoDialPainter extends CustomPainter {
     // 2. Multi-Tiered Metallic Bezel (Braun Style)
     // 2a. Outer Chamfer Ring
     final outerBezelPaint = Paint()
-      ..shader = const RadialGradient(
-        colors: [
-          Color(0xFF353940),
-          Color(0xFF22252A),
-          Color(0xFF181A1D),
-        ],
-        stops: [0.85, 0.95, 1.0],
+      ..shader = RadialGradient(
+        colors: outerBezelGradient,
+        stops: const [0.85, 0.95, 1.0],
       ).createShader(Rect.fromCircle(center: center, radius: outerRadius));
     canvas.drawCircle(center, outerRadius, outerBezelPaint);
 
@@ -82,7 +86,7 @@ class ChronoDialPainter extends CustomPainter {
 
     // 2c. Inner Bezel Stepped Border
     final innerBezelStroke = Paint()
-      ..color = const Color(0xFF141517)
+      ..color = innerBezelColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
     canvas.drawCircle(center, dialRadius + 2, innerBezelStroke);
@@ -231,6 +235,8 @@ class ChronoDialPainter extends CustomPainter {
         oldDelegate.targetMinutes != targetMinutes ||
         oldDelegate.isRunning != isRunning ||
         oldDelegate.needleColor != needleColor ||
-        oldDelegate.filamentColor != filamentColor;
+        oldDelegate.filamentColor != filamentColor ||
+        oldDelegate.outerBezelGradient != outerBezelGradient ||
+        oldDelegate.innerBezelColor != innerBezelColor;
   }
 }

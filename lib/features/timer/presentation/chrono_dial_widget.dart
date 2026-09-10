@@ -187,6 +187,8 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                             isRunning: state.isRunning,
                             needleColor: themeState.needleColor,
                             filamentColor: themeState.filamentColor,
+                            outerBezelGradient: themeState.plateGradient,
+                            innerBezelColor: themeState.borderColor,
                           ),
                         );
                       },
@@ -200,6 +202,9 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                 child: CrownPushButton(
                   isPressed: state.isRunning,
                   onTap: _handleToggle,
+                  gradientColors: themeState.plateGradient,
+                  borderColor: themeState.borderColor,
+                  stemColor: themeState.moduleChassisColor,
                 ),
               ),
             ],
@@ -210,9 +215,9 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: TaktColors.basaltSlate,
+            color: themeState.moduleChassisColor,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: TaktColors.slateBorder, width: 1.0),
+            border: Border.all(color: themeState.borderColor, width: 1.0),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

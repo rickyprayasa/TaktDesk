@@ -5,11 +5,17 @@ import '../../../../app/theme/takt_colors.dart';
 class CrownPushButton extends StatefulWidget {
   final bool isPressed;
   final VoidCallback onTap;
+  final List<Color>? gradientColors;
+  final Color? borderColor;
+  final Color? stemColor;
 
   const CrownPushButton({
     super.key,
     required this.isPressed,
     required this.onTap,
+    this.gradientColors,
+    this.borderColor,
+    this.stemColor,
   });
 
   @override
@@ -85,17 +91,20 @@ class _CrownPushButtonState extends State<CrownPushButton>
               width: 32,
               height: 12,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
+                  colors: widget.gradientColors ?? const [
                     Color(0xFF424750),
                     Color(0xFF2A2D33),
                     Color(0xFF1E2125),
                   ],
                 ),
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-                border: Border.all(color: TaktColors.slateBorder, width: 1.0),
+                border: Border.all(
+                  color: widget.borderColor ?? TaktColors.slateBorder,
+                  width: 1.0,
+                ),
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0x66000000),
@@ -120,7 +129,7 @@ class _CrownPushButtonState extends State<CrownPushButton>
             Container(
               width: 14,
               height: 4,
-              color: const Color(0xFF181A1D),
+              color: widget.stemColor ?? const Color(0xFF181A1D),
             ),
           ],
         ),

@@ -4,6 +4,7 @@ import '../../domain/pomodoro_phase.dart';
 import '../chrono_dial_controller.dart';
 import 'split_flap_tile.dart';
 import '../../../../app/theme/takt_colors.dart';
+import '../../../../app/theme/theme_controller.dart';
 
 /// 3D Mechanical Split-Flap Board mounted above the Chrono Dial.
 /// Displays Pomodoro Phase (FOCUS / SHORT BRK / LONG BRK) and Cycle Count (CYCLE 1/4).
@@ -13,6 +14,7 @@ class SplitFlapBoardWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(chronoDialProvider);
+    final themeState = ref.watch(chassisThemeProvider);
     final controller = ref.read(chronoDialProvider.notifier);
 
     final phaseText = _formatPhaseText(state.phase);
@@ -38,9 +40,9 @@ class SplitFlapBoardWidget extends ConsumerWidget {
         margin: EdgeInsets.zero,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: const Color(0xFF181B1F),
+          color: themeState.moduleChassisColor,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: const Color(0xFF333842), width: 1.0),
+          border: Border.all(color: themeState.borderColor, width: 1.0),
           boxShadow: const [
             BoxShadow(
               color: Color(0x77000000),

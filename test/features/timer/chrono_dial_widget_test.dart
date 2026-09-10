@@ -8,7 +8,9 @@ import 'package:takt_desk/app/theme/theme_controller.dart';
 import 'package:takt_desk/core/database/app_database.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_painter.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_widget.dart';
+import 'package:takt_desk/features/timer/presentation/widgets/crown_push_button.dart';
 import 'package:takt_desk/features/timer/presentation/widgets/mechanical_flip_digit.dart';
+import 'package:takt_desk/features/timer/presentation/widgets/split_flap_board_widget.dart';
 
 void main() {
   setUpAll(() {
@@ -287,5 +289,101 @@ void main() {
     painter = customPaint.painter as ChronoDialPainter;
     expect(painter.needleColor, equals(const Color(0xFF3A86FF))); // electric cobalt
     expect(painter.filamentColor, equals(const Color(0xFFFF9E00))); // vivid amber neon
+  });
+
+  testWidgets('ChronoDialWidget adapts dial bezel, crown, split flap, and pill timer to rawBrassPatina edition', (tester) async {
+    final testDb = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(testDb.close);
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(testDb),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Initial default: Braun Classic
+    var customPaint = tester.widget<CustomPaint>(dialFinder);
+    var painter = customPaint.painter as ChronoDialPainter;
+    expect(painter.outerBezelGradient, equals(HardwareEdition.braunClassic.plateGradientDark));
+    expect(painter.innerBezelColor, equals(HardwareEdition.braunClassic.darkBorder));
+
+    // Initial crown push button
+    var crownWidget = tester.widget<CrownPushButton>(find.byType(CrownPushButton));
+    expect(crownWidget.gradientColors, equals(HardwareEdition.braunClassic.plateGradientDark));
+    expect(crownWidget.borderColor, equals(HardwareEdition.braunClassic.darkBorder));
+    expect(crownWidget.stemColor, equals(HardwareEdition.braunClassic.darkModuleBg));
+
+    // Pill timer initial
+    var pillContainer = tester.widget<Container>(
+      find.ancestor(
+        of: find.byIcon(Icons.remove_circle_outline),
+        matching: find.byType(Container),
+      ).first,
+    );
+    var pillDeco = pillContainer.decoration as BoxDecoration;
+    expect((pillDeco.border as Border).top.color, equals(HardwareEdition.braunClassic.darkBorder));
+    expect(pillDeco.color, equals(HardwareEdition.braunClassic.darkModuleBg));
+
+    // Split flap board initial
+    var splitFlapContainer = tester.widget<Container>(
+      find.descendant(
+        of: find.byType(SplitFlapBoardWidget),
+        matching: find.byType(Container),
+      ).first,
+    );
+    var splitFlapDeco = splitFlapContainer.decoration as BoxDecoration;
+    expect((splitFlapDeco.border as Border).top.color, equals(HardwareEdition.braunClassic.darkBorder));
+    expect(splitFlapDeco.color, equals(HardwareEdition.braunClassic.darkModuleBg));
+
+    // Switch to Raw Brass & Patina edition
+    container.read(chassisThemeProvider.notifier).setHardwareEdition(HardwareEditionType.rawBrassPatina);
+    await tester.pump();
+
+    // Verify ChronoDialPainter configured with brass plate gradient and border color
+    customPaint = tester.widget<CustomPaint>(dialFinder);
+    painter = customPaint.painter as ChronoDialPainter;
+    expect(painter.outerBezelGradient, equals(HardwareEdition.rawBrassPatina.plateGradientDark));
+    expect(painter.innerBezelColor, equals(HardwareEdition.rawBrassPatina.darkBorder));
+
+    // Verify CrownPushButton adapts to rawBrassPatina
+    crownWidget = tester.widget<CrownPushButton>(find.byType(CrownPushButton));
+    expect(crownWidget.gradientColors, equals(HardwareEdition.rawBrassPatina.plateGradientDark));
+    expect(crownWidget.borderColor, equals(HardwareEdition.rawBrassPatina.darkBorder));
+    expect(crownWidget.stemColor, equals(HardwareEdition.rawBrassPatina.darkModuleBg));
+
+    // Verify Pill timer container adapts to rawBrassPatina
+    pillContainer = tester.widget<Container>(
+      find.ancestor(
+        of: find.byIcon(Icons.remove_circle_outline),
+        matching: find.byType(Container),
+      ).first,
+    );
+    pillDeco = pillContainer.decoration as BoxDecoration;
+    expect((pillDeco.border as Border).top.color, equals(HardwareEdition.rawBrassPatina.darkBorder));
+    expect(pillDeco.color, equals(HardwareEdition.rawBrassPatina.darkModuleBg));
+
+    // Verify Split flap board container adapts to rawBrassPatina
+    splitFlapContainer = tester.widget<Container>(
+      find.descendant(
+        of: find.byType(SplitFlapBoardWidget),
+        matching: find.byType(Container),
+      ).first,
+    );
+    splitFlapDeco = splitFlapContainer.decoration as BoxDecoration;
+    expect((splitFlapDeco.border as Border).top.color, equals(HardwareEdition.rawBrassPatina.darkBorder));
+    expect(splitFlapDeco.color, equals(HardwareEdition.rawBrassPatina.darkModuleBg));
   });
 }
