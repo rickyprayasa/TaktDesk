@@ -115,9 +115,10 @@ class _DeskTelemetrySlipWidgetState extends ConsumerState<DeskTelemetrySlipWidge
     final sessionsAsync = ref.watch(todayTimerSessionsStreamProvider);
     final sessions = sessionsAsync.valueOrNull ?? const <TimerSession>[];
 
-    final paperColor = isDark ? const Color(0xFF202328) : const Color(0xFFF5F3EB);
-    final borderColor = themeState.borderColor;
-    final inkColor = isDark ? TaktColors.warmBone : TaktColors.chassisObsidian;
+    // Authentic thermal receipt paper retains an off-white ivory/warm bone finish in both dark & light modes
+    const paperColor = Color(0xFFF5F3EB);
+    const borderColor = Color(0xFFD5D1C8);
+    const inkColor = TaktColors.thermalCarbon;
 
     final fullLog = TelemetryLogFormatter.formatFullAuditLog(
       editionTitle: themeState.edition.title,
@@ -146,22 +147,25 @@ class _DeskTelemetrySlipWidgetState extends ConsumerState<DeskTelemetrySlipWidge
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF16181B) : const Color(0xFFCBC8BE),
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(3.0)),
-                  border: Border.all(color: borderColor, width: 1.0),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF383D45) : const Color(0xFFBDB8AD),
+                    width: 1.0,
+                  ),
                 ),
               ),
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: paperColor,
-                  border: Border(
+                  border: const Border(
                     left: BorderSide(color: borderColor, width: 1.0),
                     right: BorderSide(color: borderColor, width: 1.0),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
-                      blurRadius: 16.0,
-                      offset: const Offset(0, 6),
+                      color: Colors.black.withValues(alpha: isDark ? 0.60 : 0.15),
+                      blurRadius: 18.0,
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
@@ -179,7 +183,7 @@ class _DeskTelemetrySlipWidgetState extends ConsumerState<DeskTelemetrySlipWidge
                           physics: const BouncingScrollPhysics(),
                           child: Text(
                             fullLog,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontFamily: 'monospace',
                               fontSize: 8.5,
                               height: 1.38,
