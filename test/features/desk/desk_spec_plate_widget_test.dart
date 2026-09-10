@@ -7,6 +7,7 @@ import 'package:takt_desk/app/theme/theme_controller.dart';
 import 'package:takt_desk/core/audio/audio_service.dart';
 import 'package:takt_desk/core/audio/sound_effect.dart';
 import 'package:takt_desk/features/desk/presentation/widgets/desk_spec_plate_widget.dart';
+import 'package:takt_desk/features/desk/presentation/widgets/desk_telemetry_slip_widget.dart';
 import 'package:takt_desk/features/settings/presentation/settings_controller.dart';
 
 class MockAudioService extends AudioService {
@@ -30,6 +31,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          todayTimerSessionsStreamProvider.overrideWith((ref) => Stream.value([])),
           todayFocusStatsProvider.overrideWith(
             (ref) => Stream.value(const TodayFocusStats(
               completedCount: 2,
@@ -46,13 +48,14 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.textContaining('BRAUN CLASSIC'), findsOneWidget);
-    expect(find.textContaining('MOD. 01'), findsOneWidget);
-    expect(find.textContaining('1960'), findsOneWidget);
-    expect(find.textContaining('GERMANIC MINIMALISM'), findsOneWidget);
-    expect(find.textContaining('STEREO 44.1kHz'), findsOneWidget);
-    expect(find.textContaining('2 / 4 CYCLES'), findsOneWidget);
-    expect(find.textContaining('50 MIN FOCUSED'), findsOneWidget);
+    final plateSurface = find.byKey(const ValueKey('desk_spec_plate_surface'));
+    expect(find.descendant(of: plateSurface, matching: find.text('BRAUN CLASSIC')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('MOD. 01')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('1960')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('GERMANIC MINIMALISM')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('STEREO 44.1kHz')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('2 / 4 CYCLES')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('50 MIN FOCUSED')), findsOneWidget);
     expect(find.byKey(const ValueKey('spec_plate_led_row')), findsOneWidget);
 
     // Verify LED states: completedCount = 2 -> 2 active (filamentAmber), 2 inactive (basaltSlate)
@@ -72,6 +75,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          todayTimerSessionsStreamProvider.overrideWith((ref) => Stream.value([])),
           todayFocusStatsProvider.overrideWith(
             (ref) => const Stream.empty(),
           ),
@@ -85,8 +89,9 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.textContaining('0 / 4 CYCLES'), findsOneWidget);
-    expect(find.textContaining('0 MIN FOCUSED'), findsOneWidget);
+    final plateSurface = find.byKey(const ValueKey('desk_spec_plate_surface'));
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('0 / 4 CYCLES')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('0 MIN FOCUSED')), findsOneWidget);
 
     // All 4 LEDs should be inactive
     for (int i = 0; i < 4; i++) {
@@ -100,6 +105,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          todayTimerSessionsStreamProvider.overrideWith((ref) => Stream.value([])),
           todayFocusStatsProvider.overrideWith(
             (ref) => Stream.value(const TodayFocusStats(
               completedCount: 4,
@@ -116,8 +122,9 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.textContaining('4 / 4 CYCLES'), findsOneWidget);
-    expect(find.textContaining('100 MIN FOCUSED'), findsOneWidget);
+    final plateSurface = find.byKey(const ValueKey('desk_spec_plate_surface'));
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('4 / 4 CYCLES')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('100 MIN FOCUSED')), findsOneWidget);
 
     for (int i = 0; i < 4; i++) {
       expect(find.byKey(ValueKey('spec_plate_led_$i')), findsOneWidget);
@@ -133,6 +140,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          todayTimerSessionsStreamProvider.overrideWith((ref) => Stream.value([])),
           audioServiceProvider.overrideWithValue(mockAudio),
           todayFocusStatsProvider.overrideWith(
             (ref) => Stream.value(const TodayFocusStats(
@@ -157,7 +165,7 @@ void main() {
       expect((led.decoration as BoxDecoration).color, equals(TaktColors.basaltSlate));
     }
 
-    await tester.tap(find.byType(DeskSpecPlateWidget));
+    await tester.tap(find.byKey(const ValueKey('desk_spec_plate_surface')));
     await tester.pumpAndSettle();
 
     expect(mockAudio.playedEffects, contains(SoundEffect.dialClick));
@@ -167,6 +175,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          todayTimerSessionsStreamProvider.overrideWith((ref) => Stream.value([])),
           chassisThemeProvider.overrideWith((ref) => ThemeController()..setDarkMode(false)),
           todayFocusStatsProvider.overrideWith(
             (ref) => Stream.value(const TodayFocusStats(
@@ -184,8 +193,9 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.textContaining('BRAUN CLASSIC'), findsOneWidget);
-    expect(find.textContaining('3 / 4 CYCLES'), findsOneWidget);
+    final plateSurface = find.byKey(const ValueKey('desk_spec_plate_surface'));
+    expect(find.descendant(of: plateSurface, matching: find.text('BRAUN CLASSIC')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('3 / 4 CYCLES')), findsOneWidget);
 
     for (int i = 0; i < 3; i++) {
       final container = tester.widget<Container>(find.byKey(ValueKey('spec_plate_led_$i')));
@@ -199,6 +209,7 @@ void main() {
   testWidgets('DeskSpecPlateWidget updates stamp title and gradient based on active edition', (tester) async {
     final container = ProviderContainer(
       overrides: [
+        todayTimerSessionsStreamProvider.overrideWith((ref) => Stream.value([])),
         todayFocusStatsProvider.overrideWith(
           (ref) => Stream.value(const TodayFocusStats(completedCount: 1, totalMinutes: 25)),
         ),
@@ -220,8 +231,9 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.textContaining('TITANIUM STEALTH'), findsOneWidget);
-    expect(find.textContaining('AEROSPACE PVD GRADE 5'), findsOneWidget);
+    final plateSurface = find.byKey(const ValueKey('desk_spec_plate_surface'));
+    expect(find.descendant(of: plateSurface, matching: find.text('TITANIUM STEALTH')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('AEROSPACE PVD GRADE 5')), findsOneWidget);
 
     final plateContainer = tester.widget<Container>(
       find.descendant(of: find.byType(DeskSpecPlateWidget), matching: find.byType(Container)).first,
@@ -239,6 +251,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          todayTimerSessionsStreamProvider.overrideWith((ref) => Stream.value([])),
           todayFocusStatsProvider.overrideWith(
             (ref) => Stream.value(const TodayFocusStats(
               completedCount: 2,
@@ -263,24 +276,79 @@ void main() {
     final innerContainerBox = tester.renderObject(plateContainerFinder) as RenderBox;
     expect(innerContainerBox.size.width, lessThanOrEqualTo(280.0));
 
+    final plateSurface = find.byKey(const ValueKey('desk_spec_plate_surface'));
     // Verify all text elements are present
-    expect(find.textContaining('BRAUN CLASSIC'), findsOneWidget);
-    expect(find.textContaining('MOD. 01'), findsOneWidget);
-    expect(find.textContaining('1960'), findsOneWidget);
-    expect(find.textContaining('GERMANIC MINIMALISM'), findsOneWidget);
-    expect(find.textContaining('STEREO 44.1kHz'), findsOneWidget);
-    expect(find.textContaining('2 / 4 CYCLES'), findsOneWidget);
-    expect(find.textContaining('50 MIN FOCUSED'), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.text('BRAUN CLASSIC')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('MOD. 01')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('1960')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('GERMANIC MINIMALISM')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('STEREO 44.1kHz')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('2 / 4 CYCLES')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('50 MIN FOCUSED')), findsOneWidget);
 
     // Verify that NO Text widget in the plate has overflow: TextOverflow.ellipsis
     // (labels are structured to fit naturally and scale with FittedBox rather than clipping with ellipsis)
     final textWidgets = tester.widgetList<Text>(find.descendant(
-      of: find.byType(DeskSpecPlateWidget),
+      of: plateSurface,
       matching: find.byType(Text),
     ));
     for (final text in textWidgets) {
       expect(text.overflow, isNot(TextOverflow.ellipsis));
     }
+  });
+
+  testWidgets('DeskSpecPlateWidget toggles DeskTelemetrySlipWidget on plate tap and collapses via onRetract', (tester) async {
+    final mockAudio = MockAudioService();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          audioServiceProvider.overrideWithValue(mockAudio),
+          todayFocusStatsProvider.overrideWith(
+            (ref) => Stream.value(const TodayFocusStats(completedCount: 1, totalMinutes: 25)),
+          ),
+          todayTimerSessionsStreamProvider.overrideWith((ref) => Stream.value([])),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(
+            body: DeskSpecPlateWidget(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Initially slip is rendered in collapsed state and plate cue displays downward chevron
+    expect(find.byType(DeskTelemetrySlipWidget), findsOneWidget);
+    final initialSlip = tester.widget<DeskTelemetrySlipWidget>(find.byType(DeskTelemetrySlipWidget));
+    expect(initialSlip.isExpanded, isFalse);
+    expect(find.textContaining('▼'), findsOneWidget);
+
+    // Tap plate to expand
+    await tester.tap(find.byKey(const ValueKey('desk_spec_plate_surface')));
+    await tester.pumpAndSettle();
+
+    final expandedSlip = tester.widget<DeskTelemetrySlipWidget>(find.byType(DeskTelemetrySlipWidget));
+    expect(expandedSlip.isExpanded, isTrue);
+    expect(find.textContaining('▲'), findsWidgets);
+    expect(mockAudio.playedEffects, contains(SoundEffect.dialClick));
+
+    // Tap retract on slip to collapse
+    await tester.tap(find.text('[ RETRACT ▲ ]'));
+    await tester.pumpAndSettle();
+
+    final retractedSlip = tester.widget<DeskTelemetrySlipWidget>(find.byType(DeskTelemetrySlipWidget));
+    expect(retractedSlip.isExpanded, isFalse);
+    expect(find.textContaining('▼'), findsOneWidget);
+
+    // Tap plate again to expand, then tap plate again to toggle collapse
+    await tester.tap(find.byKey(const ValueKey('desk_spec_plate_surface')));
+    await tester.pumpAndSettle();
+    expect(tester.widget<DeskTelemetrySlipWidget>(find.byType(DeskTelemetrySlipWidget)).isExpanded, isTrue);
+
+    await tester.tap(find.byKey(const ValueKey('desk_spec_plate_surface')));
+    await tester.pumpAndSettle();
+    expect(tester.widget<DeskTelemetrySlipWidget>(find.byType(DeskTelemetrySlipWidget)).isExpanded, isFalse);
   });
 }
 

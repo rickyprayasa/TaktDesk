@@ -6,17 +6,34 @@ import '../../../../core/audio/audio_service.dart';
 import '../../../../core/audio/sound_effect.dart';
 import '../../../../core/haptics/haptic_service.dart';
 import '../../../settings/presentation/settings_controller.dart';
+import 'desk_telemetry_slip_widget.dart';
 
 /// Industrial spec plate anchoring the lower desk canvas.
 ///
 /// Features debossed brushed aluminum / slate aesthetics, corner rivet accents,
-/// Germanic manufacturer metadata stamp, and an analog daily focus tally
-/// accompanied by a 4-micro-LED quadrant progress meter.
-class DeskSpecPlateWidget extends ConsumerWidget {
+/// Germanic manufacturer metadata stamp, an analog daily focus tally
+/// accompanied by a 4-micro-LED quadrant progress meter, and a physical
+/// drawer housing mounting the tactile dot-matrix telemetry receipt slip.
+class DeskSpecPlateWidget extends ConsumerStatefulWidget {
   const DeskSpecPlateWidget({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DeskSpecPlateWidget> createState() => _DeskSpecPlateWidgetState();
+}
+
+class _DeskSpecPlateWidgetState extends ConsumerState<DeskSpecPlateWidget> {
+  bool _isTelemetryExpanded = false;
+
+  void _toggleTelemetry() {
+    setState(() {
+      _isTelemetryExpanded = !_isTelemetryExpanded;
+    });
+    ref.read(audioServiceProvider).play(SoundEffect.dialClick);
+    HapticService.selectionClick();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeState = ref.watch(chassisThemeProvider);
     final isDark = themeState.isDarkMode;
     final statsAsync = ref.watch(todayFocusStatsProvider);
@@ -35,51 +52,49 @@ class DeskSpecPlateWidget extends ConsumerWidget {
     final borderColor = isDark ? themeState.edition.darkBorder : themeState.edition.lightBorder;
     final rivetColor = isDark ? themeState.edition.rivetDark : themeState.edition.rivetLight;
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 280),
-        child: Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(7.0),
-            border: Border.all(color: borderColor, width: 1.0),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isDark
-                  ? themeState.edition.plateGradientDark
-                  : themeState.edition.plateGradientLight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
-                offset: const Offset(0, 2),
-                blurRadius: 4.0,
-              ),
-            ],
+    final plateContainer = Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(7.0),
+        border: Border.all(color: borderColor, width: 1.0),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? themeState.edition.plateGradientDark
+              : themeState.edition.plateGradientLight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+            offset: const Offset(0, 2),
+            blurRadius: 4.0,
           ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(7.0),
-              onTap: () {
-                ref.read(audioServiceProvider).play(SoundEffect.dialClick);
-                HapticService.lightClick();
-              },
-              child: Stack(
-                children: [
-                  // Corner mechanical rivets
-                  Positioned(top: 4, left: 4, child: _RivetDot(color: rivetColor, isDark: isDark)),
-                  Positioned(top: 4, right: 4, child: _RivetDot(color: rivetColor, isDark: isDark)),
-                  Positioned(bottom: 4, left: 4, child: _RivetDot(color: rivetColor, isDark: isDark)),
-                  Positioned(bottom: 4, right: 4, child: _RivetDot(color: rivetColor, isDark: isDark)),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: const ValueKey('desk_spec_plate_surface'),
+          borderRadius: BorderRadius.circular(7.0),
+          onTap: _toggleTelemetry,
+          child: Stack(
+            children: [
+              // Corner mechanical rivets
+              Positioned(top: 4, left: 4, child: _RivetDot(color: rivetColor, isDark: isDark)),
+              Positioned(top: 4, right: 4, child: _RivetDot(color: rivetColor, isDark: isDark)),
+              Positioned(bottom: 4, left: 4, child: _RivetDot(color: rivetColor, isDark: isDark)),
+              Positioned(bottom: 4, right: 4, child: _RivetDot(color: rivetColor, isDark: isDark)),
 
                   // Main Plate Content
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         // Left Column: Manufacturer Stamp
                         Expanded(
@@ -216,11 +231,49 @@ class DeskSpecPlateWidget extends ConsumerWidget {
                         ),
                       ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    // Mechanical aperture cue for telemetry printer slip
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        _isTelemetryExpanded
+                            ? '[ TELEMETRY LOG ▲ ]'
+                            : '[ TELEMETRY LOG ▼ ]',
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 6.8,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.6,
+                          color: secondaryTextColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
+        ),
+      ),
+    );
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 280),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            plateContainer,
+            DeskTelemetrySlipWidget(
+              isExpanded: _isTelemetryExpanded,
+              onRetract: () {
+                setState(() {
+                  _isTelemetryExpanded = false;
+                });
+              },
+            ),
+          ],
         ),
       ),
     );

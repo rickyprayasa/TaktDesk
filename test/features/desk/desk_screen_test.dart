@@ -13,6 +13,7 @@ import 'package:takt_desk/features/desk/presentation/desk_canvas_screen.dart';
 import 'package:takt_desk/features/desk/presentation/isometric_desk_layout.dart';
 import 'package:takt_desk/features/desk/presentation/widgets/chassis_theme_switch.dart';
 import 'package:takt_desk/features/desk/presentation/widgets/desk_spec_plate_widget.dart';
+import 'package:takt_desk/features/desk/presentation/widgets/desk_telemetry_slip_widget.dart';
 import 'package:takt_desk/features/desk/presentation/widgets/emergency_unlatch_widget.dart';
 import 'package:takt_desk/features/desk/presentation/widgets/monastic_switch_widget.dart';
 import 'package:takt_desk/features/desk/presentation/widgets/settings_rivet_button.dart';
@@ -37,6 +38,9 @@ List<Override> deskTestOverrides(AppDatabase testDb) => [
   ),
   lifetimeFocusStatsProvider.overrideWith(
     (ref) => Stream.value(const LifetimeFocusStats(totalSessions: 0, totalHours: 0)),
+  ),
+  todayTimerSessionsStreamProvider.overrideWith(
+    (ref) => Stream.value(const []),
   ),
 ];
 
