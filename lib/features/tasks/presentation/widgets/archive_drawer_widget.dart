@@ -22,7 +22,7 @@ class ArchiveDrawerWidget extends ConsumerWidget {
       key: const ValueKey('archive_drawer_container'),
       margin: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B1E22),
+        color: themeState.isDarkMode ? const Color(0xFF1B1E22) : themeState.moduleChassisColor,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
           color: isOpen ? themeState.filamentColor.withValues(alpha: 0.6) : themeState.borderColor,
@@ -68,10 +68,14 @@ class ArchiveDrawerWidget extends ConsumerWidget {
                     key: const ValueKey('archive_drawer_handle_plate'),
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                     decoration: BoxDecoration(
-                      color: themeState.filamentColor.withValues(alpha: 0.15),
+                      color: themeState.isDarkMode
+                          ? themeState.filamentColor.withValues(alpha: 0.15)
+                          : themeState.canvasColor,
                       borderRadius: BorderRadius.circular(3),
                       border: Border.all(
-                        color: themeState.filamentColor.withValues(alpha: 0.7),
+                        color: themeState.isDarkMode
+                            ? themeState.filamentColor.withValues(alpha: 0.7)
+                            : themeState.borderColor,
                         width: 0.8,
                       ),
                     ),
@@ -81,7 +85,9 @@ class ArchiveDrawerWidget extends ConsumerWidget {
                         Icon(
                           isOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                           size: 14,
-                          color: themeState.filamentColor,
+                          color: themeState.isDarkMode
+                              ? themeState.filamentColor
+                              : themeState.chassisTextColor,
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -90,7 +96,9 @@ class ArchiveDrawerWidget extends ConsumerWidget {
                             fontFamily: 'monospace',
                             fontSize: 9.0,
                             fontWeight: FontWeight.w700,
-                            color: themeState.filamentColor,
+                            color: themeState.isDarkMode
+                                ? themeState.filamentColor
+                                : themeState.chassisTextColor,
                             letterSpacing: 1.0,
                           ),
                         ),
@@ -122,7 +130,7 @@ class ArchiveDrawerWidget extends ConsumerWidget {
                             child: Text(
                               'DRAWER EMPTY',
                               style: TaktTypography.receiptBody.copyWith(
-                                color: Colors.white24,
+                                color: themeState.chassisMutedTextColor,
                                 fontSize: 10,
                                 letterSpacing: 1.0,
                               ),
@@ -138,7 +146,7 @@ class ArchiveDrawerWidget extends ConsumerWidget {
                                   separatorBuilder: (_, __) => const SizedBox(height: 4),
                                   itemBuilder: (context, index) {
                                     final task = state.archivedTasks[index];
-                                    return _buildArchivedTaskItem(context, task, controller);
+                                    return _buildArchivedTaskItem(context, task, controller, themeState);
                                   },
                                 ),
                               ),
@@ -159,7 +167,9 @@ class ArchiveDrawerWidget extends ConsumerWidget {
                                         fontFamily: 'monospace',
                                         fontSize: 8.0,
                                         fontWeight: FontWeight.w600,
-                                        color: TaktColors.mutedOchre.withValues(alpha: 0.7),
+                                        color: themeState.isDarkMode
+                                            ? TaktColors.mutedOchre.withValues(alpha: 0.8)
+                                            : const Color(0xFFB33A18),
                                         letterSpacing: 0.8,
                                       ),
                                     ),
@@ -199,13 +209,14 @@ class ArchiveDrawerWidget extends ConsumerWidget {
     BuildContext context,
     ReceiptTask task,
     ReceiptRunnerController controller,
+    ChassisThemeState themeState,
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFF25282E),
+        color: themeState.isDarkMode ? const Color(0xFF25282E) : themeState.canvasColor,
         borderRadius: BorderRadius.circular(3),
-        border: Border.all(color: const Color(0xFF383C45), width: 0.8),
+        border: Border.all(color: themeState.borderColor, width: 0.8),
       ),
       child: Row(
         children: [
@@ -224,7 +235,7 @@ class ArchiveDrawerWidget extends ConsumerWidget {
               task.title,
               style: TaktTypography.receiptBody.copyWith(
                 fontSize: 10,
-                color: Colors.white70,
+                color: themeState.chassisTextColor.withValues(alpha: 0.75),
                 decoration: TextDecoration.lineThrough,
               ),
               maxLines: 1,
@@ -239,16 +250,16 @@ class ArchiveDrawerWidget extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFF333842),
+                color: themeState.isDarkMode ? const Color(0xFF333842) : themeState.moduleChassisColor,
                 borderRadius: BorderRadius.circular(2),
               ),
-              child: const Text(
+              child: Text(
                 'REPRINT',
                 style: TextStyle(
                   fontFamily: 'monospace',
                   fontSize: 7.5,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFFD99B59),
+                  color: themeState.isDarkMode ? const Color(0xFFD99B59) : const Color(0xFF8B4513),
                 ),
               ),
             ),
@@ -258,9 +269,9 @@ class ArchiveDrawerWidget extends ConsumerWidget {
           InkWell(
             onTap: () => controller.deleteArchivedTask(task.id),
             borderRadius: BorderRadius.circular(3),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 3, vertical: 2),
-              child: Icon(Icons.close, size: 12, color: Colors.white38),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+              child: Icon(Icons.close, size: 12, color: themeState.chassisMutedTextColor),
             ),
           ),
         ],

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/app/theme/hardware_edition.dart';
+import 'package:takt_desk/app/theme/takt_colors.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
 import 'package:takt_desk/app/theme/widgets/material_chassis_box.dart';
 import 'package:takt_desk/features/tasks/presentation/receipt_runner_controller.dart';
@@ -366,6 +367,156 @@ void main() {
         drawerOpenBorder.top.color,
         equals(HardwareEdition.titaniumStealth.filamentColor.withValues(alpha: 0.6)),
       );
+    });
+
+    testWidgets('harmonizes archive drawer chassis and high-contrast typography in light and dark modes', (tester) async {
+      final controller = ReceiptRunnerController();
+      await controller.addTask('Archived Task Alpha');
+      controller.tearTask(controller.state.tasks.first.id);
+      controller.toggleArchiveDrawer();
+
+      final container = ProviderContainer(
+        overrides: [
+          receiptRunnerProvider.overrideWith((ref) => controller),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      // 1. Light Mode Check
+      container.read(chassisThemeProvider.notifier).setDarkMode(false);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: ReceiptRunnerWidget(),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final themeLight = container.read(chassisThemeProvider);
+
+      // Archive drawer container background matches moduleChassisColor in light mode
+      final drawerContainerFinder = find.byKey(const ValueKey('archive_drawer_container'));
+      final drawerContainer = tester.widget<Container>(drawerContainerFinder);
+      final drawerDecoration = drawerContainer.decoration as BoxDecoration;
+      expect(drawerDecoration.color, equals(themeLight.moduleChassisColor));
+
+      // Handle center plate
+      final handlePlateFinder = find.byKey(const ValueKey('archive_drawer_handle_plate'));
+      final handlePlate = tester.widget<Container>(handlePlateFinder);
+      final handleDecoration = handlePlate.decoration as BoxDecoration;
+      expect(handleDecoration.color, equals(themeLight.canvasColor));
+      final handleBorder = handleDecoration.border as Border;
+      expect(handleBorder.top.color, equals(themeLight.borderColor));
+
+      // Handle text and icon
+      final handleText = tester.widget<Text>(find.text('ARCHIVE // 1'));
+      expect(handleText.style?.color, equals(themeLight.chassisTextColor));
+
+      final handleIcon = tester.widget<Icon>(find.byIcon(Icons.keyboard_arrow_up));
+      expect(handleIcon.color, equals(themeLight.chassisTextColor));
+
+      // Archived task card
+      final taskCardFinder = find.ancestor(
+        of: find.text('Archived Task Alpha'),
+        matching: find.byType(Container),
+      ).first;
+      final taskCard = tester.widget<Container>(taskCardFinder);
+      final taskCardDecoration = taskCard.decoration as BoxDecoration;
+      expect(taskCardDecoration.color, equals(themeLight.canvasColor));
+      final taskCardBorder = taskCardDecoration.border as Border;
+      expect(taskCardBorder.top.color, equals(themeLight.borderColor));
+
+      // Archived task title
+      final taskTitle = tester.widget<Text>(find.text('Archived Task Alpha'));
+      expect(taskTitle.style?.color, equals(themeLight.chassisTextColor.withValues(alpha: 0.75)));
+
+      // Reprint button background and text
+      final reprintFinder = find.ancestor(
+        of: find.text('REPRINT'),
+        matching: find.byType(Container),
+      ).first;
+      final reprintContainer = tester.widget<Container>(reprintFinder);
+      final reprintDecoration = reprintContainer.decoration as BoxDecoration;
+      expect(reprintDecoration.color, equals(themeLight.moduleChassisColor));
+
+      final reprintText = tester.widget<Text>(find.text('REPRINT'));
+      expect(reprintText.style?.color, equals(const Color(0xFF8B4513)));
+
+      // Delete icon
+      final deleteIcon = tester.widget<Icon>(find.byIcon(Icons.close));
+      expect(deleteIcon.color, equals(themeLight.chassisMutedTextColor));
+
+      // Purge archive button text
+      final purgeText = tester.widget<Text>(find.text('PURGE ARCHIVE'));
+      expect(purgeText.style?.color, equals(const Color(0xFFB33A18)));
+
+      // 2. Empty drawer test in Light Mode
+      await controller.clearArchive();
+      await tester.pumpAndSettle();
+
+      final emptyDrawerText = tester.widget<Text>(find.text('DRAWER EMPTY'));
+      expect(emptyDrawerText.style?.color, equals(themeLight.chassisMutedTextColor));
+
+      // 3. Dark Mode Check
+      container.read(chassisThemeProvider.notifier).setDarkMode(true);
+      // Re-add and tear task to test dark mode cards
+      await controller.addTask('Archived Task Beta');
+      controller.tearTask(controller.state.tasks.first.id);
+      await tester.pumpAndSettle();
+
+      final themeDark = container.read(chassisThemeProvider);
+
+      // Archive drawer container background in dark mode
+      final drawerDarkContainer = tester.widget<Container>(drawerContainerFinder);
+      final drawerDarkDecoration = drawerDarkContainer.decoration as BoxDecoration;
+      expect(drawerDarkDecoration.color, equals(const Color(0xFF1B1E22)));
+
+      // Handle plate in dark mode
+      final handlePlateDark = tester.widget<Container>(handlePlateFinder);
+      final handleDarkDecoration = handlePlateDark.decoration as BoxDecoration;
+      expect(handleDarkDecoration.color, equals(themeDark.filamentColor.withValues(alpha: 0.15)));
+      final handleDarkBorder = handleDarkDecoration.border as Border;
+      expect(handleDarkBorder.top.color, equals(themeDark.filamentColor.withValues(alpha: 0.7)));
+
+      final handleDarkText = tester.widget<Text>(find.text('ARCHIVE // 1'));
+      expect(handleDarkText.style?.color, equals(themeDark.filamentColor));
+
+      final handleDarkIcon = tester.widget<Icon>(find.byIcon(Icons.keyboard_arrow_up));
+      expect(handleDarkIcon.color, equals(themeDark.filamentColor));
+
+      // Archived task card in dark mode
+      final taskCardDarkFinder = find.ancestor(
+        of: find.text('Archived Task Beta'),
+        matching: find.byType(Container),
+      ).first;
+      final taskCardDark = tester.widget<Container>(taskCardDarkFinder);
+      final taskCardDarkDecoration = taskCardDark.decoration as BoxDecoration;
+      expect(taskCardDarkDecoration.color, equals(const Color(0xFF25282E)));
+
+      // Reprint button in dark mode
+      final reprintDarkFinder = find.ancestor(
+        of: find.text('REPRINT'),
+        matching: find.byType(Container),
+      ).first;
+      final reprintDarkContainer = tester.widget<Container>(reprintDarkFinder);
+      final reprintDarkDecoration = reprintDarkContainer.decoration as BoxDecoration;
+      expect(reprintDarkDecoration.color, equals(const Color(0xFF333842)));
+
+      final reprintDarkText = tester.widget<Text>(find.text('REPRINT'));
+      expect(reprintDarkText.style?.color, equals(const Color(0xFFD99B59)));
+
+      // Purge archive text in dark mode
+      final purgeDarkText = tester.widget<Text>(find.text('PURGE ARCHIVE'));
+      expect(purgeDarkText.style?.color, equals(TaktColors.mutedOchre.withValues(alpha: 0.8)));
+
+      await tester.pumpWidget(const SizedBox());
     });
   });
 }
