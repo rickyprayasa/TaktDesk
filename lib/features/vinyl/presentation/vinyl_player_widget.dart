@@ -8,6 +8,8 @@ import '../domain/vinyl_track.dart';
 import '../../../app/theme/takt_typography.dart';
 import '../../../app/theme/theme_controller.dart';
 import '../../../app/theme/widgets/material_chassis_box.dart';
+import '../../../core/haptics/haptic_service.dart';
+import 'widgets/vinyl_record_crate_sheet.dart';
 
 class VinylPlayerWidget extends ConsumerStatefulWidget {
   const VinylPlayerWidget({super.key});
@@ -201,52 +203,52 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
                 ),
               ),
               const SizedBox(width: 8),
-              DropdownButton<int>(
-                value: state.selectedTrackIndex,
-                isDense: true,
-                dropdownColor: themeState.moduleChassisColor,
-                style: TaktTypography.controlLabel.copyWith(
-                  fontSize: 10,
-                  color: themeState.chassisTextColor,
-                ),
-                underline: const SizedBox(),
-                icon: Icon(
-                  Icons.arrow_drop_down,
-                  color: themeState.chassisTextColor,
-                  size: 16,
-                ),
-                selectedItemBuilder: (BuildContext context) {
-                  return VinylTrack.presets.map((t) {
-                    return Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        'TRACK 0${t.index + 1}',
-                        style: TaktTypography.controlLabel.copyWith(
-                          fontSize: 10,
-                          color: state.needleOnRecord
-                              ? themeState.filamentColor
-                              : themeState.chassisTextColor,
-                        ),
-                      ),
-                    );
-                  }).toList();
-                },
-                items: VinylTrack.presets
-                    .map((t) => DropdownMenuItem(
-                          value: t.index,
-                          child: Text(
-                            t.name,
-                            style: TextStyle(color: themeState.chassisTextColor),
-                          ),
-                        ))
-                    .toList(),
-                onChanged: (val) {
-                  if (val != null) controller.selectTrack(val);
-                },
+              const _CrateTriggerBadge(
+                key: ValueKey('vinyl_crate_trigger_button'),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CrateTriggerBadge extends ConsumerWidget {
+  const _CrateTriggerBadge({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeState = ref.watch(chassisThemeProvider);
+
+    return Semantics(
+      button: true,
+      label: 'Open vinyl crate',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticService.selectionClick();
+            VinylRecordCrateSheet.show(context);
+          },
+          borderRadius: BorderRadius.circular(4),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+            decoration: BoxDecoration(
+              color: themeState.moduleChassisColor,
+              border: Border.all(color: themeState.borderColor, width: 1.0),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              '[ CRATE // ${VinylTrack.presets.length.toString().padLeft(2, '0')} DISCS ▾ ]',
+              style: TaktTypography.controlLabel.copyWith(
+                color: themeState.chassisTextColor,
+                fontSize: 9,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

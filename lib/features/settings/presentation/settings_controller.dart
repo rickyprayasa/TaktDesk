@@ -5,6 +5,7 @@ import '../../../app/theme/theme_controller.dart';
 import '../../../core/audio/audio_service.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/haptics/haptic_service.dart';
+import '../../vinyl/presentation/vinyl_controller.dart';
 
 class TodayFocusStats {
   final int completedCount;
@@ -111,11 +112,13 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
   final AppDatabase? _database;
   final AudioService? _audioService;
   final ThemeController? _themeController;
+  final VinylController? _vinylController;
 
   DeskPreferencesController([
     this._database,
     this._audioService,
     this._themeController,
+    this._vinylController,
   ]) : super(const DeskPreferencesState()) {
     init();
   }
@@ -127,6 +130,9 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
     if (!mounted) return;
     if (pref != null) {
       _themeController?.setProUnlocked(pref.isProSimulated);
+      if (!pref.isProSimulated) {
+        _vinylController?.revertIfProRevoked();
+      }
       final applied = _themeController?.setHardwareEdition(
         HardwareEdition.fromString(pref.selectedEdition).type,
       ) ?? true;
@@ -186,6 +192,9 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
 
   Future<void> setProSimulated(bool value) async {
     _themeController?.setProUnlocked(value);
+    if (!value) {
+      _vinylController?.revertIfProRevoked();
+    }
     final activeEdition = _themeController?.state.edition.type.name ?? state.selectedEdition;
     state = state.copyWith(
       isProSimulated: value,
@@ -207,7 +216,8 @@ final deskPreferencesControllerProvider =
   final db = ref.watch(appDatabaseProvider);
   final audioService = ref.watch(audioServiceProvider);
   final themeController = ref.watch(chassisThemeProvider.notifier);
-  return DeskPreferencesController(db, audioService, themeController);
+  final vinylController = ref.watch(vinylProvider.notifier);
+  return DeskPreferencesController(db, audioService, themeController, vinylController);
 });
 
 final todayFocusStatsProvider = StreamProvider<TodayFocusStats>((ref) {

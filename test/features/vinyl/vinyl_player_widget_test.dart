@@ -8,6 +8,7 @@ import 'package:takt_desk/core/audio/audio_service.dart';
 import 'package:takt_desk/core/audio/sound_effect.dart';
 import 'package:takt_desk/features/vinyl/presentation/vinyl_deck_painter.dart';
 import 'package:takt_desk/features/vinyl/presentation/vinyl_player_widget.dart';
+import 'package:takt_desk/features/vinyl/presentation/widgets/vinyl_record_crate_sheet.dart';
 
 class MockAudioService extends AudioService {
   final List<SoundEffect> playedEffects = [];
@@ -47,8 +48,12 @@ void main() {
     // Verify track name is displayed in uppercase
     expect(find.text('LO-FI RAIN'), findsOneWidget);
 
-    // Verify DropdownButton is present
-    expect(find.byType(DropdownButton<int>), findsOneWidget);
+    // Verify DropdownButton is no longer present
+    expect(find.byType(DropdownButton<int>), findsNothing);
+
+    // Verify _CrateTriggerBadge with key vinyl_crate_trigger_button is present
+    expect(find.byKey(const ValueKey('vinyl_crate_trigger_button')), findsOneWidget);
+    expect(find.text('[ CRATE // 08 DISCS ▾ ]'), findsOneWidget);
 
     // Verify CustomPaint with VinylDeckPainter
     final painterFinder = find.byWidgetPredicate(
@@ -117,7 +122,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('VinylPlayerWidget changes track using dropdown', (tester) async {
+  testWidgets('VinylPlayerWidget crate trigger button opens VinylRecordCrateSheet and loads track', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
@@ -132,14 +137,28 @@ void main() {
 
     expect(find.text('LO-FI RAIN'), findsOneWidget);
 
-    // Open dropdown
-    await tester.tap(find.byType(DropdownButton<int>));
+    // Tap crate trigger button
+    final triggerFinder = find.byKey(const ValueKey('vinyl_crate_trigger_button'));
+    expect(triggerFinder, findsOneWidget);
+    await tester.tap(triggerFinder);
     await tester.pumpAndSettle();
 
-    // Select 'Deep Brown Noise'
-    await tester.tap(find.text('Deep Brown Noise').last);
+    // Verify VinylRecordCrateSheet is displayed
+    expect(find.byType(VinylRecordCrateSheet), findsOneWidget);
+    expect(find.text('ANALOG RECORD CRATE // 33 RPM'), findsOneWidget);
+
+    // In VinylRecordCrateSheet, page 0 is active ("LO-FI RAIN", on platter).
+    // Drag page view to track 1 ("DEEP BROWN NOISE")
+    await tester.drag(find.byType(PageView), const Offset(-300, 0));
     await tester.pumpAndSettle();
 
+    final loadButton = find.byKey(const ValueKey('load_track_button_1'));
+    expect(loadButton, findsOneWidget);
+    await tester.tap(loadButton);
+    await tester.pumpAndSettle();
+
+    // Verify modal popped and track is loaded
+    expect(find.byType(VinylRecordCrateSheet), findsNothing);
     expect(find.text('DEEP BROWN NOISE'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());

@@ -8,8 +8,11 @@ import 'package:takt_desk/core/audio/sound_effect.dart';
 import 'package:takt_desk/core/database/app_database.dart';
 import 'package:takt_desk/core/haptics/haptic_service.dart';
 import 'package:takt_desk/features/settings/presentation/settings_controller.dart';
+import 'package:takt_desk/features/vinyl/presentation/vinyl_controller.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late AppDatabase db;
   late AudioService audioService;
 
@@ -398,5 +401,34 @@ void main() {
     expect(state.isProSimulated, isFalse);
     expect(themeController.state.edition.type, equals(HardwareEditionType.braunClassic));
     expect(themeController.state.isProUnlocked, isFalse);
+  });
+
+  test('calling setProSimulated(false) reverts premium vinyl track to Track 0 (Lo-fi Rain)', () async {
+    final themeController = ThemeController();
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        audioServiceProvider.overrideWithValue(audioService),
+        chassisThemeProvider.overrideWith((ref) => themeController),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(deskPreferencesControllerProvider.notifier);
+    await controller.init();
+
+    final vinylController = container.read(vinylProvider.notifier);
+    // Track 4 is Campfire Embers (premium)
+    final equipped = vinylController.selectTrack(4, isPro: true);
+    expect(equipped, isTrue);
+    expect(container.read(vinylProvider).selectedTrackIndex, equals(4));
+    expect(container.read(vinylProvider).currentTrack.name, equals('Campfire Embers'));
+
+    // Revoke Pro clearance
+    await controller.setProSimulated(false);
+
+    // Should have reverted to Track 0 (Lo-fi Rain)
+    expect(container.read(vinylProvider).selectedTrackIndex, equals(0));
+    expect(container.read(vinylProvider).currentTrack.name, equals('Lo-fi Rain'));
   });
 }
