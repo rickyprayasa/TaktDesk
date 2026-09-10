@@ -31,6 +31,8 @@ class ChronoDialController extends StateNotifier<TimerState> {
       remainingSeconds: profile.focusMinutes * 60.0,
       lastTickMinute: profile.focusMinutes,
     );
+    HapticService.dialTick();
+    _audioService?.playFoley(SoundEffect.dialClick);
   }
 
   void setTargetMinutes(int minutes) {
@@ -105,27 +107,9 @@ class ChronoDialController extends StateNotifier<TimerState> {
       _audioService?.playFoley(SoundEffect.bellChime);
       HapticService.mechanicalPress();
 
-      PomodoroPhase nextPhase;
-      int nextCycle = state.cycleCount;
-
-      switch (state.phase) {
-        case PomodoroPhase.focus:
-          if (state.cycleCount < 4) {
-            nextPhase = PomodoroPhase.shortBreak;
-          } else {
-            nextPhase = PomodoroPhase.longBreak;
-          }
-          break;
-        case PomodoroPhase.shortBreak:
-          nextPhase = PomodoroPhase.focus;
-          nextCycle = (state.cycleCount + 1).clamp(1, 4);
-          break;
-        case PomodoroPhase.longBreak:
-          nextPhase = PomodoroPhase.focus;
-          nextCycle = 1;
-          break;
-      }
-
+      final next = _nextPhaseAndCycle();
+      final nextPhase = next.phase;
+      final nextCycle = next.cycleCount;
       final nextMins = _minutesForPhase(nextPhase, state.profile);
 
       state = state.copyWith(
@@ -141,6 +125,21 @@ class ChronoDialController extends StateNotifier<TimerState> {
         remainingSeconds: nextRemaining,
         lastTickMinute: currentMinute,
       );
+    }
+  }
+
+  ({PomodoroPhase phase, int cycleCount}) _nextPhaseAndCycle() {
+    switch (state.phase) {
+      case PomodoroPhase.focus:
+        if (state.cycleCount < 4) {
+          return (phase: PomodoroPhase.shortBreak, cycleCount: state.cycleCount);
+        } else {
+          return (phase: PomodoroPhase.longBreak, cycleCount: state.cycleCount);
+        }
+      case PomodoroPhase.shortBreak:
+        return (phase: PomodoroPhase.focus, cycleCount: (state.cycleCount + 1).clamp(1, 4));
+      case PomodoroPhase.longBreak:
+        return (phase: PomodoroPhase.focus, cycleCount: 1);
     }
   }
 
@@ -171,29 +170,18 @@ class ChronoDialController extends StateNotifier<TimerState> {
 
   void advancePhase() {
     if (state.isRunning) return;
-    PomodoroPhase nextPhase;
-    int nextCycle = state.cycleCount;
-
-    switch (state.phase) {
-      case PomodoroPhase.focus:
-        if (state.cycleCount < 4) {
-          nextPhase = PomodoroPhase.shortBreak;
-        } else {
-          nextPhase = PomodoroPhase.longBreak;
-        }
-        break;
-      case PomodoroPhase.shortBreak:
-        nextPhase = PomodoroPhase.focus;
-        nextCycle = (state.cycleCount + 1).clamp(1, 4);
-        break;
-      case PomodoroPhase.longBreak:
-        nextPhase = PomodoroPhase.focus;
-        nextCycle = 1;
-        break;
-    }
-
-    setPhase(nextPhase);
-    state = state.copyWith(cycleCount: nextCycle);
+    final next = _nextPhaseAndCycle();
+    final mins = _minutesForPhase(next.phase, state.profile);
+    _sessionStartedAt = null;
+    state = state.copyWith(
+      phase: next.phase,
+      cycleCount: next.cycleCount,
+      targetMinutes: mins,
+      remainingSeconds: mins * 60.0,
+      lastTickMinute: mins,
+    );
+    HapticService.dialTick();
+    _audioService?.playFoley(SoundEffect.dialClick);
   }
 }
 
