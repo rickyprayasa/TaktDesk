@@ -8,11 +8,14 @@ import 'package:takt_desk/app/theme/hardware_edition.dart';
 import 'package:takt_desk/app/theme/takt_colors.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
 import 'package:takt_desk/core/database/app_database.dart';
+import 'package:takt_desk/features/timer/domain/pomodoro_phase.dart';
+import 'package:takt_desk/features/timer/presentation/chrono_dial_controller.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_painter.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_widget.dart';
 import 'package:takt_desk/features/timer/presentation/widgets/crown_push_button.dart';
 import 'package:takt_desk/features/timer/presentation/widgets/mechanical_flip_digit.dart';
 import 'package:takt_desk/features/timer/presentation/widgets/split_flap_board_widget.dart';
+import 'package:takt_desk/features/timer/presentation/widgets/split_flap_tile.dart';
 
 void main() {
   setUpAll(() {
@@ -600,5 +603,36 @@ void main() {
     expect(painter1.shouldRepaint(painter2), isTrue);
     expect(painter2.shouldRepaint(painter3), isTrue);
     expect(painter3.shouldRepaint(painter4), isTrue);
+  });
+
+  testWidgets('ChronoDialWidget renders Patina Olive colors and split flap labels during break', (tester) async {
+    final container = ProviderContainer(
+      overrides: [
+        chronoDialProvider.overrideWith((ref) {
+          final ctrl = ChronoDialController();
+          ctrl.setPhase(PomodoroPhase.shortBreak);
+          return ctrl;
+        }),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: Scaffold(body: ChronoDialWidget())),
+      ),
+    );
+    await tester.pump();
+
+    // Split-flap displays SHORT BRK
+    final shortBrkChars = 'SHORT BRK'.split('');
+    final tiles = tester.widgetList<SplitFlapTile>(find.byType(SplitFlapTile));
+    final displayedPhase = tiles.take(shortBrkChars.length).map((t) => t.char).join();
+    expect(displayedPhase, equals('SHORT BRK'));
+
+    final dialPainter = tester.widget<CustomPaint>(dialFinder).painter as ChronoDialPainter;
+    expect(dialPainter.needleColor, equals(TaktColors.patinaOlive));
+    expect(dialPainter.filamentColor, equals(TaktColors.patinaOlive));
   });
 }

@@ -9,6 +9,7 @@ import 'widgets/mechanical_flip_digit.dart';
 import 'widgets/split_flap_board_widget.dart';
 import '../../desk/presentation/widgets/monastic_switch_widget.dart';
 import '../../../app/theme/hardware_edition.dart';
+import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/takt_typography.dart';
 import '../../../app/theme/theme_controller.dart';
 
@@ -159,6 +160,11 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
         break;
     }
 
+    final effectiveNeedleColor =
+        state.isBreak ? TaktColors.patinaOlive : themeState.needleColor;
+    final effectiveFilamentColor =
+        state.isBreak ? TaktColors.patinaOlive : themeState.filamentColor;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -201,8 +207,8 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                             progressPercent: state.progressPercent,
                             targetMinutes: state.targetMinutes,
                             isRunning: state.isRunning,
-                            needleColor: themeState.needleColor,
-                            filamentColor: themeState.filamentColor,
+                            needleColor: effectiveNeedleColor,
+                            filamentColor: effectiveFilamentColor,
                             outerBezelGradient: themeState.plateGradient,
                             innerBezelColor: themeState.borderColor,
                             textureType: themeState.textureType,

@@ -29,7 +29,7 @@ class SplitFlapBoardWidget extends ConsumerWidget {
         ledColor = TaktColors.patinaOlive;
         break;
       case PomodoroPhase.longBreak:
-        ledColor = TaktColors.mutedOchre;
+        ledColor = const Color(0xFFC85A32);
         break;
     }
 
