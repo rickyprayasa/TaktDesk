@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/app/theme/hardware_edition.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
+import 'package:takt_desk/app/theme/widgets/material_chassis_box.dart';
 import 'package:takt_desk/features/tasks/presentation/receipt_runner_controller.dart';
 import 'package:takt_desk/features/tasks/presentation/receipt_runner_painter.dart';
 import 'package:takt_desk/features/tasks/presentation/receipt_runner_widget.dart';
@@ -155,8 +156,12 @@ void main() {
       await tester.pump();
 
       // Initially braunClassic (dark mode)
-      final chassisFinder = find.byKey(const ValueKey('receipt_dispenser_chassis'));
-      final casingBefore = tester.widget<Container>(chassisFinder);
+      expect(find.byType(MaterialChassisBox), findsOneWidget);
+      final casingFinder = find.descendant(
+        of: find.byType(MaterialChassisBox),
+        matching: find.byType(Container),
+      ).first;
+      final casingBefore = tester.widget<Container>(casingFinder);
       final decorationBefore = casingBefore.decoration as BoxDecoration;
       expect(decorationBefore.color, equals(HardwareEdition.braunClassic.darkModuleBg));
       final borderBefore = decorationBefore.border as Border;
@@ -173,7 +178,7 @@ void main() {
       container.read(chassisThemeProvider.notifier).setHardwareEdition(HardwareEditionType.titaniumStealth);
       await tester.pumpAndSettle();
 
-      final casingAfter = tester.widget<Container>(chassisFinder);
+      final casingAfter = tester.widget<Container>(casingFinder);
       final decorationAfter = casingAfter.decoration as BoxDecoration;
       expect(decorationAfter.color, equals(HardwareEdition.titaniumStealth.darkModuleBg));
       final borderAfter = decorationAfter.border as Border;
@@ -184,6 +189,77 @@ void main() {
       final slitDecorationAfter = slitAfter.decoration as BoxDecoration;
       final slitBorderAfter = slitDecorationAfter.border as Border;
       expect(slitBorderAfter.top.color, equals(HardwareEdition.titaniumStealth.darkBorder));
+    });
+
+    testWidgets('renders MaterialChassisBox and applies high-contrast typography in light and dark modes', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      // Start in light mode
+      container.read(chassisThemeProvider.notifier).setDarkMode(false);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: ReceiptRunnerWidget(),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // MaterialChassisBox is present
+      expect(find.byType(MaterialChassisBox), findsOneWidget);
+
+      final themeLight = container.read(chassisThemeProvider);
+
+      // DISPENSER: 5 MAX has chassisTextColor in Light Mode
+      final headerTextLight = tester.widget<Text>(find.text('DISPENSER: 5 MAX'));
+      expect(headerTextLight.style?.color, equals(themeLight.chassisTextColor));
+
+      // + button has chassisTextColor
+      final addIconLight = tester.widget<Icon>(find.byIcon(Icons.add));
+      expect(addIconLight.color, equals(themeLight.chassisTextColor));
+
+      // NO TASKS IN QUEUE has chassisMutedTextColor
+      final emptyTextLight = tester.widget<Text>(find.text('NO TASKS IN QUEUE'));
+      expect(emptyTextLight.style?.color, equals(themeLight.chassisMutedTextColor));
+
+      // Pip LED inactive color matches themeState.borderColor
+      final pipFinder = find.descendant(
+        of: find.byType(Row),
+        matching: find.byWidgetPredicate((w) =>
+            w is Container &&
+            w.constraints?.maxWidth == 4 &&
+            (w.decoration as BoxDecoration?)?.shape == BoxShape.circle),
+      );
+      expect(pipFinder, findsWidgets);
+      final firstPip = tester.widget<Container>(pipFinder.first);
+      expect((firstPip.decoration as BoxDecoration).color, equals(themeLight.borderColor));
+
+      // Switch to dark mode
+      container.read(chassisThemeProvider.notifier).setDarkMode(true);
+      await tester.pumpAndSettle();
+
+      final themeDark = container.read(chassisThemeProvider);
+
+      final headerTextDark = tester.widget<Text>(find.text('DISPENSER: 5 MAX'));
+      expect(headerTextDark.style?.color, equals(themeDark.chassisTextColor));
+
+      final addIconDark = tester.widget<Icon>(find.byIcon(Icons.add));
+      expect(addIconDark.color, equals(themeDark.chassisTextColor));
+
+      final emptyTextDark = tester.widget<Text>(find.text('NO TASKS IN QUEUE'));
+      expect(emptyTextDark.style?.color, equals(themeDark.chassisMutedTextColor));
+
+      final firstPipDark = tester.widget<Container>(pipFinder.first);
+      expect((firstPipDark.decoration as BoxDecoration).color, equals(themeDark.borderColor));
+
+      await tester.pumpWidget(const SizedBox());
     });
 
     testWidgets('renders 4 corner rivets matching active edition rivetColor', (tester) async {

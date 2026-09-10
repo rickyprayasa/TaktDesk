@@ -35,10 +35,12 @@ class DispenserSlotHeader extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Model Label
-            const Expanded(
+            Expanded(
               child: Text(
                 'DISPENSER: 5 MAX',
-                style: TaktTypography.controlLabel,
+                style: TaktTypography.controlLabel.copyWith(
+                  color: themeState.chassisTextColor,
+                ),
               ),
             ),
             // 5 Segmented Pip LEDs
@@ -48,7 +50,7 @@ class DispenserSlotHeader extends ConsumerWidget {
                 final isLit = index < taskCount;
                 final ledColor = isFull
                     ? TaktColors.mutedOchre
-                    : (isLit ? TaktColors.filamentAmber : const Color(0xFF2B2E34));
+                    : (isLit ? themeState.filamentColor : themeState.borderColor);
                 return Container(
                   width: 4,
                   height: 4,
@@ -78,8 +80,8 @@ class DispenserSlotHeader extends ConsumerWidget {
               icon: Icon(
                 Icons.add,
                 color: onAddTap != null
-                    ? TaktColors.warmBone
-                    : TaktColors.warmBone.withValues(alpha: 0.25),
+                    ? themeState.chassisTextColor
+                    : themeState.chassisMutedTextColor,
                 size: 18,
               ),
               onPressed: onAddTap,

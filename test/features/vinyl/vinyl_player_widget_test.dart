@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/app/theme/hardware_edition.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
+import 'package:takt_desk/app/theme/widgets/material_chassis_box.dart';
 import 'package:takt_desk/core/audio/audio_service.dart';
 import 'package:takt_desk/core/audio/sound_effect.dart';
 import 'package:takt_desk/features/vinyl/presentation/vinyl_deck_painter.dart';
@@ -263,9 +264,12 @@ void main() {
       await tester.pump();
 
       // Initially braunClassic
-      final chassisFinder = find.byKey(const ValueKey('vinyl_player_deck_chassis'));
-      expect(chassisFinder, findsOneWidget);
-      final casingBefore = tester.widget<Container>(chassisFinder);
+      expect(find.byType(MaterialChassisBox), findsOneWidget);
+      final casingFinder = find.descendant(
+        of: find.byType(MaterialChassisBox),
+        matching: find.byType(Container),
+      ).first;
+      final casingBefore = tester.widget<Container>(casingFinder);
       final decorationBefore = casingBefore.decoration as BoxDecoration;
       expect(decorationBefore.color, equals(HardwareEdition.braunClassic.darkModuleBg));
       final borderBefore = decorationBefore.border as Border;
@@ -275,11 +279,83 @@ void main() {
       container.read(chassisThemeProvider.notifier).setHardwareEdition(HardwareEditionType.titaniumStealth);
       await tester.pumpAndSettle();
 
-      final casingAfter = tester.widget<Container>(chassisFinder);
+      final casingAfter = tester.widget<Container>(casingFinder);
       final decorationAfter = casingAfter.decoration as BoxDecoration;
       expect(decorationAfter.color, equals(HardwareEdition.titaniumStealth.darkModuleBg));
       final borderAfter = decorationAfter.border as Border;
       expect(borderAfter.top.color, equals(HardwareEdition.titaniumStealth.darkBorder));
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('renders MaterialChassisBox and applies high-contrast typography in light and dark modes', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      // Start in light mode
+      container.read(chassisThemeProvider.notifier).setDarkMode(false);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: VinylPlayerWidget(),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // MaterialChassisBox is present
+      expect(find.byType(MaterialChassisBox), findsOneWidget);
+
+      final themeLight = container.read(chassisThemeProvider);
+
+      // Verify title "BRAUN TP-1" text color in Light Mode
+      final titleTextLight = tester.widget<Text>(find.text('BRAUN TP-1'));
+      expect(titleTextLight.style?.color, equals(themeLight.chassisTextColor));
+
+      // Verify "33 RPM" text color when needle is up
+      final rpmTextLight = tester.widget<Text>(find.text('33 RPM'));
+      expect(rpmTextLight.style?.color, equals(themeLight.chassisMutedTextColor));
+
+      // Verify track name text color when needle is up
+      final trackTextLight = tester.widget<Text>(find.text('LO-FI RAIN'));
+      expect(trackTextLight.style?.color, equals(themeLight.chassisTextColor));
+
+      // Switch to dark mode
+      container.read(chassisThemeProvider.notifier).setDarkMode(true);
+      await tester.pumpAndSettle();
+
+      final themeDark = container.read(chassisThemeProvider);
+
+      // Verify title "BRAUN TP-1" text color in Dark Mode
+      final titleTextDark = tester.widget<Text>(find.text('BRAUN TP-1'));
+      expect(titleTextDark.style?.color, equals(themeDark.chassisTextColor));
+
+      // Verify "33 RPM" text color when needle is up in Dark Mode
+      final rpmTextDark = tester.widget<Text>(find.text('33 RPM'));
+      expect(rpmTextDark.style?.color, equals(themeDark.chassisMutedTextColor));
+
+      // Verify track name in Dark Mode
+      final trackTextDark = tester.widget<Text>(find.text('LO-FI RAIN'));
+      expect(trackTextDark.style?.color, equals(themeDark.chassisTextColor));
+
+      // Drop needle and verify colors change to filamentColor
+      final painterFinder = find.byWidgetPredicate(
+        (widget) => widget is CustomPaint && widget.painter is VinylDeckPainter,
+      );
+      await tester.tap(painterFinder);
+      await tester.pump();
+
+      final rpmPlaying = tester.widget<Text>(find.text('33 RPM'));
+      expect(rpmPlaying.style?.color, equals(themeDark.filamentColor));
+
+      final trackPlaying = tester.widget<Text>(find.text('LO-FI RAIN'));
+      expect(trackPlaying.style?.color, equals(themeDark.filamentColor));
 
       await tester.pumpWidget(const SizedBox());
     });
