@@ -73,6 +73,11 @@ void main() {
       return null;
     });
 
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -122,7 +127,7 @@ void main() {
     expect(find.textContaining('STANDBY // COMMENCE CHRONO DIAL'), findsOneWidget);
   });
 
-  testWidgets('DeskTelemetrySlipWidget animates collapse when isExpanded changes from true to false', (tester) async {
+  testWidgets('DeskTelemetrySlipWidget animates expansion and collapse when isExpanded changes', (tester) async {
     final now = DateTime(2026, 9, 10, 14, 0);
     final mockSessions = [
       TimerSession(
@@ -158,7 +163,7 @@ void main() {
     final sizeTransition = tester.widget<SizeTransition>(sizeTransitionFinder);
     expect(sizeTransition.sizeFactor.value, equals(0.0));
 
-    // Re-pump with isExpanded = true
+    // Re-pump with isExpanded = true (Expansion)
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -184,6 +189,31 @@ void main() {
     await tester.pumpAndSettle();
     final endSizeTransition = tester.widget<SizeTransition>(sizeTransitionFinder);
     expect(endSizeTransition.sizeFactor.value, equals(1.0));
+
+    // Re-pump with isExpanded = false (Collapse)
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          todayTimerSessionsStreamProvider.overrideWith((ref) => Stream.value(mockSessions)),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: DeskTelemetrySlipWidget(
+              isExpanded: false,
+              onRetract: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 200));
+    final collapsingTransition = tester.widget<SizeTransition>(sizeTransitionFinder);
+    expect(collapsingTransition.sizeFactor.value, lessThan(1.0));
+    expect(collapsingTransition.sizeFactor.value, greaterThan(0.0));
+
+    await tester.pumpAndSettle();
+    final collapsedTransition = tester.widget<SizeTransition>(sizeTransitionFinder);
+    expect(collapsedTransition.sizeFactor.value, equals(0.0));
   });
 
   testWidgets('DeskTelemetrySlipWidget supports light mode aesthetics', (tester) async {
