@@ -57,13 +57,25 @@ class VinylController extends StateNotifier<VinylState> {
     }
   }
 
-  void selectTrack(int index) {
-    if (index >= 0 && index < VinylTrack.presets.length) {
-      state = state.copyWith(selectedTrackIndex: index);
-      HapticService.dialTick();
-      if (state.needleOnRecord) {
-        _audioService?.startAmbient(index);
-      }
+  bool selectTrack(int index, {bool isPro = false}) {
+    if (index < 0 || index >= VinylTrack.presets.length) {
+      return false;
+    }
+    final track = VinylTrack.presets[index];
+    if (track.isPremium && !isPro) {
+      return false;
+    }
+    state = state.copyWith(selectedTrackIndex: index);
+    HapticService.dialTick();
+    if (state.needleOnRecord) {
+      _audioService?.startAmbient(index);
+    }
+    return true;
+  }
+
+  void revertIfProRevoked() {
+    if (state.currentTrack.isPremium) {
+      selectTrack(0, isPro: true);
     }
   }
 }

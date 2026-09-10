@@ -98,6 +98,10 @@ class MainActivity : FlutterActivity() {
                             1 -> "flutter_assets/assets/audio/vinyl_brown_noise.wav"
                             2 -> "flutter_assets/assets/audio/vinyl_library.wav"
                             3 -> "flutter_assets/assets/audio/vinyl_cafe.wav"
+                            4 -> "flutter_assets/assets/audio/vinyl_campfire.wav"
+                            5 -> "flutter_assets/assets/audio/vinyl_forest.wav"
+                            6 -> "flutter_assets/assets/audio/vinyl_cosmic.wav"
+                            7 -> "flutter_assets/assets/audio/vinyl_train.wav"
                             else -> "flutter_assets/assets/audio/vinyl_lofi_rain.wav"
                         }
                         val fd = context.assets.openFd(assetPath)

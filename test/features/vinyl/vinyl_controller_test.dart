@@ -29,23 +29,33 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('VinylTrack domain', () {
-    test('presets contain exactly 4 analog soundscapes', () {
-      expect(VinylTrack.presets.length, equals(4));
-      expect(VinylTrack.presets[0].name, equals('Lo-fi Rain'));
-      expect(VinylTrack.presets[0].labelColorHex, equals('#C85A32'));
-      expect(VinylTrack.presets[1].name, equals('Deep Brown Noise'));
-      expect(VinylTrack.presets[1].labelColorHex, equals('#4D5D4B'));
-      expect(VinylTrack.presets[2].name, equals('Library Atmosphere'));
-      expect(VinylTrack.presets[2].labelColorHex, equals('#D99B59'));
-      expect(VinylTrack.presets[3].name, equals('Cafe Echo'));
-      expect(VinylTrack.presets[3].labelColorHex, equals('#2E3238'));
+    test('presets contain exactly 8 analog soundscapes with correct tiers and metadata', () {
+      expect(VinylTrack.presets.length, equals(8));
+      for (int i = 0; i < 4; i++) {
+        expect(VinylTrack.presets[i].isPremium, isFalse, reason: 'Track $i should be Free');
+      }
+      for (int i = 4; i < 8; i++) {
+        expect(VinylTrack.presets[i].isPremium, isTrue, reason: 'Track $i should be Studio Pro');
+      }
+      for (final track in VinylTrack.presets) {
+        expect(track.catalogId, isNotEmpty);
+        expect(track.name, isNotEmpty);
+        expect(track.subtitle, isNotEmpty);
+        expect(track.description, isNotEmpty);
+        expect(track.labelColorHex, isNotEmpty);
+        expect(track.assetPath, isNotEmpty);
+      }
     });
 
-    test('labelColor parses hex code correctly', () {
+    test('labelColor parses hex code correctly for all 8 tracks', () {
       expect(VinylTrack.presets[0].labelColor.toARGB32(), equals(0xFFC85A32));
       expect(VinylTrack.presets[1].labelColor.toARGB32(), equals(0xFF4D5D4B));
       expect(VinylTrack.presets[2].labelColor.toARGB32(), equals(0xFFD99B59));
       expect(VinylTrack.presets[3].labelColor.toARGB32(), equals(0xFF2E3238));
+      expect(VinylTrack.presets[4].labelColor.toARGB32(), equals(0xFFE05A2B));
+      expect(VinylTrack.presets[5].labelColor.toARGB32(), equals(0xFF3B7A57));
+      expect(VinylTrack.presets[6].labelColor.toARGB32(), equals(0xFF3A86FF));
+      expect(VinylTrack.presets[7].labelColor.toARGB32(), equals(0xFF6C757D));
     });
   });
 
@@ -126,6 +136,40 @@ void main() {
 
       controller.selectTrack(1);
       expect(mockAudio.ambientStarted, isEmpty);
+    });
+
+    test('selectTrack guards premium tracks when not Pro and permits when Pro', () {
+      final controller = VinylController();
+      expect(controller.state.selectedTrackIndex, equals(0));
+
+      // Attempt selecting premium track 4 without Pro
+      final freeSuccess = controller.selectTrack(4, isPro: false);
+      expect(freeSuccess, isFalse);
+      expect(controller.state.selectedTrackIndex, equals(0));
+
+      // Select free track 1 without Pro
+      final freeTrack1 = controller.selectTrack(1, isPro: false);
+      expect(freeTrack1, isTrue);
+      expect(controller.state.selectedTrackIndex, equals(1));
+
+      // Attempt selecting premium track 4 with Pro
+      final proSuccess = controller.selectTrack(4, isPro: true);
+      expect(proSuccess, isTrue);
+      expect(controller.state.selectedTrackIndex, equals(4));
+    });
+
+    test('revertIfProRevoked resets to track 0 if on a premium track, no-op if on free track', () {
+      final controller = VinylController();
+      controller.selectTrack(4, isPro: true);
+      expect(controller.state.selectedTrackIndex, equals(4));
+
+      controller.revertIfProRevoked();
+      expect(controller.state.selectedTrackIndex, equals(0));
+
+      // Reverting while on free track remains at free track
+      controller.selectTrack(2, isPro: false);
+      controller.revertIfProRevoked();
+      expect(controller.state.selectedTrackIndex, equals(2));
     });
   });
 }
