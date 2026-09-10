@@ -86,7 +86,124 @@ void main() {
     });
   });
 
+  group('ChassisChamferPainter Unit Tests', () {
+    test('shouldRepaint returns false when properties are identical', () {
+      const painter1 = ChassisChamferPainter(
+        highlightColor: Color(0x20FFFFFF),
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+        strokeWidth: 1.0,
+      );
+      const painter2 = ChassisChamferPainter(
+        highlightColor: Color(0x20FFFFFF),
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+        strokeWidth: 1.0,
+      );
+      expect(painter1.shouldRepaint(painter2), isFalse);
+    });
+
+    test('shouldRepaint returns true when highlightColor, borderRadius, or strokeWidth changes', () {
+      const base = ChassisChamferPainter(
+        highlightColor: Color(0x20FFFFFF),
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+        strokeWidth: 1.0,
+      );
+      const diffColor = ChassisChamferPainter(
+        highlightColor: Color(0x40FFFFFF),
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+        strokeWidth: 1.0,
+      );
+      const diffRadius = ChassisChamferPainter(
+        highlightColor: Color(0x20FFFFFF),
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+        strokeWidth: 1.0,
+      );
+      const diffWidth = ChassisChamferPainter(
+        highlightColor: Color(0x20FFFFFF),
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+        strokeWidth: 2.0,
+      );
+
+      expect(base.shouldRepaint(diffColor), isTrue);
+      expect(base.shouldRepaint(diffRadius), isTrue);
+      expect(base.shouldRepaint(diffWidth), isTrue);
+    });
+
+    test('paint draws top and left chamfer specular path without throwing', () {
+      const painter = ChassisChamferPainter(
+        highlightColor: Color(0x20FFFFFF),
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+        strokeWidth: 1.0,
+      );
+      final recorder = PictureRecorder();
+      final canvas = Canvas(recorder);
+      expect(() => painter.paint(canvas, const Size(200, 200)), returnsNormally);
+      final picture = recorder.endRecording();
+      picture.dispose();
+    });
+  });
+
   group('MaterialChassisBox Widget Tests', () {
+    testWidgets('renders multi-layer elevation depth shadows and chamfer highlight in dark and light modes', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      // 1. Dark Mode
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: Scaffold(
+              body: MaterialChassisBox(
+                child: Text('Chamfer Depth'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Verify multi-layer shadows
+      final boxContainer = tester.widget<Container>(find.byType(Container).first);
+      final darkDeco = boxContainer.decoration as BoxDecoration;
+      expect(darkDeco.boxShadow, isNotNull);
+      expect(darkDeco.boxShadow!.length, greaterThanOrEqualTo(2));
+
+      // Deep directional cast shadow
+      final darkCastShadow = darkDeco.boxShadow![0];
+      expect(darkCastShadow.blurRadius, equals(14));
+      expect(darkCastShadow.offset, equals(const Offset(0, 6)));
+      expect(darkCastShadow.color, equals(Colors.black.withValues(alpha: 0.45)));
+
+      // Tighter ambient contact shadow
+      final darkContactShadow = darkDeco.boxShadow![1];
+      expect(darkContactShadow.blurRadius, equals(4));
+      expect(darkContactShadow.offset, equals(const Offset(0, 1)));
+      expect(darkContactShadow.color, equals(Colors.black.withValues(alpha: 0.25)));
+
+      // Verify chamfer highlight painter is attached as foregroundPainter inside ClipRRect
+      final customPaintFinder = find.descendant(
+        of: find.byType(ClipRRect),
+        matching: find.byType(CustomPaint),
+      );
+      expect(customPaintFinder, findsOneWidget);
+      var customPaint = tester.widget<CustomPaint>(customPaintFinder);
+      expect(customPaint.foregroundPainter, isA<ChassisChamferPainter>());
+      var chamferPainter = customPaint.foregroundPainter as ChassisChamferPainter;
+      expect(chamferPainter.highlightColor, equals(Colors.white.withValues(alpha: 0.12)));
+
+      // 2. Switch to Light Mode
+      container.read(chassisThemeProvider.notifier).setDarkMode(false);
+      await tester.pumpAndSettle();
+
+      final lightBoxContainer = tester.widget<Container>(find.byType(Container).first);
+      final lightDeco = lightBoxContainer.decoration as BoxDecoration;
+      expect(lightDeco.boxShadow![0].color, equals(const Color(0x1F000000)));
+      expect(lightDeco.boxShadow![1].color, equals(const Color(0x0F000000)));
+
+      customPaint = tester.widget<CustomPaint>(customPaintFinder);
+      expect(customPaint.foregroundPainter, isA<ChassisChamferPainter>());
+      chamferPainter = customPaint.foregroundPainter as ChassisChamferPainter;
+      expect(chamferPainter.highlightColor, equals(Colors.white.withValues(alpha: 0.28)));
+    });
     testWidgets('renders child widget inside container with custom padding and margin', (tester) async {
       await tester.pumpWidget(
         const ProviderScope(

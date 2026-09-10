@@ -26,10 +26,33 @@ class VinylDeckPainter extends CustomPainter {
     final radius = math.min(size.width, size.height) * 0.41;
 
     // ==========================================
-    // 1. Turntable Platter with Stroboscope Rim
+    // 0. Recessed Platter Well (Machined Chassis Cavity)
     // ==========================================
     final platterRadius = radius + 5;
+    final wellRadius = platterRadius + 3.0;
 
+    // Recessed circular well inner shadow fading inward
+    final innerStop = math.max(0.0, (platterRadius - 4.0) / wellRadius);
+    final wellShadowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          Colors.transparent,
+          Colors.black.withValues(alpha: 0.35),
+        ],
+        stops: [innerStop, 1.0],
+      ).createShader(Rect.fromCircle(center: center, radius: wellRadius));
+    canvas.drawCircle(center, wellRadius, wellShadowPaint);
+
+    // Subtle well outer lip contour
+    final wellLipPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    canvas.drawCircle(center, wellRadius, wellLipPaint);
+
+    // ==========================================
+    // 1. Turntable Platter with Stroboscope Rim
+    // ==========================================
     // Platter ambient drop shadow onto turntable base
     final platterShadow = Paint()
       ..color = const Color(0x66000000)

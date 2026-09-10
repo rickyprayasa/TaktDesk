@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -261,6 +262,70 @@ void main() {
       expect(base.shouldRepaint(diffBorder), isTrue);
       expect(base.shouldRepaint(diffLabel), isTrue);
     });
+
+    test('shouldRepaint returns true when rotationAngle, needleOnRecord, or armProgress changes', () {
+      final base = VinylDeckPainter(
+        rotationAngle: 0.0,
+        needleOnRecord: false,
+        armProgress: 0.0,
+      );
+      final diffAngle = VinylDeckPainter(
+        rotationAngle: 1.5,
+        needleOnRecord: false,
+        armProgress: 0.0,
+      );
+      final diffNeedle = VinylDeckPainter(
+        rotationAngle: 0.0,
+        needleOnRecord: true,
+        armProgress: 0.0,
+      );
+      final diffProgress = VinylDeckPainter(
+        rotationAngle: 0.0,
+        needleOnRecord: false,
+        armProgress: 0.5,
+      );
+
+      expect(base.shouldRepaint(diffAngle), isTrue);
+      expect(base.shouldRepaint(diffNeedle), isTrue);
+      expect(base.shouldRepaint(diffProgress), isTrue);
+    });
+
+    test('VinylDeckPainter draws recessed well with inner shadow and lip before platter', () {
+      final painter = VinylDeckPainter(
+        rotationAngle: 0.0,
+        needleOnRecord: false,
+      );
+
+      final recordingCanvas = _RecordingCanvas();
+      const testSize = Size(300, 300);
+      painter.paint(recordingCanvas, testSize);
+
+      final radius = math.min(testSize.width, testSize.height) * 0.41;
+      final platterRadius = radius + 5;
+      final expectedWellRadius = platterRadius + 3.0;
+
+      // Find the recessed well shadow circle (radial gradient)
+      final wellShadowCircles = recordingCanvas.circles.where((c) =>
+        (c.radius - expectedWellRadius).abs() < 0.001 &&
+        c.paint.shader != null
+      ).toList();
+      expect(wellShadowCircles, isNotEmpty, reason: 'Must draw recessed well inner shadow circle with shader at wellRadius');
+
+      // Find the subtle well lip circle (stroke)
+      final wellLipCircles = recordingCanvas.circles.where((c) =>
+        (c.radius - expectedWellRadius).abs() < 0.001 &&
+        c.paint.style == PaintingStyle.stroke
+      ).toList();
+      expect(wellLipCircles, isNotEmpty, reason: 'Must draw subtle well lip stroke circle at wellRadius');
+
+      // Check order: well shadow must be drawn before the platter main body
+      final wellShadowIndex = recordingCanvas.circles.indexOf(wellShadowCircles.first);
+      final platterBodyIndex = recordingCanvas.circles.indexWhere((c) =>
+        (c.radius - platterRadius).abs() < 0.001 &&
+        c.paint.shader != null
+      );
+      expect(wellShadowIndex, lessThan(platterBodyIndex), reason: 'Recessed well cavity must be painted before platter body');
+    });
   });
 
   group('VinylPlayerWidget Dynamic Metallurgy Theming', () {
@@ -466,5 +531,17 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
   });
+}
+
+class _RecordingCanvas implements Canvas {
+  final List<({Offset center, double radius, Paint paint})> circles = [];
+
+  @override
+  void drawCircle(Offset c, double radius, Paint paint) {
+    circles.add((center: c, radius: radius, paint: paint));
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
 }
 

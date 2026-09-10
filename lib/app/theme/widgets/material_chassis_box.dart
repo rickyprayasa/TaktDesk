@@ -3,6 +3,58 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme_controller.dart';
 import 'material_texture_painter.dart';
 
+/// Paints a top-lit specular chamfer highlight rim along the top and left edges
+/// of the chassis to simulate a machined 5mm metal slab edge.
+class ChassisChamferPainter extends CustomPainter {
+  final Color highlightColor;
+  final BorderRadius borderRadius;
+  final double strokeWidth;
+
+  const ChassisChamferPainter({
+    required this.highlightColor,
+    this.borderRadius = const BorderRadius.all(Radius.circular(8)),
+    this.strokeWidth = 1.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0) return;
+
+    final paint = Paint()
+      ..color = highlightColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    final topLeftRadius = borderRadius.topLeft;
+    final rX = topLeftRadius.x.clamp(0.0, size.width / 2);
+    final rY = topLeftRadius.y.clamp(0.0, size.height / 2);
+
+    final path = Path();
+    // Start along the left edge, moving upwards
+    path.moveTo(strokeWidth / 2, size.height - borderRadius.bottomLeft.y);
+    path.lineTo(strokeWidth / 2, rY > 0 ? rY : strokeWidth / 2);
+
+    if (rX > 0 && rY > 0) {
+      path.arcToPoint(
+        Offset(rX, strokeWidth / 2),
+        radius: Radius.elliptical(rX, rY),
+      );
+    }
+
+    // Line along the top edge
+    path.lineTo(size.width - borderRadius.topRight.x, strokeWidth / 2);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant ChassisChamferPainter oldDelegate) {
+    return oldDelegate.highlightColor != highlightColor ||
+        oldDelegate.borderRadius != borderRadius ||
+        oldDelegate.strokeWidth != strokeWidth;
+  }
+}
+
 /// A reusable hardware chassis container that applies procedural material texture,
 /// outer bezel borders, corner rivets, and elevation depth around any instrument or component.
 class MaterialChassisBox extends ConsumerWidget {
@@ -16,6 +68,7 @@ class MaterialChassisBox extends ConsumerWidget {
   final double borderWidth;
   final bool showRivets;
   final bool showTexture;
+  final bool showChamfer;
 
   const MaterialChassisBox({
     super.key,
@@ -29,6 +82,7 @@ class MaterialChassisBox extends ConsumerWidget {
     this.borderWidth = 1.2,
     this.showRivets = true,
     this.showTexture = true,
+    this.showChamfer = true,
   });
 
   @override
@@ -79,6 +133,14 @@ class MaterialChassisBox extends ConsumerWidget {
                       isDark: themeState.isDarkMode,
                       chassisColor: themeState.moduleChassisColor,
                     ),
+                    foregroundPainter: showChamfer
+                        ? ChassisChamferPainter(
+                            highlightColor: Colors.white.withValues(
+                              alpha: themeState.isDarkMode ? 0.12 : 0.28,
+                            ),
+                            borderRadius: borderRadius,
+                          )
+                        : null,
                   ),
                 ),
               ),
