@@ -37,6 +37,14 @@ class ChassisThemeState {
 
   Color get accentColor => edition.accentColor;
 
+  Color get chassisTextColor =>
+      isDarkMode ? const Color(0xFFE8E5DE) : const Color(0xFF1B1E23);
+
+  Color get chassisMutedTextColor =>
+      isDarkMode ? const Color(0x99E8E5DE) : const Color(0x991B1E23);
+
+  HardwareTextureType get textureType => edition.textureType;
+
   ChassisThemeState copyWith({
     bool? isDarkMode,
     HardwareEdition? edition,

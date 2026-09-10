@@ -31,6 +31,44 @@ void main() {
         expect(edition.plateGradientLight.length, greaterThanOrEqualTo(2));
       }
     });
+
+    test('each edition assigns its corresponding HardwareTextureType', () {
+      expect(
+        HardwareEdition.braunClassic.textureType,
+        equals(HardwareTextureType.matteAbsGrain),
+      );
+      expect(
+        HardwareEdition.titaniumStealth.textureType,
+        equals(HardwareTextureType.brushedTitanium),
+      );
+      expect(
+        HardwareEdition.bauhausHeritage.textureType,
+        equals(HardwareTextureType.tubularChrome),
+      );
+      expect(
+        HardwareEdition.rawBrassPatina.textureType,
+        equals(HardwareTextureType.burnishedBrass),
+      );
+    });
+
+    test('module background has distinct contrast from canvas in both dark and light modes', () {
+      for (final edition in HardwareEdition.all) {
+        expect(
+          edition.darkModuleBg,
+          isNot(equals(edition.darkCanvas)),
+          reason: '${edition.title} darkModuleBg must not match darkCanvas',
+        );
+        expect(
+          edition.lightModuleBg,
+          isNot(equals(edition.lightCanvas)),
+          reason: '${edition.title} lightModuleBg must not match lightCanvas',
+        );
+      }
+      expect(HardwareEdition.braunClassic.lightModuleBg, equals(const Color(0xFFCFCBC0)));
+      expect(HardwareEdition.titaniumStealth.lightModuleBg, equals(const Color(0xFFBFC4CD)));
+      expect(HardwareEdition.bauhausHeritage.lightModuleBg, equals(const Color(0xFFD3CFC7)));
+      expect(HardwareEdition.rawBrassPatina.lightModuleBg, equals(const Color(0xFFCCC7B3)));
+    });
   });
 
   group('ThemeController with HardwareEditions', () {
@@ -106,6 +144,9 @@ void main() {
       expect(stateDark.plateGradient, equals(HardwareEdition.braunClassic.plateGradientDark));
       expect(stateDark.rivetColor, equals(HardwareEdition.braunClassic.rivetDark));
       expect(stateDark.accentColor, equals(HardwareEdition.braunClassic.accentColor));
+      expect(stateDark.chassisTextColor, equals(const Color(0xFFE8E5DE)));
+      expect(stateDark.chassisMutedTextColor, equals(const Color(0x99E8E5DE)));
+      expect(stateDark.textureType, equals(HardwareTextureType.matteAbsGrain));
 
       const stateLight = ChassisThemeState(isDarkMode: false);
       expect(stateLight.canvasColor, equals(HardwareEdition.braunClassic.lightCanvas));
@@ -114,6 +155,15 @@ void main() {
       expect(stateLight.plateGradient, equals(HardwareEdition.braunClassic.plateGradientLight));
       expect(stateLight.rivetColor, equals(HardwareEdition.braunClassic.rivetLight));
       expect(stateLight.accentColor, equals(HardwareEdition.braunClassic.accentColor));
+      expect(stateLight.chassisTextColor, equals(const Color(0xFF1B1E23)));
+      expect(stateLight.chassisMutedTextColor, equals(const Color(0x991B1E23)));
+      expect(stateLight.textureType, equals(HardwareTextureType.matteAbsGrain));
+
+      const titaniumState = ChassisThemeState(
+        isDarkMode: false,
+        edition: HardwareEdition.titaniumStealth,
+      );
+      expect(titaniumState.textureType, equals(HardwareTextureType.brushedTitanium));
     });
   });
 }

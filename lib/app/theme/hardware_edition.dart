@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'takt_colors.dart';
 
+enum HardwareTextureType {
+  matteAbsGrain,
+  brushedTitanium,
+  tubularChrome,
+  burnishedBrass,
+}
+
 enum HardwareEditionType {
   braunClassic,
   titaniumStealth,
@@ -10,6 +17,7 @@ enum HardwareEditionType {
 
 class HardwareEdition {
   final HardwareEditionType type;
+  final HardwareTextureType textureType;
   final String title;
   final String subtitle;
   final String yearLabel;
@@ -34,6 +42,7 @@ class HardwareEdition {
 
   const HardwareEdition({
     required this.type,
+    required this.textureType,
     required this.title,
     required this.subtitle,
     required this.yearLabel,
@@ -55,6 +64,7 @@ class HardwareEdition {
 
   static const HardwareEdition braunClassic = HardwareEdition(
     type: HardwareEditionType.braunClassic,
+    textureType: HardwareTextureType.matteAbsGrain,
     title: 'BRAUN CLASSIC',
     subtitle: 'GERMANIC MINIMALISM',
     yearLabel: 'MOD. 01 · 1960',
@@ -62,7 +72,7 @@ class HardwareEdition {
     darkCanvas: TaktColors.chassisObsidian,
     lightCanvas: TaktColors.lightChassisCanvas,
     darkModuleBg: TaktColors.basaltSlate,
-    lightModuleBg: TaktColors.lightChassisBasalt,
+    lightModuleBg: Color(0xFFCFCBC0),
     darkBorder: TaktColors.slateBorder,
     lightBorder: TaktColors.lightChassisBorder,
     needleColor: TaktColors.mutedOchre, // #C85A32
@@ -76,6 +86,7 @@ class HardwareEdition {
 
   static const HardwareEdition titaniumStealth = HardwareEdition(
     type: HardwareEditionType.titaniumStealth,
+    textureType: HardwareTextureType.brushedTitanium,
     title: 'TITANIUM STEALTH',
     subtitle: 'AEROSPACE PVD GRADE 5',
     yearLabel: 'MOD. 02 · 2026',
@@ -83,7 +94,7 @@ class HardwareEdition {
     darkCanvas: Color(0xFF111317),
     lightCanvas: Color(0xFFCBCED4),
     darkModuleBg: Color(0xFF1B1E24),
-    lightModuleBg: Color(0xFFD8DBE2),
+    lightModuleBg: Color(0xFFBFC4CD),
     darkBorder: Color(0xFF2C323D),
     lightBorder: Color(0xFFA2A7B2),
     needleColor: Color(0xFF3A86FF), // Electric Cobalt Cyan
@@ -97,6 +108,7 @@ class HardwareEdition {
 
   static const HardwareEdition bauhausHeritage = HardwareEdition(
     type: HardwareEditionType.bauhausHeritage,
+    textureType: HardwareTextureType.tubularChrome,
     title: 'BAUHAUS HERITAGE',
     subtitle: 'TUBULAR CHROME & PRIMARY',
     yearLabel: 'MOD. 03 · 1925',
@@ -104,7 +116,7 @@ class HardwareEdition {
     darkCanvas: Color(0xFF101114),
     lightCanvas: Color(0xFFDCDAD4),
     darkModuleBg: Color(0xFF1E2025),
-    lightModuleBg: Color(0xFFEAE7E0),
+    lightModuleBg: Color(0xFFD3CFC7),
     darkBorder: Color(0xFF4A4E58), // Tubular chrome highlight
     lightBorder: Color(0xFF9E9B93),
     needleColor: Color(0xFFD62828), // Bauhaus Crimson
@@ -118,6 +130,7 @@ class HardwareEdition {
 
   static const HardwareEdition rawBrassPatina = HardwareEdition(
     type: HardwareEditionType.rawBrassPatina,
+    textureType: HardwareTextureType.burnishedBrass,
     title: 'RAW BRASS & PATINA',
     subtitle: 'BURNISHED MARINE CHRONO',
     yearLabel: 'MOD. 04 · 1954',
@@ -125,7 +138,7 @@ class HardwareEdition {
     darkCanvas: Color(0xFF151815),
     lightCanvas: Color(0xFFD5D2C7),
     darkModuleBg: Color(0xFF202520),
-    lightModuleBg: Color(0xFFDFDBCF),
+    lightModuleBg: Color(0xFFCCC7B3),
     darkBorder: Color(0xFF5A5844), // Burnished Brass Border
     lightBorder: Color(0xFFB2AD97),
     needleColor: Color(0xFFE0B858), // Polished Brass Gold
