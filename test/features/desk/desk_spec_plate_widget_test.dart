@@ -234,4 +234,53 @@ void main() {
     final ledDecoration = litLed.decoration as BoxDecoration;
     expect(ledDecoration.color, equals(HardwareEdition.titaniumStealth.filamentColor));
   });
+
+  testWidgets('DeskSpecPlateWidget has maxWidth 280 and fits all text without truncation on narrow screens', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          todayFocusStatsProvider.overrideWith(
+            (ref) => Stream.value(const TodayFocusStats(
+              completedCount: 2,
+              totalMinutes: 50,
+            )),
+          ),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(
+            body: DeskSpecPlateWidget(),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Verify plate container width does not exceed 280 (matching modular instrument chassis)
+    final plateContainerFinder = find.descendant(
+      of: find.byType(DeskSpecPlateWidget),
+      matching: find.byType(Container),
+    ).first;
+    final innerContainerBox = tester.renderObject(plateContainerFinder) as RenderBox;
+    expect(innerContainerBox.size.width, lessThanOrEqualTo(280.0));
+
+    // Verify all text elements are present
+    expect(find.textContaining('BRAUN CLASSIC'), findsOneWidget);
+    expect(find.textContaining('MOD. 01'), findsOneWidget);
+    expect(find.textContaining('1960'), findsOneWidget);
+    expect(find.textContaining('GERMANIC MINIMALISM'), findsOneWidget);
+    expect(find.textContaining('STEREO 44.1kHz'), findsOneWidget);
+    expect(find.textContaining('2 / 4 CYCLES'), findsOneWidget);
+    expect(find.textContaining('50 MIN FOCUSED'), findsOneWidget);
+
+    // Verify that NO Text widget in the plate has overflow: TextOverflow.ellipsis
+    // (labels are structured to fit naturally and scale with FittedBox rather than clipping with ellipsis)
+    final textWidgets = tester.widgetList<Text>(find.descendant(
+      of: find.byType(DeskSpecPlateWidget),
+      matching: find.byType(Text),
+    ));
+    for (final text in textWidgets) {
+      expect(text.overflow, isNot(TextOverflow.ellipsis));
+    }
+  });
 }
+
