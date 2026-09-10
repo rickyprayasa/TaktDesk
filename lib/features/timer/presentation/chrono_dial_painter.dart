@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../app/theme/takt_colors.dart';
 
@@ -236,7 +237,7 @@ class ChronoDialPainter extends CustomPainter {
         oldDelegate.isRunning != isRunning ||
         oldDelegate.needleColor != needleColor ||
         oldDelegate.filamentColor != filamentColor ||
-        oldDelegate.outerBezelGradient != outerBezelGradient ||
+        !listEquals(oldDelegate.outerBezelGradient, outerBezelGradient) ||
         oldDelegate.innerBezelColor != innerBezelColor;
   }
 }

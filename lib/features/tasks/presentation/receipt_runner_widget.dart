@@ -116,20 +116,22 @@ class ReceiptRunnerWidget extends ConsumerWidget {
   }
 
   Widget _buildCornerRivet(int index, Color color) {
-    return Container(
-      key: ValueKey('dispenser_rivet_$index'),
-      width: 5,
-      height: 5,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color,
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x44000000),
-            offset: Offset(0, 0.5),
-            blurRadius: 0.5,
-          ),
-        ],
+    return IgnorePointer(
+      child: Container(
+        key: ValueKey('dispenser_rivet_$index'),
+        width: 5,
+        height: 5,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: color,
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x44000000),
+              offset: Offset(0, 0.5),
+              blurRadius: 0.5,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -943,6 +943,16 @@ class _HardwareEditionsSectionState
                         color: _currentPage == i
                             ? themeState.filamentColor
                             : widget.borderColor.withValues(alpha: 0.5),
+                        boxShadow: _currentPage == i
+                            ? [
+                                BoxShadow(
+                                  color: themeState.filamentColor
+                                      .withValues(alpha: 0.6),
+                                  blurRadius: 3.0,
+                                  spreadRadius: 0.5,
+                                ),
+                              ]
+                            : null,
                       ),
                     ),
                   ],
