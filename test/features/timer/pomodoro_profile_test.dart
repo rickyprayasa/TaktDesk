@@ -19,18 +19,50 @@ void main() {
       expect(PomodoroProfile.sprint.longBreakMinutes, equals(10));
     });
 
-    test('custom profile clamps values within bounds', () {
-      final custom = PomodoroProfile.custom(
+    test('custom profile clamps values within bounds on both ends', () {
+      final customUpper = PomodoroProfile.custom(
         focusMinutes: 120, // should clamp to 90
-        shortBreakMinutes: 0, // should clamp to 1
+        shortBreakMinutes: 50, // should clamp to 30
         longBreakMinutes: 60, // should clamp to 45
       );
-      expect(custom.focusMinutes, equals(90));
-      expect(custom.shortBreakMinutes, equals(1));
-      expect(custom.longBreakMinutes, equals(45));
+      expect(customUpper.focusMinutes, equals(90));
+      expect(customUpper.shortBreakMinutes, equals(30));
+      expect(customUpper.longBreakMinutes, equals(45));
+
+      final customLower = PomodoroProfile.custom(
+        focusMinutes: 0, // should clamp to 1
+        shortBreakMinutes: 0, // should clamp to 1
+        longBreakMinutes: 0, // should clamp to 1
+      );
+      expect(customLower.focusMinutes, equals(1));
+      expect(customLower.shortBreakMinutes, equals(1));
+      expect(customLower.longBreakMinutes, equals(1));
     });
 
-    test('TimerState reports isBreak properly', () {
+    test('PomodoroProfileType exposes correct human-readable labels', () {
+      expect(PomodoroProfileType.classic.label, equals('CLASSIC 25/5'));
+      expect(PomodoroProfileType.monastic.label, equals('MONASTIC 50/10'));
+      expect(PomodoroProfileType.sprint.label, equals('SPRINT 15/3'));
+      expect(PomodoroProfileType.custom.label, equals('CUSTOM'));
+    });
+
+    test('PomodoroProfile supports copyWith and value equality', () {
+      final modified = PomodoroProfile.classic.copyWith(focusMinutes: 30);
+      expect(modified.focusMinutes, equals(30));
+      expect(modified.shortBreakMinutes, equals(5));
+
+      const identicalProfile = PomodoroProfile(
+        type: PomodoroProfileType.classic,
+        focusMinutes: 25,
+        shortBreakMinutes: 5,
+        longBreakMinutes: 15,
+      );
+      expect(PomodoroProfile.classic, equals(identicalProfile));
+      expect(PomodoroProfile.classic.hashCode, equals(identicalProfile.hashCode));
+      expect(PomodoroProfile.classic, isNot(equals(PomodoroProfile.monastic)));
+    });
+
+    test('TimerState reports isBreak properly for focus, shortBreak, and longBreak', () {
       const focusState = TimerState(
         targetMinutes: 25,
         remainingSeconds: 1500,
@@ -39,13 +71,24 @@ void main() {
       );
       expect(focusState.isBreak, isFalse);
 
-      const breakState = TimerState(
+      const shortBreakState = TimerState(
         targetMinutes: 5,
         remainingSeconds: 300,
         isRunning: false,
         phase: PomodoroPhase.shortBreak,
       );
-      expect(breakState.isBreak, isTrue);
+      expect(shortBreakState.isBreak, isTrue);
+
+      const longBreakState = TimerState(
+        targetMinutes: 15,
+        remainingSeconds: 900,
+        isRunning: false,
+        phase: PomodoroPhase.longBreak,
+      );
+      expect(longBreakState.isBreak, isTrue);
+
+      final stateWithProfile = focusState.copyWith(profile: PomodoroProfile.monastic);
+      expect(stateWithProfile.profile.type, equals(PomodoroProfileType.monastic));
     });
   });
 }

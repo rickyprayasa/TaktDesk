@@ -3,7 +3,8 @@ import math, struct, wave, os
 SAMPLE_RATE = 22050
 DURATION = 1.8
 NUM_SAMPLES = int(SAMPLE_RATE * DURATION)
-out_path = "assets/audio/foley_bell_chime.wav"
+script_dir = os.path.dirname(os.path.abspath(__file__))
+out_path = os.path.join(script_dir, "..", "assets", "audio", "foley_bell_chime.wav")
 
 samples = []
 for i in range(NUM_SAMPLES):
