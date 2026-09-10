@@ -9,6 +9,7 @@ import '../../../../core/audio/sound_effect.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/haptics/haptic_service.dart';
 import '../../domain/telemetry_log_formatter.dart';
+export 'desk_telemetry_dialog.dart';
 
 /// Stream provider for observing today's focus timer sessions.
 final todayTimerSessionsStreamProvider = StreamProvider<List<TimerSession>>((ref) {
@@ -17,17 +18,19 @@ final todayTimerSessionsStreamProvider = StreamProvider<List<TimerSession>>((ref
 
 /// Tactile thermal paper receipt slip widget displaying dot-matrix focus telemetry.
 ///
-/// Feeds vertically beneath the 280px spec plate with an authentic animated
-/// paper feed mechanism, procedural serrated sawtooth bottom edge, and one-tap
-/// audit log export to the system clipboard.
+/// Features authentic procedural serrated sawtooth bottom edge,
+/// scrollable dot-matrix session entries, and one-tap audit log export to the
+/// system clipboard.
 class DeskTelemetrySlipWidget extends ConsumerStatefulWidget {
+  final VoidCallback? onClose;
+  final VoidCallback? onRetract;
   final bool isExpanded;
-  final VoidCallback onRetract;
 
   const DeskTelemetrySlipWidget({
     super.key,
-    required this.isExpanded,
-    required this.onRetract,
+    this.onClose,
+    this.onRetract,
+    this.isExpanded = true,
   });
 
   @override
@@ -93,10 +96,16 @@ class _DeskTelemetrySlipWidgetState extends ConsumerState<DeskTelemetrySlipWidge
     });
   }
 
-  void _onRetract() {
+  void _onClose() {
     HapticService.selectionClick();
     ref.read(audioServiceProvider).play(SoundEffect.dialClick);
-    widget.onRetract();
+    if (widget.onClose != null) {
+      widget.onClose!();
+    } else if (widget.onRetract != null) {
+      widget.onRetract!();
+    } else {
+      Navigator.of(context).maybePop();
+    }
   }
 
   @override
@@ -117,6 +126,10 @@ class _DeskTelemetrySlipWidgetState extends ConsumerState<DeskTelemetrySlipWidge
       sessions: sessions,
     );
 
+    final closeLabel = widget.onRetract != null && widget.onClose == null
+        ? '[ RETRACT ▲ ]'
+        : '[ CLOSE ✕ ]';
+
     return SizeTransition(
       sizeFactor: _animation,
       alignment: Alignment.topCenter,
@@ -127,20 +140,28 @@ class _DeskTelemetrySlipWidgetState extends ConsumerState<DeskTelemetrySlipWidge
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Top mechanical paper slot cue
+              Container(
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF16181B) : const Color(0xFFCBC8BE),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(3.0)),
+                  border: Border.all(color: borderColor, width: 1.0),
+                ),
+              ),
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: paperColor,
                   border: Border(
-                    top: BorderSide(color: borderColor, width: 1.0),
                     left: BorderSide(color: borderColor, width: 1.0),
                     right: BorderSide(color: borderColor, width: 1.0),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
-                      blurRadius: 6.0,
-                      offset: const Offset(0, 3),
+                      color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
+                      blurRadius: 16.0,
+                      offset: const Offset(0, 6),
                     ),
                   ],
                 ),
@@ -150,15 +171,23 @@ class _DeskTelemetrySlipWidgetState extends ConsumerState<DeskTelemetrySlipWidge
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        fullLog,
-                        style: TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 8.5,
-                          height: 1.38,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.4,
-                          color: inkColor,
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: MediaQuery.of(context).size.height * 0.55,
+                        ),
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: Text(
+                            fullLog,
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 8.5,
+                              height: 1.38,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.4,
+                              color: inkColor,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -167,6 +196,7 @@ class _DeskTelemetrySlipWidgetState extends ConsumerState<DeskTelemetrySlipWidge
                         children: [
                           Flexible(
                             child: InkWell(
+                              key: const ValueKey('telemetry_copy_button'),
                               onTap: () => _onCopy(fullLog),
                               borderRadius: BorderRadius.circular(4),
                               child: Padding(
@@ -193,7 +223,8 @@ class _DeskTelemetrySlipWidgetState extends ConsumerState<DeskTelemetrySlipWidge
                           const SizedBox(width: 8),
                           Flexible(
                             child: InkWell(
-                              onTap: _onRetract,
+                              key: const ValueKey('telemetry_close_button'),
+                              onTap: _onClose,
                               borderRadius: BorderRadius.circular(4),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
@@ -201,7 +232,7 @@ class _DeskTelemetrySlipWidgetState extends ConsumerState<DeskTelemetrySlipWidge
                                   fit: BoxFit.scaleDown,
                                   alignment: Alignment.centerRight,
                                   child: Text(
-                                    '[ RETRACT ▲ ]',
+                                    closeLabel,
                                     style: TextStyle(
                                       fontFamily: 'monospace',
                                       fontSize: 8.0,

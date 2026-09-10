@@ -223,11 +223,10 @@ void main() {
           chassisThemeProvider.overrideWith((ref) => ThemeController()..setDarkMode(false)),
           todayTimerSessionsStreamProvider.overrideWith((ref) => Stream.value([])),
         ],
-        child: MaterialApp(
+        child: const MaterialApp(
           home: Scaffold(
             body: DeskTelemetrySlipWidget(
               isExpanded: true,
-              onRetract: () {},
             ),
           ),
         ),
@@ -236,5 +235,41 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('TAKT DESK // SESSION TELEMETRY'), findsOneWidget);
+  });
+
+  testWidgets('DeskTelemetryDialog.show displays centered modal dialog and closes on button tap', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          todayTimerSessionsStreamProvider.overrideWith((ref) => Stream.value([])),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () => DeskTelemetryDialog.show(context),
+                child: const Text('OPEN DIALOG'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DeskTelemetryDialog), findsNothing);
+
+    await tester.tap(find.text('OPEN DIALOG'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DeskTelemetryDialog), findsOneWidget);
+    expect(find.byType(DeskTelemetrySlipWidget), findsOneWidget);
+    expect(find.textContaining('TAKT DESK // SESSION TELEMETRY'), findsOneWidget);
+    expect(find.text('[ CLOSE ✕ ]'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('telemetry_close_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DeskTelemetryDialog), findsNothing);
   });
 }

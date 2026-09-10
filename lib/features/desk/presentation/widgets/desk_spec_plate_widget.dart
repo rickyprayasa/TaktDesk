@@ -6,41 +6,20 @@ import '../../../../core/audio/audio_service.dart';
 import '../../../../core/audio/sound_effect.dart';
 import '../../../../core/haptics/haptic_service.dart';
 import '../../../settings/presentation/settings_controller.dart';
-import 'desk_telemetry_slip_widget.dart';
+import 'desk_telemetry_dialog.dart';
 
 /// Industrial spec plate anchoring the lower desk canvas.
 ///
 /// Features debossed brushed aluminum / slate aesthetics, corner rivet accents,
 /// Germanic manufacturer metadata stamp, an analog daily focus tally
-/// accompanied by a 4-micro-LED quadrant progress meter, and a physical
-/// drawer housing mounting the tactile dot-matrix telemetry receipt slip.
-class DeskSpecPlateWidget extends ConsumerStatefulWidget {
+/// accompanied by a 4-micro-LED quadrant progress meter. Tapping the plate
+/// opens the modal dot-matrix telemetry audit log receipt slip without
+/// vertically expanding or shifting the stationary desk canvas layout.
+class DeskSpecPlateWidget extends ConsumerWidget {
   const DeskSpecPlateWidget({super.key});
 
   @override
-  ConsumerState<DeskSpecPlateWidget> createState() => _DeskSpecPlateWidgetState();
-}
-
-class _DeskSpecPlateWidgetState extends ConsumerState<DeskSpecPlateWidget> {
-  bool _isTelemetryExpanded = false;
-
-  void _toggleTelemetry() {
-    setState(() {
-      _isTelemetryExpanded = !_isTelemetryExpanded;
-    });
-    ref.read(audioServiceProvider).play(SoundEffect.dialClick);
-    HapticService.selectionClick();
-  }
-
-  void _collapseTelemetry() {
-    if (!_isTelemetryExpanded) return;
-    setState(() {
-      _isTelemetryExpanded = false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final themeState = ref.watch(chassisThemeProvider);
     final isDark = themeState.isDarkMode;
     final statsAsync = ref.watch(todayFocusStatsProvider);
@@ -84,7 +63,11 @@ class _DeskSpecPlateWidgetState extends ConsumerState<DeskSpecPlateWidget> {
         child: InkWell(
           key: const ValueKey('desk_spec_plate_surface'),
           borderRadius: BorderRadius.circular(7.0),
-          onTap: _toggleTelemetry,
+          onTap: () {
+            ref.read(audioServiceProvider).play(SoundEffect.dialClick);
+            HapticService.selectionClick();
+            DeskTelemetryDialog.show(context);
+          },
           child: Stack(
             children: [
               // Corner mechanical rivets
@@ -93,168 +76,145 @@ class _DeskSpecPlateWidgetState extends ConsumerState<DeskSpecPlateWidget> {
               Positioned(bottom: 4, left: 4, child: _RivetDot(color: rivetColor, isDark: isDark)),
               Positioned(bottom: 4, right: 4, child: _RivetDot(color: rivetColor, isDark: isDark)),
 
-                  // Main Plate Content
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    child: Column(
+              // Main Plate Content
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Left Column: Manufacturer Stamp
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              themeState.edition.title,
+                              maxLines: 1,
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 9.0,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: primaryTextColor,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              themeState.edition.yearLabel,
+                              maxLines: 1,
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 7.8,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                                color: secondaryTextColor,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '${themeState.edition.subtitle} · STEREO 44.1kHz',
+                              maxLines: 1,
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 7.0,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.4,
+                                color: secondaryTextColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Right Column: Daily Focus Tally & Quadrant LEDs
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        // 4 Micro-LED indicators
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Left Column: Manufacturer Stamp
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  themeState.edition.title,
-                                  maxLines: 1,
-                                  style: TextStyle(
-                                    fontFamily: 'monospace',
-                                    fontSize: 9.0,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.8,
-                                    color: primaryTextColor,
-                                  ),
+                          key: const ValueKey('spec_plate_led_row'),
+                          mainAxisSize: MainAxisSize.min,
+                          children: List.generate(4, (i) {
+                            final isLit = i < activeLeds;
+                            return Container(
+                              key: ValueKey('spec_plate_led_$i'),
+                              margin: EdgeInsets.only(left: i == 0 ? 0 : 3.5),
+                              width: 5.5,
+                              height: 5.5,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isLit
+                                    ? themeState.filamentColor
+                                    : TaktColors.basaltSlate,
+                                border: Border.all(
+                                  color: isLit
+                                      ? const Color(0xFFFFD59E)
+                                      : TaktColors.chassisObsidian,
+                                  width: 0.8,
                                 ),
+                                boxShadow: isLit
+                                    ? [
+                                        BoxShadow(
+                                          color: themeState.filamentColor.withValues(alpha: 0.8),
+                                          blurRadius: 4.0,
+                                          spreadRadius: 1.0,
+                                        ),
+                                      ]
+                                    : null,
                               ),
-                              const SizedBox(height: 2),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  themeState.edition.yearLabel,
-                                  maxLines: 1,
-                                  style: TextStyle(
-                                    fontFamily: 'monospace',
-                                    fontSize: 7.8,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.5,
-                                    color: secondaryTextColor,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 1),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  '${themeState.edition.subtitle} · STEREO 44.1kHz',
-                                  maxLines: 1,
-                                  style: TextStyle(
-                                    fontFamily: 'monospace',
-                                    fontSize: 7.0,
-                                    fontWeight: FontWeight.w500,
-                                    letterSpacing: 0.4,
-                                    color: secondaryTextColor,
-                                  ),
-                                ),
-                              ),
-                            ],
+                            );
+                          }),
+                        ),
+                        const SizedBox(height: 3),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            'TODAY: ${stats.completedCount} / 4 CYCLES',
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                              color: primaryTextColor,
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        // Right Column: Daily Focus Tally & Quadrant LEDs
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // 4 Micro-LED indicators
-                            Row(
-                              key: const ValueKey('spec_plate_led_row'),
-                              mainAxisSize: MainAxisSize.min,
-                              children: List.generate(4, (i) {
-                                final isLit = i < activeLeds;
-                                return Container(
-                                  key: ValueKey('spec_plate_led_$i'),
-                                  margin: EdgeInsets.only(left: i == 0 ? 0 : 3.5),
-                                  width: 5.5,
-                                  height: 5.5,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: isLit
-                                        ? themeState.filamentColor
-                                        : TaktColors.basaltSlate,
-                                    border: Border.all(
-                                      color: isLit
-                                          ? const Color(0xFFFFD59E)
-                                          : TaktColors.chassisObsidian,
-                                      width: 0.8,
-                                    ),
-                                    boxShadow: isLit
-                                        ? [
-                                            BoxShadow(
-                                              color: themeState.filamentColor.withValues(alpha: 0.8),
-                                              blurRadius: 4.0,
-                                              spreadRadius: 1.0,
-                                            ),
-                                          ]
-                                        : null,
-                                  ),
-                                );
-                              }),
+                        const SizedBox(height: 1),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            '${stats.totalMinutes} MIN FOCUSED',
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 7.5,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.5,
+                              color: secondaryTextColor,
                             ),
-                            const SizedBox(height: 3),
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerRight,
-                              child: Text(
-                                'TODAY: ${stats.completedCount} / 4 CYCLES',
-                                maxLines: 1,
-                                style: TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 8.5,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.5,
-                                  color: primaryTextColor,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 1),
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerRight,
-                              child: Text(
-                                '${stats.totalMinutes} MIN FOCUSED',
-                                maxLines: 1,
-                                style: TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 7.5,
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: 0.5,
-                                  color: secondaryTextColor,
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 4),
-                    // Mechanical aperture cue for telemetry printer slip
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        _isTelemetryExpanded
-                            ? '[ TELEMETRY LOG ▲ ]'
-                            : '[ TELEMETRY LOG ▼ ]',
-                        maxLines: 1,
-                        style: TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 6.8,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.6,
-                          color: secondaryTextColor,
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -268,16 +228,7 @@ class _DeskSpecPlateWidgetState extends ConsumerState<DeskSpecPlateWidget> {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 280),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            plateContainer,
-            DeskTelemetrySlipWidget(
-              isExpanded: _isTelemetryExpanded,
-              onRetract: _collapseTelemetry,
-            ),
-          ],
-        ),
+        child: plateContainer,
       ),
     );
   }

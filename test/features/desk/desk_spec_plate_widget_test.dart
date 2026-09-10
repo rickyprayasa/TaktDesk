@@ -297,7 +297,7 @@ void main() {
     }
   });
 
-  testWidgets('DeskSpecPlateWidget toggles DeskTelemetrySlipWidget on plate tap and collapses via onRetract', (tester) async {
+  testWidgets('DeskSpecPlateWidget opens DeskTelemetryDialog modal on plate tap and dismisses cleanly', (tester) async {
     final mockAudio = MockAudioService();
 
     await tester.pumpWidget(
@@ -318,37 +318,40 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Initially slip is rendered in collapsed state and plate cue displays downward chevron
-    expect(find.byType(DeskTelemetrySlipWidget), findsOneWidget);
-    final initialSlip = tester.widget<DeskTelemetrySlipWidget>(find.byType(DeskTelemetrySlipWidget));
-    expect(initialSlip.isExpanded, isFalse);
-    expect(find.textContaining('▼'), findsOneWidget);
+    // The plate itself is compact and does not embed DeskTelemetrySlipWidget directly in tree
+    expect(find.byType(DeskTelemetryDialog), findsNothing);
+    expect(find.byType(DeskTelemetrySlipWidget), findsNothing);
 
-    // Tap plate to expand
+    // Tap plate to open modal dialog
     await tester.tap(find.byKey(const ValueKey('desk_spec_plate_surface')));
     await tester.pumpAndSettle();
 
-    final expandedSlip = tester.widget<DeskTelemetrySlipWidget>(find.byType(DeskTelemetrySlipWidget));
-    expect(expandedSlip.isExpanded, isTrue);
-    expect(find.textContaining('▲'), findsWidgets);
+    // Dialog is now displayed centered on screen
+    expect(find.byType(DeskTelemetryDialog), findsOneWidget);
+    expect(find.byType(DeskTelemetrySlipWidget), findsOneWidget);
+    expect(find.textContaining('TAKT DESK // SESSION TELEMETRY'), findsOneWidget);
+    expect(find.byKey(const ValueKey('telemetry_copy_button')), findsOneWidget);
+    expect(find.byKey(const ValueKey('telemetry_close_button')), findsOneWidget);
     expect(mockAudio.playedEffects, contains(SoundEffect.dialClick));
 
-    // Tap retract on slip to collapse
-    await tester.tap(find.text('[ RETRACT ▲ ]'));
+    // Tap close button on dialog
+    await tester.tap(find.byKey(const ValueKey('telemetry_close_button')));
     await tester.pumpAndSettle();
 
-    final retractedSlip = tester.widget<DeskTelemetrySlipWidget>(find.byType(DeskTelemetrySlipWidget));
-    expect(retractedSlip.isExpanded, isFalse);
-    expect(find.textContaining('▼'), findsOneWidget);
+    // Dialog dismissed; main plate remains intact
+    expect(find.byType(DeskTelemetryDialog), findsNothing);
+    expect(find.byType(DeskTelemetrySlipWidget), findsNothing);
+    expect(find.byKey(const ValueKey('desk_spec_plate_surface')), findsOneWidget);
 
-    // Tap plate again to expand, then tap plate again to toggle collapse
+    // Tap plate again to open and dismiss via barrier tap
     await tester.tap(find.byKey(const ValueKey('desk_spec_plate_surface')));
     await tester.pumpAndSettle();
-    expect(tester.widget<DeskTelemetrySlipWidget>(find.byType(DeskTelemetrySlipWidget)).isExpanded, isTrue);
+    expect(find.byType(DeskTelemetryDialog), findsOneWidget);
 
-    await tester.tap(find.byKey(const ValueKey('desk_spec_plate_surface')));
+    // Tap top-left edge outside the 280px dialog to trigger barrier dismissal
+    await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
-    expect(tester.widget<DeskTelemetrySlipWidget>(find.byType(DeskTelemetrySlipWidget)).isExpanded, isFalse);
+    expect(find.byType(DeskTelemetryDialog), findsNothing);
   });
 }
 
