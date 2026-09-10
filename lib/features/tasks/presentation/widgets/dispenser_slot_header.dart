@@ -1,22 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/theme/takt_colors.dart';
 import '../../../../app/theme/takt_typography.dart';
+import '../../../../app/theme/theme_controller.dart';
 
 /// Top control housing and recessed aperture mouth for the thermal paper dispenser.
-class DispenserSlotHeader extends StatelessWidget {
+class DispenserSlotHeader extends ConsumerWidget {
   final int taskCount;
   final int maxTasks;
   final VoidCallback? onAddTap;
+  final Color? borderColor;
 
   const DispenserSlotHeader({
     super.key,
     required this.taskCount,
     this.maxTasks = 5,
     required this.onAddTap,
+    this.borderColor,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeState = ref.watch(chassisThemeProvider);
+    final effectiveBorderColor = borderColor ?? themeState.borderColor;
     final isFull = taskCount >= maxTasks;
 
     return Column(
@@ -83,13 +89,14 @@ class DispenserSlotHeader extends StatelessWidget {
         const SizedBox(height: 10),
         // 2. Recessed Mechanical Feeder Aperture Slit
         Container(
+          key: const ValueKey('dispenser_aperture_slit'),
           height: 8,
           margin: const EdgeInsets.only(bottom: 4),
           decoration: BoxDecoration(
             color: const Color(0xFF0C0D0F),
             borderRadius: BorderRadius.circular(2),
             border: Border.all(
-              color: const Color(0xFF1E2126),
+              color: effectiveBorderColor,
               width: 1.0,
             ),
             boxShadow: const [

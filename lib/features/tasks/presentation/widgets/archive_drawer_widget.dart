@@ -4,6 +4,7 @@ import '../../domain/receipt_task.dart';
 import '../receipt_runner_controller.dart';
 import '../../../../app/theme/takt_colors.dart';
 import '../../../../app/theme/takt_typography.dart';
+import '../../../../app/theme/theme_controller.dart';
 
 /// Industrial Slide-Out Brass Archive Drawer attached to the bottom of the Thermal Task Runner.
 class ArchiveDrawerWidget extends ConsumerWidget {
@@ -13,16 +14,18 @@ class ArchiveDrawerWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(receiptRunnerProvider);
     final controller = ref.read(receiptRunnerProvider.notifier);
+    final themeState = ref.watch(chassisThemeProvider);
     final isOpen = state.isArchiveOpen;
     final count = state.archivedTasks.length;
 
     return Container(
+      key: const ValueKey('archive_drawer_container'),
       margin: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
         color: const Color(0xFF1B1E22),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: isOpen ? const Color(0xFFC89B59).withValues(alpha: 0.6) : TaktColors.slateBorder,
+          color: isOpen ? themeState.filamentColor.withValues(alpha: 0.6) : themeState.borderColor,
           width: 1.0,
         ),
         boxShadow: const [
@@ -41,16 +44,13 @@ class ArchiveDrawerWidget extends ConsumerWidget {
             onTap: controller.toggleArchiveDrawer,
             borderRadius: BorderRadius.circular(6),
             child: Container(
+              key: const ValueKey('archive_drawer_handle_bar'),
               height: 32,
               padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(5),
-                gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF383125),
-                    Color(0xFF24221C),
-                    Color(0xFF1E1C17),
-                  ],
+                gradient: LinearGradient(
+                  colors: themeState.plateGradient,
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -58,16 +58,20 @@ class ArchiveDrawerWidget extends ConsumerWidget {
               child: Row(
                 children: [
                   // Left brass rivet
-                  _buildBrassRivet(),
+                  _buildBrassRivet(
+                    key: const ValueKey('archive_drawer_rivet_left'),
+                    rivetColor: themeState.rivetColor,
+                  ),
                   const Spacer(),
                   // Center Brass Plate Handle
                   Container(
+                    key: const ValueKey('archive_drawer_handle_plate'),
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFC89B59).withValues(alpha: 0.15),
+                      color: themeState.filamentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(3),
                       border: Border.all(
-                        color: const Color(0xFFC89B59).withValues(alpha: 0.7),
+                        color: themeState.filamentColor.withValues(alpha: 0.7),
                         width: 0.8,
                       ),
                     ),
@@ -77,16 +81,16 @@ class ArchiveDrawerWidget extends ConsumerWidget {
                         Icon(
                           isOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                           size: 14,
-                          color: const Color(0xFFC89B59),
+                          color: themeState.filamentColor,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           'ARCHIVE // $count',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'monospace',
                             fontSize: 9.0,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFFE8C88A),
+                            color: themeState.filamentColor,
                             letterSpacing: 1.0,
                           ),
                         ),
@@ -95,7 +99,10 @@ class ArchiveDrawerWidget extends ConsumerWidget {
                   ),
                   const Spacer(),
                   // Right brass rivet
-                  _buildBrassRivet(),
+                  _buildBrassRivet(
+                    key: const ValueKey('archive_drawer_rivet_right'),
+                    rivetColor: themeState.rivetColor,
+                  ),
                 ],
               ),
             ),
@@ -169,14 +176,15 @@ class ArchiveDrawerWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildBrassRivet() {
+  Widget _buildBrassRivet({Key? key, required Color rivetColor}) {
     return Container(
+      key: key,
       width: 6,
       height: 6,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Color(0xFFC89B59),
-        boxShadow: [
+        color: rivetColor,
+        boxShadow: const [
           BoxShadow(
             color: Color(0x66000000),
             offset: Offset(0, 1),
