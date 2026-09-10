@@ -5,6 +5,7 @@ import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/theme_controller.dart';
 import '../../../core/haptics/haptic_service.dart';
 import 'settings_controller.dart';
+import 'widgets/studio_pro_dialog.dart';
 
 /// The Industrial Service Hatch Modal Sheet (Settings, About & Legal).
 ///
@@ -1364,103 +1365,12 @@ void _showStudioProDialog(
   Color? primaryTextColor,
   Color? secondaryTextColor,
 }) {
-  final dark = isDark ?? ref.read(chassisThemeProvider).isDarkMode;
-  final primary = primaryTextColor ??
-      (dark ? TaktColors.warmBone : const Color(0xFF141618));
-  final secondary = secondaryTextColor ??
-      (dark ? const Color(0xFF9E9B93) : const Color(0xFF5A5D64));
-
-  showDialog<void>(
-    context: context,
-    builder: (dialogCtx) => AlertDialog(
-      backgroundColor:
-          dark ? TaktColors.basaltSlate : const Color(0xFFEDEAE2),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8.0),
-        side: BorderSide(
-          color: dark ? TaktColors.slateBorder : TaktColors.lightChassisBorder,
-        ),
-      ),
-      title: Text(
-        'TAKT DESK STUDIO PRO',
-        style: TextStyle(
-          fontFamily: 'monospace',
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.0,
-          color: primary,
-        ),
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'UNLOCK ${edition.title} & ALL HARDWARE FINISHES',
-            style: const TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-              color: TaktColors.filamentAmber,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Lifetime clearance gives you access to aerospace titanium, Bauhaus primary palettes, burnished marine brass, and all future hardware materials.',
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 10,
-              color: secondary,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogCtx).pop(),
-          child: Text(
-            'CANCEL',
-            style: TextStyle(
-              fontFamily: 'monospace',
-              color: secondary,
-              fontWeight: FontWeight.w600,
-              fontSize: 11,
-            ),
-          ),
-        ),
-        ElevatedButton(
-          key: const ValueKey('pro_dialog_unlock_button'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: TaktColors.filamentAmber,
-            foregroundColor: TaktColors.chassisObsidian,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(4.0),
-            ),
-          ),
-          onPressed: () async {
-            await ref
-                .read(deskPreferencesControllerProvider.notifier)
-                .setProSimulated(true);
-            await ref
-                .read(deskPreferencesControllerProvider.notifier)
-                .setHardwareEdition(edition.type);
-            HapticService.selectionClick();
-            if (dialogCtx.mounted) {
-              Navigator.of(dialogCtx).pop();
-            }
-          },
-          child: const Text(
-            'UNLOCK NOW (SIMULATED)',
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontWeight: FontWeight.w700,
-              fontSize: 11,
-            ),
-          ),
-        ),
-      ],
-    ),
+  showStudioProDialog(
+    context,
+    ref,
+    edition: edition,
+    isDark: isDark,
+    primaryTextColor: primaryTextColor,
+    secondaryTextColor: secondaryTextColor,
   );
 }
