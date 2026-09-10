@@ -8,11 +8,13 @@ class VinylState {
   final bool needleOnRecord;
   final double turntableSpeed; // 0.0 to 1.0
   final int selectedTrackIndex;
+  final bool isDrawerOpen;
 
   const VinylState({
     this.needleOnRecord = false,
     this.turntableSpeed = 0.0,
     this.selectedTrackIndex = 0,
+    this.isDrawerOpen = false,
   });
 
   VinylTrack get currentTrack => VinylTrack.presets[selectedTrackIndex];
@@ -21,13 +23,32 @@ class VinylState {
     bool? needleOnRecord,
     double? turntableSpeed,
     int? selectedTrackIndex,
+    bool? isDrawerOpen,
   }) {
     return VinylState(
       needleOnRecord: needleOnRecord ?? this.needleOnRecord,
       turntableSpeed: turntableSpeed ?? this.turntableSpeed,
       selectedTrackIndex: selectedTrackIndex ?? this.selectedTrackIndex,
+      isDrawerOpen: isDrawerOpen ?? this.isDrawerOpen,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is VinylState &&
+          runtimeType == other.runtimeType &&
+          needleOnRecord == other.needleOnRecord &&
+          turntableSpeed == other.turntableSpeed &&
+          selectedTrackIndex == other.selectedTrackIndex &&
+          isDrawerOpen == other.isDrawerOpen;
+
+  @override
+  int get hashCode =>
+      needleOnRecord.hashCode ^
+      turntableSpeed.hashCode ^
+      selectedTrackIndex.hashCode ^
+      isDrawerOpen.hashCode;
 }
 
 class VinylController extends StateNotifier<VinylState> {
@@ -76,6 +97,18 @@ class VinylController extends StateNotifier<VinylState> {
   void revertIfProRevoked() {
     if (state.currentTrack.isPremium) {
       selectTrack(0, isPro: true);
+    }
+  }
+
+  void toggleDrawer() {
+    state = state.copyWith(isDrawerOpen: !state.isDrawerOpen);
+    HapticService.selectionClick();
+  }
+
+  void setDrawerOpen(bool open) {
+    if (state.isDrawerOpen != open) {
+      state = state.copyWith(isDrawerOpen: open);
+      HapticService.selectionClick();
     }
   }
 }

@@ -13,10 +13,12 @@ void showStudioProDialog(
   WidgetRef ref, {
   HardwareEdition? edition,
   VinylTrack? vinylTrack,
+  VinylTrack? track,
   bool? isDark,
   Color? primaryTextColor,
   Color? secondaryTextColor,
 }) {
+  final targetTrack = vinylTrack ?? track;
   final dark = isDark ?? ref.read(chassisThemeProvider).isDarkMode;
   final primary = primaryTextColor ??
       (dark ? TaktColors.warmBone : const Color(0xFF141618));
@@ -25,14 +27,14 @@ void showStudioProDialog(
 
   final subtitleText = edition != null
       ? 'UNLOCK ${edition.title} & ALL HARDWARE FINISHES'
-      : vinylTrack != null
-          ? 'UNLOCK ${vinylTrack.name.toUpperCase()} & ALL STUDIO PRO RECORDS'
+      : targetTrack != null
+          ? 'UNLOCK ${targetTrack.name.toUpperCase()} & ALL STUDIO PRO RECORDS'
           : 'UNLOCK STUDIO PRO CLEARANCE';
 
   final bodyText = edition != null
       ? 'Lifetime clearance gives you access to aerospace titanium, Bauhaus primary palettes, burnished marine brass, and all future hardware materials.'
-      : vinylTrack != null
-          ? 'Lifetime clearance gives you access to ${vinylTrack.name}, all exclusive Studio Pro ambient soundscapes, and future analog master recordings.'
+      : targetTrack != null
+          ? 'Lifetime clearance gives you access to ${targetTrack.name}, all exclusive Studio Pro ambient soundscapes, and future analog master recordings.'
           : 'Lifetime clearance gives you access to all exclusive hardware finishes, premium analog ambient soundscapes, and all future Studio Pro features.';
 
   showDialog<void>(
@@ -113,10 +115,10 @@ void showStudioProDialog(
                   .read(deskPreferencesControllerProvider.notifier)
                   .setHardwareEdition(edition.type);
             }
-            if (vinylTrack != null) {
+            if (targetTrack != null) {
               ref
                   .read(vinylProvider.notifier)
-                  .selectTrack(vinylTrack.index, isPro: true);
+                  .selectTrack(targetTrack.index, isPro: true);
             }
             HapticService.selectionClick();
             if (dialogCtx.mounted) {

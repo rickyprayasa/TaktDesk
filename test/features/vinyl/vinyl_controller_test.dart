@@ -171,5 +171,30 @@ void main() {
       controller.revertIfProRevoked();
       expect(controller.state.selectedTrackIndex, equals(2));
     });
+
+    test('isDrawerOpen defaults to false', () {
+      final controller = VinylController();
+      expect(controller.state.isDrawerOpen, isFalse);
+    });
+
+    test('toggleDrawer flips isDrawerOpen and setDrawerOpen sets explicit state', () {
+      final controller = VinylController();
+      expect(controller.state.isDrawerOpen, isFalse);
+
+      controller.toggleDrawer();
+      expect(controller.state.isDrawerOpen, isTrue);
+
+      controller.toggleDrawer();
+      expect(controller.state.isDrawerOpen, isFalse);
+
+      controller.setDrawerOpen(true);
+      expect(controller.state.isDrawerOpen, isTrue);
+
+      controller.setDrawerOpen(true);
+      expect(controller.state.isDrawerOpen, isTrue);
+
+      controller.setDrawerOpen(false);
+      expect(controller.state.isDrawerOpen, isFalse);
+    });
   });
 }
