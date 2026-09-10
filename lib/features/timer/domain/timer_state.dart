@@ -1,4 +1,5 @@
 import 'pomodoro_phase.dart';
+import 'pomodoro_profile.dart';
 
 class TimerState {
   final int targetMinutes;
@@ -7,6 +8,7 @@ class TimerState {
   final int lastTickMinute;
   final PomodoroPhase phase;
   final int cycleCount; // 1 to 4
+  final PomodoroProfile profile;
 
   const TimerState({
     required this.targetMinutes,
@@ -15,7 +17,11 @@ class TimerState {
     this.lastTickMinute = 0,
     this.phase = PomodoroPhase.focus,
     this.cycleCount = 1,
+    this.profile = PomodoroProfile.classic,
   });
+
+  bool get isBreak =>
+      phase == PomodoroPhase.shortBreak || phase == PomodoroPhase.longBreak;
 
   double get progressPercent => targetMinutes > 0
       ? 1.0 - (remainingSeconds / (targetMinutes * 60.0)).clamp(0.0, 1.0)
@@ -28,6 +34,7 @@ class TimerState {
     int? lastTickMinute,
     PomodoroPhase? phase,
     int? cycleCount,
+    PomodoroProfile? profile,
   }) {
     return TimerState(
       targetMinutes: targetMinutes ?? this.targetMinutes,
@@ -36,6 +43,7 @@ class TimerState {
       lastTickMinute: lastTickMinute ?? this.lastTickMinute,
       phase: phase ?? this.phase,
       cycleCount: cycleCount ?? this.cycleCount,
+      profile: profile ?? this.profile,
     );
   }
 }

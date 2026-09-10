@@ -158,6 +158,7 @@ class MainActivity : FlutterActivity() {
                             "paperTear" -> "flutter_assets/assets/audio/foley_paper_tear.wav"
                             "inkStamp" -> "flutter_assets/assets/audio/foley_ink_stamp.wav"
                             "switchClick" -> "flutter_assets/assets/audio/foley_switch_click.wav"
+                            "bellChime" -> "flutter_assets/assets/audio/foley_bell_chime.wav"
                             else -> null
                         }
                         if (foleyAsset != null) {
