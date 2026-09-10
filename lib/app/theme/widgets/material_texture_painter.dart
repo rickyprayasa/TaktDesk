@@ -176,6 +176,8 @@ class MaterialTexturePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant MaterialTexturePainter oldDelegate) {
+    // chassisColor is checked so that when the base chassis tone changes,
+    // the procedural texture is re-evaluated and repainted.
     return textureType != oldDelegate.textureType ||
         isDark != oldDelegate.isDark ||
         chassisColor != oldDelegate.chassisColor;

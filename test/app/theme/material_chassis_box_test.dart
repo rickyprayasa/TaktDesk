@@ -193,13 +193,21 @@ void main() {
       );
       expect(clipRRectFinder, findsOneWidget);
 
-      final customPaintFinder = find.descendant(
+      final repaintBoundaryFinder = find.descendant(
         of: clipRRectFinder,
+        matching: find.byType(RepaintBoundary),
+      );
+      expect(repaintBoundaryFinder, findsOneWidget);
+
+      final customPaintFinder = find.descendant(
+        of: repaintBoundaryFinder,
         matching: find.byType(CustomPaint),
       );
       expect(customPaintFinder, findsOneWidget);
 
       final customPaint = tester.widget<CustomPaint>(customPaintFinder);
+      expect(customPaint.isComplex, isTrue);
+      expect(customPaint.willChange, isFalse);
       expect(customPaint.painter, isA<MaterialTexturePainter>());
 
       final painter = customPaint.painter as MaterialTexturePainter;

@@ -70,11 +70,15 @@ class MaterialChassisBox extends ConsumerWidget {
             Positioned.fill(
               child: ClipRRect(
                 borderRadius: borderRadius,
-                child: CustomPaint(
-                  painter: MaterialTexturePainter(
-                    textureType: themeState.textureType,
-                    isDark: themeState.isDarkMode,
-                    chassisColor: themeState.moduleChassisColor,
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    isComplex: true,
+                    willChange: false,
+                    painter: MaterialTexturePainter(
+                      textureType: themeState.textureType,
+                      isDark: themeState.isDarkMode,
+                      chassisColor: themeState.moduleChassisColor,
+                    ),
                   ),
                 ),
               ),
