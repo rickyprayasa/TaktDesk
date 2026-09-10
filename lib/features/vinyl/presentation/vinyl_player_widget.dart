@@ -232,7 +232,7 @@ class _CrateTriggerBadge extends ConsumerWidget {
             VinylRecordCrateSheet.show(context);
           },
           borderRadius: BorderRadius.circular(4),
-          child: Container(
+          child: Ink(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
             decoration: BoxDecoration(
               color: themeState.moduleChassisColor,

@@ -114,7 +114,7 @@ class _VinylRecordCrateSheetState extends ConsumerState<VinylRecordCrateSheet> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '[ ${(_currentPage + 1).toString().padLeft(2, '0')} / 08 ]',
+                    '[ ${(_currentPage + 1).toString().padLeft(2, '0')} / ${VinylTrack.presets.length.toString().padLeft(2, '0')} ]',
                     style: TextStyle(
                       fontFamily: 'monospace',
                       fontSize: 11,
@@ -586,6 +586,15 @@ class _MiniVinylDiscPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     canvas.drawCircle(center, labelRadius, labelBorderPaint);
+
+    // Active track subtle illuminated label halo
+    if (isActive) {
+      final activeHalo = Paint()
+        ..color = const Color(0xFFE89A3C).withValues(alpha: 0.45)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5;
+      canvas.drawCircle(center, labelRadius + 0.75, activeHalo);
+    }
 
     // Center spindle hole
     final spindleRadius = radius * 0.09;
