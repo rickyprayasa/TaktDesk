@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../app/theme/takt_colors.dart';
 
@@ -7,12 +8,16 @@ class VinylDeckPainter extends CustomPainter {
   final bool needleOnRecord;
   final Color labelColor;
   final double armProgress; // 0.0 (rest cradle) to 1.0 (on record)
+  final List<Color>? tonearmGradient;
+  final Color? armPivotBorderColor;
 
   VinylDeckPainter({
     required this.rotationAngle,
     required this.needleOnRecord,
     this.labelColor = TaktColors.mutedOchre,
     double? armProgress,
+    this.tonearmGradient,
+    this.armPivotBorderColor,
   }) : armProgress = armProgress ?? (needleOnRecord ? 1.0 : 0.0);
 
   @override
@@ -215,8 +220,8 @@ class VinylDeckPainter extends CustomPainter {
 
     // 3d. Tonearm Metallic Wand
     final armPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [
+      ..shader = LinearGradient(
+        colors: tonearmGradient ?? const [
           Color(0xFFF0ECE3),
           Color(0xFFBDC3CC),
           Color(0xFF8E95A0),
@@ -240,7 +245,7 @@ class VinylDeckPainter extends CustomPainter {
     canvas.drawCircle(tonearmBase, 11.0, pivotOuter);
 
     final pivotBorder = Paint()
-      ..color = const Color(0xFF555B66)
+      ..color = armPivotBorderColor ?? const Color(0xFF555B66)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
     canvas.drawCircle(tonearmBase, 11.0, pivotBorder);
@@ -266,6 +271,8 @@ class VinylDeckPainter extends CustomPainter {
     return oldDelegate.rotationAngle != rotationAngle ||
         oldDelegate.needleOnRecord != needleOnRecord ||
         oldDelegate.armProgress != armProgress ||
-        oldDelegate.labelColor != labelColor;
+        oldDelegate.labelColor != labelColor ||
+        !listEquals(oldDelegate.tonearmGradient, tonearmGradient) ||
+        oldDelegate.armPivotBorderColor != armPivotBorderColor;
   }
 }

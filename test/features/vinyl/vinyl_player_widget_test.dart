@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:takt_desk/app/theme/hardware_edition.dart';
+import 'package:takt_desk/app/theme/theme_controller.dart';
 import 'package:takt_desk/core/audio/audio_service.dart';
 import 'package:takt_desk/core/audio/sound_effect.dart';
 import 'package:takt_desk/features/vinyl/presentation/vinyl_deck_painter.dart';
@@ -191,4 +193,183 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
   });
+
+  group('VinylDeckPainter theming & repainting', () {
+    test('shouldRepaint returns true when tonearmGradient, armPivotBorderColor, or labelColor changes', () {
+      final base = VinylDeckPainter(
+        rotationAngle: 0.0,
+        needleOnRecord: false,
+        labelColor: Colors.amber,
+        tonearmGradient: const [Colors.white, Colors.black],
+        armPivotBorderColor: Colors.grey,
+      );
+
+      final same = VinylDeckPainter(
+        rotationAngle: 0.0,
+        needleOnRecord: false,
+        labelColor: Colors.amber,
+        tonearmGradient: const [Colors.white, Colors.black],
+        armPivotBorderColor: Colors.grey,
+      );
+
+      final diffGradient = VinylDeckPainter(
+        rotationAngle: 0.0,
+        needleOnRecord: false,
+        labelColor: Colors.amber,
+        tonearmGradient: const [Colors.red, Colors.blue],
+        armPivotBorderColor: Colors.grey,
+      );
+
+      final diffBorder = VinylDeckPainter(
+        rotationAngle: 0.0,
+        needleOnRecord: false,
+        labelColor: Colors.amber,
+        tonearmGradient: const [Colors.white, Colors.black],
+        armPivotBorderColor: Colors.cyan,
+      );
+
+      final diffLabel = VinylDeckPainter(
+        rotationAngle: 0.0,
+        needleOnRecord: false,
+        labelColor: Colors.green,
+        tonearmGradient: const [Colors.white, Colors.black],
+        armPivotBorderColor: Colors.grey,
+      );
+
+      expect(base.shouldRepaint(same), isFalse);
+      expect(base.shouldRepaint(diffGradient), isTrue);
+      expect(base.shouldRepaint(diffBorder), isTrue);
+      expect(base.shouldRepaint(diffLabel), isTrue);
+    });
+  });
+
+  group('VinylPlayerWidget Dynamic Metallurgy Theming', () {
+    testWidgets('updates chassis color and border dynamically on edition switch', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: VinylPlayerWidget(),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // Initially braunClassic
+      final chassisFinder = find.byKey(const ValueKey('vinyl_player_deck_chassis'));
+      expect(chassisFinder, findsOneWidget);
+      final casingBefore = tester.widget<Container>(chassisFinder);
+      final decorationBefore = casingBefore.decoration as BoxDecoration;
+      expect(decorationBefore.color, equals(HardwareEdition.braunClassic.darkModuleBg));
+      final borderBefore = decorationBefore.border as Border;
+      expect(borderBefore.top.color, equals(HardwareEdition.braunClassic.darkBorder));
+
+      // Switch edition to titaniumStealth
+      container.read(chassisThemeProvider.notifier).setHardwareEdition(HardwareEditionType.titaniumStealth);
+      await tester.pumpAndSettle();
+
+      final casingAfter = tester.widget<Container>(chassisFinder);
+      final decorationAfter = casingAfter.decoration as BoxDecoration;
+      expect(decorationAfter.color, equals(HardwareEdition.titaniumStealth.darkModuleBg));
+      final borderAfter = decorationAfter.border as Border;
+      expect(borderAfter.top.color, equals(HardwareEdition.titaniumStealth.darkBorder));
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('renders 4 corner rivets matching active edition rivetColor', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: VinylPlayerWidget(),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // Check initial 4 rivets
+      for (int i = 0; i < 4; i++) {
+        final rivetFinder = find.byKey(ValueKey('vinyl_rivet_$i'));
+        expect(rivetFinder, findsOneWidget);
+        final rivet = tester.widget<Container>(rivetFinder);
+        final decoration = rivet.decoration as BoxDecoration;
+        expect(decoration.color, equals(HardwareEdition.braunClassic.rivetDark));
+      }
+
+      // Switch to rawBrassPatina
+      container.read(chassisThemeProvider.notifier).setHardwareEdition(HardwareEditionType.rawBrassPatina);
+      await tester.pumpAndSettle();
+
+      for (int i = 0; i < 4; i++) {
+        final rivetFinder = find.byKey(ValueKey('vinyl_rivet_$i'));
+        expect(rivetFinder, findsOneWidget);
+        final rivet = tester.widget<Container>(rivetFinder);
+        final decoration = rivet.decoration as BoxDecoration;
+        expect(decoration.color, equals(HardwareEdition.rawBrassPatina.rivetDark));
+      }
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('passes dynamic accent labelColor, tonearm metallurgy gradient, and pivot border to VinylDeckPainter', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: VinylPlayerWidget(),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final painterFinder = find.byWidgetPredicate(
+        (widget) => widget is CustomPaint && widget.painter is VinylDeckPainter,
+      );
+      expect(painterFinder, findsOneWidget);
+
+      var customPaint = tester.widget<CustomPaint>(painterFinder);
+      var painter = customPaint.painter as VinylDeckPainter;
+
+      // Braun Classic defaults
+      expect(painter.labelColor, equals(HardwareEdition.braunClassic.accentColor));
+      expect(painter.tonearmGradient, equals(HardwareEdition.braunClassic.plateGradientDark));
+      expect(painter.armPivotBorderColor, equals(HardwareEdition.braunClassic.darkBorder));
+
+      // Switch to bauhausHeritage
+      container.read(chassisThemeProvider.notifier).setHardwareEdition(HardwareEditionType.bauhausHeritage);
+      await tester.pumpAndSettle();
+
+      customPaint = tester.widget<CustomPaint>(painterFinder);
+      painter = customPaint.painter as VinylDeckPainter;
+
+      expect(painter.labelColor, equals(HardwareEdition.bauhausHeritage.accentColor));
+      expect(painter.tonearmGradient, equals(HardwareEdition.bauhausHeritage.plateGradientDark));
+      expect(painter.armPivotBorderColor, equals(HardwareEdition.bauhausHeritage.darkBorder));
+
+      await tester.pumpWidget(const SizedBox());
+    });
+  });
 }
+
