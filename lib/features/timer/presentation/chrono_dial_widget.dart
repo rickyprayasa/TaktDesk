@@ -8,6 +8,7 @@ import 'widgets/crown_push_button.dart';
 import 'widgets/mechanical_flip_digit.dart';
 import 'widgets/split_flap_board_widget.dart';
 import '../../desk/presentation/widgets/monastic_switch_widget.dart';
+import '../../../app/theme/hardware_edition.dart';
 import '../../../app/theme/takt_typography.dart';
 import '../../../app/theme/theme_controller.dart';
 
@@ -142,6 +143,22 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
     final remainingSeconds = (state.remainingSeconds % 60).floor();
     const dialDimensions = Size(240, 240);
 
+    final Color lightDialColor;
+    switch (themeState.edition.type) {
+      case HardwareEditionType.braunClassic:
+        lightDialColor = const Color(0xFFEAE6DC);
+        break;
+      case HardwareEditionType.titaniumStealth:
+        lightDialColor = const Color(0xFFD3D8E0);
+        break;
+      case HardwareEditionType.bauhausHeritage:
+        lightDialColor = const Color(0xFFF0EDE4);
+        break;
+      case HardwareEditionType.rawBrassPatina:
+        lightDialColor = const Color(0xFFE2DCB8);
+        break;
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -189,6 +206,8 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                             outerBezelGradient: themeState.plateGradient,
                             innerBezelColor: themeState.borderColor,
                             textureType: themeState.textureType,
+                            isDark: themeState.isDarkMode,
+                            dialFaceColor: lightDialColor,
                           ),
                         );
                       },

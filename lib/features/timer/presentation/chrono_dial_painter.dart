@@ -14,9 +14,11 @@ class ChronoDialPainter extends CustomPainter {
   final List<Color> outerBezelGradient;
   final Color innerBezelColor;
   final HardwareTextureType textureType;
+  final bool isDark;
+  final Color? dialFaceColor;
 
   // Cached text painters for dial numbers
-  static final Map<int, TextPainter> _numberPainters = {};
+  static final Map<(int, bool), TextPainter> _numberPainters = {};
 
   ChronoDialPainter({
     required this.remainingSeconds,
@@ -32,9 +34,53 @@ class ChronoDialPainter extends CustomPainter {
     ],
     this.innerBezelColor = const Color(0xFF141517),
     this.textureType = HardwareTextureType.matteAbsGrain,
+    this.isDark = true,
+    this.dialFaceColor,
   });
 
-  static TextPainter _getTextPainter(String text) {
+  Color get activeDialFaceColor =>
+      isDark ? const Color(0xFF16181B) : (dialFaceColor ?? const Color(0xFFEBE8DF));
+
+  double get _knurlAlpha {
+    switch (textureType) {
+      case HardwareTextureType.burnishedBrass:
+        return 0.14;
+      case HardwareTextureType.brushedTitanium:
+        return 0.12;
+      case HardwareTextureType.tubularChrome:
+        return 0.16;
+      case HardwareTextureType.matteAbsGrain:
+        return 0.08;
+    }
+  }
+
+  Color get knurlColor => isDark
+      ? Colors.white.withValues(alpha: _knurlAlpha)
+      : Colors.black.withValues(alpha: _knurlAlpha * 0.75);
+
+  Color get majorTickColor => isDark
+      ? TaktColors.warmBone.withValues(alpha: 0.90)
+      : const Color(0xFF1B1E23).withValues(alpha: 0.88);
+
+  Color get minorTickColor => isDark
+      ? TaktColors.warmBone.withValues(alpha: 0.32)
+      : const Color(0xFF1B1E23).withValues(alpha: 0.38);
+
+  Color get numeralColor => isDark
+      ? TaktColors.warmBone.withValues(alpha: 0.65)
+      : const Color(0xFF1B1E23).withValues(alpha: 0.78);
+
+  Color get dishShadowColor => isDark
+      ? Colors.black.withValues(alpha: 0.45)
+      : Colors.black.withValues(alpha: 0.12);
+
+  Color get hubCapColor =>
+      isDark ? const Color(0xFF22252A) : const Color(0xFF2B2E34);
+
+  List<double> get glassHighlightAlphas =>
+      isDark ? const [0.15, 0.03] : const [0.28, 0.06];
+
+  static TextPainter getTextPainter(String text, {bool isDark = true}) {
     return TextPainter(
       text: TextSpan(
         text: text,
@@ -42,7 +88,9 @@ class ChronoDialPainter extends CustomPainter {
           fontFamily: 'monospace',
           fontWeight: FontWeight.w700,
           fontSize: 8.5,
-          color: TaktColors.warmBone.withValues(alpha: 0.65),
+          color: isDark
+              ? TaktColors.warmBone.withValues(alpha: 0.65)
+              : const Color(0xFF1B1E23).withValues(alpha: 0.78),
           letterSpacing: 0.5,
         ),
       ),
@@ -72,21 +120,6 @@ class ChronoDialPainter extends CustomPainter {
     canvas.drawCircle(center, outerRadius, outerBezelPaint);
 
     // 2b. Diamond Knurling Pattern on Outer Rim
-    final Color knurlColor;
-    switch (textureType) {
-      case HardwareTextureType.burnishedBrass:
-        knurlColor = Colors.white.withValues(alpha: 0.14);
-        break;
-      case HardwareTextureType.brushedTitanium:
-        knurlColor = Colors.white.withValues(alpha: 0.12);
-        break;
-      case HardwareTextureType.tubularChrome:
-        knurlColor = Colors.white.withValues(alpha: 0.16);
-        break;
-      case HardwareTextureType.matteAbsGrain:
-        knurlColor = Colors.white.withValues(alpha: 0.08);
-        break;
-    }
     final knurlPaint = Paint()
       ..color = knurlColor
       ..strokeWidth = 1.0;
@@ -111,12 +144,12 @@ class ChronoDialPainter extends CustomPainter {
     canvas.drawCircle(center, dialRadius + 2, innerBezelStroke);
 
     // 3. Dial Face (Matte Deep Charcoal)
-    final dialFacePaint = Paint()..color = const Color(0xFF16181B);
+    final dialFacePaint = Paint()..color = activeDialFaceColor;
     canvas.drawCircle(center, dialRadius, dialFacePaint);
 
     // 3a. Deep Inner Shadow (recessed dish effect)
     final dishShadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.45)
+      ..color = dishShadowColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4.0
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
@@ -134,11 +167,11 @@ class ChronoDialPainter extends CustomPainter {
 
     // 5. Precision Tick Marks & Numeric Indices (60 ticks)
     final majorTickPaint = Paint()
-      ..color = TaktColors.warmBone.withValues(alpha: 0.90)
+      ..color = majorTickColor
       ..strokeWidth = 2.2
       ..strokeCap = StrokeCap.round;
     final minorTickPaint = Paint()
-      ..color = TaktColors.warmBone.withValues(alpha: 0.32)
+      ..color = minorTickColor
       ..strokeWidth = 1.0;
 
     for (int i = 0; i < 60; i++) {
@@ -160,8 +193,8 @@ class ChronoDialPainter extends CustomPainter {
       if (isMajor) {
         final minuteVal = (i == 0) ? 60 : i;
         final tp = _numberPainters.putIfAbsent(
-          minuteVal,
-          () => _getTextPainter(minuteVal.toString().padLeft(2, '0')),
+          (minuteVal, isDark),
+          () => getTextPainter(minuteVal.toString().padLeft(2, '0'), isDark: isDark),
         );
         final numRadius = dialRadius - 22;
         final numOffset = Offset(
@@ -214,20 +247,21 @@ class ChronoDialPainter extends CustomPainter {
     canvas.drawCircle(counterTail, 3.8, needlePaint);
 
     // Center Pivot Cap (metallic brass/slate core)
-    final capBasePaint = Paint()..color = const Color(0xFF24272C);
+    final capBasePaint = Paint()..color = hubCapColor;
     canvas.drawCircle(center, 5.5, capBasePaint);
 
     final capCorePaint = Paint()..color = TaktColors.warmBone;
     canvas.drawCircle(center, 2.0, capCorePaint);
 
     // 8. Convex Curved Mineral Glass Glare (Optical Highlight)
+    final highlights = glassHighlightAlphas;
     final glassGlarePaint = Paint()
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Colors.white.withValues(alpha: 0.12),
-          Colors.white.withValues(alpha: 0.03),
+          Colors.white.withValues(alpha: highlights[0]),
+          Colors.white.withValues(alpha: highlights[1]),
           Colors.transparent,
         ],
         stops: const [0.0, 0.45, 0.70],
@@ -257,6 +291,8 @@ class ChronoDialPainter extends CustomPainter {
         oldDelegate.filamentColor != filamentColor ||
         !listEquals(oldDelegate.outerBezelGradient, outerBezelGradient) ||
         oldDelegate.innerBezelColor != innerBezelColor ||
-        oldDelegate.textureType != textureType;
+        oldDelegate.textureType != textureType ||
+        oldDelegate.isDark != isDark ||
+        oldDelegate.dialFaceColor != dialFaceColor;
   }
 }

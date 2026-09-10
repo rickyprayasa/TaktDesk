@@ -1,9 +1,11 @@
+import 'dart:ui';
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/app/theme/hardware_edition.dart';
+import 'package:takt_desk/app/theme/takt_colors.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
 import 'package:takt_desk/core/database/app_database.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_painter.dart';
@@ -473,5 +475,133 @@ void main() {
       textureType: HardwareTextureType.burnishedBrass,
     );
     expect(painter1.shouldRepaint(painter2), isTrue);
+  });
+
+  testWidgets('ChronoDialWidget passes isDark false and edition-specific light dial tone to ChronoDialPainter in Light Mode', (tester) async {
+    final testDb = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(testDb.close);
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(testDb),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    // Switch to Light Mode
+    container.read(chassisThemeProvider.notifier).setDarkMode(false);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Initial default: Braun Classic Light Mode
+    var customPaint = tester.widget<CustomPaint>(dialFinder);
+    var painter = customPaint.painter as ChronoDialPainter;
+    expect(painter.isDark, isFalse);
+    expect(painter.dialFaceColor, equals(const Color(0xFFEAE6DC)));
+
+    // Switch to Titanium Stealth
+    container.read(chassisThemeProvider.notifier).setHardwareEdition(HardwareEditionType.titaniumStealth);
+    await tester.pump();
+    customPaint = tester.widget<CustomPaint>(dialFinder);
+    painter = customPaint.painter as ChronoDialPainter;
+    expect(painter.dialFaceColor, equals(const Color(0xFFD3D8E0)));
+
+    // Switch to Bauhaus Heritage
+    container.read(chassisThemeProvider.notifier).setHardwareEdition(HardwareEditionType.bauhausHeritage);
+    await tester.pump();
+    customPaint = tester.widget<CustomPaint>(dialFinder);
+    painter = customPaint.painter as ChronoDialPainter;
+    expect(painter.dialFaceColor, equals(const Color(0xFFF0EDE4)));
+
+    // Switch to Raw Brass & Patina
+    container.read(chassisThemeProvider.notifier).setHardwareEdition(HardwareEditionType.rawBrassPatina);
+    await tester.pump();
+    customPaint = tester.widget<CustomPaint>(dialFinder);
+    painter = customPaint.painter as ChronoDialPainter;
+    expect(painter.dialFaceColor, equals(const Color(0xFFE2DCB8)));
+
+    // Switch back to Dark Mode
+    container.read(chassisThemeProvider.notifier).setDarkMode(true);
+    await tester.pump();
+    customPaint = tester.widget<CustomPaint>(dialFinder);
+    painter = customPaint.painter as ChronoDialPainter;
+    expect(painter.isDark, isTrue);
+  });
+
+  test('ChronoDialPainter configures authentic light-mode horological colors and dark ticks/numerals', () {
+    final lightPainter = ChronoDialPainter(
+      remainingSeconds: 1500,
+      targetMinutes: 25,
+      isRunning: false,
+      isDark: false,
+      dialFaceColor: const Color(0xFFEAE6DC),
+      textureType: HardwareTextureType.matteAbsGrain,
+    );
+
+    expect(lightPainter.isDark, isFalse);
+    expect(lightPainter.dialFaceColor, equals(const Color(0xFFEAE6DC)));
+    expect(lightPainter.activeDialFaceColor, equals(const Color(0xFFEAE6DC)));
+    expect(lightPainter.majorTickColor, equals(const Color(0xFF1B1E23).withValues(alpha: 0.88)));
+    expect(lightPainter.minorTickColor, equals(const Color(0xFF1B1E23).withValues(alpha: 0.38)));
+    expect(lightPainter.numeralColor, equals(const Color(0xFF1B1E23).withValues(alpha: 0.78)));
+    expect(lightPainter.dishShadowColor, equals(Colors.black.withValues(alpha: 0.12)));
+    expect(lightPainter.hubCapColor, equals(const Color(0xFF2B2E34)));
+    expect(lightPainter.glassHighlightAlphas, equals(const [0.28, 0.06]));
+    expect(lightPainter.knurlColor, equals(Colors.black.withValues(alpha: 0.08 * 0.75)));
+
+    // Check numeral painter color
+    final tpLight = ChronoDialPainter.getTextPainter('05', isDark: false);
+    expect(tpLight.text?.style?.color, equals(const Color(0xFF1B1E23).withValues(alpha: 0.78)));
+
+    final tpDark = ChronoDialPainter.getTextPainter('05', isDark: true);
+    expect(tpDark.text?.style?.color, equals(TaktColors.warmBone.withValues(alpha: 0.65)));
+
+    // Paint without errors on a canvas
+    final recorder = PictureRecorder();
+    final canvas = Canvas(recorder);
+    expect(() => lightPainter.paint(canvas, const Size(240, 240)), returnsNormally);
+  });
+
+  test('ChronoDialPainter shouldRepaint returns true when isDark or dialFaceColor changes', () {
+    final painter1 = ChronoDialPainter(
+      remainingSeconds: 1500,
+      targetMinutes: 25,
+      isRunning: false,
+      isDark: true,
+    );
+    final painter2 = ChronoDialPainter(
+      remainingSeconds: 1500,
+      targetMinutes: 25,
+      isRunning: false,
+      isDark: false,
+    );
+    final painter3 = ChronoDialPainter(
+      remainingSeconds: 1500,
+      targetMinutes: 25,
+      isRunning: false,
+      isDark: false,
+      dialFaceColor: const Color(0xFFEAE6DC),
+    );
+    final painter4 = ChronoDialPainter(
+      remainingSeconds: 1500,
+      targetMinutes: 25,
+      isRunning: false,
+      isDark: false,
+      dialFaceColor: const Color(0xFFD3D8E0),
+    );
+
+    expect(painter1.shouldRepaint(painter2), isTrue);
+    expect(painter2.shouldRepaint(painter3), isTrue);
+    expect(painter3.shouldRepaint(painter4), isTrue);
   });
 }

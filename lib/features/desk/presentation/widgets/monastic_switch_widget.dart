@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:takt_desk/app/theme/takt_colors.dart';
 import 'package:takt_desk/app/theme/takt_typography.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
 import 'package:takt_desk/core/focus/focus_lock_controller.dart';
@@ -29,12 +28,12 @@ class MonasticSwitchWidget extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
-            color: TaktColors.basaltSlate,
+            color: themeState.moduleChassisColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isLocked
                   ? themeState.filamentColor.withValues(alpha: 0.8)
-                  : TaktColors.slateBorder,
+                  : themeState.borderColor,
               width: 1.0,
             ),
             boxShadow: isLocked
@@ -59,7 +58,7 @@ class MonasticSwitchWidget extends ConsumerWidget {
                   shape: BoxShape.circle,
                   color: isLocked
                       ? themeState.filamentColor
-                      : const Color(0xFF4A4E55),
+                      : (themeState.isDarkMode ? const Color(0xFF4A4E55) : themeState.borderColor),
                   boxShadow: isLocked
                       ? [
                           BoxShadow(
@@ -74,7 +73,9 @@ class MonasticSwitchWidget extends ConsumerWidget {
               Text(
                 'MONASTIC',
                 style: TaktTypography.labelSmall.copyWith(
-                  color: isLocked ? TaktPalette.warmBone : TaktPalette.warmBone.withValues(alpha: 0.6),
+                  color: isLocked
+                      ? themeState.chassisTextColor
+                      : themeState.chassisTextColor.withValues(alpha: 0.6),
                   fontSize: 9,
                   letterSpacing: 1.2,
                   fontWeight: FontWeight.w700,
@@ -84,7 +85,9 @@ class MonasticSwitchWidget extends ConsumerWidget {
               Text(
                 isLocked ? 'ENGAGED' : 'LOCKDOWN',
                 style: TaktTypography.labelSmall.copyWith(
-                  color: isLocked ? themeState.filamentColor : TaktPalette.warmBone.withValues(alpha: 0.4),
+                  color: isLocked
+                      ? themeState.filamentColor
+                      : themeState.chassisTextColor.withValues(alpha: 0.4),
                   fontSize: 9,
                   letterSpacing: 1.0,
                   fontWeight: FontWeight.w600,
