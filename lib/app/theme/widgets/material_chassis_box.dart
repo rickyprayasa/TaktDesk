@@ -120,7 +120,7 @@ class MaterialChassisBox extends ConsumerWidget {
       child: Stack(
         fit: StackFit.passthrough,
         children: [
-          if (showTexture)
+          if (showTexture || showChamfer)
             Positioned.fill(
               child: ClipRRect(
                 borderRadius: borderRadius,
@@ -128,11 +128,13 @@ class MaterialChassisBox extends ConsumerWidget {
                   child: CustomPaint(
                     isComplex: true,
                     willChange: false,
-                    painter: MaterialTexturePainter(
-                      textureType: themeState.textureType,
-                      isDark: themeState.isDarkMode,
-                      chassisColor: themeState.moduleChassisColor,
-                    ),
+                    painter: showTexture
+                        ? MaterialTexturePainter(
+                            textureType: themeState.textureType,
+                            isDark: themeState.isDarkMode,
+                            chassisColor: themeState.moduleChassisColor,
+                          )
+                        : null,
                     foregroundPainter: showChamfer
                         ? ChassisChamferPainter(
                             highlightColor: Colors.white.withValues(

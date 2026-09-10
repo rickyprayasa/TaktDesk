@@ -333,13 +333,14 @@ void main() {
       expect(painter.chassisColor, HardwareEdition.braunClassic.darkModuleBg);
     });
 
-    testWidgets('omits texture painter when showTexture is false', (tester) async {
+    testWidgets('omits texture and chamfer painters when both showTexture and showChamfer are false', (tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(
             home: Scaffold(
               body: MaterialChassisBox(
                 showTexture: false,
+                showChamfer: false,
                 child: Text('Smooth Box'),
               ),
             ),
@@ -358,6 +359,38 @@ void main() {
         matching: find.byType(CustomPaint),
       );
       expect(customPaintFinder, findsNothing);
+    });
+
+    testWidgets('renders ChassisChamferPainter when showTexture is false and showChamfer is true', (tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: MaterialChassisBox(
+                showTexture: false,
+                showChamfer: true,
+                child: Text('Chamfer Highlight Box'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final clipRRectFinder = find.descendant(
+        of: find.byType(MaterialChassisBox),
+        matching: find.byType(ClipRRect),
+      );
+      expect(clipRRectFinder, findsOneWidget);
+
+      final customPaintFinder = find.descendant(
+        of: clipRRectFinder,
+        matching: find.byType(CustomPaint),
+      );
+      expect(customPaintFinder, findsOneWidget);
+
+      final customPaint = tester.widget<CustomPaint>(customPaintFinder);
+      expect(customPaint.painter, isNull);
+      expect(customPaint.foregroundPainter, isA<ChassisChamferPainter>());
     });
 
     testWidgets('reacts dynamically when theme changes from braunClassic to titaniumStealth', (tester) async {
