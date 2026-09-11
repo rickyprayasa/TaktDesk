@@ -225,6 +225,30 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+
+        val widgetChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.takt.desk/app_widget")
+        widgetChannel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "updateWidgetData" -> {
+                    val cycles = call.argument<Int>("cyclesCompleted") ?: 0
+                    val target = call.argument<Int>("cyclesTarget") ?: 4
+                    val minutes = call.argument<Int>("minutesFocused") ?: 0
+                    val status = call.argument<String>("status") ?: "STANDBY"
+
+                    val prefs = getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
+                    prefs.edit()
+                        .putInt(TaktAppWidgetProvider.KEY_CYCLES_COMPLETED, cycles)
+                        .putInt(TaktAppWidgetProvider.KEY_CYCLES_TARGET, target)
+                        .putInt(TaktAppWidgetProvider.KEY_MINUTES_FOCUSED, minutes)
+                        .putString(TaktAppWidgetProvider.KEY_STATUS, status)
+                        .apply()
+
+                    TaktAppWidgetProvider.updateAllWidgets(this)
+                    result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
     }
 
     override fun onDestroy() {
