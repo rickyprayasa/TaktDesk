@@ -9,7 +9,12 @@ final appWidgetServiceProvider = Provider<AppWidgetService>((ref) {
 
 final appWidgetSyncProvider = Provider.autoDispose<void>((ref) {
   final statsAsync = ref.watch(todayFocusStatsProvider);
-  final timerState = ref.watch(chronoDialControllerProvider);
+  final status = ref.watch(chronoDialControllerProvider.select((state) {
+    if (state.isRunning) {
+      return state.isBreak ? 'BREAK' : 'FOCUS';
+    }
+    return 'STANDBY';
+  }));
   final widgetService = ref.watch(appWidgetServiceProvider);
 
   statsAsync.whenData((stats) {
@@ -17,13 +22,6 @@ final appWidgetSyncProvider = Provider.autoDispose<void>((ref) {
     final cycles = (completedCount > 0 && completedCount % 4 == 0)
         ? 4
         : (completedCount % 4);
-
-    final String status;
-    if (timerState.isRunning) {
-      status = timerState.isBreak ? 'BREAK' : 'FOCUS';
-    } else {
-      status = 'STANDBY';
-    }
 
     widgetService.updateWidgetData(
       cyclesCompleted: cycles,

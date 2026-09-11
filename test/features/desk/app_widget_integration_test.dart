@@ -264,4 +264,56 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('timer ticks do not trigger redundant MethodChannel IPC updates while status is unchanged', (tester) async {
+    final dialController = TestChronoDialController(
+      const TimerState(
+        remainingSeconds: 1500,
+        targetMinutes: 25,
+        isRunning: true,
+        phase: PomodoroPhase.focus,
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(testDb),
+          focusLockServiceProvider.overrideWithValue(MockFocusLockService()),
+          todayFocusStatsProvider.overrideWith((ref) => statsStreamController.stream),
+          todayTimerSessionsStreamProvider.overrideWith((ref) => Stream.value(const [])),
+          chronoDialControllerProvider.overrideWith((ref) => dialController),
+        ],
+        child: const MaterialApp(
+          home: DeskCanvasScreen(),
+        ),
+      ),
+    );
+
+    statsStreamController.add(const TodayFocusStats(
+      completedCount: 1,
+      totalMinutes: 25,
+    ));
+    await tester.pump();
+
+    final initialCallCount = channelCalls.length;
+    expect(initialCallCount, greaterThan(0));
+    expect(channelCalls.last.arguments['status'], equals('FOCUS'));
+
+    // Simulate 1-second countdown tick with status remaining FOCUS
+    dialController.setTimerState(
+      const TimerState(
+        remainingSeconds: 1499,
+        targetMinutes: 25,
+        isRunning: true,
+        phase: PomodoroPhase.focus,
+      ),
+    );
+    await tester.pump();
+
+    // Assert zero additional MethodChannel calls were sent
+    expect(channelCalls.length, equals(initialCallCount));
+
+    await tester.pumpWidget(const SizedBox());
+  });
 }
