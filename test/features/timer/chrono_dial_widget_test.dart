@@ -686,5 +686,38 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('ChronoDialPainter uses high-contrast light ticks and numerals on dark dial face in light mode', (tester) async {
+    final themeNotifier = ThemeController(
+      initial: const ChassisThemeState(
+        isDarkMode: false,
+        edition: HardwareEdition.midCenturyWalnut,
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          chassisThemeProvider.overrideWith((ref) => themeNotifier),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final dialPainter = tester.widget<CustomPaint>(dialFinder).painter as ChronoDialPainter;
+    expect(dialPainter.isDark, isFalse);
+    expect(dialPainter.hasDarkDialFace, isTrue);
+    expect(dialPainter.majorTickColor, equals(TaktColors.warmBone.withValues(alpha: 0.90)));
+    expect(dialPainter.numeralColor, equals(TaktColors.warmBone.withValues(alpha: 0.65)));
+
+    await tester.pumpWidget(const SizedBox());
+  });
 }
 

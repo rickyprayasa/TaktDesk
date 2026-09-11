@@ -23,7 +23,7 @@ class ChassisThemeState {
       isDarkMode ? edition.darkBorder : edition.lightBorder;
 
   Color get textColor =>
-      isDarkMode ? edition.lightCanvas : edition.darkCanvas;
+      hasDarkChassis ? const Color(0xFFE8E5DE) : const Color(0xFF1B1E23);
 
   Color get needleColor => edition.needleColor;
 
@@ -37,11 +37,14 @@ class ChassisThemeState {
 
   Color get accentColor => edition.accentColor;
 
+  bool get hasDarkChassis =>
+      isDarkMode || canvasColor.computeLuminance() < 0.45;
+
   Color get chassisTextColor =>
-      isDarkMode ? const Color(0xFFE8E5DE) : const Color(0xFF1B1E23);
+      hasDarkChassis ? const Color(0xFFE8E5DE) : const Color(0xFF1B1E23);
 
   Color get chassisMutedTextColor =>
-      isDarkMode ? const Color(0x99E8E5DE) : const Color(0x991B1E23);
+      hasDarkChassis ? const Color(0x99E8E5DE) : const Color(0x991B1E23);
 
   HardwareTextureType get textureType => edition.textureType;
 

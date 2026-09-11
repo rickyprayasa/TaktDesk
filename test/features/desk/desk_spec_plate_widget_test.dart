@@ -297,6 +297,40 @@ void main() {
     }
   });
 
+  testWidgets('DeskSpecPlateWidget renders light text in light mode for dark-finish editions (Walnut and Carbon)', (tester) async {
+    final themeNotifier = ThemeController(
+      initial: const ChassisThemeState(
+        isDarkMode: false,
+        edition: HardwareEdition.midCenturyWalnut,
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          chassisThemeProvider.overrideWith((ref) => themeNotifier),
+          todayTimerSessionsStreamProvider.overrideWith((ref) => Stream.value([])),
+          todayFocusStatsProvider.overrideWith(
+            (ref) => Stream.value(const TodayFocusStats(
+              completedCount: 2,
+              totalMinutes: 50,
+            )),
+          ),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(
+            body: DeskSpecPlateWidget(),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final plateSurface = find.byKey(const ValueKey('desk_spec_plate_surface'));
+    final titleText = tester.widget<Text>(find.descendant(of: plateSurface, matching: find.text('MID-CENTURY WALNUT')));
+    expect(titleText.style?.color, equals(TaktColors.warmBone));
+  });
+
   testWidgets('DeskSpecPlateWidget opens DeskTelemetryDialog modal on plate tap and dismisses cleanly', (tester) async {
     final mockAudio = MockAudioService();
 

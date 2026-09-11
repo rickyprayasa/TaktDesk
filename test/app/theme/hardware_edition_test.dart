@@ -163,6 +163,21 @@ void main() {
         edition: HardwareEdition.midCenturyWalnut,
       );
       expect(walnutState.textureType, equals(HardwareTextureType.organicWalnut));
+      expect(walnutState.hasDarkChassis, isTrue);
+      expect(walnutState.chassisTextColor, equals(const Color(0xFFE8E5DE)));
+      expect(walnutState.chassisMutedTextColor, equals(const Color(0x99E8E5DE)));
+
+      const carbonState = ChassisThemeState(
+        isDarkMode: false,
+        edition: HardwareEdition.forgedCarbon,
+      );
+      expect(carbonState.textureType, equals(HardwareTextureType.forgedCarbon));
+      expect(carbonState.hasDarkChassis, isTrue);
+      expect(carbonState.chassisTextColor, equals(const Color(0xFFE8E5DE)));
+      expect(carbonState.chassisMutedTextColor, equals(const Color(0x99E8E5DE)));
+
+      expect(stateLight.hasDarkChassis, isFalse);
+      expect(stateDark.hasDarkChassis, isTrue);
     });
   });
 }

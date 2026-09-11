@@ -41,6 +41,9 @@ class ChronoDialPainter extends CustomPainter {
   Color get activeDialFaceColor =>
       isDark ? const Color(0xFF16181B) : (dialFaceColor ?? const Color(0xFFEBE8DF));
 
+  bool get hasDarkDialFace =>
+      isDark || activeDialFaceColor.computeLuminance() < 0.45;
+
   double get _knurlAlpha {
     switch (textureType) {
       case HardwareTextureType.burnishedBrass:
@@ -58,19 +61,19 @@ class ChronoDialPainter extends CustomPainter {
     }
   }
 
-  Color get knurlColor => isDark
+  Color get knurlColor => hasDarkDialFace
       ? Colors.white.withValues(alpha: _knurlAlpha)
       : Colors.black.withValues(alpha: _knurlAlpha * 0.75);
 
-  Color get majorTickColor => isDark
+  Color get majorTickColor => hasDarkDialFace
       ? TaktColors.warmBone.withValues(alpha: 0.90)
       : const Color(0xFF1B1E23).withValues(alpha: 0.88);
 
-  Color get minorTickColor => isDark
+  Color get minorTickColor => hasDarkDialFace
       ? TaktColors.warmBone.withValues(alpha: 0.32)
       : const Color(0xFF1B1E23).withValues(alpha: 0.38);
 
-  Color get numeralColor => isDark
+  Color get numeralColor => hasDarkDialFace
       ? TaktColors.warmBone.withValues(alpha: 0.65)
       : const Color(0xFF1B1E23).withValues(alpha: 0.78);
 
@@ -197,8 +200,8 @@ class ChronoDialPainter extends CustomPainter {
       if (isMajor) {
         final minuteVal = (i == 0) ? 60 : i;
         final tp = _numberPainters.putIfAbsent(
-          (minuteVal, isDark),
-          () => getTextPainter(minuteVal.toString().padLeft(2, '0'), isDark: isDark),
+          (minuteVal, hasDarkDialFace),
+          () => getTextPainter(minuteVal.toString().padLeft(2, '0'), isDark: hasDarkDialFace),
         );
         final numRadius = dialRadius - 22;
         final numOffset = Offset(

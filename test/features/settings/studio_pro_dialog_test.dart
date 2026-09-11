@@ -31,6 +31,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('TAKT DESK STUDIO PRO'), findsOneWidget);
+    expect(find.text('RSQUARE'), findsOneWidget);
     expect(find.textContaining('MID-CENTURY WALNUT'), findsOneWidget);
     expect(find.byKey(const ValueKey('material_showcase_plaque')), findsOneWidget);
     expect(find.byKey(const ValueKey('pro_dialog_unlock_button')), findsOneWidget);

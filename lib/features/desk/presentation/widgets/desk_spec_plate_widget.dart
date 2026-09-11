@@ -30,9 +30,14 @@ class DeskSpecPlateWidget extends ConsumerWidget {
         ? 4
         : (completedCount % 4);
 
-    final primaryTextColor = isDark ? TaktColors.warmBone : TaktColors.chassisObsidian;
-    final secondaryTextColor = isDark
-        ? TaktColors.warmBone.withValues(alpha: 0.6)
+    final plateLuminance = (themeState.edition.plateGradientLight[0].computeLuminance() +
+            themeState.edition.plateGradientLight.last.computeLuminance()) /
+        2;
+    final isDarkPlate = isDark || plateLuminance < 0.45;
+
+    final primaryTextColor = isDarkPlate ? TaktColors.warmBone : TaktColors.chassisObsidian;
+    final secondaryTextColor = isDarkPlate
+        ? TaktColors.warmBone.withValues(alpha: 0.70)
         : const Color(0xFF5A5D64);
 
     final borderColor = isDark ? themeState.edition.darkBorder : themeState.edition.lightBorder;
@@ -71,10 +76,10 @@ class DeskSpecPlateWidget extends ConsumerWidget {
           child: Stack(
             children: [
               // Corner mechanical rivets
-              Positioned(top: 4, left: 4, child: _RivetDot(color: rivetColor, isDark: isDark)),
-              Positioned(top: 4, right: 4, child: _RivetDot(color: rivetColor, isDark: isDark)),
-              Positioned(bottom: 4, left: 4, child: _RivetDot(color: rivetColor, isDark: isDark)),
-              Positioned(bottom: 4, right: 4, child: _RivetDot(color: rivetColor, isDark: isDark)),
+              Positioned(top: 4, left: 4, child: _RivetDot(color: rivetColor, isDark: isDarkPlate)),
+              Positioned(top: 4, right: 4, child: _RivetDot(color: rivetColor, isDark: isDarkPlate)),
+              Positioned(bottom: 4, left: 4, child: _RivetDot(color: rivetColor, isDark: isDarkPlate)),
+              Positioned(bottom: 4, right: 4, child: _RivetDot(color: rivetColor, isDark: isDarkPlate)),
 
               // Main Plate Content
               Padding(

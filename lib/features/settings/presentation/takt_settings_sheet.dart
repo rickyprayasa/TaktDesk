@@ -88,7 +88,19 @@ class TaktSettingsSheet extends ConsumerWidget {
                       color: primaryTextColor,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 3),
+                  const Text(
+                    'DEVELOPED BY RSQUARE',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
+                      color: TaktColors.filamentAmber,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
 
                   // Section: Hardware Editions // Chassis Materiality
                   _HardwareEditionsSection(
@@ -517,13 +529,25 @@ class TaktSettingsSheet extends ConsumerWidget {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Takt Desk v1.0.0 (Build 2026.09) · Pure Handheld Mobile Edition',
+                          'Takt Desk v1.0.0 (Build 2026.09) · Developed by RSQUARE',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: 'monospace',
                             fontSize: 9.0,
                             fontWeight: FontWeight.w600,
                             color: primaryTextColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'DEVELOPED BY RSQUARE',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2,
+                            color: TaktColors.filamentAmber,
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -553,10 +577,10 @@ class TaktSettingsSheet extends ConsumerWidget {
                           onPressed: () {
                             showLicensePage(
                               context: context,
-                              applicationName: 'Takt Desk',
+                              applicationName: 'Takt Desk by RSQUARE',
                               applicationVersion: 'v1.0.0 (Build 2026.09)',
                               applicationLegalese:
-                                  'Weniger, aber besser — Dieter Rams',
+                                  'Weniger, aber besser — Dieter Rams · Developed by RSQUARE',
                             );
                           },
                           child: const Text(

@@ -247,8 +247,8 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                                                 Text(
                                                   'TAKT DESK',
                                                   style: TaktTypography.controlLabel.copyWith(
-                                                    color: theme.isDarkMode
-                                                        ? TaktColors.warmBone.withValues(alpha: 0.75)
+                                                    color: theme.hasDarkChassis
+                                                        ? TaktColors.warmBone.withValues(alpha: 0.85)
                                                         : const Color(0xFF2C3038),
                                                     letterSpacing: 1.5,
                                                     fontSize: 11.5,

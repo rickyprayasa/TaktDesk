@@ -47,15 +47,30 @@ void showStudioProDialog(
           color: dark ? TaktColors.slateBorder : TaktColors.lightChassisBorder,
         ),
       ),
-      title: Text(
-        'TAKT DESK STUDIO PRO',
-        style: TextStyle(
-          fontFamily: 'monospace',
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.0,
-          color: primary,
-        ),
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'TAKT DESK STUDIO PRO',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
+              color: primary,
+            ),
+          ),
+          const Text(
+            'RSQUARE',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
+              color: TaktColors.filamentAmber,
+            ),
+          ),
+        ],
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
