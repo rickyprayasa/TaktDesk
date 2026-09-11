@@ -2,6 +2,7 @@ package com.example.takt_desk
 
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Build
 import android.view.WindowManager
@@ -15,6 +16,7 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
     private val FOCUS_CHANNEL = "com.takt.desk/focus_lock"
     private val AUDIO_CHANNEL = "com.takt.desk/audio"
+    private val TIMER_CHANNEL = "com.takt.desk/timer_service"
     private var previousInterruptionFilter: Int? = null
     private var ambientPlayer: MediaPlayer? = null
 
@@ -171,6 +173,50 @@ class MainActivity : FlutterActivity() {
                             }
                             fd.close()
                         }
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.success(false)
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, TIMER_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "startService" -> {
+                    try {
+                        val remainingSeconds = call.argument<Double>("remainingSeconds") ?: 0.0
+                        val targetMinutes = call.argument<Int>("targetMinutes") ?: 25
+                        val phase = call.argument<String>("phase") ?: "focus"
+                        val cycleCount = call.argument<Int>("cycleCount") ?: 1
+                        val profileName = call.argument<String>("profileName") ?: "CLASSIC 25/5"
+
+                        val serviceIntent = Intent(this, TimerForegroundService::class.java).apply {
+                            action = TimerForegroundService.ACTION_START
+                            putExtra(TimerForegroundService.EXTRA_REMAINING_SECONDS, remainingSeconds)
+                            putExtra(TimerForegroundService.EXTRA_TARGET_MINUTES, targetMinutes)
+                            putExtra(TimerForegroundService.EXTRA_PHASE, phase)
+                            putExtra(TimerForegroundService.EXTRA_CYCLE_COUNT, cycleCount)
+                            putExtra(TimerForegroundService.EXTRA_PROFILE_NAME, profileName)
+                        }
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            startForegroundService(serviceIntent)
+                        } else {
+                            startService(serviceIntent)
+                        }
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.success(false)
+                    }
+                }
+                "stopService" -> {
+                    try {
+                        val serviceIntent = Intent(this, TimerForegroundService::class.java).apply {
+                            action = TimerForegroundService.ACTION_STOP
+                        }
+                        startService(serviceIntent)
                         result.success(true)
                     } catch (e: Exception) {
                         result.success(false)
