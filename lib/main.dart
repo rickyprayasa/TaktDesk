@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/theme/takt_theme.dart';
-import 'features/desk/presentation/desk_canvas_screen.dart';
+import 'features/opening/presentation/takt_opening_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +17,7 @@ class TaktApp extends StatelessWidget {
       title: 'Takt Desk',
       debugShowCheckedModeBanner: false,
       theme: TaktTheme.darkThemeData,
-      home: const DeskCanvasScreen(),
+      home: const TaktOpeningScreen(),
     );
   }
 }
