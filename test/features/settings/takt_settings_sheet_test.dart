@@ -328,7 +328,12 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(tester.takeException(), isNull);
+      final ex = tester.takeException();
+      if (ex is FlutterError) {
+        // ignore: avoid_print
+        print(ex.toStringDeep());
+      }
+      expect(ex, isNull);
       expect(find.textContaining('SERVICE HATCH'), findsOneWidget);
     });
 

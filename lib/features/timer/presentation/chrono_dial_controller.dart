@@ -47,6 +47,23 @@ class ChronoDialController extends StateNotifier<TimerState> {
     HapticService.dialTick();
   }
 
+  void updateCustomDurations({
+    int? focusMinutes,
+    int? shortBreakMinutes,
+    int? longBreakMinutes,
+  }) {
+    if (state.isRunning) return;
+    final currentCustom = state.profile.type == PomodoroProfileType.custom
+        ? state.profile
+        : PomodoroProfile.custom();
+    final updated = PomodoroProfile.custom(
+      focusMinutes: focusMinutes ?? currentCustom.focusMinutes,
+      shortBreakMinutes: shortBreakMinutes ?? currentCustom.shortBreakMinutes,
+      longBreakMinutes: longBreakMinutes ?? currentCustom.longBreakMinutes,
+    );
+    setProfile(updated);
+  }
+
   void start() {
     if (state.remainingSeconds <= 0) {
       state = state.copyWith(

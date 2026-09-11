@@ -7,10 +7,10 @@ import 'chrono_dial_painter.dart';
 import 'widgets/crown_push_button.dart';
 import 'widgets/mechanical_flip_digit.dart';
 import 'widgets/split_flap_board_widget.dart';
+import 'widgets/chrono_profile_selector_widget.dart';
 import '../../desk/presentation/widgets/monastic_switch_widget.dart';
 import '../../../app/theme/hardware_edition.dart';
 import '../../../app/theme/takt_colors.dart';
-import '../../../app/theme/takt_typography.dart';
 import '../../../app/theme/theme_controller.dart';
 
 class ChronoDialWidget extends ConsumerStatefulWidget {
@@ -236,57 +236,10 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
           ),
         ),
         const SizedBox(height: 14),
-        // 3. Tactile Duration Preset Selectors & Active Countdown Display (Pill Timer)
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: themeState.moduleChassisColor,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: themeState.borderColor, width: 1.0),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                visualDensity: VisualDensity.compact,
-                icon: Icon(
-                  Icons.remove_circle_outline,
-                  color: state.isRunning ? themeState.borderColor : themeState.chassisTextColor,
-                  size: 18,
-                ),
-                onPressed: state.isRunning
-                    ? null
-                    : () => ref
-                        .read(chronoDialProvider.notifier)
-                        .setTargetMinutes(state.targetMinutes - 5),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Text(
-                  '${state.targetMinutes} MIN',
-                  style: TaktTypography.controlLabel.copyWith(
-                    color: state.isRunning ? themeState.filamentColor : themeState.chassisTextColor,
-                  ),
-                ),
-              ),
-              IconButton(
-                visualDensity: VisualDensity.compact,
-                icon: Icon(
-                  Icons.add_circle_outline,
-                  color: state.isRunning ? themeState.borderColor : themeState.chassisTextColor,
-                  size: 18,
-                ),
-                onPressed: state.isRunning
-                    ? null
-                    : () => ref
-                        .read(chronoDialProvider.notifier)
-                        .setTargetMinutes(state.targetMinutes + 5),
-              ),
-            ],
-          ),
-        ),
+        // 3. Horizontal Industrial Cassette Preset Selector (280px modular bar)
+        const ChronoProfileSelectorWidget(),
         const SizedBox(height: 10),
-        // 4. Simple Monastic Focus Lockdown Toggle (below Pill Timer)
+        // 4. Simple Monastic Focus Lockdown Toggle (below Preset Selector)
         const MonasticSwitchWidget(),
       ],
     );

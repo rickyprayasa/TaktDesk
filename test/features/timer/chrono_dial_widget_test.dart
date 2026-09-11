@@ -12,6 +12,7 @@ import 'package:takt_desk/features/timer/domain/pomodoro_phase.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_controller.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_painter.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_widget.dart';
+import 'package:takt_desk/features/timer/presentation/widgets/chrono_profile_selector_widget.dart';
 import 'package:takt_desk/features/timer/presentation/widgets/crown_push_button.dart';
 import 'package:takt_desk/features/timer/presentation/widgets/mechanical_flip_digit.dart';
 import 'package:takt_desk/features/timer/presentation/widgets/split_flap_board_widget.dart';
@@ -47,23 +48,23 @@ void main() {
       ),
     );
 
-    // Verify initial time display and target duration label (25 MIN)
+    // Verify initial time display and cassette profile selector
     expect(find.byType(MechanicalCounterDisplay, skipOffstage: false), findsOneWidget);
     expectDisplay(tester, 25, 0);
-    expect(find.text('25 MIN'), findsOneWidget);
+    expect(find.byType(ChronoProfileSelectorWidget), findsOneWidget);
+    expect(find.text('25/5 CLS'), findsOneWidget);
+    expect(find.text('50/10 MON'), findsOneWidget);
+    expect(find.text('15/3 SPR'), findsOneWidget);
+    expect(find.text('CUSTOM'), findsOneWidget);
 
     // Verify CustomPaint with ChronoDialPainter is rendered
     expect(dialFinder, findsOneWidget);
-
-    // Verify adjust duration buttons exist
-    expect(find.byIcon(Icons.remove_circle_outline), findsOneWidget);
-    expect(find.byIcon(Icons.add_circle_outline), findsOneWidget);
 
     // Clean up
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('ChronoDialWidget increments and decrements target minutes', (tester) async {
+  testWidgets('ChronoDialWidget switches profile via cassette selector segments', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
@@ -76,22 +77,20 @@ void main() {
       ),
     );
 
-    // Tap '+' button
-    await tester.tap(find.byIcon(Icons.add_circle_outline));
+    // Tap 50/10 MON segment
+    await tester.tap(find.text('50/10 MON'));
     await tester.pump();
-    expect(find.text('30 MIN'), findsOneWidget);
-    expectDisplay(tester, 30, 0);
+    expectDisplay(tester, 50, 0);
 
-    // Tap '-' button twice
-    await tester.tap(find.byIcon(Icons.remove_circle_outline));
+    // Tap 15/3 SPR segment
+    await tester.tap(find.text('15/3 SPR'));
     await tester.pump();
-    expect(find.text('25 MIN'), findsOneWidget);
+    expectDisplay(tester, 15, 0);
+
+    // Tap 25/5 CLS segment
+    await tester.tap(find.text('25/5 CLS'));
+    await tester.pump();
     expectDisplay(tester, 25, 0);
-
-    await tester.tap(find.byIcon(Icons.remove_circle_outline));
-    await tester.pump();
-    expect(find.text('20 MIN'), findsOneWidget);
-    expectDisplay(tester, 20, 0);
 
     // Clean up
     await tester.pumpWidget(const SizedBox());
@@ -130,7 +129,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('ChronoDialWidget disables duration buttons while running', (tester) async {
+  testWidgets('ChronoDialWidget disables profile switching while running', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
@@ -143,39 +142,26 @@ void main() {
       ),
     );
 
-    // Initial state: buttons enabled
-    final removeFinder = find.widgetWithIcon(IconButton, Icons.remove_circle_outline);
-    final addFinder = find.widgetWithIcon(IconButton, Icons.add_circle_outline);
-
-    IconButton removeButton = tester.widget(removeFinder);
-    IconButton addButton = tester.widget(addFinder);
-    expect(removeButton.onPressed, isNotNull);
-    expect(addButton.onPressed, isNotNull);
+    // Initial state: 25/5 CLS
+    expectDisplay(tester, 25, 0);
 
     // Start timer
     await tester.tap(dialFinder);
     await tester.pump();
 
-    // While running: buttons disabled
-    removeButton = tester.widget(removeFinder);
-    addButton = tester.widget(addFinder);
-    expect(removeButton.onPressed, isNull);
-    expect(addButton.onPressed, isNull);
-
-    // Tapping disabled button should have no effect
-    await tester.tap(addFinder);
+    // While running: tapping another segment has no effect
+    await tester.tap(find.text('50/10 MON'));
     await tester.pump();
-    expect(find.text('25 MIN'), findsOneWidget);
+    expectDisplay(tester, 25, 0);
 
     // Pause timer
     await tester.tap(dialFinder);
     await tester.pump();
 
-    // Paused: buttons enabled again
-    removeButton = tester.widget(removeFinder);
-    addButton = tester.widget(addFinder);
-    expect(removeButton.onPressed, isNotNull);
-    expect(addButton.onPressed, isNotNull);
+    // Paused: tapping 50/10 MON switches profile
+    await tester.tap(find.text('50/10 MON'));
+    await tester.pump();
+    expectDisplay(tester, 50, 0);
 
     // Clean up
     await tester.pumpWidget(const SizedBox());
@@ -194,28 +180,24 @@ void main() {
       ),
     );
 
-    // Decrement to 5 MIN
-    final removeFinder = find.widgetWithIcon(IconButton, Icons.remove_circle_outline);
-    for (int i = 0; i < 4; i++) {
-      await tester.tap(removeFinder);
-      await tester.pump();
-    }
-    expect(find.text('5 MIN'), findsOneWidget);
-    expectDisplay(tester, 5, 0);
+    // Select Sprint profile (15m focus / 3m break)
+    await tester.tap(find.text('15/3 SPR'));
+    await tester.pump();
+    expectDisplay(tester, 15, 0);
 
     // Start timer
     await tester.tap(dialFinder);
     await tester.pump();
 
-    // Advance 301 seconds to expire timer -> auto-advances to Short Break (5 mins) in Standby
-    await tester.pump(const Duration(seconds: 301));
-    expectDisplay(tester, 5, 0);
+    // Advance 901 seconds to expire timer -> auto-advances to Short Break (3 mins) in Standby
+    await tester.pump(const Duration(seconds: 901));
+    expectDisplay(tester, 3, 0);
 
     // Tap dial to start the standby short break session
     await tester.tap(dialFinder);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
-    expectDisplay(tester, 4, 59);
+    expectDisplay(tester, 2, 59);
 
     // Clean up
     await tester.pumpWidget(const SizedBox());
@@ -235,7 +217,7 @@ void main() {
     );
 
     // Initial state is 25 MIN
-    expect(find.text('25 MIN'), findsOneWidget);
+    expectDisplay(tester, 25, 0);
 
     // Drag from center rightwards (3 o'clock position = 15 MIN)
     final dialCenter = tester.getCenter(dialFinder);
@@ -247,7 +229,6 @@ void main() {
     await tester.pump();
 
     // The dial target minutes should update to 15 MIN
-    expect(find.text('15 MIN'), findsOneWidget);
     expectDisplay(tester, 15, 0);
 
     // Clean up
@@ -328,16 +309,16 @@ void main() {
     expect(crownWidget.borderColor, equals(HardwareEdition.braunClassic.darkBorder));
     expect(crownWidget.stemColor, equals(HardwareEdition.braunClassic.darkModuleBg));
 
-    // Pill timer initial
-    var pillContainer = tester.widget<Container>(
-      find.ancestor(
-        of: find.byIcon(Icons.remove_circle_outline),
+    // Cassette profile selector initial
+    var cassetteContainer = tester.widget<Container>(
+      find.descendant(
+        of: find.byType(ChronoProfileSelectorWidget),
         matching: find.byType(Container),
       ).first,
     );
-    var pillDeco = pillContainer.decoration as BoxDecoration;
-    expect((pillDeco.border as Border).top.color, equals(HardwareEdition.braunClassic.darkBorder));
-    expect(pillDeco.color, equals(HardwareEdition.braunClassic.darkModuleBg));
+    var cassetteDeco = cassetteContainer.decoration as BoxDecoration;
+    expect((cassetteDeco.border as Border).top.color, equals(HardwareEdition.braunClassic.darkBorder));
+    expect(cassetteDeco.color, equals(HardwareEdition.braunClassic.darkModuleBg));
 
     // Split flap board initial
     var splitFlapContainer = tester.widget<Container>(
@@ -366,16 +347,16 @@ void main() {
     expect(crownWidget.borderColor, equals(HardwareEdition.rawBrassPatina.darkBorder));
     expect(crownWidget.stemColor, equals(HardwareEdition.rawBrassPatina.darkModuleBg));
 
-    // Verify Pill timer container adapts to rawBrassPatina
-    pillContainer = tester.widget<Container>(
-      find.ancestor(
-        of: find.byIcon(Icons.remove_circle_outline),
+    // Verify cassette profile selector container adapts to rawBrassPatina
+    cassetteContainer = tester.widget<Container>(
+      find.descendant(
+        of: find.byType(ChronoProfileSelectorWidget),
         matching: find.byType(Container),
       ).first,
     );
-    pillDeco = pillContainer.decoration as BoxDecoration;
-    expect((pillDeco.border as Border).top.color, equals(HardwareEdition.rawBrassPatina.darkBorder));
-    expect(pillDeco.color, equals(HardwareEdition.rawBrassPatina.darkModuleBg));
+    cassetteDeco = cassetteContainer.decoration as BoxDecoration;
+    expect((cassetteDeco.border as Border).top.color, equals(HardwareEdition.rawBrassPatina.darkBorder));
+    expect(cassetteDeco.color, equals(HardwareEdition.rawBrassPatina.darkModuleBg));
 
     // Verify Split flap board container adapts to rawBrassPatina
     splitFlapContainer = tester.widget<Container>(
@@ -419,34 +400,24 @@ void main() {
     expect(themeState.isDarkMode, isFalse);
     expect(themeState.chassisTextColor, equals(const Color(0xFF1B1E23)));
 
-    // Stopped state: Duration text '25 MIN' and icons use chassisTextColor
-    final durationText = tester.widget<Text>(find.text('25 MIN'));
-    expect(durationText.style?.color, equals(const Color(0xFF1B1E23)));
+    // Stopped state: Inactive cassette segment text uses chassisTextColor with alpha, active uses filamentColor
+    final inactiveSegmentText = tester.widget<Text>(find.text('50/10 MON'));
+    expect(inactiveSegmentText.style?.color, equals(const Color(0xFF1B1E23).withValues(alpha: 0.70)));
 
-    final removeIcon = tester.widget<Icon>(find.byIcon(Icons.remove_circle_outline));
-    expect(removeIcon.color, equals(const Color(0xFF1B1E23)));
-
-    final addIcon = tester.widget<Icon>(find.byIcon(Icons.add_circle_outline));
-    expect(addIcon.color, equals(const Color(0xFF1B1E23)));
+    final activeSegmentText = tester.widget<Text>(find.text('25/5 CLS'));
+    expect(activeSegmentText.style?.color, equals(themeState.filamentColor));
 
     // ChronoDialPainter receives textureType matching active edition (braunClassic -> matteAbsGrain)
     var customPaint = tester.widget<CustomPaint>(dialFinder);
     var painter = customPaint.painter as ChronoDialPainter;
     expect(painter.textureType, equals(HardwareTextureType.matteAbsGrain));
 
-    // When running: Duration text uses filamentColor, icons use borderColor
+    // When running: Inactive cassette segment text dims to alpha 0.35
     await tester.tap(dialFinder);
     await tester.pump();
 
-    final runningThemeState = container.read(chassisThemeProvider);
-    final runningDurationText = tester.widget<Text>(find.text('25 MIN'));
-    expect(runningDurationText.style?.color, equals(runningThemeState.filamentColor));
-
-    final runningRemoveIcon = tester.widget<Icon>(find.byIcon(Icons.remove_circle_outline));
-    expect(runningRemoveIcon.color, equals(runningThemeState.borderColor));
-
-    final runningAddIcon = tester.widget<Icon>(find.byIcon(Icons.add_circle_outline));
-    expect(runningAddIcon.color, equals(runningThemeState.borderColor));
+    final runningInactiveText = tester.widget<Text>(find.text('50/10 MON'));
+    expect(runningInactiveText.style?.color, equals(themeState.chassisTextColor.withValues(alpha: 0.35)));
 
     // Pause timer
     await tester.tap(dialFinder);

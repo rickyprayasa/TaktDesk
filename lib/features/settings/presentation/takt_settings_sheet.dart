@@ -4,6 +4,7 @@ import '../../../app/theme/hardware_edition.dart';
 import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/theme_controller.dart';
 import '../../../core/haptics/haptic_service.dart';
+import '../../timer/presentation/chrono_dial_controller.dart';
 import 'settings_controller.dart';
 import 'widgets/studio_pro_dialog.dart';
 
@@ -292,7 +293,17 @@ class TaktSettingsSheet extends ConsumerWidget {
                   ),
                   const SizedBox(height: 20),
 
-                  // Section 2: System Clearance & Lockdown
+                  // Section 2: Pomodoro Interval Engine
+                  _PomodoroIntervalEngineSection(
+                    isDark: isDark,
+                    primaryTextColor: primaryTextColor,
+                    secondaryTextColor: secondaryTextColor,
+                    panelBgColor: panelBgColor,
+                    borderColor: borderColor,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Section 3: System Clearance & Lockdown
                   _SectionHeader(
                     title: 'SYSTEM CLEARANCE & LOCKDOWN',
                     textColor: secondaryTextColor,
@@ -647,6 +658,243 @@ class TaktSettingsSheet extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PomodoroIntervalEngineSection extends ConsumerWidget {
+  final bool isDark;
+  final Color primaryTextColor;
+  final Color secondaryTextColor;
+  final Color panelBgColor;
+  final Color borderColor;
+
+  const _PomodoroIntervalEngineSection({
+    required this.isDark,
+    required this.primaryTextColor,
+    required this.secondaryTextColor,
+    required this.panelBgColor,
+    required this.borderColor,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final timerState = ref.watch(chronoDialProvider);
+    final controller = ref.read(chronoDialProvider.notifier);
+    final profile = timerState.profile;
+    final isRunning = timerState.isRunning;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionHeader(
+          title: 'POMODORO INTERVAL ENGINE',
+          textColor: secondaryTextColor,
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: panelBgColor,
+            borderRadius: BorderRadius.circular(6.0),
+            border: Border.all(color: borderColor, width: 0.8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Active profile indicator
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  Text(
+                    'ACTIVE PROFILE',
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.0,
+                      color: primaryTextColor,
+                    ),
+                  ),
+                  Text(
+                    profile.type.label,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: TaktColors.filamentAmber,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Divider(color: borderColor.withValues(alpha: 0.5), height: 1),
+              const SizedBox(height: 12),
+
+              // Stepper 1: Focus Duration
+              _buildStepperRow(
+                title: 'FOCUS DURATION',
+                subtitle: 'Work interval (1 – 90 min)',
+                value: '${profile.focusMinutes} MIN',
+                valueKey: const ValueKey('custom_focus_value'),
+                minusKey: const ValueKey('custom_focus_minus'),
+                plusKey: const ValueKey('custom_focus_plus'),
+                canDecrement: !isRunning && profile.focusMinutes > 1,
+                canIncrement: !isRunning && profile.focusMinutes < 90,
+                onDecrement: () => controller.updateCustomDurations(
+                  focusMinutes: profile.focusMinutes - 1,
+                ),
+                onIncrement: () => controller.updateCustomDurations(
+                  focusMinutes: profile.focusMinutes + 1,
+                ),
+                primaryTextColor: primaryTextColor,
+                secondaryTextColor: secondaryTextColor,
+                borderColor: borderColor,
+              ),
+              const SizedBox(height: 10),
+
+              // Stepper 2: Short Break
+              _buildStepperRow(
+                title: 'SHORT BREAK',
+                subtitle: 'Cycle rest interval (1 – 30 min)',
+                value: '${profile.shortBreakMinutes} MIN',
+                valueKey: const ValueKey('custom_short_break_value'),
+                minusKey: const ValueKey('custom_short_break_minus'),
+                plusKey: const ValueKey('custom_short_break_plus'),
+                canDecrement: !isRunning && profile.shortBreakMinutes > 1,
+                canIncrement: !isRunning && profile.shortBreakMinutes < 30,
+                onDecrement: () => controller.updateCustomDurations(
+                  shortBreakMinutes: profile.shortBreakMinutes - 1,
+                ),
+                onIncrement: () => controller.updateCustomDurations(
+                  shortBreakMinutes: profile.shortBreakMinutes + 1,
+                ),
+                primaryTextColor: primaryTextColor,
+                secondaryTextColor: secondaryTextColor,
+                borderColor: borderColor,
+              ),
+              const SizedBox(height: 10),
+
+              // Stepper 3: Long Break
+              _buildStepperRow(
+                title: 'LONG BREAK',
+                subtitle: '4th cycle recovery (1 – 45 min)',
+                value: '${profile.longBreakMinutes} MIN',
+                valueKey: const ValueKey('custom_long_break_value'),
+                minusKey: const ValueKey('custom_long_break_minus'),
+                plusKey: const ValueKey('custom_long_break_plus'),
+                canDecrement: !isRunning && profile.longBreakMinutes > 1,
+                canIncrement: !isRunning && profile.longBreakMinutes < 45,
+                onDecrement: () => controller.updateCustomDurations(
+                  longBreakMinutes: profile.longBreakMinutes - 1,
+                ),
+                onIncrement: () => controller.updateCustomDurations(
+                  longBreakMinutes: profile.longBreakMinutes + 1,
+                ),
+                primaryTextColor: primaryTextColor,
+                secondaryTextColor: secondaryTextColor,
+                borderColor: borderColor,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStepperRow({
+    required String title,
+    required String subtitle,
+    required String value,
+    required Key valueKey,
+    required Key minusKey,
+    required Key plusKey,
+    required bool canDecrement,
+    required bool canIncrement,
+    required VoidCallback onDecrement,
+    required VoidCallback onIncrement,
+    required Color primaryTextColor,
+    required Color secondaryTextColor,
+    required Color borderColor,
+  }) {
+    return Wrap(
+      alignment: WrapAlignment.spaceBetween,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 8,
+      runSpacing: 6,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 10.5,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.0,
+                color: primaryTextColor,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 9.0,
+                color: secondaryTextColor,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              key: minusKey,
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+              icon: Icon(
+                Icons.remove_circle_outline,
+                color: canDecrement ? primaryTextColor : borderColor,
+                size: 18,
+              ),
+              onPressed: canDecrement ? onDecrement : null,
+            ),
+            SizedBox(
+              width: 54,
+              child: Text(
+                value,
+                key: valueKey,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: TaktColors.filamentAmber,
+                ),
+              ),
+            ),
+            IconButton(
+              key: plusKey,
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+              icon: Icon(
+                Icons.add_circle_outline,
+                color: canIncrement ? primaryTextColor : borderColor,
+                size: 18,
+              ),
+              onPressed: canIncrement ? onIncrement : null,
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
