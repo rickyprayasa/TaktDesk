@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/theme/takt_theme.dart';
+import 'app/theme/theme_controller.dart';
 import 'features/opening/presentation/takt_opening_screen.dart';
 
 void main() {
@@ -8,15 +9,16 @@ void main() {
   runApp(const ProviderScope(child: TaktApp()));
 }
 
-class TaktApp extends StatelessWidget {
+class TaktApp extends ConsumerWidget {
   const TaktApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = ref.watch(chassisThemeProvider);
     return MaterialApp(
       title: 'Takt Desk',
       debugShowCheckedModeBanner: false,
-      theme: TaktTheme.darkThemeData,
+      theme: theme.isDarkMode ? TaktTheme.darkThemeData : TaktTheme.lightThemeData,
       home: const TaktOpeningScreen(),
     );
   }

@@ -22,6 +22,12 @@ void main() {
     expect(theme.scaffoldBackgroundColor, TaktColors.chassisObsidian);
   });
 
+  test('TaktTheme produces consistent light theme', () {
+    final theme = TaktTheme.lightThemeData;
+    expect(theme.scaffoldBackgroundColor, TaktColors.lightChassisCanvas);
+    expect(theme.brightness, Brightness.light);
+  });
+
   test('TaktTypography defines expected text styles', () {
     expect(TaktTypography.controlLabel.fontFamily, 'sans-serif');
     expect(TaktTypography.receiptHeader.fontFamily, 'monospace');

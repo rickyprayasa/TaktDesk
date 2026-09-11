@@ -63,13 +63,24 @@ void showStudioProDialog(
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset(
-                'assets/images/rsquare_logo.png',
-                width: 16,
-                height: 16,
-                fit: BoxFit.contain,
+              Container(
+                width: 20,
+                height: 20,
+                padding: const EdgeInsets.all(2.5),
+                decoration: BoxDecoration(
+                  color: dark ? const Color(0xFFEFECE6) : Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: TaktColors.filamentAmber.withValues(alpha: 0.6),
+                    width: 0.8,
+                  ),
+                ),
+                child: Image.asset(
+                  'assets/images/rsquare_logo.png',
+                  fit: BoxFit.contain,
+                ),
               ),
-              const SizedBox(width: 5),
+              const SizedBox(width: 6),
               const Text(
                 'RSQUARE',
                 style: TextStyle(

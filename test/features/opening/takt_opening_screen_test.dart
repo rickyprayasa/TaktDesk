@@ -25,6 +25,10 @@ void main() {
     );
     expect(logoFinder, findsOneWidget);
 
+    // Verify scaffold uses light background by default
+    final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+    expect(scaffold.backgroundColor, const Color(0xFFE5E2DA));
+
     // Clean up
     await tester.pumpWidget(const SizedBox());
   });

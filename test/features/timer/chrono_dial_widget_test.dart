@@ -316,6 +316,7 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
+    container.read(chassisThemeProvider.notifier).setDarkMode(true);
 
     await tester.pumpWidget(
       UncontrolledProviderScope(

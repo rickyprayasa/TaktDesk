@@ -330,6 +330,7 @@ void main() {
     testWidgets('updates chassis color and border dynamically on edition switch', (tester) async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
+      container.read(chassisThemeProvider.notifier).setDarkMode(true);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -445,6 +446,7 @@ void main() {
     testWidgets('renders 4 corner rivets matching active edition rivetColor', (tester) async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
+      container.read(chassisThemeProvider.notifier).setDarkMode(true);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -487,6 +489,7 @@ void main() {
     testWidgets('passes dynamic accent labelColor, tonearm metallurgy gradient, and pivot border to VinylDeckPainter', (tester) async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
+      container.read(chassisThemeProvider.notifier).setDarkMode(true);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(

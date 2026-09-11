@@ -533,14 +533,21 @@ class TaktSettingsSheet extends ConsumerWidget {
                           height: 36,
                           margin: const EdgeInsets.only(bottom: 8),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.15),
+                            color: isDark ? const Color(0xFFEFECE6) : Colors.white,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: TaktColors.filamentAmber.withValues(alpha: 0.4),
+                              color: TaktColors.filamentAmber.withValues(alpha: 0.6),
                               width: 1.0,
                             ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x18000000),
+                                offset: Offset(0, 1.5),
+                                blurRadius: 3,
+                              ),
+                            ],
                           ),
-                          padding: const EdgeInsets.all(4),
+                          padding: const EdgeInsets.all(4.5),
                           child: Image.asset(
                             'assets/images/rsquare_logo.png',
                             fit: BoxFit.contain,

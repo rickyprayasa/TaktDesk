@@ -146,6 +146,7 @@ void main() {
     testWidgets('renders multi-layer elevation depth shadows and chamfer highlight in dark and light modes', (tester) async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
+      container.read(chassisThemeProvider.notifier).setDarkMode(true);
 
       // 1. Dark Mode
       await tester.pumpWidget(
@@ -259,7 +260,7 @@ void main() {
         final rivetContainer = tester.widget<Container>(rivetFinder);
         final decoration = rivetContainer.decoration as BoxDecoration;
         expect(decoration.shape, BoxShape.circle);
-        expect(decoration.color, equals(HardwareEdition.braunClassic.rivetDark));
+        expect(decoration.color, equals(HardwareEdition.braunClassic.rivetLight));
 
         final ignorePointer = find.ancestor(
           of: rivetFinder,
@@ -329,8 +330,8 @@ void main() {
 
       final painter = customPaint.painter as MaterialTexturePainter;
       expect(painter.textureType, HardwareTextureType.matteAbsGrain);
-      expect(painter.isDark, isTrue);
-      expect(painter.chassisColor, HardwareEdition.braunClassic.darkModuleBg);
+      expect(painter.isDark, isFalse);
+      expect(painter.chassisColor, HardwareEdition.braunClassic.lightModuleBg);
     });
 
     testWidgets('omits texture and chamfer painters when both showTexture and showChamfer are false', (tester) async {
@@ -395,6 +396,8 @@ void main() {
 
     testWidgets('reacts dynamically when theme changes from braunClassic to titaniumStealth', (tester) async {
       final container = ProviderContainer();
+      addTearDown(container.dispose);
+      container.read(chassisThemeProvider.notifier).setDarkMode(true);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(

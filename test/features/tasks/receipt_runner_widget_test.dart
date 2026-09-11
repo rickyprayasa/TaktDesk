@@ -141,6 +141,7 @@ void main() {
     testWidgets('updates chassis color, border, and feeder slit border dynamically on edition switch', (tester) async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
+      container.read(chassisThemeProvider.notifier).setDarkMode(true);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -266,6 +267,7 @@ void main() {
     testWidgets('renders 4 corner rivets matching active edition rivetColor', (tester) async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
+      container.read(chassisThemeProvider.notifier).setDarkMode(true);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -305,6 +307,7 @@ void main() {
     testWidgets('updates ArchiveDrawerWidget plate gradient, rivets, and border dynamically', (tester) async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
+      container.read(chassisThemeProvider.notifier).setDarkMode(true);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(

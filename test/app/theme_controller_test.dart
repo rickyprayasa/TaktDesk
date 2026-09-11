@@ -3,17 +3,17 @@ import 'package:takt_desk/app/theme/theme_controller.dart';
 
 void main() {
   group('ThemeController', () {
-    test('defaults to dark obsidian chassis', () {
+    test('defaults to light finish chassis', () {
       final controller = ThemeController();
-      expect(controller.state.isDarkMode, isTrue);
+      expect(controller.state.isDarkMode, isFalse);
     });
 
-    test('toggleTheme alternates between dark and light finish', () {
+    test('toggleTheme alternates between light and dark finish', () {
       final controller = ThemeController();
       controller.toggleTheme();
-      expect(controller.state.isDarkMode, isFalse);
-      controller.toggleTheme();
       expect(controller.state.isDarkMode, isTrue);
+      controller.toggleTheme();
+      expect(controller.state.isDarkMode, isFalse);
     });
 
     test('setDarkMode explicitly sets theme state', () {

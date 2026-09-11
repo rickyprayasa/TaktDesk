@@ -217,6 +217,7 @@ void main() {
     );
     addTearDown(container.dispose);
 
+    container.read(chassisThemeProvider.notifier).setDarkMode(true);
     container.read(chassisThemeProvider.notifier).setHardwareEdition(HardwareEditionType.titaniumStealth);
 
     await tester.pumpWidget(

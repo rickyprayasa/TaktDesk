@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/theme/takt_colors.dart';
+import '../../../../app/theme/theme_controller.dart';
 import '../../../../core/audio/audio_service.dart';
 import '../../../../core/audio/sound_effect.dart';
 import '../../../../core/haptics/haptic_service.dart';
@@ -141,8 +142,11 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
 
   @override
   Widget build(BuildContext context) {
+    final themeState = ref.watch(chassisThemeProvider);
+    final isDark = themeState.isDarkMode;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF121316),
+      backgroundColor: isDark ? const Color(0xFF121316) : const Color(0xFFE5E2DA),
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: _handleTapToSkip,
@@ -156,14 +160,19 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
                   // 1. Ambient Background Vignette
                   Positioned.fill(
                     child: Container(
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         gradient: RadialGradient(
                           center: Alignment.center,
                           radius: 0.9,
-                          colors: [
-                            Color(0xFF181A1E),
-                            Color(0xFF121316),
-                          ],
+                          colors: isDark
+                              ? const [
+                                  Color(0xFF181A1E),
+                                  Color(0xFF121316),
+                                ]
+                              : const [
+                                  Color(0xFFEDE9E0),
+                                  Color(0xFFDDD9CF),
+                                ],
                         ),
                       ),
                     ),
@@ -176,7 +185,7 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         // Micro-LED indicator at top
-                        _buildTopMicroLed(),
+                        _buildTopMicroLed(isDark),
                         const SizedBox(height: 18),
 
                         // Horological Dial Canvas Assembly
@@ -193,6 +202,7 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
                                   needleRotation:
                                       _needleSweepAnimation.value * 2 * math.pi,
                                   isIlluminated: _needleSweepAnimation.value > 0,
+                                  isDark: isDark,
                                 ),
                               ),
                             ),
@@ -203,7 +213,7 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
                         // Typographic Lockup & RSQUARE Logo Reveal
                         Opacity(
                           opacity: _brandAlphaAnimation.value,
-                          child: _buildBrandLockup(),
+                          child: _buildBrandLockup(isDark),
                         ),
                       ],
                     ),
@@ -213,7 +223,7 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
                   Positioned(
                     bottom: 24,
                     child: Opacity(
-                      opacity: 0.45,
+                      opacity: 0.55,
                       child: Text(
                         '[ TAP ANYWHERE TO SKIP ]',
                         style: TextStyle(
@@ -221,7 +231,9 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
                           fontSize: 9.0,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 1.5,
-                          color: TaktColors.warmBone.withValues(alpha: 0.6),
+                          color: isDark
+                              ? TaktColors.warmBone.withValues(alpha: 0.6)
+                              : const Color(0xFF7A808B),
                         ),
                       ),
                     ),
@@ -235,7 +247,7 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
     );
   }
 
-  Widget _buildTopMicroLed() {
+  Widget _buildTopMicroLed(bool isDark) {
     final glow = _ledGlowAnimation.value;
     return Container(
       key: const ValueKey('opening_micro_led'),
@@ -244,7 +256,7 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: Color.lerp(
-          const Color(0xFF2B2E34),
+          isDark ? const Color(0xFF2B2E34) : const Color(0xFFBBB6AC),
           TaktColors.filamentAmber,
           glow,
         ),
@@ -261,38 +273,45 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
     );
   }
 
-  Widget _buildBrandLockup() {
+  Widget _buildBrandLockup(bool isDark) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // RSQUARE emblem box
+        // RSQUARE emblem plaque with guaranteed high contrast
         Container(
-          width: 32,
-          height: 32,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.25),
-            borderRadius: BorderRadius.circular(6),
+            color: isDark ? const Color(0xFFEFECE6) : Colors.white,
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: TaktColors.filamentAmber.withValues(alpha: 0.35),
-              width: 0.8,
+              color: TaktColors.filamentAmber.withValues(alpha: 0.6),
+              width: 1.0,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark ? const Color(0x33000000) : const Color(0x18000000),
+                offset: const Offset(0, 2),
+                blurRadius: 4,
+              ),
+            ],
           ),
-          padding: const EdgeInsets.all(4),
+          padding: const EdgeInsets.all(4.5),
           child: Image.asset(
             'assets/images/rsquare_logo.png',
             fit: BoxFit.contain,
           ),
         ),
-        const SizedBox(height: 6),
-        const Text(
+        const SizedBox(height: 8),
+        Text(
           'ENGINEERED BY RSQUARE',
           style: TextStyle(
             fontFamily: 'monospace',
             fontSize: 8.5,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
-            color: TaktColors.filamentAmber,
+            color: isDark ? TaktColors.filamentAmber : const Color(0xFFB05F00),
           ),
         ),
         const SizedBox(height: 10),
@@ -303,7 +322,9 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
             fontSize: 14.0,
             fontWeight: FontWeight.w800,
             letterSpacing: 2.5,
-            color: TaktColors.warmBone.withValues(alpha: 0.90),
+            color: isDark
+                ? TaktColors.warmBone.withValues(alpha: 0.90)
+                : const Color(0xFF1E2126),
           ),
         ),
         const SizedBox(height: 4),
@@ -314,7 +335,9 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
             fontSize: 7.8,
             fontWeight: FontWeight.w600,
             letterSpacing: 1.0,
-            color: TaktColors.warmBone.withValues(alpha: 0.50),
+            color: isDark
+                ? TaktColors.warmBone.withValues(alpha: 0.50)
+                : const Color(0xFF6B7280),
           ),
         ),
       ],
@@ -326,10 +349,12 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
 class _OpeningDialPainter extends CustomPainter {
   final double needleRotation;
   final bool isIlluminated;
+  final bool isDark;
 
   _OpeningDialPainter({
     required this.needleRotation,
     required this.isIlluminated,
+    this.isDark = false,
   });
 
   @override
@@ -348,15 +373,17 @@ class _OpeningDialPainter extends CustomPainter {
     );
     final crownRRect = RRect.fromRectAndRadius(crownRect, const Radius.circular(2.5));
     final crownPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFF5A5E66), Color(0xFF2A2C32), Color(0xFF1E2024)],
+      ..shader = LinearGradient(
+        colors: isDark
+            ? const [Color(0xFF5A5E66), Color(0xFF2A2C32), Color(0xFF1E2024)]
+            : const [Color(0xFFDED9CF), Color(0xFFBCB6A9), Color(0xFFA69F91)],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       ).createShader(crownRect);
     canvas.drawRRect(crownRRect, crownPaint);
 
     final crownKnurlPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.20)
+      ..color = isDark ? Colors.white.withValues(alpha: 0.20) : Colors.black.withValues(alpha: 0.12)
       ..strokeWidth = 1.0;
     for (int i = 0; i < 7; i++) {
       final x = crownRect.left + 3 + i * 3.0;
@@ -365,25 +392,31 @@ class _OpeningDialPainter extends CustomPainter {
 
     // 2. Bezel Shadow
     final shadowPaint = Paint()
-      ..color = const Color(0x66000000)
+      ..color = isDark ? const Color(0x66000000) : const Color(0x1F000000)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10.0);
     canvas.drawCircle(center + const Offset(0, 6), outerRadius, shadowPaint);
 
     // 3. Metallic Outer Bezel Ring (Radial Gradient)
     final bezelPaint = Paint()
-      ..shader = const RadialGradient(
-        colors: [
-          Color(0xFF4A4E56),
-          Color(0xFF2E3137),
-          Color(0xFF1E2024),
-        ],
-        stops: [0.85, 0.94, 1.0],
+      ..shader = RadialGradient(
+        colors: isDark
+            ? [
+                const Color(0xFF4A4E56),
+                const Color(0xFF2E3137),
+                const Color(0xFF1E2024),
+              ]
+            : [
+                const Color(0xFFF4F1EA),
+                const Color(0xFFD7D3C8),
+                const Color(0xFFB5B0A4),
+              ],
+        stops: const [0.85, 0.94, 1.0],
       ).createShader(Rect.fromCircle(center: center, radius: outerRadius));
     canvas.drawCircle(center, outerRadius, bezelPaint);
 
     // 4. Knurled Grip Ring (90 precision micro-lines)
     final knurlPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.12)
+      ..color = isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.10)
       ..strokeWidth = 1.0;
     for (int i = 0; i < 90; i++) {
       final angle = (i * 4) * math.pi / 180.0;
@@ -400,20 +433,21 @@ class _OpeningDialPainter extends CustomPainter {
 
     // 5. Stepped Inner Bezel Stroke
     final innerBezelStroke = Paint()
-      ..color = const Color(0xFF141517)
+      ..color = isDark ? const Color(0xFF141517) : const Color(0xFFBCB7AC)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
     canvas.drawCircle(center, dialRadius + 2, innerBezelStroke);
 
-    // 6. Deep Matte Dial Face
-    final dialFacePaint = Paint()..color = const Color(0xFF1A1C20);
+    // 6. Matte Dial Face (Deep Charcoal in Dark mode, Braun Atelier off-white in Light mode)
+    final dialFacePaint = Paint()
+      ..color = isDark ? const Color(0xFF1A1C20) : const Color(0xFFF7F5EE);
     canvas.drawCircle(center, dialRadius, dialFacePaint);
 
     // 6a. Concentric Micro-Grooves (Vinyl texture)
     final groovePaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5
-      ..color = Colors.white.withValues(alpha: 0.04);
+      ..color = isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.035);
     for (double r = 18; r < dialRadius - 10; r += 7) {
       canvas.drawCircle(center, r, groovePaint);
     }
@@ -421,7 +455,7 @@ class _OpeningDialPainter extends CustomPainter {
     // 7. Amber Halo Glow (illuminated during calibration)
     if (isIlluminated) {
       final haloPaint = Paint()
-        ..color = TaktColors.filamentAmber.withValues(alpha: 0.22)
+        ..color = TaktColors.filamentAmber.withValues(alpha: isDark ? 0.22 : 0.28)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 5.0
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8.0);
@@ -430,11 +464,15 @@ class _OpeningDialPainter extends CustomPainter {
 
     // 8. 60 Precision Dial Marks & Interval Numerals
     final majorTickPaint = Paint()
-      ..color = TaktColors.warmBone.withValues(alpha: 0.90)
+      ..color = isDark
+          ? TaktColors.warmBone.withValues(alpha: 0.90)
+          : const Color(0xFF22262C).withValues(alpha: 0.85)
       ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.round;
     final minorTickPaint = Paint()
-      ..color = TaktColors.warmBone.withValues(alpha: 0.35)
+      ..color = isDark
+          ? TaktColors.warmBone.withValues(alpha: 0.35)
+          : const Color(0xFF22262C).withValues(alpha: 0.30)
       ..strokeWidth = 1.0;
 
     for (int i = 0; i < 60; i++) {
@@ -459,7 +497,7 @@ class _OpeningDialPainter extends CustomPainter {
 
     // 9a. Shadow
     final shadowPaintNeedle = Paint()
-      ..color = const Color(0x66000000)
+      ..color = isDark ? const Color(0x66000000) : const Color(0x28000000)
       ..strokeWidth = 2.4
       ..strokeCap = StrokeCap.round
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
@@ -488,10 +526,10 @@ class _OpeningDialPainter extends CustomPainter {
     canvas.drawLine(center, tailEnd, needlePaint);
 
     // 10. Center Hub Cap & Metallic Rivet
-    final hubPaint = Paint()..color = const Color(0xFF181A1D);
+    final hubPaint = Paint()..color = isDark ? const Color(0xFF181A1D) : const Color(0xFFD3CEC3);
     canvas.drawCircle(center, 6.0, hubPaint);
     final hubBorder = Paint()
-      ..color = const Color(0xFF4A4E56)
+      ..color = isDark ? const Color(0xFF4A4E56) : const Color(0xFFAAA599)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     canvas.drawCircle(center, 6.0, hubBorder);
@@ -502,6 +540,7 @@ class _OpeningDialPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _OpeningDialPainter oldDelegate) {
     return oldDelegate.needleRotation != needleRotation ||
-        oldDelegate.isIlluminated != isIlluminated;
+        oldDelegate.isIlluminated != isIlluminated ||
+        oldDelegate.isDark != isDark;
   }
 }

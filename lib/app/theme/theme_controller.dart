@@ -8,7 +8,7 @@ class ChassisThemeState {
   final bool isProUnlocked;
 
   const ChassisThemeState({
-    this.isDarkMode = true,
+    this.isDarkMode = false,
     this.edition = HardwareEdition.braunClassic,
     this.isProUnlocked = true,
   });
