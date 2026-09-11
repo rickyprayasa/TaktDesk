@@ -278,6 +278,16 @@ void main() {
       );
     });
 
+    testWidgets('Braun creed section displays RSQUARE logo image asset', (tester) async {
+      await tester.pumpWidget(buildSheet());
+      await tester.pump();
+
+      final logoFinder = find.byWidgetPredicate(
+        (w) => w is Image && w.image is AssetImage && (w.image as AssetImage).assetName == 'assets/images/rsquare_logo.png',
+      );
+      expect(logoFinder, findsOneWidget);
+    });
+
     testWidgets('Tapping OPEN SOURCE LICENSES opens license page', (tester) async {
       await tester.pumpWidget(buildSheet());
       await tester.pump();

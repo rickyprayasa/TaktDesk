@@ -528,6 +528,24 @@ class TaktSettingsSheet extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
+                        Container(
+                          width: 36,
+                          height: 36,
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: TaktColors.filamentAmber.withValues(alpha: 0.4),
+                              width: 1.0,
+                            ),
+                          ),
+                          padding: const EdgeInsets.all(4),
+                          child: Image.asset(
+                            'assets/images/rsquare_logo.png',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                         Text(
                           'Takt Desk v1.0.0 (Build 2026.09) · Developed by RSQUARE',
                           textAlign: TextAlign.center,

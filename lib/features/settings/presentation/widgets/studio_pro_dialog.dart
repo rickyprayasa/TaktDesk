@@ -60,15 +60,27 @@ void showStudioProDialog(
               color: primary,
             ),
           ),
-          const Text(
-            'RSQUARE',
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.0,
-              color: TaktColors.filamentAmber,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                'assets/images/rsquare_logo.png',
+                width: 16,
+                height: 16,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(width: 5),
+              const Text(
+                'RSQUARE',
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.0,
+                  color: TaktColors.filamentAmber,
+                ),
+              ),
+            ],
           ),
         ],
       ),
