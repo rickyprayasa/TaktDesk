@@ -36,3 +36,6 @@ migrate_working_dir/
 
 # Superpowers internal logs/briefs/ledger
 .superpowers/
+
+# User source assets in root
+/RSQUARE.png
