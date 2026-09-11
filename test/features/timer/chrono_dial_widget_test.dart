@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/app/theme/hardware_edition.dart';
@@ -644,10 +645,10 @@ void main() {
   });
 
   testWidgets('ChronoDialWidget starts and stops background timer service on state changes', (tester) async {
-    final calls = <String>[];
+    final calls = <MethodCall>[];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(TimerBackgroundService.channel, (call) async {
-      calls.add(call.method);
+      calls.add(call);
       return true;
     });
     addTearDown(() {
@@ -667,15 +668,21 @@ void main() {
       ),
     );
 
-    // Tap dial to start -> triggers startService
+    // Tap dial to start -> triggers startService with full payload
     await tester.tap(dialFinder);
     await tester.pump();
-    expect(calls, contains('startService'));
+    expect(calls.map((c) => c.method).toList(), contains('startService'));
+    final startCall = calls.firstWhere((c) => c.method == 'startService');
+    expect(startCall.arguments['remainingSeconds'], equals(25 * 60.0));
+    expect(startCall.arguments['targetMinutes'], equals(25));
+    expect(startCall.arguments['phase'], equals('focus'));
+    expect(startCall.arguments['cycleCount'], equals(1));
+    expect(startCall.arguments['profileName'], equals('CLASSIC 25/5'));
 
     // Tap dial to pause -> triggers stopService
     await tester.tap(dialFinder);
     await tester.pump();
-    expect(calls, contains('stopService'));
+    expect(calls.map((c) => c.method).toList(), contains('stopService'));
 
     await tester.pumpWidget(const SizedBox());
   });
