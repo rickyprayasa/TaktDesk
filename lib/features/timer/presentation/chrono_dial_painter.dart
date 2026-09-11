@@ -51,6 +51,10 @@ class ChronoDialPainter extends CustomPainter {
         return 0.16;
       case HardwareTextureType.matteAbsGrain:
         return 0.08;
+      case HardwareTextureType.organicWalnut:
+        return 0.10;
+      case HardwareTextureType.forgedCarbon:
+        return 0.13;
     }
   }
 

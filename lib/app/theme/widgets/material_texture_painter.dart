@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../hardware_edition.dart';
@@ -7,6 +8,8 @@ import '../hardware_edition.dart';
 /// - [HardwareTextureType.burnishedBrass]: Warm golden striations with darker patina edge vignette.
 /// - [HardwareTextureType.tubularChrome]: Dual specular 45-degree linear gradient bands.
 /// - [HardwareTextureType.matteAbsGrain]: Granular micro-pebble thermoplastic stippling.
+/// - [HardwareTextureType.organicWalnut]: Mathematical sinusoidal wood grain growth rings with vessel stippling and lacquer sheen.
+/// - [HardwareTextureType.forgedCarbon]: Procedural anisotropic chopped carbon flake mosaic with diagonal sheen.
 class MaterialTexturePainter extends CustomPainter {
   final HardwareTextureType textureType;
   final bool isDark;
@@ -34,6 +37,12 @@ class MaterialTexturePainter extends CustomPainter {
         break;
       case HardwareTextureType.matteAbsGrain:
         _paintMatteAbsGrain(canvas, size);
+        break;
+      case HardwareTextureType.organicWalnut:
+        _paintOrganicWalnut(canvas, size);
+        break;
+      case HardwareTextureType.forgedCarbon:
+        _paintForgedCarbon(canvas, size);
         break;
     }
   }
@@ -172,6 +181,146 @@ class MaterialTexturePainter extends CustomPainter {
         ..strokeCap = StrokeCap.round;
       canvas.drawPoints(ui.PointMode.points, darkPoints, darkPaint);
     }
+  }
+
+  void _paintOrganicWalnut(Canvas canvas, Size size) {
+    // 1. Alternating wavy wood grain lines (growth rings)
+    final heartwoodPaint = Paint()
+      ..color = const Color(0xFF1C140E).withValues(alpha: isDark ? 0.12 : 0.16)
+      ..strokeWidth = 0.8
+      ..style = PaintingStyle.stroke;
+
+    final sapwoodPaint = Paint()
+      ..color = const Color(0xFFD49B55).withValues(alpha: isDark ? 0.07 : 0.10)
+      ..strokeWidth = 0.6
+      ..style = PaintingStyle.stroke;
+
+    const double step = 3.2;
+    for (double y = 1.0; y < size.height; y += step) {
+      final isHeartwood = (y ~/ step) % 2 == 0;
+      final path = Path();
+      path.moveTo(0, y);
+
+      // Sinusoidal grain path with variable frequency
+      for (double x = 0; x <= size.width; x += 6.0) {
+        final wave = math.sin(x * 0.018) * 2.2 + math.sin(x * 0.045) * 1.1;
+        path.lineTo(x, (y + wave).clamp(0.0, size.height));
+      }
+
+      canvas.drawPath(path, isHeartwood ? heartwoodPaint : sapwoodPaint);
+    }
+
+    // 2. Micro-pore wood vessel stippling
+    final vesselPaint = Paint()
+      ..color = isDark
+          ? Colors.black.withValues(alpha: 0.10)
+          : const Color(0xFF3E2714).withValues(alpha: 0.08)
+      ..strokeWidth = 0.9
+      ..strokeCap = StrokeCap.round;
+
+    final vesselPoints = <Offset>[];
+    for (double y = 4.0; y < size.height; y += 9.0) {
+      final xOffset = (y.toInt() % 7) * 4.0;
+      for (double x = 4.0 + xOffset; x < size.width; x += 18.0) {
+        vesselPoints.add(Offset(x, y));
+      }
+    }
+    if (vesselPoints.isNotEmpty) {
+      canvas.drawPoints(ui.PointMode.points, vesselPoints, vesselPaint);
+    }
+
+    // 3. Satin polyurethane lacquer sheen (35-degree linear gradient)
+    final Rect rect = Offset.zero & size;
+    final sheenPaint = Paint()
+      ..shader = LinearGradient(
+        begin: const Alignment(-0.9, -0.6),
+        end: const Alignment(0.9, 0.6),
+        colors: [
+          Colors.transparent,
+          Colors.white.withValues(alpha: isDark ? 0.03 : 0.07),
+          Colors.transparent,
+          Colors.white.withValues(alpha: isDark ? 0.05 : 0.09),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.35, 0.55, 0.75, 1.0],
+      ).createShader(rect);
+
+    canvas.drawRect(rect, sheenPaint);
+
+    // 4. Perimeter vignette
+    final vignettePaint = Paint()
+      ..shader = RadialGradient(
+        center: Alignment.center,
+        radius: 0.9,
+        colors: [
+          Colors.transparent,
+          Colors.black.withValues(alpha: 0.0),
+          Colors.black.withValues(alpha: isDark ? 0.28 : 0.15),
+        ],
+        stops: const [0.0, 0.65, 1.0],
+      ).createShader(rect);
+
+    canvas.drawRect(rect, vignettePaint);
+  }
+
+  void _paintForgedCarbon(Canvas canvas, Size size) {
+    final Rect rect = Offset.zero & size;
+
+    // 1. Anisotropic chopped carbon flakes grid
+    final highlightPaint = Paint()
+      ..color = const Color(0xFFE0E5EC).withValues(alpha: isDark ? 0.09 : 0.14)
+      ..style = PaintingStyle.fill;
+
+    final darkAbsorbPaint = Paint()
+      ..color = Colors.black.withValues(alpha: isDark ? 0.16 : 0.10)
+      ..style = PaintingStyle.fill;
+
+    const double flakeW = 16.0;
+    const double flakeH = 8.0;
+
+    for (double y = 0; y < size.height; y += flakeH) {
+      final row = (y / flakeH).toInt();
+      final xOffset = (row % 2 == 1) ? flakeW * 0.5 : 0.0;
+      for (double x = xOffset; x < size.width; x += flakeW) {
+        final hash = (x.toInt() * 13 + y.toInt() * 37) % 5;
+        if (hash == 0) {
+          // Highlight flake
+          final flakePath = Path()
+            ..moveTo(x, y + 2)
+            ..lineTo(x + flakeW - 2, y)
+            ..lineTo(x + flakeW, y + flakeH - 2)
+            ..lineTo(x + 2, y + flakeH)
+            ..close();
+          canvas.drawPath(flakePath, highlightPaint);
+        } else if (hash == 1 || hash == 2) {
+          // Dark absorbing flake
+          final flakePath = Path()
+            ..moveTo(x + 1, y)
+            ..lineTo(x + flakeW, y + 3)
+            ..lineTo(x + flakeW - 3, y + flakeH)
+            ..lineTo(x, y + flakeH - 1)
+            ..close();
+          canvas.drawPath(flakePath, darkAbsorbPaint);
+        }
+      }
+    }
+
+    // 2. Anisotropic diagonal sheen
+    final sheenPaint = Paint()
+      ..shader = LinearGradient(
+        begin: const Alignment(-1.0, -1.0),
+        end: const Alignment(1.0, 1.0),
+        colors: [
+          Colors.transparent,
+          Colors.white.withValues(alpha: isDark ? 0.04 : 0.08),
+          Colors.transparent,
+          Colors.white.withValues(alpha: isDark ? 0.06 : 0.11),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.28, 0.5, 0.72, 1.0],
+      ).createShader(rect);
+
+    canvas.drawRect(rect, sheenPaint);
   }
 
   @override
