@@ -44,6 +44,9 @@ void main() {
       expect(PomodoroProfileType.monastic.label, equals('MONASTIC 50/10'));
       expect(PomodoroProfileType.sprint.label, equals('SPRINT 15/3'));
       expect(PomodoroProfileType.custom.label, equals('CUSTOM'));
+      expect(PomodoroProfile.classic.label, equals('CLASSIC 25/5'));
+      expect(PomodoroProfile.monastic.label, equals('MONASTIC 50/10'));
+      expect(PomodoroProfile.sprint.label, equals('SPRINT 15/3'));
     });
 
     test('PomodoroProfile supports copyWith and value equality', () {

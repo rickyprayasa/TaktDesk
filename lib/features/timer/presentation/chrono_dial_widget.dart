@@ -10,6 +10,7 @@ import '../../desk/presentation/widgets/monastic_switch_widget.dart';
 import '../../../app/theme/hardware_edition.dart';
 import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/theme_controller.dart';
+import '../../../core/services/timer_background_service.dart';
 
 class ChronoDialWidget extends ConsumerStatefulWidget {
   const ChronoDialWidget({super.key});
@@ -109,20 +110,31 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
     ref.listen<bool>(
       chronoDialProvider.select((s) => s.isRunning),
       (previous, isRunning) {
+        final currentTimerState = ref.read(chronoDialProvider);
+        final bgService = ref.read(timerBackgroundServiceProvider);
+
         if (isRunning) {
           _lastElapsed = null;
           _accumulatedDelta = 0.0;
-          _remainingSecondsNotifier.value = ref.read(chronoDialProvider).remainingSeconds;
+          _remainingSecondsNotifier.value = currentTimerState.remainingSeconds;
           if (!_ticker.isActive) {
             _ticker.start();
           }
+          bgService.start(
+            remainingSeconds: currentTimerState.remainingSeconds,
+            targetMinutes: currentTimerState.targetMinutes,
+            phase: currentTimerState.phase,
+            cycleCount: currentTimerState.cycleCount,
+            profileName: currentTimerState.profile.label,
+          );
         } else {
           if (_ticker.isActive) {
             _ticker.stop();
           }
           _lastElapsed = null;
           _accumulatedDelta = 0.0;
-          _remainingSecondsNotifier.value = ref.read(chronoDialProvider).remainingSeconds;
+          _remainingSecondsNotifier.value = currentTimerState.remainingSeconds;
+          bgService.stop();
         }
       },
     );

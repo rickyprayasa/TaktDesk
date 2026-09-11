@@ -31,6 +31,8 @@ class PomodoroProfile {
     required this.longBreakMinutes,
   });
 
+  String get label => type.label;
+
   static const classic = PomodoroProfile(
     type: PomodoroProfileType.classic,
     focusMinutes: 25,

@@ -8,6 +8,7 @@ import 'package:takt_desk/app/theme/hardware_edition.dart';
 import 'package:takt_desk/app/theme/takt_colors.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
 import 'package:takt_desk/core/database/app_database.dart';
+import 'package:takt_desk/core/services/timer_background_service.dart';
 import 'package:takt_desk/features/timer/domain/pomodoro_phase.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_controller.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_painter.dart';
@@ -641,4 +642,42 @@ void main() {
     expect(dialPainter.needleColor, equals(TaktColors.patinaOlive));
     expect(dialPainter.filamentColor, equals(TaktColors.patinaOlive));
   });
+
+  testWidgets('ChronoDialWidget starts and stops background timer service on state changes', (tester) async {
+    final calls = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(TimerBackgroundService.channel, (call) async {
+      calls.add(call.method);
+      return true;
+    });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(TimerBackgroundService.channel, null);
+    });
+
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Tap dial to start -> triggers startService
+    await tester.tap(dialFinder);
+    await tester.pump();
+    expect(calls, contains('startService'));
+
+    // Tap dial to pause -> triggers stopService
+    await tester.tap(dialFinder);
+    await tester.pump();
+    expect(calls, contains('stopService'));
+
+    await tester.pumpWidget(const SizedBox());
+  });
 }
+
