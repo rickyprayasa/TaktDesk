@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme/hardware_edition.dart';
 import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/theme_controller.dart';
+import '../../../app/theme/widgets/rsquare_hardware_plaque.dart';
 import '../../../core/haptics/haptic_service.dart';
 import '../../timer/presentation/chrono_dial_controller.dart';
 import 'settings_controller.dart';
@@ -528,29 +529,11 @@ class TaktSettingsSheet extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Container(
-                          width: 36,
-                          height: 36,
-                          margin: const EdgeInsets.only(bottom: 8),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFFEFECE6) : Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: TaktColors.filamentAmber.withValues(alpha: 0.6),
-                              width: 1.0,
-                            ),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x18000000),
-                                offset: Offset(0, 1.5),
-                                blurRadius: 3,
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(4.5),
-                          child: Image.asset(
-                            'assets/images/rsquare_logo.png',
-                            fit: BoxFit.contain,
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: RsquareHardwarePlaque(
+                            size: 38,
+                            isDark: isDark,
                           ),
                         ),
                         Text(

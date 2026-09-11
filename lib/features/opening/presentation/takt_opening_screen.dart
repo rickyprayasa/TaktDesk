@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/theme/takt_colors.dart';
 import '../../../../app/theme/theme_controller.dart';
+import '../../../../app/theme/widgets/rsquare_hardware_plaque.dart';
 import '../../../../core/audio/audio_service.dart';
 import '../../../../core/audio/sound_effect.dart';
 import '../../../../core/haptics/haptic_service.dart';
@@ -278,30 +279,10 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // RSQUARE emblem plaque with guaranteed high contrast
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFFEFECE6) : Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: TaktColors.filamentAmber.withValues(alpha: 0.6),
-              width: 1.0,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isDark ? const Color(0x33000000) : const Color(0x18000000),
-                offset: const Offset(0, 2),
-                blurRadius: 4,
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.all(4.5),
-          child: Image.asset(
-            'assets/images/rsquare_logo.png',
-            fit: BoxFit.contain,
-          ),
+        // Industrial chamfered RSQUARE hardware plaque with micro-rivets
+        RsquareHardwarePlaque(
+          size: 40,
+          isDark: isDark,
         ),
         const SizedBox(height: 8),
         Text(

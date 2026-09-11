@@ -4,6 +4,7 @@ import '../../../../app/theme/hardware_edition.dart';
 import '../../../../app/theme/takt_colors.dart';
 import '../../../../app/theme/theme_controller.dart';
 import '../../../../app/theme/widgets/material_texture_painter.dart';
+import '../../../../app/theme/widgets/rsquare_hardware_plaque.dart';
 import '../../../../core/haptics/haptic_service.dart';
 import '../../../vinyl/domain/vinyl_track.dart';
 import '../../../vinyl/presentation/vinyl_controller.dart';
@@ -63,22 +64,10 @@ void showStudioProDialog(
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 20,
-                height: 20,
-                padding: const EdgeInsets.all(2.5),
-                decoration: BoxDecoration(
-                  color: dark ? const Color(0xFFEFECE6) : Colors.white,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                    color: TaktColors.filamentAmber.withValues(alpha: 0.6),
-                    width: 0.8,
-                  ),
-                ),
-                child: Image.asset(
-                  'assets/images/rsquare_logo.png',
-                  fit: BoxFit.contain,
-                ),
+              RsquareHardwarePlaque(
+                size: 24,
+                isDark: dark,
+                showRivets: false,
               ),
               const SizedBox(width: 6),
               const Text(
@@ -95,40 +84,166 @@ void showStudioProDialog(
           ),
         ],
       ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (edition != null) ...[
-            _MaterialShowcasePlaque(
-              edition: edition,
-              isDark: dark,
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (edition == null) ...[
-            Text(
-              subtitleText,
-              style: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.8,
-                color: TaktColors.filamentAmber,
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Lifetime Architecture Badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: TaktColors.filamentAmber.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: TaktColors.filamentAmber.withValues(alpha: 0.4),
+                  width: 0.8,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'LIFETIME ARCHITECTURE',
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                      color: TaktColors.filamentAmber,
+                    ),
+                  ),
+                  Text(
+                    'ZERO SUBSCRIPTION',
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 8.0,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.6,
+                      color: secondary,
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 8),
-          ],
-          Text(
-            bodyText,
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 10,
-              color: secondary,
-              height: 1.4,
+
+            // Launch Promo Pricing Card
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: dark ? const Color(0xFF14171A) : const Color(0xFFE2DFD7),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: dark ? TaktColors.slateBorder : TaktColors.lightChassisBorder,
+                  width: 0.8,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'FOUNDER LAUNCH EDITION · 38% OFF',
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 8.0,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                          color: TaktColors.filamentAmber,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            'Rp 49.000',
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 15.0,
+                              fontWeight: FontWeight.w800,
+                              color: primary,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Rp 79.000',
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 10.0,
+                              fontWeight: FontWeight.w500,
+                              decoration: TextDecoration.lineThrough,
+                              color: secondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: TaktColors.filamentAmber,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                    child: const Text(
+                      'PAY ONCE',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 7.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF121315),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 10),
+
+            if (edition != null) ...[
+              _MaterialShowcasePlaque(
+                edition: edition,
+                isDark: dark,
+              ),
+              const SizedBox(height: 10),
+            ],
+            if (edition == null) ...[
+              Text(
+                subtitleText,
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                  color: TaktColors.filamentAmber,
+                ),
+              ),
+              const SizedBox(height: 6),
+            ],
+            Text(
+              bodyText,
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 9.5,
+                color: secondary,
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Benefit feature list
+            _buildBenefitItem('✓ 5 Artisanal Materials (Walnut, Carbon, Titanium, Brass, Bauhaus)', secondary),
+            _buildBenefitItem('✓ 4 Master Analog Soundscapes (Campfire, Forest, Cosmic...)', secondary),
+            _buildBenefitItem('✓ Monastic Focus Lock & Retro Binaural Audio Engine', secondary),
+            _buildBenefitItem('✓ Android AOD Notification & 2x2 Desktop Horological Widget', secondary),
+            _buildBenefitItem('✓ 100% Offline Privacy: Zero telemetry, zero recurring bills', secondary),
+          ],
+        ),
       ),
       actions: [
         TextButton(
@@ -356,4 +471,28 @@ class _PlaqueRivet extends StatelessWidget {
     );
   }
 }
+
+Widget _buildBenefitItem(String text, Color color) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 4.0),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 8.5,
+              fontWeight: FontWeight.w500,
+              color: color,
+              height: 1.3,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 
