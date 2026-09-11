@@ -6,13 +6,18 @@ enum HardwareTextureType {
   brushedTitanium,
   tubularChrome,
   burnishedBrass,
+  organicWalnut,
+  forgedCarbon,
 }
 
 enum HardwareEditionType {
   braunClassic,
+  braunAtelierCream,
   titaniumStealth,
   bauhausHeritage,
   rawBrassPatina,
+  midCenturyWalnut,
+  forgedCarbon,
 }
 
 class HardwareEdition {
@@ -84,6 +89,28 @@ class HardwareEdition {
     rivetLight: Color(0xFFA8A398),
   );
 
+  static const HardwareEdition braunAtelierCream = HardwareEdition(
+    type: HardwareEditionType.braunAtelierCream,
+    textureType: HardwareTextureType.matteAbsGrain,
+    title: 'BRAUN ATELIER CREAM',
+    subtitle: 'WARM BONE & SIGNAL ORANGE',
+    yearLabel: 'MOD. 05 · 1965',
+    isPremium: false,
+    darkCanvas: Color(0xFF242321),
+    lightCanvas: Color(0xFFEAE6DC),
+    darkModuleBg: Color(0xFF1E1D1B),
+    lightModuleBg: Color(0xFFDDD9CE),
+    darkBorder: Color(0xFF3A3835),
+    lightBorder: Color(0xFFBDB8AB),
+    needleColor: Color(0xFFFF5500), // Braun Signal Orange
+    filamentColor: Color(0xFFFFB703), // Warm Amber Glow
+    accentColor: Color(0xFF4A5568),
+    plateGradientDark: [Color(0xFF2C2A27), Color(0xFF211F1D), Color(0xFF181716)],
+    plateGradientLight: [Color(0xFFF4F1EA), Color(0xFFEAE6DC), Color(0xFFDFDBD0)],
+    rivetDark: Color(0xFF4D4944),
+    rivetLight: Color(0xFFA8A398),
+  );
+
   static const HardwareEdition titaniumStealth = HardwareEdition(
     type: HardwareEditionType.titaniumStealth,
     textureType: HardwareTextureType.brushedTitanium,
@@ -150,23 +177,76 @@ class HardwareEdition {
     rivetLight: Color(0xFF968249),
   );
 
+  static const HardwareEdition midCenturyWalnut = HardwareEdition(
+    type: HardwareEditionType.midCenturyWalnut,
+    textureType: HardwareTextureType.organicWalnut,
+    title: 'MID-CENTURY WALNUT',
+    subtitle: 'NATURAL TIMBER & SATIN GOLD',
+    yearLabel: 'MOD. 06 · 1958',
+    isPremium: true,
+    darkCanvas: Color(0xFF1C140E),
+    lightCanvas: Color(0xFF8D5B3A),
+    darkModuleBg: Color(0xFF16100B),
+    lightModuleBg: Color(0xFF73472A),
+    darkBorder: Color(0xFF4A3525),
+    lightBorder: Color(0xFFB07C54),
+    needleColor: Color(0xFFF3C68F), // Champagne Gold
+    filamentColor: Color(0xFFFF9233), // Warm Hearthfire Glow
+    accentColor: Color(0xFF5E4028),
+    plateGradientDark: [Color(0xFF2E2218), Color(0xFF221811), Color(0xFF18100A)],
+    plateGradientLight: [Color(0xFFA8734C), Color(0xFF8D5B3A), Color(0xFF6E4426)],
+    rivetDark: Color(0xFFC99A40), // Satin Brass Rivet
+    rivetLight: Color(0xFFE0B858),
+  );
+
+  static const HardwareEdition forgedCarbon = HardwareEdition(
+    type: HardwareEditionType.forgedCarbon,
+    textureType: HardwareTextureType.forgedCarbon,
+    title: 'FORGED CARBON',
+    subtitle: 'COMPOSITE MARBLE & AMBER',
+    yearLabel: 'MOD. 07 · 2024',
+    isPremium: true,
+    darkCanvas: Color(0xFF0F1012),
+    lightCanvas: Color(0xFF4A4D55),
+    darkModuleBg: Color(0xFF15161A),
+    lightModuleBg: Color(0xFF3A3D44),
+    darkBorder: Color(0xFF2D3039),
+    lightBorder: Color(0xFF636773),
+    needleColor: Color(0xFFFF3B00), // Electric Racing Amber
+    filamentColor: Color(0xFFFFAA00), // Phosphor Neon Amber
+    accentColor: Color(0xFF00B4D8),
+    plateGradientDark: [Color(0xFF1E2025), Color(0xFF141518), Color(0xFF0B0C0E)],
+    plateGradientLight: [Color(0xFF6B707B), Color(0xFF535760), Color(0xFF3E4148)],
+    rivetDark: Color(0xFF3D424F), // Gunmetal Rivet
+    rivetLight: Color(0xFF8E939E),
+  );
+
   static const List<HardwareEdition> all = [
     braunClassic,
+    braunAtelierCream,
     titaniumStealth,
     bauhausHeritage,
     rawBrassPatina,
+    midCenturyWalnut,
+    forgedCarbon,
   ];
 
   static HardwareEdition fromType(HardwareEditionType type) {
     switch (type) {
       case HardwareEditionType.braunClassic:
         return braunClassic;
+      case HardwareEditionType.braunAtelierCream:
+        return braunAtelierCream;
       case HardwareEditionType.titaniumStealth:
         return titaniumStealth;
       case HardwareEditionType.bauhausHeritage:
         return bauhausHeritage;
       case HardwareEditionType.rawBrassPatina:
         return rawBrassPatina;
+      case HardwareEditionType.midCenturyWalnut:
+        return midCenturyWalnut;
+      case HardwareEditionType.forgedCarbon:
+        return forgedCarbon;
     }
   }
 
