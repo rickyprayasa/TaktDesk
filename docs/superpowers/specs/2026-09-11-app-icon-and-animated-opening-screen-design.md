@@ -15,7 +15,7 @@ Takt Desk embodies Dieter Rams' 1960s Braun modernist design principles:
 
 To give Takt Desk a complete, authentic product identity on Android devices:
 1. **Official Android App Launcher Icon:**
-   - Replaces default Flutter template icons with a physical, squircle matte-obsidian Braun horological desk cube featuring a chamfered aluminum bezel, recessed concentric dial grooves, minimalist tick marks, a warm amber micro-LED, and a precision orange chrono needle.
+   - Replaces default Flutter template icons with the authentic circular Braun analog pomodoro dial instrument featuring a metallic knurled steel outer bezel, top 12 o'clock crown push-button, precision 60 tick marks, warm amber micro-LED, and vibrant amber chrono needle with obsidian hub cap.
 2. **RSQUARE Official Brand Asset Bundling:**
    - Bundles `/home/tuneeca/RSQUARE/Android/Takt Desk/RSQUARE.png` into `assets/images/rsquare_logo.png` within Flutter assets.
    - Integrates the crisp RSQUARE geometric emblem into the Service Hatch settings dialog (`TaktSettingsSheet`), `StudioProDialog`, and the animated opening sequence.
