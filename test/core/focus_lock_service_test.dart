@@ -33,6 +33,10 @@ void main() {
           .setMockMethodCallHandler(FocusLockService.channel, null);
     });
 
+    test('FocusLockService registers channel com.takt.desk/focus_lock', () {
+      expect(FocusLockService.channel.name, equals('com.takt.desk/focus_lock'));
+    });
+
     test('enableFocusLock sends method call and returns true', () async {
       final result = await service.enableFocusLock();
       expect(result, isTrue);

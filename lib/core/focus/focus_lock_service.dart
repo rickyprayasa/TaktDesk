@@ -6,7 +6,7 @@ final focusLockServiceProvider = Provider<FocusLockService>((ref) {
 });
 
 class FocusLockService {
-  static const MethodChannel channel = MethodChannel('com.tuneeca.takt_desk/focus_lock');
+  static const MethodChannel channel = MethodChannel('com.takt.desk/focus_lock');
 
   Future<bool> enableFocusLock() async {
     try {

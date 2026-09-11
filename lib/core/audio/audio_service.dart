@@ -10,7 +10,7 @@ final audioServiceProvider = Provider<AudioService>((ref) {
 });
 
 class AudioService {
-  static const _channel = MethodChannel('com.tuneeca.takt_desk/audio');
+  static const MethodChannel channel = MethodChannel('com.takt.desk/audio');
 
   final bool isMock;
   bool _initialized = false;
@@ -34,7 +34,7 @@ class AudioService {
   void setVolume(double vol) {
     _volume = vol.clamp(0.0, 1.0);
     if (!isMock && _initialized) {
-      _channel.invokeMethod('setVolume', {'volume': _volume}).catchError((_) {});
+      channel.invokeMethod('setVolume', {'volume': _volume}).catchError((_) {});
     }
   }
 
@@ -45,7 +45,7 @@ class AudioService {
   void playFoley(SoundEffect effect) {
     if (!_initialized || !_foleyEnabled) return;
     if (!isMock) {
-      _channel.invokeMethod('playFoley', {'effect': effect.name}).catchError((_) {});
+      channel.invokeMethod('playFoley', {'effect': effect.name}).catchError((_) {});
     }
   }
 
@@ -56,7 +56,7 @@ class AudioService {
     _activeTrackIndex = trackIndex;
     _isAmbientPlaying = true;
     if (!isMock) {
-      _channel.invokeMethod('startAmbient', {
+      channel.invokeMethod('startAmbient', {
         'trackIndex': trackIndex,
         'volume': _volume,
       }).catchError((_) {});
@@ -66,7 +66,7 @@ class AudioService {
   void stopAmbient() {
     _isAmbientPlaying = false;
     if (!isMock) {
-      _channel.invokeMethod('stopAmbient').catchError((_) {});
+      channel.invokeMethod('stopAmbient').catchError((_) {});
     }
   }
 

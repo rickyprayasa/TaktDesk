@@ -13,8 +13,8 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
-    private val FOCUS_CHANNEL = "com.tuneeca.takt_desk/focus_lock"
-    private val AUDIO_CHANNEL = "com.tuneeca.takt_desk/audio"
+    private val FOCUS_CHANNEL = "com.takt.desk/focus_lock"
+    private val AUDIO_CHANNEL = "com.takt.desk/audio"
     private var previousInterruptionFilter: Int? = null
     private var ambientPlayer: MediaPlayer? = null
 
