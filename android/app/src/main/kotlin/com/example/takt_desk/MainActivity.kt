@@ -17,6 +17,7 @@ class MainActivity : FlutterActivity() {
     private val FOCUS_CHANNEL = "com.takt.desk/focus_lock"
     private val AUDIO_CHANNEL = "com.takt.desk/audio"
     private val TIMER_CHANNEL = "com.takt.desk/timer_service"
+    private val WIDGET_CHANNEL = "com.takt.desk/app_widget"
     private var previousInterruptionFilter: Int? = null
     private var ambientPlayer: MediaPlayer? = null
 
@@ -226,25 +227,29 @@ class MainActivity : FlutterActivity() {
             }
         }
 
-        val widgetChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.takt.desk/app_widget")
+        val widgetChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, WIDGET_CHANNEL)
         widgetChannel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "updateWidgetData" -> {
-                    val cycles = call.argument<Int>("cyclesCompleted") ?: 0
-                    val target = call.argument<Int>("cyclesTarget") ?: 4
-                    val minutes = call.argument<Int>("minutesFocused") ?: 0
-                    val status = call.argument<String>("status") ?: "STANDBY"
+                    try {
+                        val cycles = (call.argument<Number>("cyclesCompleted"))?.toInt() ?: 0
+                        val target = (call.argument<Number>("cyclesTarget"))?.toInt() ?: 4
+                        val minutes = (call.argument<Number>("minutesFocused"))?.toInt() ?: 0
+                        val status = call.argument<String>("status") ?: "STANDBY"
 
-                    val prefs = getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
-                    prefs.edit()
-                        .putInt(TaktAppWidgetProvider.KEY_CYCLES_COMPLETED, cycles)
-                        .putInt(TaktAppWidgetProvider.KEY_CYCLES_TARGET, target)
-                        .putInt(TaktAppWidgetProvider.KEY_MINUTES_FOCUSED, minutes)
-                        .putString(TaktAppWidgetProvider.KEY_STATUS, status)
-                        .apply()
+                        val prefs = getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
+                        prefs.edit()
+                            .putInt(TaktAppWidgetProvider.KEY_CYCLES_COMPLETED, cycles)
+                            .putInt(TaktAppWidgetProvider.KEY_CYCLES_TARGET, target)
+                            .putInt(TaktAppWidgetProvider.KEY_MINUTES_FOCUSED, minutes)
+                            .putString(TaktAppWidgetProvider.KEY_STATUS, status)
+                            .apply()
 
-                    TaktAppWidgetProvider.updateAllWidgets(this)
-                    result.success(true)
+                        TaktAppWidgetProvider.updateAllWidgets(this)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("WIDGET_UPDATE_FAILED", e.message, null)
+                    }
                 }
                 else -> result.notImplemented()
             }
