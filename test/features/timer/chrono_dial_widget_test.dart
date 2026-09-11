@@ -15,8 +15,6 @@ import 'package:takt_desk/features/timer/presentation/chrono_dial_widget.dart';
 import 'package:takt_desk/features/timer/presentation/widgets/chrono_profile_selector_widget.dart';
 import 'package:takt_desk/features/timer/presentation/widgets/crown_push_button.dart';
 import 'package:takt_desk/features/timer/presentation/widgets/mechanical_flip_digit.dart';
-import 'package:takt_desk/features/timer/presentation/widgets/split_flap_board_widget.dart';
-import 'package:takt_desk/features/timer/presentation/widgets/split_flap_tile.dart';
 
 void main() {
   setUpAll(() {
@@ -274,7 +272,7 @@ void main() {
     expect(painter.filamentColor, equals(const Color(0xFFFF9E00))); // vivid amber neon
   });
 
-  testWidgets('ChronoDialWidget adapts dial bezel, crown, split flap, and pill timer to rawBrassPatina edition', (tester) async {
+  testWidgets('ChronoDialWidget adapts dial bezel, crown, and console to rawBrassPatina edition', (tester) async {
     final testDb = AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(testDb.close);
     final container = ProviderContainer(
@@ -320,17 +318,6 @@ void main() {
     expect((cassetteDeco.border as Border).top.color, equals(HardwareEdition.braunClassic.darkBorder));
     expect(cassetteDeco.color, equals(HardwareEdition.braunClassic.darkModuleBg));
 
-    // Split flap board initial
-    var splitFlapContainer = tester.widget<Container>(
-      find.descendant(
-        of: find.byType(SplitFlapBoardWidget),
-        matching: find.byType(Container),
-      ).first,
-    );
-    var splitFlapDeco = splitFlapContainer.decoration as BoxDecoration;
-    expect((splitFlapDeco.border as Border).top.color, equals(HardwareEdition.braunClassic.darkBorder));
-    expect(splitFlapDeco.color, equals(HardwareEdition.braunClassic.darkModuleBg));
-
     // Switch to Raw Brass & Patina edition
     container.read(chassisThemeProvider.notifier).setHardwareEdition(HardwareEditionType.rawBrassPatina);
     await tester.pump();
@@ -357,17 +344,6 @@ void main() {
     cassetteDeco = cassetteContainer.decoration as BoxDecoration;
     expect((cassetteDeco.border as Border).top.color, equals(HardwareEdition.rawBrassPatina.darkBorder));
     expect(cassetteDeco.color, equals(HardwareEdition.rawBrassPatina.darkModuleBg));
-
-    // Verify Split flap board container adapts to rawBrassPatina
-    splitFlapContainer = tester.widget<Container>(
-      find.descendant(
-        of: find.byType(SplitFlapBoardWidget),
-        matching: find.byType(Container),
-      ).first,
-    );
-    splitFlapDeco = splitFlapContainer.decoration as BoxDecoration;
-    expect((splitFlapDeco.border as Border).top.color, equals(HardwareEdition.rawBrassPatina.darkBorder));
-    expect(splitFlapDeco.color, equals(HardwareEdition.rawBrassPatina.darkModuleBg));
   });
 
   testWidgets('ChronoDialWidget applies chassisTextColor in light mode and forwards textureType to painter', (tester) async {
@@ -576,7 +552,7 @@ void main() {
     expect(painter3.shouldRepaint(painter4), isTrue);
   });
 
-  testWidgets('ChronoDialWidget renders Patina Olive colors and split flap labels during break', (tester) async {
+  testWidgets('ChronoDialWidget renders Patina Olive colors and console labels during break', (tester) async {
     final container = ProviderContainer(
       overrides: [
         chronoDialProvider.overrideWith((ref) {
@@ -596,18 +572,16 @@ void main() {
     );
     await tester.pump();
 
-    // Split-flap displays SHORT BRK
-    final shortBrkChars = 'SHORT BRK'.split('');
-    final tiles = tester.widgetList<SplitFlapTile>(find.byType(SplitFlapTile));
-    final displayedPhase = tiles.take(shortBrkChars.length).map((t) => t.char).join();
-    expect(displayedPhase, equals('SHORT BRK'));
+    // Console displays SHORT BRK and cycle progress
+    expect(find.text('SHORT BRK'), findsOneWidget);
+    expect(find.text('CYCLE 1/4'), findsOneWidget);
 
     final dialPainter = tester.widget<CustomPaint>(dialFinder).painter as ChronoDialPainter;
     expect(dialPainter.needleColor, equals(TaktColors.patinaOlive));
     expect(dialPainter.filamentColor, equals(TaktColors.patinaOlive));
   });
 
-  testWidgets('ChronoDialWidget renders Patina Olive colors and LONG BRK split flap during long break', (tester) async {
+  testWidgets('ChronoDialWidget renders Patina Olive colors and LONG BRK console label during long break', (tester) async {
     final container = ProviderContainer(
       overrides: [
         chronoDialProvider.overrideWith((ref) {
@@ -627,11 +601,8 @@ void main() {
     );
     await tester.pump();
 
-    // Split-flap displays LONG  BRK
-    final longBrkChars = 'LONG  BRK'.split('');
-    final tiles = tester.widgetList<SplitFlapTile>(find.byType(SplitFlapTile));
-    final displayedPhase = tiles.take(longBrkChars.length).map((t) => t.char).join();
-    expect(displayedPhase, equals('LONG  BRK'));
+    // Console displays LONG BRK
+    expect(find.text('LONG BRK'), findsOneWidget);
 
     final dialPainter = tester.widget<CustomPaint>(dialFinder).painter as ChronoDialPainter;
     expect(dialPainter.needleColor, equals(TaktColors.patinaOlive));

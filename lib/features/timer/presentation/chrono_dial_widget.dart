@@ -5,8 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'chrono_dial_controller.dart';
 import 'chrono_dial_painter.dart';
 import 'widgets/crown_push_button.dart';
-import 'widgets/mechanical_flip_digit.dart';
-import 'widgets/split_flap_board_widget.dart';
 import 'widgets/chrono_profile_selector_widget.dart';
 import '../../desk/presentation/widgets/monastic_switch_widget.dart';
 import '../../../app/theme/hardware_edition.dart';
@@ -168,18 +166,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Preserved offstage for test harness & accessibility without obstructing dial face
-        Offstage(
-          offstage: true,
-          child: MechanicalCounterDisplay(
-            minutes: remainingMinutes,
-            seconds: remainingSeconds,
-          ),
-        ),
-        // 1. 3D Split-Flap Pomodoro Phase & Cycle Display
-        const SplitFlapBoardWidget(),
-        const SizedBox(height: 12),
-        // 2. Main Dial Canvas with 12 o'clock Crown Push-Button directly seated on bezel
+        // 1. Main Dial Canvas with 12 o'clock Crown Push-Button directly seated on bezel
         SizedBox(
           width: dialDimensions.width,
           height: dialDimensions.height + 14,
@@ -236,10 +223,13 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
           ),
         ),
         const SizedBox(height: 14),
-        // 3. Horizontal Industrial Cassette Preset Selector (280px modular bar)
-        const ChronoProfileSelectorWidget(),
+        // 2. Consolidated Industrial Console (Telemetry + Timer MM:SS + Cassette Preset Selector)
+        ChronoProfileSelectorWidget(
+          remainingMinutes: remainingMinutes,
+          seconds: remainingSeconds,
+        ),
         const SizedBox(height: 10),
-        // 4. Simple Monastic Focus Lockdown Toggle (below Preset Selector)
+        // 3. Simple Monastic Focus Lockdown Toggle (below Preset Selector)
         const MonasticSwitchWidget(),
       ],
     );

@@ -65,13 +65,13 @@ class MechanicalCounterDisplay extends StatelessWidget {
     const digitStyle = TextStyle(
       fontFamily: 'monospace',
       fontWeight: FontWeight.w700,
-      fontSize: 16.0,
-      letterSpacing: 1.0,
+      fontSize: 14.0,
+      letterSpacing: 0.5,
       color: TaktColors.warmBone,
     );
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: const Color(0xFF101214),
         borderRadius: BorderRadius.circular(5.0),
@@ -97,13 +97,13 @@ class MechanicalCounterDisplay extends StatelessWidget {
           MechanicalFlipDigit(digit: mStr[0], style: digitStyle),
           MechanicalFlipDigit(digit: mStr[1], style: digitStyle),
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 2.0),
+            padding: EdgeInsets.symmetric(horizontal: 1.5),
             child: Text(
               ':',
               style: TextStyle(
                 fontFamily: 'monospace',
                 fontWeight: FontWeight.w700,
-                fontSize: 15.0,
+                fontSize: 13.0,
                 color: TaktColors.mutedOchre,
               ),
             ),
