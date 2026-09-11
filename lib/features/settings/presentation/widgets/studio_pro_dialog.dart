@@ -26,11 +26,9 @@ void showStudioProDialog(
   final secondary = secondaryTextColor ??
       (dark ? const Color(0xFF9E9B93) : const Color(0xFF5A5D64));
 
-  final subtitleText = edition != null
-      ? 'UNLOCK ${edition.title} & ALL HARDWARE FINISHES'
-      : targetTrack != null
-          ? 'UNLOCK ${targetTrack.name.toUpperCase()} & ALL STUDIO PRO RECORDS'
-          : 'UNLOCK STUDIO PRO CLEARANCE';
+  final subtitleText = targetTrack != null
+      ? 'UNLOCK ${targetTrack.name.toUpperCase()} & ALL STUDIO PRO RECORDS'
+      : 'UNLOCK STUDIO PRO CLEARANCE';
 
   final bodyText = edition != null
       ? 'Lifetime clearance gives you access to aerospace titanium, Bauhaus primary palettes, burnished marine brass, and all future hardware materials.'
@@ -243,6 +241,8 @@ class _MaterialShowcasePlaque extends StatelessWidget {
                       children: [
                         Text(
                           edition.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontFamily: 'monospace',
                             fontSize: 11,
@@ -254,6 +254,8 @@ class _MaterialShowcasePlaque extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           '${edition.yearLabel} · ${edition.subtitle}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontFamily: 'monospace',
                             fontSize: 8.5,

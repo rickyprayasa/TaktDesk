@@ -407,11 +407,13 @@ void main() {
       await tester.tap(switchFinder);
       await tester.pumpAndSettle();
 
-      expect(find.text('LOCKED // PRO'), findsWidgets);
-
-      // Navigate to titanium stealth card in carousel
+      // Navigate past free Atelier Cream (page 1) to titanium stealth (page 2) in carousel
       await tester.tap(find.byKey(const ValueKey('edition_next_button')));
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('LOCKED // PREVIEW 👁'), findsWidgets);
 
       // Tap locked titanium card
       final titaniumFinder = find.byKey(const ValueKey('edition_card_titaniumStealth'));
