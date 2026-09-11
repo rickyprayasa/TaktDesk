@@ -8,28 +8,33 @@ final appWidgetServiceProvider = Provider<AppWidgetService>((ref) {
 });
 
 final appWidgetSyncProvider = Provider.autoDispose<void>((ref) {
-  final statsAsync = ref.watch(todayFocusStatsProvider);
-  final status = ref.watch(chronoDialControllerProvider.select((state) {
-    if (state.isRunning) {
-      return state.isBreak ? 'BREAK' : 'FOCUS';
-    }
-    return 'STANDBY';
-  }));
   final widgetService = ref.watch(appWidgetServiceProvider);
 
-  statsAsync.whenData((stats) {
-    final completedCount = stats.completedCount;
-    final cycles = (completedCount > 0 && completedCount % 4 == 0)
-        ? 4
-        : (completedCount % 4);
+  void sync() {
+    final statsAsync = ref.read(todayFocusStatsProvider);
+    final state = ref.read(chronoDialControllerProvider);
+    final status = state.isRunning ? (state.isBreak ? 'BREAK' : 'FOCUS') : 'STANDBY';
 
-    widgetService.updateWidgetData(
-      cyclesCompleted: cycles,
-      cyclesTarget: 4,
-      minutesFocused: stats.totalMinutes,
-      status: status,
-    );
-  });
+    statsAsync.whenData((stats) {
+      final completedCount = stats.completedCount;
+      final cycles = (completedCount > 0 && completedCount % 4 == 0)
+          ? 4
+          : (completedCount % 4);
+
+      widgetService.updateWidgetData(
+        cyclesCompleted: cycles,
+        cyclesTarget: 4,
+        minutesFocused: stats.totalMinutes,
+        status: status,
+      );
+    });
+  }
+
+  ref.listen(todayFocusStatsProvider, (_, __) => sync(), fireImmediately: true);
+  ref.listen(chronoDialControllerProvider.select((state) {
+    if (state.isRunning) return state.isBreak ? 'BREAK' : 'FOCUS';
+    return 'STANDBY';
+  }), (_, __) => sync());
 });
 
 
