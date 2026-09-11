@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/theme/hardware_edition.dart';
 import '../../../../app/theme/takt_colors.dart';
 import '../../../../app/theme/theme_controller.dart';
+import '../../../../app/theme/widgets/material_texture_painter.dart';
 import '../../../../core/haptics/haptic_service.dart';
 import '../../../vinyl/domain/vinyl_track.dart';
 import '../../../vinyl/presentation/vinyl_controller.dart';
@@ -62,17 +63,26 @@ void showStudioProDialog(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            subtitleText,
-            style: const TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-              color: TaktColors.filamentAmber,
+          if (edition != null) ...[
+            _MaterialShowcasePlaque(
+              edition: edition,
+              isDark: dark,
             ),
-          ),
-          const SizedBox(height: 8),
+            const SizedBox(height: 12),
+          ],
+          if (edition == null) ...[
+            Text(
+              subtitleText,
+              style: const TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+                color: TaktColors.filamentAmber,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
           Text(
             bodyText,
             style: TextStyle(
@@ -138,3 +148,170 @@ void showStudioProDialog(
     ),
   );
 }
+
+class _MaterialShowcasePlaque extends StatelessWidget {
+  final HardwareEdition edition;
+  final bool isDark;
+
+  const _MaterialShowcasePlaque({
+    required this.edition,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor = isDark ? edition.darkBorder : edition.lightBorder;
+    final rivetColor = isDark ? edition.rivetDark : edition.rivetLight;
+
+    return Container(
+      key: const ValueKey('material_showcase_plaque'),
+      height: 96,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(6.0),
+        border: Border.all(color: borderColor, width: 1.2),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark ? edition.plateGradientDark : edition.plateGradientLight,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x33000000),
+            offset: Offset(0, 2),
+            blurRadius: 4,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(5.0),
+        child: Stack(
+          children: [
+            // Procedural surface texture
+            Positioned.fill(
+              child: CustomPaint(
+                painter: MaterialTexturePainter(
+                  textureType: edition.textureType,
+                  isDark: isDark,
+                  chassisColor: isDark ? edition.darkModuleBg : edition.lightModuleBg,
+                ),
+              ),
+            ),
+            // Rivets at 4 corners
+            Positioned(top: 5, left: 5, child: _PlaqueRivet(color: rivetColor)),
+            Positioned(top: 5, right: 5, child: _PlaqueRivet(color: rivetColor)),
+            Positioned(bottom: 5, left: 5, child: _PlaqueRivet(color: rivetColor)),
+            Positioned(bottom: 5, right: 5, child: _PlaqueRivet(color: rivetColor)),
+
+            // Interactive showcase content
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                children: [
+                  // Mini Horological Dial & Needle
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isDark ? Colors.black45 : Colors.white54,
+                      border: Border.all(color: borderColor, width: 1.0),
+                    ),
+                    child: Center(
+                      child: Container(
+                        width: 4,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          color: edition.needleColor,
+                          borderRadius: BorderRadius.circular(2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: edition.filamentColor.withValues(alpha: 0.6),
+                              blurRadius: 4,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  // Metadata
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          edition.title,
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                            color: isDark ? TaktColors.warmBone : const Color(0xFF141618),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${edition.yearLabel} · ${edition.subtitle}',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 8.5,
+                            color: isDark ? const Color(0xFF9E9B93) : const Color(0xFF5A5D64),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: edition.filamentColor,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'STUDIO PRO FINISH',
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 7.5,
+                                fontWeight: FontWeight.w700,
+                                color: edition.filamentColor,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PlaqueRivet extends StatelessWidget {
+  final Color color;
+
+  const _PlaqueRivet({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 4,
+      height: 4,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
+    );
+  }
+}
+

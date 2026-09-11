@@ -1540,14 +1540,10 @@ class _EditionCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.lock,
-            size: 9,
-            color: TaktColors.mutedOchre,
-          ),
+          Icon(Icons.lock, size: 9, color: TaktColors.mutedOchre),
           SizedBox(width: 4),
           Text(
-            'LOCKED // PRO',
+            'LOCKED // PREVIEW 👁',
             style: TextStyle(
               fontFamily: 'monospace',
               fontSize: 8.5,
