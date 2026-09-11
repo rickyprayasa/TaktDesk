@@ -117,12 +117,6 @@ class TimerForegroundService : Service() {
                 notification,
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
             )
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                NOTIFICATION_ID,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-            )
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }
@@ -138,16 +132,13 @@ class TimerForegroundService : Service() {
     }
 
     private fun onTimerFinished(phase: String) {
-        // 1. Acquire temporary 3-second wakelock to play bell sound
+        // 1. Acquire temporary 3.5-second wakelock to play bell sound
         acquireTransientWakeLock()
 
-        // 2. Play analog bell chime
-        playBellChime()
-
-        // 3. Trigger dual-tap mechanical haptics
+        // 2. Trigger dual-tap mechanical haptics
         triggerMechanicalHaptics()
 
-        // 4. Post alert notification
+        // 3. Post alert notification
         val phaseLabel = when (phase) {
             "shortBreak" -> "SHORT BREAK"
             "longBreak" -> "LONG BREAK"
@@ -179,9 +170,20 @@ class TimerForegroundService : Service() {
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(ALERT_NOTIFICATION_ID, alertNotif)
 
-        // Stop foreground state
+        // 4. Dismiss ongoing countdown chronometer from notification shade
         stopForeground(STOP_FOREGROUND_REMOVE)
-        stopSelf()
+
+        // 5. Fallback safety timer for service teardown if audio fails
+        val fallbackTeardown = Runnable {
+            stopSelf()
+        }
+        handler.postDelayed(fallbackTeardown, 2500)
+
+        // 6. Play bell chime and cleanly terminate service once playback finishes
+        playBellChime {
+            handler.removeCallbacks(fallbackTeardown)
+            stopSelf()
+        }
     }
 
     private fun stopCountdown() {
@@ -203,7 +205,7 @@ class TimerForegroundService : Service() {
         }
     }
 
-    private fun playBellChime() {
+    private fun playBellChime(onComplete: (() -> Unit)? = null) {
         try {
             bellPlayer?.release()
             assets.openFd("flutter_assets/assets/audio/foley_bell_chime.wav").use { afd ->
@@ -215,15 +217,24 @@ class TimerForegroundService : Service() {
                             .build()
                     )
                     setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
-                    prepare()
-                    start()
                     setOnCompletionListener {
                         it.release()
                         bellPlayer = null
+                        onComplete?.invoke()
                     }
+                    setOnErrorListener { mp, _, _ ->
+                        mp.release()
+                        bellPlayer = null
+                        onComplete?.invoke()
+                        true
+                    }
+                    prepare()
+                    start()
                 }
             }
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+            onComplete?.invoke()
+        }
     }
 
     private fun triggerMechanicalHaptics() {
