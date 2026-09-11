@@ -187,11 +187,13 @@ class _MaterialShowcasePlaque extends StatelessWidget {
           children: [
             // Procedural surface texture
             Positioned.fill(
-              child: CustomPaint(
-                painter: MaterialTexturePainter(
-                  textureType: edition.textureType,
-                  isDark: isDark,
-                  chassisColor: isDark ? edition.darkModuleBg : edition.lightModuleBg,
+              child: RepaintBoundary(
+                child: CustomPaint(
+                  painter: MaterialTexturePainter(
+                    textureType: edition.textureType,
+                    isDark: isDark,
+                    chassisColor: isDark ? edition.darkModuleBg : edition.lightModuleBg,
+                  ),
                 ),
               ),
             ),
