@@ -127,6 +127,39 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('ChronoDialWidget starts and pauses on CrownPushButton tap', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Tap CrownPushButton to start
+    await tester.tap(find.byType(CrownPushButton));
+    await tester.pump();
+
+    // Advance 1 second
+    await tester.pump(const Duration(seconds: 1));
+    expectDisplay(tester, 24, 59);
+
+    // Tap CrownPushButton to pause
+    await tester.tap(find.byType(CrownPushButton));
+    await tester.pump();
+
+    // Advance 2 seconds and verify counter stays paused
+    await tester.pump(const Duration(seconds: 2));
+    expectDisplay(tester, 24, 59);
+
+    // Clean up
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('ChronoDialWidget disables profile switching while running', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(

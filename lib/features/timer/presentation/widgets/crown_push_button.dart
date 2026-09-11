@@ -75,61 +75,71 @@ class _CrownPushButtonState extends State<CrownPushButton>
     return GestureDetector(
       onTap: _handleTap,
       behavior: HitTestBehavior.opaque,
-      child: AnimatedBuilder(
-        animation: _pressAnimation,
-        builder: (context, child) {
-          return Transform.translate(
-            offset: Offset(0, _pressAnimation.value),
-            child: child,
-          );
-        },
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      child: SizedBox(
+        width: 32,
+        height: 16,
+        child: Stack(
+          alignment: Alignment.topCenter,
           children: [
-            // Crown Cap with ribbed knurling lines
-            Container(
-              width: 32,
-              height: 12,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: widget.gradientColors ?? const [
-                    Color(0xFF424750),
-                    Color(0xFF2A2D33),
-                    Color(0xFF1E2125),
-                  ],
-                ),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-                border: Border.all(
-                  color: widget.borderColor ?? TaktColors.slateBorder,
-                  width: 1.0,
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x66000000),
-                    offset: Offset(0, 3),
-                    blurRadius: 4.0,
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(
-                  5,
-                  (index) => Container(
-                    width: 1.5,
-                    height: 8,
-                    color: Colors.white.withValues(alpha: 0.12),
-                  ),
+            // Stem Collar (stationary on bezel socket)
+            Positioned(
+              bottom: 0,
+              child: Container(
+                width: 14,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: widget.stemColor ?? const Color(0xFF181A1D),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(1)),
                 ),
               ),
             ),
-            // Stem Collar
-            Container(
-              width: 14,
-              height: 4,
-              color: widget.stemColor ?? const Color(0xFF181A1D),
+            // Crown Cap with ribbed knurling lines (depresses down onto collar)
+            AnimatedBuilder(
+              animation: _pressAnimation,
+              builder: (context, child) {
+                return Positioned(
+                  top: _pressAnimation.value,
+                  child: child!,
+                );
+              },
+              child: Container(
+                width: 32,
+                height: 12,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: widget.gradientColors ?? const [
+                      Color(0xFF424750),
+                      Color(0xFF2A2D33),
+                      Color(0xFF1E2125),
+                    ],
+                  ),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                  border: Border.all(
+                    color: widget.borderColor ?? TaktColors.slateBorder,
+                    width: 1.0,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x66000000),
+                      offset: Offset(0, 3),
+                      blurRadius: 4.0,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(
+                    5,
+                    (index) => Container(
+                      width: 1.5,
+                      height: 8,
+                      color: Colors.white.withValues(alpha: 0.12),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ],
         ),

@@ -208,7 +208,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                   ),
                 ),
               ),
-              // Top Crown Push-Button seated directly on the 12 o'clock dial bezel
+              // Top Crown Push-Button seated directly into the 12 o'clock dial bezel socket
               Positioned(
                 top: 6,
                 child: CrownPushButton(
