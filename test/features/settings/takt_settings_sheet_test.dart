@@ -334,7 +334,7 @@ void main() {
       expect(find.textContaining('SERVICE HATCH'), findsOneWidget);
     });
 
-    testWidgets('TaktSettingsSheet renders Hardware Editions section with 4 swatches', (tester) async {
+    testWidgets('TaktSettingsSheet renders Hardware Editions section with 7 swatches', (tester) async {
       await tester.pumpWidget(buildSheet());
       await tester.pump();
 
@@ -343,6 +343,10 @@ void main() {
       expect(find.byKey(const ValueKey('edition_next_button')), findsOneWidget);
 
       // Advance through gallery carousel to inspect each edition
+      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('BRAUN ATELIER CREAM'), findsOneWidget);
+
       await tester.tap(find.byKey(const ValueKey('edition_next_button')));
       await tester.pumpAndSettle();
       expect(find.text('TITANIUM STEALTH'), findsOneWidget);
@@ -355,6 +359,14 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('RAW BRASS & PATINA'), findsOneWidget);
 
+      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('MID-CENTURY WALNUT'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('FORGED CARBON'), findsOneWidget);
+
       expect(find.textContaining('SIMULATE STUDIO PRO CLEARANCE'), findsOneWidget);
     });
 
@@ -362,7 +374,9 @@ void main() {
       await tester.pumpWidget(buildSheet());
       await tester.pump();
 
-      // Navigate to titanium stealth card in carousel
+      // Navigate past Atelier Cream to titanium stealth card in carousel
+      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('edition_next_button')));
       await tester.pumpAndSettle();
 
@@ -445,6 +459,97 @@ void main() {
       );
     });
 
+    testWidgets('Tapping free braunAtelierCream card equips it directly without StudioProDialog even when Pro is disabled', (tester) async {
+      await tester.pumpWidget(buildSheet());
+      await tester.pump();
+
+      // Disable simulated pro
+      final switchFinder = find.byKey(const ValueKey('simulate_pro_switch'));
+      await tester.tap(switchFinder);
+      await tester.pumpAndSettle();
+
+      // Navigate to Atelier Cream (page 1)
+      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+      await tester.pumpAndSettle();
+
+      final atelierFinder = find.byKey(const ValueKey('edition_card_braunAtelierCream'));
+      expect(atelierFinder, findsOneWidget);
+
+      // Verify Free tier badge
+      expect(
+        find.descendant(
+          of: atelierFinder,
+          matching: find.text('FREE'),
+        ),
+        findsOneWidget,
+      );
+
+      // Tap Atelier Cream card directly
+      await tester.tap(atelierFinder);
+      await tester.pumpAndSettle();
+
+      // Verify StudioProDialog did NOT open
+      expect(find.text('TAKT DESK STUDIO PRO'), findsNothing);
+
+      // Verify Atelier Cream is equipped
+      expect(
+        find.descendant(
+          of: atelierFinder,
+          matching: find.text('EQUIPPED'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('Tapping locked midCenturyWalnut and forgedCarbon cards when Pro is disabled opens StudioProDialog', (tester) async {
+      await tester.pumpWidget(buildSheet());
+      await tester.pump();
+
+      // Disable simulated pro
+      final switchFinder = find.byKey(const ValueKey('simulate_pro_switch'));
+      await tester.tap(switchFinder);
+      await tester.pumpAndSettle();
+
+      // Navigate from index 0 to index 5 (Mid-Century Walnut)
+      for (int i = 0; i < 5; i++) {
+        await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+        await tester.pumpAndSettle();
+      }
+
+      final walnutFinder = find.byKey(const ValueKey('edition_card_midCenturyWalnut'));
+      expect(walnutFinder, findsOneWidget);
+
+      await tester.tap(walnutFinder);
+      await tester.pumpAndSettle();
+
+      // Verify Studio Pro dialog appears for Mid-Century Walnut
+      expect(find.text('TAKT DESK STUDIO PRO'), findsOneWidget);
+      expect(find.textContaining('MID-CENTURY WALNUT'), findsWidgets);
+
+      // Dismiss dialog
+      await tester.tap(find.text('CANCEL'));
+      await tester.pumpAndSettle();
+      expect(find.text('TAKT DESK STUDIO PRO'), findsNothing);
+
+      // Advance to index 6 (Forged Carbon)
+      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+      await tester.pumpAndSettle();
+
+      final carbonFinder = find.byKey(const ValueKey('edition_card_forgedCarbon'));
+      expect(carbonFinder, findsOneWidget);
+
+      await tester.tap(carbonFinder);
+      await tester.pumpAndSettle();
+
+      // Verify Studio Pro dialog appears for Forged Carbon
+      expect(find.text('TAKT DESK STUDIO PRO'), findsOneWidget);
+      expect(find.textContaining('FORGED CARBON'), findsWidgets);
+
+      // Dismiss dialog
+      await tester.tap(find.text('CANCEL'));
+      await tester.pumpAndSettle();
+      expect(find.text('TAKT DESK STUDIO PRO'), findsNothing);
+    });
 
     testWidgets('TaktSettingsSheet displays gallery counter, arrows, and page dots', (tester) async {
       final container = ProviderContainer(
@@ -482,12 +587,12 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify counter badge and arrow buttons exist
-      expect(find.textContaining('01 / 04'), findsOneWidget);
+      expect(find.textContaining('01 / 07'), findsOneWidget);
       expect(find.byKey(const ValueKey('edition_prev_button')), findsOneWidget);
       expect(find.byKey(const ValueKey('edition_next_button')), findsOneWidget);
 
-      // Verify 4 indicator dots exist
-      for (int i = 0; i < 4; i++) {
+      // Verify 7 indicator dots exist
+      for (int i = 0; i < 7; i++) {
         expect(find.byKey(ValueKey('edition_dot_$i')), findsOneWidget);
       }
 
@@ -495,13 +600,13 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('edition_next_button')));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('02 / 04'), findsOneWidget);
+      expect(find.textContaining('02 / 07'), findsOneWidget);
 
       // Tap prev button to return to page 1
       await tester.tap(find.byKey(const ValueKey('edition_prev_button')));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('01 / 04'), findsOneWidget);
+      expect(find.textContaining('01 / 07'), findsOneWidget);
     });
 
     testWidgets('Pomodoro Interval Engine steppers tune custom durations without mutating active session', (tester) async {
