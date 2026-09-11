@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/core/services/app_widget_service.dart';
 
@@ -67,4 +68,13 @@ void main() {
 
     expect(result, isFalse);
   });
+
+  test('appWidgetServiceProvider provides AppWidgetService instance', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final instance = container.read(appWidgetServiceProvider);
+    expect(instance, isA<AppWidgetService>());
+  });
 }
+

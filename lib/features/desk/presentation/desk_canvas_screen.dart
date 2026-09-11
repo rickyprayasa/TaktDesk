@@ -8,6 +8,7 @@ import '../../../app/theme/theme_controller.dart';
 import '../../../core/focus/focus_lock_controller.dart';
 import '../../../core/haptics/haptic_service.dart';
 import '../../../core/sensors/parallax_controller.dart';
+import '../../../core/services/app_widget_service.dart';
 import '../../tasks/presentation/receipt_runner_widget.dart';
 import '../../timer/presentation/chrono_dial_widget.dart';
 import '../../vinyl/presentation/vinyl_player_widget.dart';
@@ -164,6 +165,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
   Widget build(BuildContext context) {
     final theme = ref.watch(chassisThemeProvider);
     final focusState = ref.watch(focusLockProvider);
+    ref.watch(appWidgetSyncProvider);
 
     return PopScope(
       canPop: !focusState.isLocked,
