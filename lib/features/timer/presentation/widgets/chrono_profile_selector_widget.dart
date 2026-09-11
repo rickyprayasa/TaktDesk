@@ -113,11 +113,9 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
             ? null
             : () {
                 if (isActive) return;
-                // If switching to custom, preserve existing custom minutes if controller state was already custom
                 final currentState = ref.read(chronoDialProvider);
-                final targetProfile = (segment.type == PomodoroProfileType.custom &&
-                        currentState.profile.type == PomodoroProfileType.custom)
-                    ? currentState.profile
+                final targetProfile = (segment.type == PomodoroProfileType.custom)
+                    ? currentState.customProfile
                     : segment.profile;
                 ref.read(chronoDialProvider.notifier).setProfile(targetProfile);
               },

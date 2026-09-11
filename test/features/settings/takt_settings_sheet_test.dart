@@ -7,6 +7,8 @@ import 'package:takt_desk/core/audio/audio_service.dart';
 import 'package:takt_desk/core/database/app_database.dart';
 import 'package:takt_desk/features/settings/presentation/settings_controller.dart';
 import 'package:takt_desk/features/settings/presentation/takt_settings_sheet.dart';
+import 'package:takt_desk/features/timer/domain/pomodoro_profile.dart';
+import 'package:takt_desk/features/timer/presentation/chrono_dial_controller.dart';
 
 void main() {
   group('TaktSettingsSheet', () {
@@ -328,12 +330,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final ex = tester.takeException();
-      if (ex is FlutterError) {
-        // ignore: avoid_print
-        print(ex.toStringDeep());
-      }
-      expect(ex, isNull);
+      expect(tester.takeException(), isNull);
       expect(find.textContaining('SERVICE HATCH'), findsOneWidget);
     });
 
@@ -503,6 +500,112 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('01 / 04'), findsOneWidget);
+    });
+
+    testWidgets('Pomodoro Interval Engine steppers tune custom durations without mutating active session', (tester) async {
+      final testDb = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(testDb.close);
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(testDb),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: TaktSettingsSheet(),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Scroll to interval engine section
+      await tester.ensureVisible(find.byKey(const ValueKey('custom_focus_plus')));
+      await tester.pumpAndSettle();
+
+      // Verify section header and active profile label
+      expect(find.text('POMODORO INTERVAL ENGINE'), findsOneWidget);
+      expect(find.text('CLASSIC 25/5'), findsOneWidget);
+
+      // Verify default custom stepper values
+      expect(find.byKey(const ValueKey('custom_focus_value')), findsOneWidget);
+      expect(find.text('25 MIN'), findsWidgets);
+      expect(find.text('5 MIN'), findsWidgets);
+      expect(find.text('15 MIN'), findsWidgets);
+
+      // Increment Focus duration
+      await tester.tap(find.byKey(const ValueKey('custom_focus_plus')));
+      await tester.pumpAndSettle();
+      expect(find.text('26 MIN'), findsOneWidget);
+      expect(container.read(chronoDialProvider).customProfile.focusMinutes, equals(26));
+      // Active profile is classic and untouched
+      expect(container.read(chronoDialProvider).profile.type, equals(PomodoroProfileType.classic));
+      expect(container.read(chronoDialProvider).targetMinutes, equals(25));
+
+      // Decrement Focus duration
+      await tester.tap(find.byKey(const ValueKey('custom_focus_minus')));
+      await tester.pumpAndSettle();
+      expect(container.read(chronoDialProvider).customProfile.focusMinutes, equals(25));
+
+      // Increment Short Break
+      await tester.tap(find.byKey(const ValueKey('custom_short_break_plus')));
+      await tester.pumpAndSettle();
+      expect(find.text('6 MIN'), findsOneWidget);
+      expect(container.read(chronoDialProvider).customProfile.shortBreakMinutes, equals(6));
+
+      // Increment Long Break
+      await tester.ensureVisible(find.byKey(const ValueKey('custom_long_break_plus')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('custom_long_break_plus')));
+      await tester.pumpAndSettle();
+      expect(find.text('16 MIN'), findsOneWidget);
+      expect(container.read(chronoDialProvider).customProfile.longBreakMinutes, equals(16));
+    });
+
+    testWidgets('Pomodoro Interval Engine steppers are disabled while timer is running', (tester) async {
+      final testDb = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(testDb.close);
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(testDb),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      // Start the timer
+      container.read(chronoDialProvider.notifier).start();
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: TaktSettingsSheet(),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Scroll to interval engine section
+      await tester.ensureVisible(find.byKey(const ValueKey('custom_focus_plus')));
+      await tester.pumpAndSettle();
+
+      // Tap increment button while running
+      await tester.tap(find.byKey(const ValueKey('custom_focus_plus')));
+      await tester.pumpAndSettle();
+
+      // Value remains unchanged at 25 MIN
+      expect(container.read(chronoDialProvider).customProfile.focusMinutes, equals(25));
     });
   });
 }

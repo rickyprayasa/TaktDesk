@@ -218,5 +218,49 @@ void main() {
       expect(controller.state.cycleCount, 2);
       expect(controller.state.targetMinutes, 50);
     });
+
+    test('updateCustomDurations updates customProfile and leaves non-custom active session untouched', () {
+      final controller = ChronoDialController();
+      controller.setProfile(PomodoroProfile.classic);
+      expect(controller.state.targetMinutes, equals(25));
+      expect(controller.state.cycleCount, equals(1));
+
+      controller.updateCustomDurations(
+        focusMinutes: 33,
+        shortBreakMinutes: 7,
+        longBreakMinutes: 18,
+      );
+
+      // Custom profile is updated
+      expect(controller.state.customProfile.focusMinutes, equals(33));
+      expect(controller.state.customProfile.shortBreakMinutes, equals(7));
+      expect(controller.state.customProfile.longBreakMinutes, equals(18));
+
+      // Active session is still classic 25m
+      expect(controller.state.profile.type, equals(PomodoroProfileType.classic));
+      expect(controller.state.targetMinutes, equals(25));
+    });
+
+    test('updateCustomDurations updates active custom profile and clamps duration bounds', () {
+      final controller = ChronoDialController();
+      controller.setProfile(controller.state.customProfile);
+
+      // Exceed bounds: focus 120 -> 90, short break 50 -> 30, long break 60 -> 45
+      controller.updateCustomDurations(
+        focusMinutes: 120,
+        shortBreakMinutes: 50,
+        longBreakMinutes: 60,
+      );
+
+      expect(controller.state.customProfile.focusMinutes, equals(90));
+      expect(controller.state.customProfile.shortBreakMinutes, equals(30));
+      expect(controller.state.customProfile.longBreakMinutes, equals(45));
+
+      // Active profile is updated to clamped focus
+      expect(controller.state.targetMinutes, equals(90));
+      expect(controller.state.remainingSeconds, equals(90 * 60.0));
+      expect(controller.state.phase, equals(PomodoroPhase.focus));
+      expect(controller.state.cycleCount, equals(1));
+    });
   });
 }

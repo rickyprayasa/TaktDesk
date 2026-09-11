@@ -25,6 +25,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
     _sessionStartedAt = null;
     state = state.copyWith(
       profile: profile,
+      customProfile: profile.type == PomodoroProfileType.custom ? profile : state.customProfile,
       phase: PomodoroPhase.focus,
       cycleCount: 1,
       targetMinutes: profile.focusMinutes,
@@ -53,15 +54,37 @@ class ChronoDialController extends StateNotifier<TimerState> {
     int? longBreakMinutes,
   }) {
     if (state.isRunning) return;
-    final currentCustom = state.profile.type == PomodoroProfileType.custom
-        ? state.profile
-        : PomodoroProfile.custom();
-    final updated = PomodoroProfile.custom(
-      focusMinutes: focusMinutes ?? currentCustom.focusMinutes,
-      shortBreakMinutes: shortBreakMinutes ?? currentCustom.shortBreakMinutes,
-      longBreakMinutes: longBreakMinutes ?? currentCustom.longBreakMinutes,
+    final updatedCustom = PomodoroProfile.custom(
+      focusMinutes: (focusMinutes ?? state.customProfile.focusMinutes).clamp(1, 90),
+      shortBreakMinutes: (shortBreakMinutes ?? state.customProfile.shortBreakMinutes).clamp(1, 30),
+      longBreakMinutes: (longBreakMinutes ?? state.customProfile.longBreakMinutes).clamp(1, 45),
     );
-    setProfile(updated);
+
+    if (state.profile.type == PomodoroProfileType.custom) {
+      final int currentPhaseMinutes;
+      switch (state.phase) {
+        case PomodoroPhase.focus:
+          currentPhaseMinutes = updatedCustom.focusMinutes;
+          break;
+        case PomodoroPhase.shortBreak:
+          currentPhaseMinutes = updatedCustom.shortBreakMinutes;
+          break;
+        case PomodoroPhase.longBreak:
+          currentPhaseMinutes = updatedCustom.longBreakMinutes;
+          break;
+      }
+      state = state.copyWith(
+        customProfile: updatedCustom,
+        profile: updatedCustom,
+        targetMinutes: currentPhaseMinutes,
+        remainingSeconds: currentPhaseMinutes * 60.0,
+        lastTickMinute: currentPhaseMinutes,
+      );
+    } else {
+      state = state.copyWith(
+        customProfile: updatedCustom,
+      );
+    }
   }
 
   void start() {

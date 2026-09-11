@@ -9,6 +9,7 @@ class TimerState {
   final PomodoroPhase phase;
   final int cycleCount; // 1 to 4
   final PomodoroProfile profile;
+  final PomodoroProfile customProfile;
 
   const TimerState({
     required this.targetMinutes,
@@ -18,6 +19,12 @@ class TimerState {
     this.phase = PomodoroPhase.focus,
     this.cycleCount = 1,
     this.profile = PomodoroProfile.classic,
+    this.customProfile = const PomodoroProfile(
+      type: PomodoroProfileType.custom,
+      focusMinutes: 25,
+      shortBreakMinutes: 5,
+      longBreakMinutes: 15,
+    ),
   });
 
   bool get isBreak =>
@@ -35,6 +42,7 @@ class TimerState {
     PomodoroPhase? phase,
     int? cycleCount,
     PomodoroProfile? profile,
+    PomodoroProfile? customProfile,
   }) {
     return TimerState(
       targetMinutes: targetMinutes ?? this.targetMinutes,
@@ -44,6 +52,7 @@ class TimerState {
       phase: phase ?? this.phase,
       cycleCount: cycleCount ?? this.cycleCount,
       profile: profile ?? this.profile,
+      customProfile: customProfile ?? this.customProfile,
     );
   }
 }

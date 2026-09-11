@@ -69,4 +69,60 @@ void main() {
     expect(state.profile.type, equals(PomodoroProfileType.classic));
     expect(state.targetMinutes, equals(25));
   });
+
+  testWidgets('ChronoProfileSelectorWidget preserves custom intervals across preset switching', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    // Tune custom durations to 42 min focus, 8 min short break, 22 min long break
+    container.read(chronoDialProvider.notifier).updateCustomDurations(
+      focusMinutes: 42,
+      shortBreakMinutes: 8,
+      longBreakMinutes: 22,
+    );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoProfileSelectorWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Tap CUSTOM segment
+    await tester.tap(find.text('CUSTOM'));
+    await tester.pump();
+
+    var state = container.read(chronoDialProvider);
+    expect(state.profile.type, equals(PomodoroProfileType.custom));
+    expect(state.targetMinutes, equals(42));
+    expect(state.profile.focusMinutes, equals(42));
+    expect(state.profile.shortBreakMinutes, equals(8));
+    expect(state.profile.longBreakMinutes, equals(22));
+
+    // Switch to Classic
+    await tester.tap(find.text('25/5 CLS'));
+    await tester.pump();
+
+    state = container.read(chronoDialProvider);
+    expect(state.profile.type, equals(PomodoroProfileType.classic));
+    expect(state.targetMinutes, equals(25));
+
+    // Switch back to CUSTOM - should still retain 42/8/22
+    await tester.tap(find.text('CUSTOM'));
+    await tester.pump();
+
+    state = container.read(chronoDialProvider);
+    expect(state.profile.type, equals(PomodoroProfileType.custom));
+    expect(state.targetMinutes, equals(42));
+    expect(state.profile.focusMinutes, equals(42));
+    expect(state.profile.shortBreakMinutes, equals(8));
+    expect(state.profile.longBreakMinutes, equals(22));
+  });
 }

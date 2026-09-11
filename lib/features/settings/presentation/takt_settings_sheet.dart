@@ -681,7 +681,8 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final timerState = ref.watch(chronoDialProvider);
     final controller = ref.read(chronoDialProvider.notifier);
-    final profile = timerState.profile;
+    final activeProfile = timerState.profile;
+    final customProfile = timerState.customProfile;
     final isRunning = timerState.isRunning;
 
     return Column(
@@ -720,7 +721,7 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
                     ),
                   ),
                   Text(
-                    profile.type.label,
+                    activeProfile.type.label,
                     style: const TextStyle(
                       fontFamily: 'monospace',
                       fontSize: 11,
@@ -737,18 +738,18 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
               // Stepper 1: Focus Duration
               _buildStepperRow(
                 title: 'FOCUS DURATION',
-                subtitle: 'Work interval (1 – 90 min)',
-                value: '${profile.focusMinutes} MIN',
+                subtitle: 'Custom work interval (1 – 90 min)',
+                value: '${customProfile.focusMinutes} MIN',
                 valueKey: const ValueKey('custom_focus_value'),
                 minusKey: const ValueKey('custom_focus_minus'),
                 plusKey: const ValueKey('custom_focus_plus'),
-                canDecrement: !isRunning && profile.focusMinutes > 1,
-                canIncrement: !isRunning && profile.focusMinutes < 90,
+                canDecrement: !isRunning && customProfile.focusMinutes > 1,
+                canIncrement: !isRunning && customProfile.focusMinutes < 90,
                 onDecrement: () => controller.updateCustomDurations(
-                  focusMinutes: profile.focusMinutes - 1,
+                  focusMinutes: customProfile.focusMinutes - 1,
                 ),
                 onIncrement: () => controller.updateCustomDurations(
-                  focusMinutes: profile.focusMinutes + 1,
+                  focusMinutes: customProfile.focusMinutes + 1,
                 ),
                 primaryTextColor: primaryTextColor,
                 secondaryTextColor: secondaryTextColor,
@@ -759,18 +760,18 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
               // Stepper 2: Short Break
               _buildStepperRow(
                 title: 'SHORT BREAK',
-                subtitle: 'Cycle rest interval (1 – 30 min)',
-                value: '${profile.shortBreakMinutes} MIN',
+                subtitle: 'Custom cycle rest (1 – 30 min)',
+                value: '${customProfile.shortBreakMinutes} MIN',
                 valueKey: const ValueKey('custom_short_break_value'),
                 minusKey: const ValueKey('custom_short_break_minus'),
                 plusKey: const ValueKey('custom_short_break_plus'),
-                canDecrement: !isRunning && profile.shortBreakMinutes > 1,
-                canIncrement: !isRunning && profile.shortBreakMinutes < 30,
+                canDecrement: !isRunning && customProfile.shortBreakMinutes > 1,
+                canIncrement: !isRunning && customProfile.shortBreakMinutes < 30,
                 onDecrement: () => controller.updateCustomDurations(
-                  shortBreakMinutes: profile.shortBreakMinutes - 1,
+                  shortBreakMinutes: customProfile.shortBreakMinutes - 1,
                 ),
                 onIncrement: () => controller.updateCustomDurations(
-                  shortBreakMinutes: profile.shortBreakMinutes + 1,
+                  shortBreakMinutes: customProfile.shortBreakMinutes + 1,
                 ),
                 primaryTextColor: primaryTextColor,
                 secondaryTextColor: secondaryTextColor,
@@ -781,18 +782,18 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
               // Stepper 3: Long Break
               _buildStepperRow(
                 title: 'LONG BREAK',
-                subtitle: '4th cycle recovery (1 – 45 min)',
-                value: '${profile.longBreakMinutes} MIN',
+                subtitle: 'Custom 4th cycle recovery (1 – 45 min)',
+                value: '${customProfile.longBreakMinutes} MIN',
                 valueKey: const ValueKey('custom_long_break_value'),
                 minusKey: const ValueKey('custom_long_break_minus'),
                 plusKey: const ValueKey('custom_long_break_plus'),
-                canDecrement: !isRunning && profile.longBreakMinutes > 1,
-                canIncrement: !isRunning && profile.longBreakMinutes < 45,
+                canDecrement: !isRunning && customProfile.longBreakMinutes > 1,
+                canIncrement: !isRunning && customProfile.longBreakMinutes < 45,
                 onDecrement: () => controller.updateCustomDurations(
-                  longBreakMinutes: profile.longBreakMinutes - 1,
+                  longBreakMinutes: customProfile.longBreakMinutes - 1,
                 ),
                 onIncrement: () => controller.updateCustomDurations(
-                  longBreakMinutes: profile.longBreakMinutes + 1,
+                  longBreakMinutes: customProfile.longBreakMinutes + 1,
                 ),
                 primaryTextColor: primaryTextColor,
                 secondaryTextColor: secondaryTextColor,
