@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.Build
@@ -76,8 +77,11 @@ class TimerForegroundService : Service() {
     ) {
         cancelScheduledCompletion()
 
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+        notificationManager?.cancel(ALERT_NOTIFICATION_ID)
+
         val remainingMillis = (remainingSeconds * 1000).toLong()
-        val baseTime = SystemClock.elapsedRealtime() + remainingMillis
+        val targetTime = System.currentTimeMillis() + remainingMillis
 
         val title = formatTitle(phase, cycleCount)
         val content = "$targetMinutes MIN · $profileName"
@@ -101,13 +105,27 @@ class TimerForegroundService : Service() {
             .setShowWhen(true)
             .setUsesChronometer(true)
             .setChronometerCountDown(true)
-            .setWhen(baseTime)
+            .setWhen(targetTime)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(pendingIntent)
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .build()
 
-        startForeground(NOTIFICATION_ID, notification)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(
+                NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            )
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(
+                NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            )
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
 
         // Schedule completion alarm
         if (remainingMillis > 0) {
@@ -188,20 +206,21 @@ class TimerForegroundService : Service() {
     private fun playBellChime() {
         try {
             bellPlayer?.release()
-            val afd = assets.openFd("flutter_assets/assets/audio/foley_bell_chime.wav")
-            bellPlayer = MediaPlayer().apply {
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build()
-                )
-                setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
-                prepare()
-                start()
-                setOnCompletionListener {
-                    it.release()
-                    bellPlayer = null
+            assets.openFd("flutter_assets/assets/audio/foley_bell_chime.wav").use { afd ->
+                bellPlayer = MediaPlayer().apply {
+                    setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ALARM)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build()
+                    )
+                    setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                    prepare()
+                    start()
+                    setOnCompletionListener {
+                        it.release()
+                        bellPlayer = null
+                    }
                 }
             }
         } catch (_: Exception) {}
@@ -270,6 +289,8 @@ class TimerForegroundService : Service() {
 
     override fun onDestroy() {
         cancelScheduledCompletion()
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+        manager?.cancel(NOTIFICATION_ID)
         bellPlayer?.release()
         bellPlayer = null
         wakeLock?.let {

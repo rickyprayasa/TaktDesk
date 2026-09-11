@@ -186,10 +186,10 @@ class MainActivity : FlutterActivity() {
             when (call.method) {
                 "startService" -> {
                     try {
-                        val remainingSeconds = call.argument<Double>("remainingSeconds") ?: 0.0
-                        val targetMinutes = call.argument<Int>("targetMinutes") ?: 25
+                        val remainingSeconds = (call.argument<Number>("remainingSeconds"))?.toDouble() ?: 0.0
+                        val targetMinutes = (call.argument<Number>("targetMinutes"))?.toInt() ?: 25
                         val phase = call.argument<String>("phase") ?: "focus"
-                        val cycleCount = call.argument<Int>("cycleCount") ?: 1
+                        val cycleCount = (call.argument<Number>("cycleCount"))?.toInt() ?: 1
                         val profileName = call.argument<String>("profileName") ?: "CLASSIC 25/5"
 
                         val serviceIntent = Intent(this, TimerForegroundService::class.java).apply {
