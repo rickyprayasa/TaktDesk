@@ -47,8 +47,15 @@ void main() {
         chassisColor: Colors.black,
       );
 
+      const painter4 = MaterialTexturePainter(
+        textureType: HardwareTextureType.organicWalnut,
+        isDark: true,
+        chassisColor: Colors.white,
+      );
+
       expect(painter1.shouldRepaint(painter2), isTrue);
       expect(painter1.shouldRepaint(painter3), isTrue);
+      expect(painter1.shouldRepaint(painter4), isTrue);
       expect(painter1.shouldRepaint(painter1), isFalse);
     });
   });

@@ -195,20 +195,26 @@ class MaterialTexturePainter extends CustomPainter {
       ..strokeWidth = 0.6
       ..style = PaintingStyle.stroke;
 
+    final heartwoodPath = Path();
+    final sapwoodPath = Path();
+
     const double step = 3.2;
     for (double y = 1.0; y < size.height; y += step) {
       final isHeartwood = (y ~/ step) % 2 == 0;
-      final path = Path();
-      path.moveTo(0, y);
+      final targetPath = isHeartwood ? heartwoodPath : sapwoodPath;
+      targetPath.moveTo(0, y);
 
-      // Sinusoidal grain path with variable frequency
-      for (double x = 0; x <= size.width; x += 6.0) {
-        final wave = math.sin(x * 0.018) * 2.2 + math.sin(x * 0.045) * 1.1;
-        path.lineTo(x, (y + wave).clamp(0.0, size.height));
+      // Sinusoidal grain path with variable frequency extending across right edge
+      for (double x = 0; x <= size.width + 6.0; x += 6.0) {
+        final curX = math.min(x, size.width);
+        final wave = math.sin(curX * 0.018) * 2.2 + math.sin(curX * 0.045) * 1.1;
+        targetPath.lineTo(curX, (y + wave).clamp(0.0, size.height));
+        if (curX >= size.width) break;
       }
-
-      canvas.drawPath(path, isHeartwood ? heartwoodPaint : sapwoodPaint);
     }
+
+    canvas.drawPath(heartwoodPath, heartwoodPaint);
+    canvas.drawPath(sapwoodPath, sapwoodPaint);
 
     // 2. Micro-pore wood vessel stippling
     final vesselPaint = Paint()
@@ -275,35 +281,37 @@ class MaterialTexturePainter extends CustomPainter {
       ..color = Colors.black.withValues(alpha: isDark ? 0.16 : 0.10)
       ..style = PaintingStyle.fill;
 
+    final highlightPath = Path();
+    final darkAbsorbPath = Path();
+
     const double flakeW = 16.0;
     const double flakeH = 8.0;
 
     for (double y = 0; y < size.height; y += flakeH) {
       final row = (y / flakeH).toInt();
       final xOffset = (row % 2 == 1) ? flakeW * 0.5 : 0.0;
-      for (double x = xOffset; x < size.width; x += flakeW) {
-        final hash = (x.toInt() * 13 + y.toInt() * 37) % 5;
+      for (double x = xOffset - flakeW; x < size.width; x += flakeW) {
+        final hash = (x.toInt().abs() * 13 + y.toInt().abs() * 37) % 5;
         if (hash == 0) {
           // Highlight flake
-          final flakePath = Path()
-            ..moveTo(x, y + 2)
-            ..lineTo(x + flakeW - 2, y)
-            ..lineTo(x + flakeW, y + flakeH - 2)
-            ..lineTo(x + 2, y + flakeH)
-            ..close();
-          canvas.drawPath(flakePath, highlightPaint);
+          highlightPath.moveTo(x, y + 2);
+          highlightPath.lineTo(x + flakeW - 2, y);
+          highlightPath.lineTo(x + flakeW, y + flakeH - 2);
+          highlightPath.lineTo(x + 2, y + flakeH);
+          highlightPath.close();
         } else if (hash == 1 || hash == 2) {
           // Dark absorbing flake
-          final flakePath = Path()
-            ..moveTo(x + 1, y)
-            ..lineTo(x + flakeW, y + 3)
-            ..lineTo(x + flakeW - 3, y + flakeH)
-            ..lineTo(x, y + flakeH - 1)
-            ..close();
-          canvas.drawPath(flakePath, darkAbsorbPaint);
+          darkAbsorbPath.moveTo(x + 1, y);
+          darkAbsorbPath.lineTo(x + flakeW, y + 3);
+          darkAbsorbPath.lineTo(x + flakeW - 3, y + flakeH);
+          darkAbsorbPath.lineTo(x, y + flakeH - 1);
+          darkAbsorbPath.close();
         }
       }
     }
+
+    canvas.drawPath(highlightPath, highlightPaint);
+    canvas.drawPath(darkAbsorbPath, darkAbsorbPaint);
 
     // 2. Anisotropic diagonal sheen
     final sheenPaint = Paint()
