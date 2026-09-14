@@ -6,6 +6,7 @@ import 'chrono_dial_controller.dart';
 import 'chrono_dial_painter.dart';
 import 'widgets/crown_push_button.dart';
 import 'widgets/chrono_profile_selector_widget.dart';
+import 'widgets/mechanical_flip_digit.dart';
 import '../../desk/presentation/widgets/monastic_switch_widget.dart';
 import '../../../app/theme/hardware_edition.dart';
 import '../../../app/theme/takt_colors.dart';
@@ -226,6 +227,24 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                         );
                       },
                     ),
+                  ),
+                ),
+              ),
+              // Sub-dial Mechanical Odometer Aperture (Integrated inside dial face at 6 o'clock)
+              Positioned(
+                top: 14 + 148,
+                child: IgnorePointer(
+                  child: ValueListenableBuilder<double>(
+                    valueListenable: _remainingSecondsNotifier,
+                    builder: (context, seconds, _) {
+                      final m = (seconds / 60).floor();
+                      final s = (seconds % 60).floor();
+                      return MechanicalCounterDisplay(
+                        minutes: m,
+                        seconds: s,
+                        isDialInset: true,
+                      );
+                    },
                   ),
                 ),
               ),

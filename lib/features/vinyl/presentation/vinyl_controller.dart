@@ -101,14 +101,21 @@ class VinylController extends StateNotifier<VinylState> {
   }
 
   void toggleDrawer() {
-    state = state.copyWith(isDrawerOpen: !state.isDrawerOpen);
+    final nextOpen = !state.isDrawerOpen;
+    state = state.copyWith(isDrawerOpen: nextOpen);
     HapticService.selectionClick();
+    _audioService?.playFoley(
+      nextOpen ? SoundEffect.drawerSlide : SoundEffect.drawerLatch,
+    );
   }
 
   void setDrawerOpen(bool open) {
     if (state.isDrawerOpen != open) {
       state = state.copyWith(isDrawerOpen: open);
       HapticService.selectionClick();
+      _audioService?.playFoley(
+        open ? SoundEffect.drawerSlide : SoundEffect.drawerLatch,
+      );
     }
   }
 }

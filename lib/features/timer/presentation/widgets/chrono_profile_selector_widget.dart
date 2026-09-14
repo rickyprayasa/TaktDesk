@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/pomodoro_phase.dart';
 import '../../domain/pomodoro_profile.dart';
 import '../chrono_dial_controller.dart';
-import 'mechanical_flip_digit.dart';
 import '../../../../app/theme/takt_colors.dart';
 import '../../../../app/theme/theme_controller.dart';
 
@@ -61,9 +60,6 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
 
     final activeColor = timerState.isBreak ? TaktColors.patinaOlive : themeState.filamentColor;
     final inactiveLedColor = isDark ? const Color(0xFF22252A) : const Color(0xFFC0BCB2);
-
-    final effectiveMinutes = remainingMinutes ?? (timerState.remainingSeconds / 60).floor();
-    final effectiveSeconds = seconds ?? (timerState.remainingSeconds % 60).toInt();
 
     Color phaseLedColor;
     switch (timerState.phase) {
@@ -147,10 +143,29 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 4),
-                // Center: Mechanical Counter Display (MM:SS)
-                MechanicalCounterDisplay(
-                  minutes: effectiveMinutes,
-                  seconds: effectiveSeconds,
+                // Center: Telemetry Status Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF101214),
+                    borderRadius: BorderRadius.circular(3.0),
+                    border: Border.all(
+                      color: themeState.borderColor.withValues(alpha: 0.6),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Text(
+                    timerState.isRunning ? 'RUNNING // SEC-ROLL' : 'STANDBY // READY',
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
+                      color: timerState.isRunning
+                          ? themeState.filamentColor
+                          : themeState.chassisTextColor.withValues(alpha: 0.65),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 4),
                 // Right: Cycle Indicator

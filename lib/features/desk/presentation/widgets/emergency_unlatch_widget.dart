@@ -36,7 +36,6 @@ class _EmergencyUnlatchWidgetState extends ConsumerState<EmergencyUnlatchWidget>
       final currentTick = (progress * 10).floor();
       if (currentTick != _lastTickSecond && currentTick > 0 && currentTick < 10) {
         _lastTickSecond = currentTick;
-        ref.read(audioServiceProvider).play(SoundEffect.dialClick);
         HapticService.lightClick();
       }
     });
@@ -44,6 +43,8 @@ class _EmergencyUnlatchWidgetState extends ConsumerState<EmergencyUnlatchWidget>
     _holdController.addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) {
         _isCompleted = true;
+        ref.read(audioServiceProvider).play(SoundEffect.switchClick);
+        HapticService.heavyClick();
         ref.read(focusLockProvider.notifier).completeUnlock();
         _holdController.reset();
       }
