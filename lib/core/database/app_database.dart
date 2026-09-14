@@ -25,7 +25,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -36,6 +36,14 @@ class AppDatabase extends _$AppDatabase {
           if (from < 2) {
             await m.addColumn(deskPreferences, deskPreferences.selectedEdition);
             await m.addColumn(deskPreferences, deskPreferences.isProSimulated);
+          }
+          if (from < 3) {
+            await m.addColumn(deskPreferences, deskPreferences.primaryVolume);
+            await m.addColumn(deskPreferences, deskPreferences.crackleVolume);
+            await m.addColumn(deskPreferences, deskPreferences.binauralVolume);
+            await m.addColumn(deskPreferences, deskPreferences.primaryMuted);
+            await m.addColumn(deskPreferences, deskPreferences.crackleMuted);
+            await m.addColumn(deskPreferences, deskPreferences.binauralMuted);
           }
         },
       );
@@ -142,8 +150,54 @@ class AppDatabase extends _$AppDatabase {
     return delete(timerSessions).go();
   }
 
+  Future<DeskPreference?> getDeskPreferences() {
+    return (select(deskPreferences)..limit(1)).getSingleOrNull();
+  }
+
   Stream<DeskPreference?> watchPreferences() {
     return (select(deskPreferences)..limit(1)).watchSingleOrNull();
+  }
+
+  Future<void> updateDeskPreferences({
+    double? soundVolume,
+    bool? parallaxEnabled,
+    int? activeAmbientTrackIndex,
+    bool? foleyEnabled,
+    bool? hapticsEnabled,
+    String? selectedEdition,
+    bool? isProSimulated,
+    double? primaryVolume,
+    double? crackleVolume,
+    double? binauralVolume,
+    bool? primaryMuted,
+    bool? crackleMuted,
+    bool? binauralMuted,
+  }) {
+    return transaction(() async {
+      final existing = await (select(deskPreferences)..limit(1)).getSingleOrNull();
+      final companion = DeskPreferencesCompanion(
+        soundVolume: soundVolume != null ? Value(soundVolume) : const Value.absent(),
+        parallaxEnabled: parallaxEnabled != null ? Value(parallaxEnabled) : const Value.absent(),
+        activeAmbientTrackIndex:
+            activeAmbientTrackIndex != null ? Value(activeAmbientTrackIndex) : const Value.absent(),
+        foleyEnabled: foleyEnabled != null ? Value(foleyEnabled) : const Value.absent(),
+        hapticsEnabled: hapticsEnabled != null ? Value(hapticsEnabled) : const Value.absent(),
+        selectedEdition: selectedEdition != null ? Value(selectedEdition) : const Value.absent(),
+        isProSimulated: isProSimulated != null ? Value(isProSimulated) : const Value.absent(),
+        primaryVolume: primaryVolume != null ? Value(primaryVolume) : const Value.absent(),
+        crackleVolume: crackleVolume != null ? Value(crackleVolume) : const Value.absent(),
+        binauralVolume: binauralVolume != null ? Value(binauralVolume) : const Value.absent(),
+        primaryMuted: primaryMuted != null ? Value(primaryMuted) : const Value.absent(),
+        crackleMuted: crackleMuted != null ? Value(crackleMuted) : const Value.absent(),
+        binauralMuted: binauralMuted != null ? Value(binauralMuted) : const Value.absent(),
+      );
+
+      if (existing == null) {
+        await into(deskPreferences).insert(companion);
+      } else {
+        await (update(deskPreferences)..where((t) => t.id.equals(existing.id))).write(companion);
+      }
+    });
   }
 
   Future<void> updatePreferences({
@@ -154,25 +208,28 @@ class AppDatabase extends _$AppDatabase {
     bool? hapticsEnabled,
     String? selectedEdition,
     bool? isProSimulated,
-  }) async {
-    final existing = await (select(deskPreferences)..limit(1)).getSingleOrNull();
-    final companion = DeskPreferencesCompanion(
-      soundVolume: soundVolume != null ? Value(soundVolume) : const Value.absent(),
-      parallaxEnabled: parallaxEnabled != null ? Value(parallaxEnabled) : const Value.absent(),
-      activeAmbientTrackIndex:
-          activeAmbientTrackIndex != null ? Value(activeAmbientTrackIndex) : const Value.absent(),
-      foleyEnabled: foleyEnabled != null ? Value(foleyEnabled) : const Value.absent(),
-      hapticsEnabled: hapticsEnabled != null ? Value(hapticsEnabled) : const Value.absent(),
-      selectedEdition: selectedEdition != null ? Value(selectedEdition) : const Value.absent(),
-      isProSimulated: isProSimulated != null ? Value(isProSimulated) : const Value.absent(),
-    );
-
-    if (existing == null) {
-      await into(deskPreferences).insert(companion);
-    } else {
-      await (update(deskPreferences)..where((t) => t.id.equals(existing.id))).write(companion);
-    }
-  }
+    double? primaryVolume,
+    double? crackleVolume,
+    double? binauralVolume,
+    bool? primaryMuted,
+    bool? crackleMuted,
+    bool? binauralMuted,
+  }) =>
+      updateDeskPreferences(
+        soundVolume: soundVolume,
+        parallaxEnabled: parallaxEnabled,
+        activeAmbientTrackIndex: activeAmbientTrackIndex,
+        foleyEnabled: foleyEnabled,
+        hapticsEnabled: hapticsEnabled,
+        selectedEdition: selectedEdition,
+        isProSimulated: isProSimulated,
+        primaryVolume: primaryVolume,
+        crackleVolume: crackleVolume,
+        binauralVolume: binauralVolume,
+        primaryMuted: primaryMuted,
+        crackleMuted: crackleMuted,
+        binauralMuted: binauralMuted,
+      );
 }
 
 LazyDatabase _openConnection() {

@@ -189,4 +189,34 @@ void main() {
     expect(updatedPref!.selectedEdition, equals('titaniumStealth'));
     expect(updatedPref.isProSimulated, isFalse);
   });
+
+  test('can persist and update soundscape mixer channels in desk preferences', () async {
+    await db.into(db.deskPreferences).insert(
+      const DeskPreferencesCompanion(),
+    );
+    final initialPref = await db.watchPreferences().first;
+    expect(initialPref!.primaryVolume, equals(0.80));
+    expect(initialPref.crackleVolume, equals(0.35));
+    expect(initialPref.binauralVolume, equals(0.25));
+    expect(initialPref.primaryMuted, isFalse);
+    expect(initialPref.crackleMuted, isFalse);
+    expect(initialPref.binauralMuted, isFalse);
+
+    await db.updateDeskPreferences(
+      primaryVolume: 0.60,
+      crackleVolume: 0.20,
+      binauralVolume: 0.15,
+      primaryMuted: false,
+      crackleMuted: true,
+      binauralMuted: false,
+    );
+
+    final updatedPref = await db.getDeskPreferences();
+    expect(updatedPref!.primaryVolume, equals(0.60));
+    expect(updatedPref.crackleVolume, equals(0.20));
+    expect(updatedPref.binauralVolume, equals(0.15));
+    expect(updatedPref.primaryMuted, isFalse);
+    expect(updatedPref.crackleMuted, isTrue);
+    expect(updatedPref.binauralMuted, isFalse);
+  });
 }

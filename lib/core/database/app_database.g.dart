@@ -819,6 +819,60 @@ class $DeskPreferencesTable extends DeskPreferences
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'CHECK ("is_pro_simulated" IN (0, 1))'),
       defaultValue: const Constant(true));
+  static const VerificationMeta _primaryVolumeMeta =
+      const VerificationMeta('primaryVolume');
+  @override
+  late final GeneratedColumn<double> primaryVolume = GeneratedColumn<double>(
+      'primary_volume', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.80));
+  static const VerificationMeta _crackleVolumeMeta =
+      const VerificationMeta('crackleVolume');
+  @override
+  late final GeneratedColumn<double> crackleVolume = GeneratedColumn<double>(
+      'crackle_volume', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.35));
+  static const VerificationMeta _binauralVolumeMeta =
+      const VerificationMeta('binauralVolume');
+  @override
+  late final GeneratedColumn<double> binauralVolume = GeneratedColumn<double>(
+      'binaural_volume', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.25));
+  static const VerificationMeta _primaryMutedMeta =
+      const VerificationMeta('primaryMuted');
+  @override
+  late final GeneratedColumn<bool> primaryMuted = GeneratedColumn<bool>(
+      'primary_muted', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("primary_muted" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _crackleMutedMeta =
+      const VerificationMeta('crackleMuted');
+  @override
+  late final GeneratedColumn<bool> crackleMuted = GeneratedColumn<bool>(
+      'crackle_muted', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("crackle_muted" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _binauralMutedMeta =
+      const VerificationMeta('binauralMuted');
+  @override
+  late final GeneratedColumn<bool> binauralMuted = GeneratedColumn<bool>(
+      'binaural_muted', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("binaural_muted" IN (0, 1))'),
+      defaultValue: const Constant(false));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -828,7 +882,13 @@ class $DeskPreferencesTable extends DeskPreferences
         foleyEnabled,
         hapticsEnabled,
         selectedEdition,
-        isProSimulated
+        isProSimulated,
+        primaryVolume,
+        crackleVolume,
+        binauralVolume,
+        primaryMuted,
+        crackleMuted,
+        binauralMuted
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -886,6 +946,42 @@ class $DeskPreferencesTable extends DeskPreferences
           isProSimulated.isAcceptableOrUnknown(
               data['is_pro_simulated']!, _isProSimulatedMeta));
     }
+    if (data.containsKey('primary_volume')) {
+      context.handle(
+          _primaryVolumeMeta,
+          primaryVolume.isAcceptableOrUnknown(
+              data['primary_volume']!, _primaryVolumeMeta));
+    }
+    if (data.containsKey('crackle_volume')) {
+      context.handle(
+          _crackleVolumeMeta,
+          crackleVolume.isAcceptableOrUnknown(
+              data['crackle_volume']!, _crackleVolumeMeta));
+    }
+    if (data.containsKey('binaural_volume')) {
+      context.handle(
+          _binauralVolumeMeta,
+          binauralVolume.isAcceptableOrUnknown(
+              data['binaural_volume']!, _binauralVolumeMeta));
+    }
+    if (data.containsKey('primary_muted')) {
+      context.handle(
+          _primaryMutedMeta,
+          primaryMuted.isAcceptableOrUnknown(
+              data['primary_muted']!, _primaryMutedMeta));
+    }
+    if (data.containsKey('crackle_muted')) {
+      context.handle(
+          _crackleMutedMeta,
+          crackleMuted.isAcceptableOrUnknown(
+              data['crackle_muted']!, _crackleMutedMeta));
+    }
+    if (data.containsKey('binaural_muted')) {
+      context.handle(
+          _binauralMutedMeta,
+          binauralMuted.isAcceptableOrUnknown(
+              data['binaural_muted']!, _binauralMutedMeta));
+    }
     return context;
   }
 
@@ -912,6 +1008,18 @@ class $DeskPreferencesTable extends DeskPreferences
           DriftSqlType.string, data['${effectivePrefix}selected_edition'])!,
       isProSimulated: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}is_pro_simulated'])!,
+      primaryVolume: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}primary_volume'])!,
+      crackleVolume: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}crackle_volume'])!,
+      binauralVolume: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}binaural_volume'])!,
+      primaryMuted: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}primary_muted'])!,
+      crackleMuted: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}crackle_muted'])!,
+      binauralMuted: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}binaural_muted'])!,
     );
   }
 
@@ -930,6 +1038,12 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
   final bool hapticsEnabled;
   final String selectedEdition;
   final bool isProSimulated;
+  final double primaryVolume;
+  final double crackleVolume;
+  final double binauralVolume;
+  final bool primaryMuted;
+  final bool crackleMuted;
+  final bool binauralMuted;
   const DeskPreference(
       {required this.id,
       required this.soundVolume,
@@ -938,7 +1052,13 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       required this.foleyEnabled,
       required this.hapticsEnabled,
       required this.selectedEdition,
-      required this.isProSimulated});
+      required this.isProSimulated,
+      required this.primaryVolume,
+      required this.crackleVolume,
+      required this.binauralVolume,
+      required this.primaryMuted,
+      required this.crackleMuted,
+      required this.binauralMuted});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -950,6 +1070,12 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
     map['haptics_enabled'] = Variable<bool>(hapticsEnabled);
     map['selected_edition'] = Variable<String>(selectedEdition);
     map['is_pro_simulated'] = Variable<bool>(isProSimulated);
+    map['primary_volume'] = Variable<double>(primaryVolume);
+    map['crackle_volume'] = Variable<double>(crackleVolume);
+    map['binaural_volume'] = Variable<double>(binauralVolume);
+    map['primary_muted'] = Variable<bool>(primaryMuted);
+    map['crackle_muted'] = Variable<bool>(crackleMuted);
+    map['binaural_muted'] = Variable<bool>(binauralMuted);
     return map;
   }
 
@@ -963,6 +1089,12 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       hapticsEnabled: Value(hapticsEnabled),
       selectedEdition: Value(selectedEdition),
       isProSimulated: Value(isProSimulated),
+      primaryVolume: Value(primaryVolume),
+      crackleVolume: Value(crackleVolume),
+      binauralVolume: Value(binauralVolume),
+      primaryMuted: Value(primaryMuted),
+      crackleMuted: Value(crackleMuted),
+      binauralMuted: Value(binauralMuted),
     );
   }
 
@@ -979,6 +1111,12 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       hapticsEnabled: serializer.fromJson<bool>(json['hapticsEnabled']),
       selectedEdition: serializer.fromJson<String>(json['selectedEdition']),
       isProSimulated: serializer.fromJson<bool>(json['isProSimulated']),
+      primaryVolume: serializer.fromJson<double>(json['primaryVolume']),
+      crackleVolume: serializer.fromJson<double>(json['crackleVolume']),
+      binauralVolume: serializer.fromJson<double>(json['binauralVolume']),
+      primaryMuted: serializer.fromJson<bool>(json['primaryMuted']),
+      crackleMuted: serializer.fromJson<bool>(json['crackleMuted']),
+      binauralMuted: serializer.fromJson<bool>(json['binauralMuted']),
     );
   }
   @override
@@ -994,6 +1132,12 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       'hapticsEnabled': serializer.toJson<bool>(hapticsEnabled),
       'selectedEdition': serializer.toJson<String>(selectedEdition),
       'isProSimulated': serializer.toJson<bool>(isProSimulated),
+      'primaryVolume': serializer.toJson<double>(primaryVolume),
+      'crackleVolume': serializer.toJson<double>(crackleVolume),
+      'binauralVolume': serializer.toJson<double>(binauralVolume),
+      'primaryMuted': serializer.toJson<bool>(primaryMuted),
+      'crackleMuted': serializer.toJson<bool>(crackleMuted),
+      'binauralMuted': serializer.toJson<bool>(binauralMuted),
     };
   }
 
@@ -1005,7 +1149,13 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           bool? foleyEnabled,
           bool? hapticsEnabled,
           String? selectedEdition,
-          bool? isProSimulated}) =>
+          bool? isProSimulated,
+          double? primaryVolume,
+          double? crackleVolume,
+          double? binauralVolume,
+          bool? primaryMuted,
+          bool? crackleMuted,
+          bool? binauralMuted}) =>
       DeskPreference(
         id: id ?? this.id,
         soundVolume: soundVolume ?? this.soundVolume,
@@ -1016,6 +1166,12 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
         hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
         selectedEdition: selectedEdition ?? this.selectedEdition,
         isProSimulated: isProSimulated ?? this.isProSimulated,
+        primaryVolume: primaryVolume ?? this.primaryVolume,
+        crackleVolume: crackleVolume ?? this.crackleVolume,
+        binauralVolume: binauralVolume ?? this.binauralVolume,
+        primaryMuted: primaryMuted ?? this.primaryMuted,
+        crackleMuted: crackleMuted ?? this.crackleMuted,
+        binauralMuted: binauralMuted ?? this.binauralMuted,
       );
   DeskPreference copyWithCompanion(DeskPreferencesCompanion data) {
     return DeskPreference(
@@ -1040,6 +1196,24 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       isProSimulated: data.isProSimulated.present
           ? data.isProSimulated.value
           : this.isProSimulated,
+      primaryVolume: data.primaryVolume.present
+          ? data.primaryVolume.value
+          : this.primaryVolume,
+      crackleVolume: data.crackleVolume.present
+          ? data.crackleVolume.value
+          : this.crackleVolume,
+      binauralVolume: data.binauralVolume.present
+          ? data.binauralVolume.value
+          : this.binauralVolume,
+      primaryMuted: data.primaryMuted.present
+          ? data.primaryMuted.value
+          : this.primaryMuted,
+      crackleMuted: data.crackleMuted.present
+          ? data.crackleMuted.value
+          : this.crackleMuted,
+      binauralMuted: data.binauralMuted.present
+          ? data.binauralMuted.value
+          : this.binauralMuted,
     );
   }
 
@@ -1053,7 +1227,13 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           ..write('foleyEnabled: $foleyEnabled, ')
           ..write('hapticsEnabled: $hapticsEnabled, ')
           ..write('selectedEdition: $selectedEdition, ')
-          ..write('isProSimulated: $isProSimulated')
+          ..write('isProSimulated: $isProSimulated, ')
+          ..write('primaryVolume: $primaryVolume, ')
+          ..write('crackleVolume: $crackleVolume, ')
+          ..write('binauralVolume: $binauralVolume, ')
+          ..write('primaryMuted: $primaryMuted, ')
+          ..write('crackleMuted: $crackleMuted, ')
+          ..write('binauralMuted: $binauralMuted')
           ..write(')'))
         .toString();
   }
@@ -1067,7 +1247,13 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       foleyEnabled,
       hapticsEnabled,
       selectedEdition,
-      isProSimulated);
+      isProSimulated,
+      primaryVolume,
+      crackleVolume,
+      binauralVolume,
+      primaryMuted,
+      crackleMuted,
+      binauralMuted);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1079,7 +1265,13 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           other.foleyEnabled == this.foleyEnabled &&
           other.hapticsEnabled == this.hapticsEnabled &&
           other.selectedEdition == this.selectedEdition &&
-          other.isProSimulated == this.isProSimulated);
+          other.isProSimulated == this.isProSimulated &&
+          other.primaryVolume == this.primaryVolume &&
+          other.crackleVolume == this.crackleVolume &&
+          other.binauralVolume == this.binauralVolume &&
+          other.primaryMuted == this.primaryMuted &&
+          other.crackleMuted == this.crackleMuted &&
+          other.binauralMuted == this.binauralMuted);
 }
 
 class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
@@ -1091,6 +1283,12 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
   final Value<bool> hapticsEnabled;
   final Value<String> selectedEdition;
   final Value<bool> isProSimulated;
+  final Value<double> primaryVolume;
+  final Value<double> crackleVolume;
+  final Value<double> binauralVolume;
+  final Value<bool> primaryMuted;
+  final Value<bool> crackleMuted;
+  final Value<bool> binauralMuted;
   const DeskPreferencesCompanion({
     this.id = const Value.absent(),
     this.soundVolume = const Value.absent(),
@@ -1100,6 +1298,12 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     this.hapticsEnabled = const Value.absent(),
     this.selectedEdition = const Value.absent(),
     this.isProSimulated = const Value.absent(),
+    this.primaryVolume = const Value.absent(),
+    this.crackleVolume = const Value.absent(),
+    this.binauralVolume = const Value.absent(),
+    this.primaryMuted = const Value.absent(),
+    this.crackleMuted = const Value.absent(),
+    this.binauralMuted = const Value.absent(),
   });
   DeskPreferencesCompanion.insert({
     this.id = const Value.absent(),
@@ -1110,6 +1314,12 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     this.hapticsEnabled = const Value.absent(),
     this.selectedEdition = const Value.absent(),
     this.isProSimulated = const Value.absent(),
+    this.primaryVolume = const Value.absent(),
+    this.crackleVolume = const Value.absent(),
+    this.binauralVolume = const Value.absent(),
+    this.primaryMuted = const Value.absent(),
+    this.crackleMuted = const Value.absent(),
+    this.binauralMuted = const Value.absent(),
   });
   static Insertable<DeskPreference> custom({
     Expression<int>? id,
@@ -1120,6 +1330,12 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     Expression<bool>? hapticsEnabled,
     Expression<String>? selectedEdition,
     Expression<bool>? isProSimulated,
+    Expression<double>? primaryVolume,
+    Expression<double>? crackleVolume,
+    Expression<double>? binauralVolume,
+    Expression<bool>? primaryMuted,
+    Expression<bool>? crackleMuted,
+    Expression<bool>? binauralMuted,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1131,6 +1347,12 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       if (hapticsEnabled != null) 'haptics_enabled': hapticsEnabled,
       if (selectedEdition != null) 'selected_edition': selectedEdition,
       if (isProSimulated != null) 'is_pro_simulated': isProSimulated,
+      if (primaryVolume != null) 'primary_volume': primaryVolume,
+      if (crackleVolume != null) 'crackle_volume': crackleVolume,
+      if (binauralVolume != null) 'binaural_volume': binauralVolume,
+      if (primaryMuted != null) 'primary_muted': primaryMuted,
+      if (crackleMuted != null) 'crackle_muted': crackleMuted,
+      if (binauralMuted != null) 'binaural_muted': binauralMuted,
     });
   }
 
@@ -1142,7 +1364,13 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       Value<bool>? foleyEnabled,
       Value<bool>? hapticsEnabled,
       Value<String>? selectedEdition,
-      Value<bool>? isProSimulated}) {
+      Value<bool>? isProSimulated,
+      Value<double>? primaryVolume,
+      Value<double>? crackleVolume,
+      Value<double>? binauralVolume,
+      Value<bool>? primaryMuted,
+      Value<bool>? crackleMuted,
+      Value<bool>? binauralMuted}) {
     return DeskPreferencesCompanion(
       id: id ?? this.id,
       soundVolume: soundVolume ?? this.soundVolume,
@@ -1153,6 +1381,12 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
       selectedEdition: selectedEdition ?? this.selectedEdition,
       isProSimulated: isProSimulated ?? this.isProSimulated,
+      primaryVolume: primaryVolume ?? this.primaryVolume,
+      crackleVolume: crackleVolume ?? this.crackleVolume,
+      binauralVolume: binauralVolume ?? this.binauralVolume,
+      primaryMuted: primaryMuted ?? this.primaryMuted,
+      crackleMuted: crackleMuted ?? this.crackleMuted,
+      binauralMuted: binauralMuted ?? this.binauralMuted,
     );
   }
 
@@ -1184,6 +1418,24 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     if (isProSimulated.present) {
       map['is_pro_simulated'] = Variable<bool>(isProSimulated.value);
     }
+    if (primaryVolume.present) {
+      map['primary_volume'] = Variable<double>(primaryVolume.value);
+    }
+    if (crackleVolume.present) {
+      map['crackle_volume'] = Variable<double>(crackleVolume.value);
+    }
+    if (binauralVolume.present) {
+      map['binaural_volume'] = Variable<double>(binauralVolume.value);
+    }
+    if (primaryMuted.present) {
+      map['primary_muted'] = Variable<bool>(primaryMuted.value);
+    }
+    if (crackleMuted.present) {
+      map['crackle_muted'] = Variable<bool>(crackleMuted.value);
+    }
+    if (binauralMuted.present) {
+      map['binaural_muted'] = Variable<bool>(binauralMuted.value);
+    }
     return map;
   }
 
@@ -1197,7 +1449,13 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
           ..write('foleyEnabled: $foleyEnabled, ')
           ..write('hapticsEnabled: $hapticsEnabled, ')
           ..write('selectedEdition: $selectedEdition, ')
-          ..write('isProSimulated: $isProSimulated')
+          ..write('isProSimulated: $isProSimulated, ')
+          ..write('primaryVolume: $primaryVolume, ')
+          ..write('crackleVolume: $crackleVolume, ')
+          ..write('binauralVolume: $binauralVolume, ')
+          ..write('primaryMuted: $primaryMuted, ')
+          ..write('crackleMuted: $crackleMuted, ')
+          ..write('binauralMuted: $binauralMuted')
           ..write(')'))
         .toString();
   }
@@ -1609,6 +1867,12 @@ typedef $$DeskPreferencesTableCreateCompanionBuilder = DeskPreferencesCompanion
   Value<bool> hapticsEnabled,
   Value<String> selectedEdition,
   Value<bool> isProSimulated,
+  Value<double> primaryVolume,
+  Value<double> crackleVolume,
+  Value<double> binauralVolume,
+  Value<bool> primaryMuted,
+  Value<bool> crackleMuted,
+  Value<bool> binauralMuted,
 });
 typedef $$DeskPreferencesTableUpdateCompanionBuilder = DeskPreferencesCompanion
     Function({
@@ -1620,6 +1884,12 @@ typedef $$DeskPreferencesTableUpdateCompanionBuilder = DeskPreferencesCompanion
   Value<bool> hapticsEnabled,
   Value<String> selectedEdition,
   Value<bool> isProSimulated,
+  Value<double> primaryVolume,
+  Value<double> crackleVolume,
+  Value<double> binauralVolume,
+  Value<bool> primaryMuted,
+  Value<bool> crackleMuted,
+  Value<bool> binauralMuted,
 });
 
 class $$DeskPreferencesTableFilterComposer
@@ -1659,6 +1929,25 @@ class $$DeskPreferencesTableFilterComposer
   ColumnFilters<bool> get isProSimulated => $composableBuilder(
       column: $table.isProSimulated,
       builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get primaryVolume => $composableBuilder(
+      column: $table.primaryVolume, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get crackleVolume => $composableBuilder(
+      column: $table.crackleVolume, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get binauralVolume => $composableBuilder(
+      column: $table.binauralVolume,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get primaryMuted => $composableBuilder(
+      column: $table.primaryMuted, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get crackleMuted => $composableBuilder(
+      column: $table.crackleMuted, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get binauralMuted => $composableBuilder(
+      column: $table.binauralMuted, builder: (column) => ColumnFilters(column));
 }
 
 class $$DeskPreferencesTableOrderingComposer
@@ -1699,6 +1988,30 @@ class $$DeskPreferencesTableOrderingComposer
   ColumnOrderings<bool> get isProSimulated => $composableBuilder(
       column: $table.isProSimulated,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get primaryVolume => $composableBuilder(
+      column: $table.primaryVolume,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get crackleVolume => $composableBuilder(
+      column: $table.crackleVolume,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get binauralVolume => $composableBuilder(
+      column: $table.binauralVolume,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get primaryMuted => $composableBuilder(
+      column: $table.primaryMuted,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get crackleMuted => $composableBuilder(
+      column: $table.crackleMuted,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get binauralMuted => $composableBuilder(
+      column: $table.binauralMuted,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$DeskPreferencesTableAnnotationComposer
@@ -1733,6 +2046,24 @@ class $$DeskPreferencesTableAnnotationComposer
 
   GeneratedColumn<bool> get isProSimulated => $composableBuilder(
       column: $table.isProSimulated, builder: (column) => column);
+
+  GeneratedColumn<double> get primaryVolume => $composableBuilder(
+      column: $table.primaryVolume, builder: (column) => column);
+
+  GeneratedColumn<double> get crackleVolume => $composableBuilder(
+      column: $table.crackleVolume, builder: (column) => column);
+
+  GeneratedColumn<double> get binauralVolume => $composableBuilder(
+      column: $table.binauralVolume, builder: (column) => column);
+
+  GeneratedColumn<bool> get primaryMuted => $composableBuilder(
+      column: $table.primaryMuted, builder: (column) => column);
+
+  GeneratedColumn<bool> get crackleMuted => $composableBuilder(
+      column: $table.crackleMuted, builder: (column) => column);
+
+  GeneratedColumn<bool> get binauralMuted => $composableBuilder(
+      column: $table.binauralMuted, builder: (column) => column);
 }
 
 class $$DeskPreferencesTableTableManager extends RootTableManager<
@@ -1770,6 +2101,12 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             Value<bool> hapticsEnabled = const Value.absent(),
             Value<String> selectedEdition = const Value.absent(),
             Value<bool> isProSimulated = const Value.absent(),
+            Value<double> primaryVolume = const Value.absent(),
+            Value<double> crackleVolume = const Value.absent(),
+            Value<double> binauralVolume = const Value.absent(),
+            Value<bool> primaryMuted = const Value.absent(),
+            Value<bool> crackleMuted = const Value.absent(),
+            Value<bool> binauralMuted = const Value.absent(),
           }) =>
               DeskPreferencesCompanion(
             id: id,
@@ -1780,6 +2117,12 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             hapticsEnabled: hapticsEnabled,
             selectedEdition: selectedEdition,
             isProSimulated: isProSimulated,
+            primaryVolume: primaryVolume,
+            crackleVolume: crackleVolume,
+            binauralVolume: binauralVolume,
+            primaryMuted: primaryMuted,
+            crackleMuted: crackleMuted,
+            binauralMuted: binauralMuted,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -1790,6 +2133,12 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             Value<bool> hapticsEnabled = const Value.absent(),
             Value<String> selectedEdition = const Value.absent(),
             Value<bool> isProSimulated = const Value.absent(),
+            Value<double> primaryVolume = const Value.absent(),
+            Value<double> crackleVolume = const Value.absent(),
+            Value<double> binauralVolume = const Value.absent(),
+            Value<bool> primaryMuted = const Value.absent(),
+            Value<bool> crackleMuted = const Value.absent(),
+            Value<bool> binauralMuted = const Value.absent(),
           }) =>
               DeskPreferencesCompanion.insert(
             id: id,
@@ -1800,6 +2149,12 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             hapticsEnabled: hapticsEnabled,
             selectedEdition: selectedEdition,
             isProSimulated: isProSimulated,
+            primaryVolume: primaryVolume,
+            crackleVolume: crackleVolume,
+            binauralVolume: binauralVolume,
+            primaryMuted: primaryMuted,
+            crackleMuted: crackleMuted,
+            binauralMuted: binauralMuted,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (
