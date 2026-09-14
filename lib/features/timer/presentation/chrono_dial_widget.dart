@@ -11,6 +11,7 @@ import '../../desk/presentation/widgets/monastic_switch_widget.dart';
 import '../../../app/theme/hardware_edition.dart';
 import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/theme_controller.dart';
+import '../../../core/sensors/parallax_controller.dart';
 import '../../../core/services/timer_background_service.dart';
 
 class ChronoDialWidget extends ConsumerStatefulWidget {
@@ -151,6 +152,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
 
     final state = ref.watch(chronoDialProvider);
     final themeState = ref.watch(chassisThemeProvider);
+    final parallax = ref.watch(parallaxProvider);
     final remainingMinutes = (state.remainingSeconds / 60).floor();
     final remainingSeconds = (state.remainingSeconds % 60).floor();
     const dialDimensions = Size(240, 240);
@@ -189,89 +191,129 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
       mainAxisSize: MainAxisSize.min,
       children: [
         // 1. Main Dial Canvas with 12 o'clock Crown Push-Button directly seated on bezel
-        SizedBox(
-          width: dialDimensions.width,
-          height: dialDimensions.height + 14,
-          child: Stack(
-            alignment: Alignment.topCenter,
-            clipBehavior: Clip.none,
-            children: [
-              // Main Dial Canvas with Unobstructed Analog Face
-              Positioned(
-                top: 14,
-                child: GestureDetector(
-                  onTap: _handleToggle,
-                  onPanStart: (details) => _handleRotaryPan(details.localPosition, dialDimensions),
-                  onPanUpdate: (details) => _handleRotaryPan(details.localPosition, dialDimensions),
-                  child: SizedBox(
+        Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.0012)
+            ..rotateX(-parallax.tiltY)
+            ..rotateY(parallax.tiltX),
+          child: SizedBox(
+            width: dialDimensions.width,
+            height: dialDimensions.height + 14,
+            child: Stack(
+              alignment: Alignment.topCenter,
+              clipBehavior: Clip.none,
+              children: [
+                // Main Dial Canvas with Unobstructed Analog Face
+                Positioned(
+                  top: 14,
+                  child: Container(
                     width: dialDimensions.width,
                     height: dialDimensions.height,
-                    child: ValueListenableBuilder<double>(
-                      valueListenable: _remainingSecondsNotifier,
-                      builder: (context, seconds, _) {
-                        final m = (seconds / 60).floor();
-                        final s = (seconds % 60).floor();
-                        return CustomPaint(
-                          size: dialDimensions,
-                          painter: ChronoDialPainter(
-                            remainingSeconds: seconds,
-                            progressPercent: state.progressPercent,
-                            targetMinutes: state.targetMinutes,
-                            isRunning: state.isRunning,
-                            needleColor: effectiveNeedleColor,
-                            filamentColor: effectiveFilamentColor,
-                            outerBezelGradient: themeState.plateGradient,
-                            innerBezelColor: themeState.borderColor,
-                            textureType: themeState.textureType,
-                            isDark: themeState.isDarkMode,
-                            dialFaceColor: lightDialColor,
-                            drawHand: false,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: themeState.isDarkMode
+                              ? Colors.black.withValues(alpha: 0.50)
+                              : const Color(0x22000000),
+                          blurRadius: 18,
+                          offset: Offset(
+                            (-parallax.tiltX * 160.0).clamp(-14.0, 14.0),
+                            8.0 + (-parallax.tiltY * 160.0).clamp(-14.0, 14.0),
                           ),
-                          foregroundPainter: ChronoDialHandPainter(
-                            remainingSeconds: seconds,
-                            needleColor: effectiveNeedleColor,
-                            hubCapColor: themeState.isDarkMode
-                                ? const Color(0xFF22252A)
-                                : const Color(0xFF2B2E34),
-                            glassHighlightAlphas: themeState.isDarkMode
-                                ? const [0.15, 0.03]
-                                : const [0.28, 0.06],
+                        ),
+                        BoxShadow(
+                          color: themeState.isDarkMode
+                              ? Colors.black.withValues(alpha: 0.25)
+                              : const Color(0x10000000),
+                          blurRadius: 6,
+                          offset: Offset(
+                            (-parallax.tiltX * 50.0).clamp(-5.0, 5.0),
+                            2.0 + (-parallax.tiltY * 50.0).clamp(-5.0, 5.0),
                           ),
-                          child: Center(
-                            child: Transform.translate(
-                              offset: const Offset(0, 38),
-                              child: IgnorePointer(
-                                child: MechanicalCounterDisplay(
-                                  minutes: m,
-                                  seconds: s,
-                                  isDialInset: true,
+                        ),
+                      ],
+                    ),
+                    child: GestureDetector(
+                      onTap: _handleToggle,
+                      onPanStart: (details) => _handleRotaryPan(details.localPosition, dialDimensions),
+                      onPanUpdate: (details) => _handleRotaryPan(details.localPosition, dialDimensions),
+                      child: SizedBox(
+                        width: dialDimensions.width,
+                        height: dialDimensions.height,
+                        child: ValueListenableBuilder<double>(
+                          valueListenable: _remainingSecondsNotifier,
+                          builder: (context, seconds, _) {
+                            final m = (seconds / 60).floor();
+                            final s = (seconds % 60).floor();
+                            return CustomPaint(
+                              size: dialDimensions,
+                              painter: ChronoDialPainter(
+                                remainingSeconds: seconds,
+                                progressPercent: state.progressPercent,
+                                targetMinutes: state.targetMinutes,
+                                isRunning: state.isRunning,
+                                needleColor: effectiveNeedleColor,
+                                filamentColor: effectiveFilamentColor,
+                                outerBezelGradient: themeState.plateGradient,
+                                innerBezelColor: themeState.borderColor,
+                                textureType: themeState.textureType,
+                                isDark: themeState.isDarkMode,
+                                dialFaceColor: lightDialColor,
+                                drawHand: false,
+                              ),
+                              foregroundPainter: ChronoDialHandPainter(
+                                remainingSeconds: seconds,
+                                needleColor: effectiveNeedleColor,
+                                hubCapColor: themeState.isDarkMode
+                                    ? const Color(0xFF22252A)
+                                    : const Color(0xFF2B2E34),
+                                glassHighlightAlphas: themeState.isDarkMode
+                                    ? const [0.15, 0.03]
+                                    : const [0.28, 0.06],
+                                lightX: parallax.lightX,
+                                lightY: parallax.lightY,
+                                lightIntensity: parallax.lightIntensity,
+                              ),
+                              child: Center(
+                                child: Transform.translate(
+                                  offset: const Offset(0, 38),
+                                  child: IgnorePointer(
+                                    child: MechanicalCounterDisplay(
+                                      minutes: m,
+                                      seconds: s,
+                                      isDialInset: true,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
-                        );
-                      },
+                            );
+                          },
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              // Top Crown Push-Button seated directly into the 12 o'clock dial bezel socket
-              Positioned(
-                top: 6,
-                child: CrownPushButton(
-                  isPressed: state.isRunning,
-                  onTap: _handleToggle,
-                  gradientColors: themeState.plateGradient,
-                  borderColor: themeState.borderColor,
-                  stemColor: themeState.moduleChassisColor,
+                // Top Crown Push-Button seated directly into the 12 o'clock dial bezel socket
+                Positioned(
+                  top: 6,
+                  child: CrownPushButton(
+                    isPressed: state.isRunning,
+                    onTap: _handleToggle,
+                    gradientColors: themeState.plateGradient,
+                    borderColor: themeState.borderColor,
+                    stemColor: themeState.moduleChassisColor,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 22),
         // 2. Consolidated Industrial Console (Telemetry + Timer MM:SS + Cassette Preset Selector)
         ChronoProfileSelectorWidget(
+
           remainingMinutes: remainingMinutes,
           seconds: remainingSeconds,
         ),

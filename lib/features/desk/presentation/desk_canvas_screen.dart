@@ -99,7 +99,21 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
 
     if (widget.gyroscopeStream == null && widget.accelerometerStream == null) {
       try {
-        _accelerometerSubscription = accelerometerEventStream().listen(
+        _gyroscopeSubscription = gyroscopeEventStream(samplingPeriod: SensorInterval.uiInterval).listen(
+          (event) {
+            if (!mounted || _sensorsPaused) return;
+            ref.read(parallaxProvider.notifier).updateFromGyroscope(
+                  x: event.x,
+                  y: event.y,
+                );
+          },
+          onError: (Object error) {},
+          cancelOnError: false,
+        );
+      } catch (_) {}
+
+      try {
+        _accelerometerSubscription = accelerometerEventStream(samplingPeriod: SensorInterval.uiInterval).listen(
           (event) {
             if (!mounted || _sensorsPaused) return;
             ref.read(parallaxProvider.notifier).updateTiltFromAccelerometer(

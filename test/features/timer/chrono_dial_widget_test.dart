@@ -9,6 +9,7 @@ import 'package:takt_desk/app/theme/hardware_edition.dart';
 import 'package:takt_desk/app/theme/takt_colors.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
 import 'package:takt_desk/core/database/app_database.dart';
+import 'package:takt_desk/core/sensors/parallax_controller.dart';
 import 'package:takt_desk/core/services/timer_background_service.dart';
 import 'package:takt_desk/features/timer/domain/pomodoro_phase.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_controller.dart';
@@ -774,5 +775,109 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
   });
+
+  test('ChronoDialHandPainter shouldRepaint returns true when light vector or intensity changes', () {
+    final painter1 = ChronoDialHandPainter(
+      remainingSeconds: 1500,
+      needleColor: Colors.amber,
+      hubCapColor: Colors.black,
+      glassHighlightAlphas: const [0.15, 0.03],
+      lightX: -0.4,
+      lightY: -0.6,
+      lightIntensity: 0.5,
+    );
+    final painter2 = ChronoDialHandPainter(
+      remainingSeconds: 1500,
+      needleColor: Colors.amber,
+      hubCapColor: Colors.black,
+      glassHighlightAlphas: const [0.15, 0.03],
+      lightX: 0.2,
+      lightY: -0.6,
+      lightIntensity: 0.5,
+    );
+    final painter3 = ChronoDialHandPainter(
+      remainingSeconds: 1500,
+      needleColor: Colors.amber,
+      hubCapColor: Colors.black,
+      glassHighlightAlphas: const [0.15, 0.03],
+      lightX: -0.4,
+      lightY: 0.1,
+      lightIntensity: 0.5,
+    );
+    final painter4 = ChronoDialHandPainter(
+      remainingSeconds: 1500,
+      needleColor: Colors.amber,
+      hubCapColor: Colors.black,
+      glassHighlightAlphas: const [0.15, 0.03],
+      lightX: -0.4,
+      lightY: -0.6,
+      lightIntensity: 0.9,
+    );
+    final painterIdentical = ChronoDialHandPainter(
+      remainingSeconds: 1500,
+      needleColor: Colors.amber,
+      hubCapColor: Colors.black,
+      glassHighlightAlphas: const [0.15, 0.03],
+      lightX: -0.4,
+      lightY: -0.6,
+      lightIntensity: 0.5,
+    );
+
+    expect(painter1.shouldRepaint(painter2), isTrue);
+    expect(painter1.shouldRepaint(painter3), isTrue);
+    expect(painter1.shouldRepaint(painter4), isTrue);
+    expect(painter1.shouldRepaint(painterIdentical), isFalse);
+  });
+
+  testWidgets('ChronoDialWidget forwards parallax light coordinates to ChronoDialHandPainter and applies 3D perspective', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Default light coordinates
+    var customPaint = tester.widget<CustomPaint>(dialFinder);
+    var handPainter = customPaint.foregroundPainter as ChronoDialHandPainter;
+    expect(handPainter.lightX, equals(-0.4));
+    expect(handPainter.lightY, equals(-0.6));
+    expect(handPainter.lightIntensity, equals(0.5));
+
+    // Verify 3D perspective transform exists around dial
+    final transformFinder = find.ancestor(
+      of: dialFinder,
+      matching: find.byType(Transform),
+    );
+    expect(transformFinder, findsWidgets);
+
+    // Update parallax state via sensor simulation
+    container.read(parallaxProvider.notifier).updateTiltFromAccelerometer(
+      x: 3.5,
+      y: 8.0,
+      z: 5.6,
+    );
+    await tester.pump();
+
+    final parallax = container.read(parallaxProvider);
+    customPaint = tester.widget<CustomPaint>(dialFinder);
+    handPainter = customPaint.foregroundPainter as ChronoDialHandPainter;
+    expect(handPainter.lightX, equals(parallax.lightX));
+    expect(handPainter.lightY, equals(parallax.lightY));
+    expect(handPainter.lightIntensity, equals(parallax.lightIntensity));
+
+    await tester.pumpWidget(const SizedBox());
+  });
 }
+
 

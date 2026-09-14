@@ -61,6 +61,15 @@ class ParallaxController extends StateNotifier<ParallaxState> {
     _applyTarget(targetX, targetY);
   }
 
+  void updateFromGyroscope({required double x, required double y}) {
+    // Gyroscope angular velocity (rad/s) during physical device shake or wobble
+    // x = pitch angular rate, y = roll angular rate
+    final targetX = (y * 0.02).clamp(-maxTiltRadians, maxTiltRadians);
+    final targetY = (-x * 0.02).clamp(-maxTiltRadians, maxTiltRadians);
+
+    _applyTarget(targetX, targetY);
+  }
+
   void updateTiltFromAccelerometer({
     required double x,
     required double y,
@@ -74,8 +83,25 @@ class ParallaxController extends StateNotifier<ParallaxState> {
       norm = 9.80665;
     }
 
-    final targetX = (x / norm).clamp(-maxTiltRadians, maxTiltRadians);
-    final targetY = (y / norm).clamp(-maxTiltRadians, maxTiltRadians);
+    final double targetX;
+    final double targetY;
+
+    if (z != null) {
+      final pitch = math.atan2(y, z.abs());
+      if (pitch > 0.50) {
+        // Handheld portrait mode (pitch > ~28°): center around ~40°-45° resting angle (0.70 rad)
+        final deltaPitch = pitch - 0.70;
+        targetX = (x / norm * 0.35).clamp(-maxTiltRadians, maxTiltRadians);
+        targetY = (deltaPitch / 0.30 * maxTiltRadians).clamp(-maxTiltRadians, maxTiltRadians);
+      } else {
+        // Desk / flat mode (pitch <= ~28°): direct gravity projection
+        targetX = (x / norm).clamp(-maxTiltRadians, maxTiltRadians);
+        targetY = (y / norm).clamp(-maxTiltRadians, maxTiltRadians);
+      }
+    } else {
+      targetX = (x / norm).clamp(-maxTiltRadians, maxTiltRadians);
+      targetY = (y / norm).clamp(-maxTiltRadians, maxTiltRadians);
+    }
 
     _applyTarget(targetX, targetY);
   }

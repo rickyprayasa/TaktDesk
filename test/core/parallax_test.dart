@@ -156,5 +156,48 @@ void main() {
       // State reference remains unchanged (no new state object created)
       expect(identical(controller.state, initialState), isTrue);
     });
+
+    test('ParallaxController updateFromGyroscope updates tilt from angular velocity and clamps to maxTiltRadians', () {
+      final controller = ParallaxController();
+
+      controller.updateFromGyroscope(x: 2.0, y: -3.0);
+      expect(controller.state.tiltX, isNonZero);
+      expect(controller.state.tiltY, isNonZero);
+      expect(controller.state.tiltX.abs(), lessThanOrEqualTo(0.05));
+      expect(controller.state.tiltY.abs(), lessThanOrEqualTo(0.05));
+
+      // Extreme angular rate clamped to 0.05 rad
+      for (int i = 0; i < 50; i++) {
+        controller.updateFromGyroscope(x: -100.0, y: 100.0);
+      }
+      expect(controller.state.tiltX, closeTo(0.05, 1e-4));
+      expect(controller.state.tiltY, closeTo(0.05, 1e-4));
+    });
+
+    test('updateTiltFromAccelerometer supports handheld orientation (y >= 2.5) without ceiling saturation', () {
+      final controller = ParallaxController();
+
+      // Handheld resting angle ~50° (y ~ 6.0 m/s^2, z ~ 7.0 m/s^2) should be close to 0 tilt
+      for (int i = 0; i < 30; i++) {
+        controller.updateTiltFromAccelerometer(x: 0.0, y: 6.0, z: 7.0);
+      }
+      expect(controller.state.tiltY.abs(), lessThan(0.015));
+
+      // Tilting forward (y = 8.0) tilts positive Y
+      for (int i = 0; i < 30; i++) {
+        controller.updateTiltFromAccelerometer(x: 0.0, y: 8.0, z: 5.6);
+      }
+      expect(controller.state.tiltY, greaterThan(0.02));
+      expect(controller.state.tiltY, lessThanOrEqualTo(0.05));
+
+      // Tilting backward (y = 4.0) tilts negative Y
+      for (int i = 0; i < 30; i++) {
+        controller.updateTiltFromAccelerometer(x: 0.0, y: 4.0, z: 7.0);
+      }
+      expect(controller.state.tiltY, lessThan(0.0));
+      expect(controller.state.tiltY, greaterThanOrEqualTo(-0.05));
+    });
   });
 }
+
+

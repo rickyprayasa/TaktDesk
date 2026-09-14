@@ -339,12 +339,18 @@ class ChronoDialHandPainter extends CustomPainter {
   final Color needleColor;
   final Color hubCapColor;
   final List<double> glassHighlightAlphas;
+  final double lightX;
+  final double lightY;
+  final double lightIntensity;
 
   ChronoDialHandPainter({
     required this.remainingSeconds,
     required this.needleColor,
     required this.hubCapColor,
     required this.glassHighlightAlphas,
+    this.lightX = -0.4,
+    this.lightY = -0.6,
+    this.lightIntensity = 0.5,
   });
 
   @override
@@ -400,39 +406,75 @@ class ChronoDialHandPainter extends CustomPainter {
     final capCorePaint = Paint()..color = TaktColors.warmBone;
     canvas.drawCircle(center, 2.0, capCorePaint);
 
-    // 3. Convex Curved Mineral Glass Glare (Optical Highlight)
-    final highlights = glassHighlightAlphas;
+    // 3. Convex Curved Mineral Glass Glare (Dynamic Optical Highlight)
+    final lightAngle = math.atan2(lightY, lightX);
+    final lightDist = math.sqrt(lightX * lightX + lightY * lightY).clamp(0.2, 1.2);
+    final peakAlpha = (glassHighlightAlphas[0] * (0.75 + lightIntensity * 0.55)).clamp(0.08, 0.70);
+    final midAlpha = (glassHighlightAlphas[1] * (0.75 + lightIntensity * 0.55)).clamp(0.02, 0.28);
+
+    final lightDirX = math.cos(lightAngle);
+    final lightDirY = math.sin(lightAngle);
     final glassGlarePaint = Paint()
       ..shader = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+        begin: Alignment(lightDirX, lightDirY),
+        end: Alignment(-lightDirX * 0.6, -lightDirY * 0.6),
         colors: [
-          Colors.white.withValues(alpha: highlights[0]),
-          Colors.white.withValues(alpha: highlights[1]),
+          Colors.white.withValues(alpha: peakAlpha),
+          Colors.white.withValues(alpha: midAlpha),
           Colors.transparent,
         ],
-        stops: const [0.0, 0.45, 0.70],
+        stops: const [0.0, 0.42, 0.75],
       ).createShader(Rect.fromCircle(center: center, radius: dialRadius));
 
+    const arcSpan = math.pi * 0.72;
+    final startAngle = lightAngle - arcSpan / 2;
     final glassPath = Path();
     glassPath.addArc(
-      Rect.fromCircle(center: center, radius: dialRadius - 1),
-      -math.pi * 0.85,
-      math.pi * 0.70,
+      Rect.fromCircle(center: center, radius: dialRadius - 1.0),
+      startAngle,
+      arcSpan,
     );
+    final innerBulgeRadius = dialRadius * (0.72 - 0.12 * lightDist.clamp(0.0, 1.0));
+    final arcStart = center + Offset((dialRadius - 1.0) * math.cos(startAngle), (dialRadius - 1.0) * math.sin(startAngle));
+    final midBulge = center + Offset(innerBulgeRadius * lightDirX, innerBulgeRadius * lightDirY);
+
     glassPath.quadraticBezierTo(
-      center.dx,
-      center.dy - dialRadius * 0.15,
-      center.dx + (dialRadius - 1) * math.cos(-math.pi * 0.85),
-      center.dy + (dialRadius - 1) * math.sin(-math.pi * 0.85),
+      midBulge.dx,
+      midBulge.dy,
+      arcStart.dx,
+      arcStart.dy,
     );
     canvas.drawPath(glassPath, glassGlarePaint);
+
+    // 4. Specular Rim Caustic Sweep along the Bezel Ring
+    final rimCausticPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..shader = SweepGradient(
+        center: Alignment.center,
+        startAngle: 0.0,
+        endAngle: 2 * math.pi,
+        transform: GradientRotation(lightAngle),
+        colors: [
+          Colors.white.withValues(alpha: (peakAlpha * 0.85).clamp(0.0, 0.75)),
+          Colors.white.withValues(alpha: 0.0),
+          Colors.white.withValues(alpha: (peakAlpha * 0.35).clamp(0.0, 0.40)),
+          Colors.white.withValues(alpha: 0.0),
+          Colors.white.withValues(alpha: (peakAlpha * 0.85).clamp(0.0, 0.75)),
+        ],
+        stops: const [0.0, 0.28, 0.50, 0.72, 1.0],
+      ).createShader(Rect.fromCircle(center: center, radius: dialRadius - 1.0));
+    canvas.drawCircle(center, dialRadius - 1.0, rimCausticPaint);
   }
 
   @override
   bool shouldRepaint(covariant ChronoDialHandPainter oldDelegate) {
     return oldDelegate.remainingSeconds != remainingSeconds ||
         oldDelegate.needleColor != needleColor ||
-        oldDelegate.hubCapColor != hubCapColor;
+        oldDelegate.hubCapColor != hubCapColor ||
+        (oldDelegate.lightX - lightX).abs() > 0.005 ||
+        (oldDelegate.lightY - lightY).abs() > 0.005 ||
+        (oldDelegate.lightIntensity - lightIntensity).abs() > 0.005;
   }
 }
+
