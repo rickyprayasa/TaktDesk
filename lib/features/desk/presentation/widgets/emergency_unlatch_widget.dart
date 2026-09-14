@@ -93,9 +93,12 @@ class _EmergencyUnlatchWidgetState extends ConsumerState<EmergencyUnlatchWidget>
             onPointerDown: _onPointerDown,
             onPointerUp: _onPointerUpOrCancel,
             onPointerCancel: _onPointerUpOrCancel,
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              height: 38,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 380),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  height: 38,
               decoration: BoxDecoration(
                 color: TaktPalette.obsidian,
                 borderRadius: BorderRadius.circular(4),
@@ -149,8 +152,10 @@ class _EmergencyUnlatchWidgetState extends ConsumerState<EmergencyUnlatchWidget>
               ),
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
+  },
+);
   }
 }

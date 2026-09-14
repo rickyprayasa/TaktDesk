@@ -172,6 +172,50 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
+    testWidgets('EmergencyUnlatchWidget remains anchored at bottom dock across DIAL, TASKS, and VINYL tabs when locked', (tester) async {
+      tester.view.physicalSize = const Size(400, 850);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      final container = ProviderContainer(
+        overrides: deskTestOverrides(testDb),
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: DeskCanvasScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Engage Monastic Focus Lock
+      await container.read(focusLockProvider.notifier).engageLock();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(EmergencyUnlatchWidget), findsOneWidget);
+      final unlatchDialY = tester.getTopLeft(find.byType(EmergencyUnlatchWidget)).dy;
+      final plateDialY = tester.getTopLeft(find.byType(DeskSpecPlateWidget)).dy;
+      expect(unlatchDialY, lessThan(plateDialY));
+
+      // Switch to TASKS tab
+      await tester.tap(find.text('TASKS'));
+      await tester.pumpAndSettle();
+      final unlatchTasksY = tester.getTopLeft(find.byType(EmergencyUnlatchWidget)).dy;
+      expect(unlatchTasksY, equals(unlatchDialY), reason: 'Unlatch button must not jump up on TASKS tab');
+
+      // Switch to VINYL tab
+      await tester.tap(find.text('VINYL'));
+      await tester.pumpAndSettle();
+      final unlatchVinylY = tester.getTopLeft(find.byType(EmergencyUnlatchWidget)).dy;
+      expect(unlatchVinylY, equals(unlatchDialY), reason: 'Unlatch button must not jump up on VINYL tab');
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
     testWidgets('DeskCanvasScreen retains pure mobile handheld layout on wide screens without horizontal multi-column rack', (tester) async {
       tester.view.physicalSize = const Size(1024, 800);
       tester.view.devicePixelRatio = 1.0;

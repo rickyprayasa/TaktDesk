@@ -243,13 +243,13 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 22),
         // 2. Consolidated Industrial Console (Telemetry + Timer MM:SS + Cassette Preset Selector)
         ChronoProfileSelectorWidget(
           remainingMinutes: remainingMinutes,
           seconds: remainingSeconds,
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 16),
         // 3. Simple Monastic Focus Lockdown Toggle (below Preset Selector)
         const MonasticSwitchWidget(),
       ],

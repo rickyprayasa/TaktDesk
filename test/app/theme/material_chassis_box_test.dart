@@ -260,7 +260,7 @@ void main() {
         final rivetContainer = tester.widget<Container>(rivetFinder);
         final decoration = rivetContainer.decoration as BoxDecoration;
         expect(decoration.shape, BoxShape.circle);
-        expect(decoration.color, equals(HardwareEdition.braunClassic.rivetLight));
+        expect(decoration.color, equals(HardwareEdition.braunClassic.rivetDark));
 
         final ignorePointer = find.ancestor(
           of: rivetFinder,
@@ -330,8 +330,8 @@ void main() {
 
       final painter = customPaint.painter as MaterialTexturePainter;
       expect(painter.textureType, HardwareTextureType.matteAbsGrain);
-      expect(painter.isDark, isFalse);
-      expect(painter.chassisColor, HardwareEdition.braunClassic.lightModuleBg);
+      expect(painter.isDark, isTrue);
+      expect(painter.chassisColor, HardwareEdition.braunClassic.darkModuleBg);
     });
 
     testWidgets('omits texture and chamfer painters when both showTexture and showChamfer are false', (tester) async {

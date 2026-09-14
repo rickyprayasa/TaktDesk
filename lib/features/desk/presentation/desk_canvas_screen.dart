@@ -205,7 +205,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                               minWidth: viewportConstraints.maxWidth,
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -216,7 +216,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                                     children: [
                                       // Row 1: Header - Branding and Chassis Hardware Controls (Monastic + Theme Switch)
                                       Padding(
-                                        padding: const EdgeInsets.only(bottom: 12.0),
+                                        padding: const EdgeInsets.only(bottom: 16.0),
                                         child: Row(
                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -270,7 +270,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                                       ),
                                       // Row 2: Dedicated Segmented Instrument Navigation
                                       Padding(
-                                        padding: const EdgeInsets.only(bottom: 12.0),
+                                        padding: const EdgeInsets.only(bottom: 20.0),
                                         child: Center(
                                           child: _buildInstrumentSelector(theme),
                                         ),
@@ -282,14 +282,19 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                                         const Center(child: ReceiptRunnerWidget())
                                       else
                                         const Center(child: VinylPlayerWidget()),
-                                      const SizedBox(height: 12),
-                                      // Emergency Unlatch Latch (renders when focus lock engaged)
-                                      const EmergencyUnlatchWidget(),
                                     ],
                                   ),
-                                  const Padding(
-                                    padding: EdgeInsets.only(top: 16.0),
-                                    child: DeskSpecPlateWidget(),
+                                  // Bottom Dock: Emergency Unlatch (pinned at bottom when locked) + Desk Spec Plate
+                                  const Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      EmergencyUnlatchWidget(),
+                                      Padding(
+                                        padding: EdgeInsets.only(top: 8.0),
+                                        child: DeskSpecPlateWidget(),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),

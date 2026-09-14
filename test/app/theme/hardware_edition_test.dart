@@ -78,9 +78,9 @@ void main() {
   });
 
   group('ThemeController with HardwareEditions', () {
-    test('initial state defaults to braunClassic, light mode, and isProUnlocked true', () {
+    test('initial state defaults to braunClassic, dark mode, and isProUnlocked true', () {
       final controller = ThemeController();
-      expect(controller.state.isDarkMode, isFalse);
+      expect(controller.state.isDarkMode, isTrue);
       expect(controller.state.edition.type, equals(HardwareEditionType.braunClassic));
       expect(controller.state.isProUnlocked, isTrue);
       expect(controller.state.needleColor, equals(const Color(0xFFC85A32))); // mutedOchre
@@ -112,10 +112,10 @@ void main() {
     test('toggleTheme preserves selected edition tokens', () {
       final controller = ThemeController();
       controller.setHardwareEdition(HardwareEditionType.bauhausHeritage);
-      expect(controller.state.isDarkMode, isFalse);
+      expect(controller.state.isDarkMode, isTrue);
 
       controller.toggleTheme();
-      expect(controller.state.isDarkMode, isTrue);
+      expect(controller.state.isDarkMode, isFalse);
       expect(controller.state.edition.type, equals(HardwareEditionType.bauhausHeritage));
       expect(controller.state.needleColor, equals(const Color(0xFFD62828))); // bauhaus crimson
     });
