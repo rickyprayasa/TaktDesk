@@ -57,6 +57,12 @@ void main() {
     expect(methodCalls.last.arguments['effect'], 'stylusDrop');
   });
 
+  test('AudioService playAlarmChime forwards chimeId', () {
+    audioService.playAlarmChime('tibetanBowl');
+    expect(methodCalls.last.method, 'playAlarmChime');
+    expect(methodCalls.last.arguments['chimeId'], 'tibetanBowl');
+  });
+
   test('AudioService stopAmbient stops ambient playback', () {
     audioService.stopAmbient();
     expect(methodCalls.last.method, 'stopAmbient');

@@ -51,6 +51,13 @@ class AudioService {
 
   void play(SoundEffect effect) => playFoley(effect);
 
+  void playAlarmChime(String chimeId) {
+    if (!_initialized) return;
+    if (!isMock) {
+      channel.invokeMethod('playAlarmChime', {'chimeId': chimeId}).catchError((_) {});
+    }
+  }
+
   void startAmbient({required int trackIndex}) {
     if (!_initialized) return;
     _activeTrackIndex = trackIndex;

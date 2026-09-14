@@ -205,6 +205,30 @@ class MainActivity : FlutterActivity() {
                         result.success(false)
                     }
                 }
+                "playAlarmChime" -> {
+                    try {
+                        val chimeId = call.argument<String>("chimeId") ?: "braunBell"
+                        val chimeAsset = when (chimeId) {
+                            "braunBell" -> "flutter_assets/assets/audio/alarm_braun_bell.wav"
+                            "deskBell" -> "flutter_assets/assets/audio/alarm_desk_bell.wav"
+                            "tibetanBowl" -> "flutter_assets/assets/audio/alarm_tibetan_bowl.wav"
+                            "zenGong" -> "flutter_assets/assets/audio/alarm_zen_gong.wav"
+                            "tubularChime" -> "flutter_assets/assets/audio/alarm_tubular_chime.wav"
+                            else -> "flutter_assets/assets/audio/alarm_braun_bell.wav"
+                        }
+                        context.assets.openFd(chimeAsset).use { fd ->
+                            MediaPlayer().apply {
+                                setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
+                                setOnCompletionListener { mp -> mp.release() }
+                                prepare()
+                                start()
+                            }
+                        }
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.success(false)
+                    }
+                }
                 else -> result.notImplemented()
             }
         }
