@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/audio/audio_service.dart';
 import '../../../core/database/app_database.dart';
@@ -13,6 +14,7 @@ final soundscapeMixerProvider =
 class SoundscapeMixerController extends StateNotifier<SoundscapeMixerState> {
   final AppDatabase _db;
   final AudioService _audioService;
+  Timer? _debounceTimer;
 
   SoundscapeMixerController(this._db, this._audioService)
       : super(const SoundscapeMixerState()) {
@@ -48,40 +50,57 @@ class SoundscapeMixerController extends StateNotifier<SoundscapeMixerState> {
   void setPrimaryVolume(double val) {
     state = state.copyWith(primaryVolume: val.clamp(0.0, 1.0));
     _syncToAudioService();
-    _persist();
+    _persist(immediate: false);
   }
 
   void setCrackleVolume(double val) {
     state = state.copyWith(crackleVolume: val.clamp(0.0, 1.0));
     _syncToAudioService();
-    _persist();
+    _persist(immediate: false);
   }
 
   void setBinauralVolume(double val) {
     state = state.copyWith(binauralVolume: val.clamp(0.0, 1.0));
     _syncToAudioService();
-    _persist();
+    _persist(immediate: false);
   }
 
   void togglePrimaryMute() {
     state = state.copyWith(isPrimaryMuted: !state.isPrimaryMuted);
     _syncToAudioService();
-    _persist();
+    _persist(immediate: true);
   }
 
   void toggleCrackleMute() {
     state = state.copyWith(isCrackleMuted: !state.isCrackleMuted);
     _syncToAudioService();
-    _persist();
+    _persist(immediate: true);
   }
 
   void toggleBinauralMute() {
     state = state.copyWith(isBinauralMuted: !state.isBinauralMuted);
     _syncToAudioService();
-    _persist();
+    _persist(immediate: true);
   }
 
-  Future<void> _persist() async {
+  void commitPersist() {
+    _persist(immediate: true);
+  }
+
+  void _persist({bool immediate = false}) {
+    if (immediate) {
+      _debounceTimer?.cancel();
+      _debounceTimer = null;
+      _executePersist();
+      return;
+    }
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      _executePersist();
+    });
+  }
+
+  Future<void> _executePersist() async {
     try {
       await _db.updateDeskPreferences(
         primaryVolume: state.primaryVolume,
@@ -92,5 +111,11 @@ class SoundscapeMixerController extends StateNotifier<SoundscapeMixerState> {
         binauralMuted: state.isBinauralMuted,
       );
     } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
   }
 }

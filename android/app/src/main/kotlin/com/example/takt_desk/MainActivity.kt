@@ -160,27 +160,27 @@ class MainActivity : FlutterActivity() {
                         val pPlayer = soundscapePlayer ?: MediaPlayer().also { soundscapePlayer = it }
                         context.assets.openFd(assetPath).use { fd ->
                             pPlayer.setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
+                            pPlayer.isLooping = true
+                            pPlayer.prepare()
                         }
-                        pPlayer.isLooping = true
-                        pPlayer.prepare()
 
                         // 2. Vinyl Surface Crackle Player
                         safeStopAndReset(cracklePlayer)
                         val cPlayer = cracklePlayer ?: MediaPlayer().also { cracklePlayer = it }
                         context.assets.openFd("flutter_assets/assets/audio/vinyl_surface_crackle.wav").use { fd ->
                             cPlayer.setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
+                            cPlayer.isLooping = true
+                            cPlayer.prepare()
                         }
-                        cPlayer.isLooping = true
-                        cPlayer.prepare()
 
                         // 3. Binaural Alpha 432 Hz Drone Player
                         safeStopAndReset(binauralPlayer)
                         val bPlayer = binauralPlayer ?: MediaPlayer().also { binauralPlayer = it }
                         context.assets.openFd("flutter_assets/assets/audio/binaural_alpha_432.wav").use { fd ->
                             bPlayer.setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
+                            bPlayer.isLooping = true
+                            bPlayer.prepare()
                         }
-                        bPlayer.isLooping = true
-                        bPlayer.prepare()
 
                         updateAllVolumes()
 

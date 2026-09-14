@@ -97,6 +97,7 @@ class TurntableMixerStrip extends ConsumerWidget {
                 faderKey: 'fader_rec_track',
                 muteKey: 'mute_rec_button',
                 onChanged: mixerNotifier.setPrimaryVolume,
+                onDragEnd: mixerNotifier.commitPersist,
                 onMuteToggle: mixerNotifier.togglePrimaryMute,
                 themeState: themeState,
                 isDark: isDark,
@@ -114,6 +115,7 @@ class TurntableMixerStrip extends ConsumerWidget {
                 faderKey: 'fader_dust_track',
                 muteKey: 'mute_dust_button',
                 onChanged: mixerNotifier.setCrackleVolume,
+                onDragEnd: mixerNotifier.commitPersist,
                 onMuteToggle: mixerNotifier.toggleCrackleMute,
                 themeState: themeState,
                 isDark: isDark,
@@ -131,6 +133,7 @@ class TurntableMixerStrip extends ConsumerWidget {
                 faderKey: 'fader_flow_track',
                 muteKey: 'mute_flow_button',
                 onChanged: mixerNotifier.setBinauralVolume,
+                onDragEnd: mixerNotifier.commitPersist,
                 onMuteToggle: mixerNotifier.toggleBinauralMute,
                 themeState: themeState,
                 isDark: isDark,
@@ -150,6 +153,7 @@ class TurntableMixerStrip extends ConsumerWidget {
     required String faderKey,
     required String muteKey,
     required ValueChanged<double> onChanged,
+    required VoidCallback onDragEnd,
     required VoidCallback onMuteToggle,
     required ChassisThemeState themeState,
     required bool isDark,
@@ -215,6 +219,8 @@ class TurntableMixerStrip extends ConsumerWidget {
                   }
                   onChanged(newVal);
                 },
+                onVerticalDragEnd: (_) => onDragEnd(),
+                onVerticalDragCancel: onDragEnd,
               child: Container(
                 width: 22,
                 height: faderHeight,

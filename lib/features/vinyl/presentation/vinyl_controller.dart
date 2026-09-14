@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../domain/soundscape_mixer_state.dart';
 import '../domain/vinyl_track.dart';
 import '../../../core/audio/audio_service.dart';
 import '../../../core/audio/sound_effect.dart';
 import '../../../core/haptics/haptic_service.dart';
+import 'soundscape_mixer_controller.dart';
 
 class VinylState {
   final bool needleOnRecord;
@@ -53,14 +55,21 @@ class VinylState {
 
 class VinylController extends StateNotifier<VinylState> {
   final AudioService? _audioService;
+  final SoundscapeMixerState Function()? _getMixerState;
 
-  VinylController([this._audioService]) : super(const VinylState());
+  VinylController([this._audioService, this._getMixerState]) : super(const VinylState());
 
   void dropNeedle() {
     state = state.copyWith(needleOnRecord: true, turntableSpeed: 1.0);
     HapticService.mechanicalPress();
     _audioService?.playFoley(SoundEffect.stylusDrop);
-    _audioService?.startAmbient(trackIndex: state.selectedTrackIndex);
+    final mixer = _getMixerState?.call();
+    _audioService?.startAmbient(
+      trackIndex: state.selectedTrackIndex,
+      primaryVolume: mixer?.effectivePrimary,
+      crackleVolume: mixer?.effectiveCrackle,
+      binauralVolume: mixer?.effectiveBinaural,
+    );
   }
 
   void liftNeedle() {
@@ -90,7 +99,13 @@ class VinylController extends StateNotifier<VinylState> {
     HapticService.dialTick();
     _audioService?.playFoley(SoundEffect.discLoad);
     if (state.needleOnRecord) {
-      _audioService?.startAmbient(trackIndex: index);
+      final mixer = _getMixerState?.call();
+      _audioService?.startAmbient(
+        trackIndex: index,
+        primaryVolume: mixer?.effectivePrimary,
+        crackleVolume: mixer?.effectiveCrackle,
+        binauralVolume: mixer?.effectiveBinaural,
+      );
     }
     return true;
   }
@@ -123,7 +138,7 @@ class VinylController extends StateNotifier<VinylState> {
 
 final vinylProvider = StateNotifierProvider<VinylController, VinylState>((ref) {
   final audioService = ref.watch(audioServiceProvider);
-  return VinylController(audioService);
+  return VinylController(audioService, () => ref.read(soundscapeMixerProvider));
 });
 
 final vinylControllerProvider = vinylProvider;
