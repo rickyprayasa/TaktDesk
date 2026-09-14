@@ -431,4 +431,29 @@ void main() {
     expect(container.read(vinylProvider).selectedTrackIndex, equals(0));
     expect(container.read(vinylProvider).currentTrack.name, equals('Lo-fi Rain'));
   });
+
+  test('SettingsController manages alarmChimeId preference with default braunBell and persistence', () async {
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        audioServiceProvider.overrideWithValue(audioService),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(deskPreferencesControllerProvider.notifier);
+    await controller.init();
+
+    // Default
+    expect(container.read(deskPreferencesControllerProvider).alarmChimeId, equals('braunBell'));
+
+    // Set to tibetanBowl
+    await controller.setAlarmChime('tibetanBowl');
+    expect(container.read(deskPreferencesControllerProvider).alarmChimeId, equals('tibetanBowl'));
+
+    // Verify persisted
+    final persisted = await db.watchPreferences().first;
+    expect(persisted, isNotNull);
+    expect(persisted!.alarmChimeId, equals('tibetanBowl'));
+  });
 }

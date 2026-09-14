@@ -9,4 +9,5 @@ class DeskPreferences extends Table {
   BoolColumn get hapticsEnabled => boolean().withDefault(const Constant(true))();
   TextColumn get selectedEdition => text().withDefault(const Constant('braunClassic'))();
   BoolColumn get isProSimulated => boolean().withDefault(const Constant(true))();
+  TextColumn get alarmChimeId => text().withDefault(const Constant('braunBell'))();
 }

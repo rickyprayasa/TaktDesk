@@ -25,7 +25,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -36,6 +36,9 @@ class AppDatabase extends _$AppDatabase {
           if (from < 2) {
             await m.addColumn(deskPreferences, deskPreferences.selectedEdition);
             await m.addColumn(deskPreferences, deskPreferences.isProSimulated);
+          }
+          if (from < 5) {
+            await m.addColumn(deskPreferences, deskPreferences.alarmChimeId);
           }
         },
       );
@@ -158,6 +161,7 @@ class AppDatabase extends _$AppDatabase {
     bool? hapticsEnabled,
     String? selectedEdition,
     bool? isProSimulated,
+    String? alarmChimeId,
   }) {
     return transaction(() async {
       final existing = await (select(deskPreferences)..limit(1)).getSingleOrNull();
@@ -170,6 +174,7 @@ class AppDatabase extends _$AppDatabase {
         hapticsEnabled: hapticsEnabled != null ? Value(hapticsEnabled) : const Value.absent(),
         selectedEdition: selectedEdition != null ? Value(selectedEdition) : const Value.absent(),
         isProSimulated: isProSimulated != null ? Value(isProSimulated) : const Value.absent(),
+        alarmChimeId: alarmChimeId != null ? Value(alarmChimeId) : const Value.absent(),
       );
 
       if (existing == null) {
@@ -188,6 +193,7 @@ class AppDatabase extends _$AppDatabase {
     bool? hapticsEnabled,
     String? selectedEdition,
     bool? isProSimulated,
+    String? alarmChimeId,
   }) =>
       updateDeskPreferences(
         soundVolume: soundVolume,
@@ -197,6 +203,7 @@ class AppDatabase extends _$AppDatabase {
         hapticsEnabled: hapticsEnabled,
         selectedEdition: selectedEdition,
         isProSimulated: isProSimulated,
+        alarmChimeId: alarmChimeId,
       );
 }
 

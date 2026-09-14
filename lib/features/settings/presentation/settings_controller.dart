@@ -58,6 +58,7 @@ class DeskPreferencesState {
   final bool parallaxEnabled;
   final String selectedEdition;
   final bool isProSimulated;
+  final String alarmChimeId;
 
   const DeskPreferencesState({
     this.soundVolume = 0.8,
@@ -66,6 +67,7 @@ class DeskPreferencesState {
     this.parallaxEnabled = true,
     this.selectedEdition = 'braunClassic',
     this.isProSimulated = true,
+    this.alarmChimeId = 'braunBell',
   });
 
   DeskPreferencesState copyWith({
@@ -75,6 +77,7 @@ class DeskPreferencesState {
     bool? parallaxEnabled,
     String? selectedEdition,
     bool? isProSimulated,
+    String? alarmChimeId,
   }) {
     return DeskPreferencesState(
       soundVolume: soundVolume ?? this.soundVolume,
@@ -83,6 +86,7 @@ class DeskPreferencesState {
       parallaxEnabled: parallaxEnabled ?? this.parallaxEnabled,
       selectedEdition: selectedEdition ?? this.selectedEdition,
       isProSimulated: isProSimulated ?? this.isProSimulated,
+      alarmChimeId: alarmChimeId ?? this.alarmChimeId,
     );
   }
 
@@ -96,7 +100,8 @@ class DeskPreferencesState {
           hapticsEnabled == other.hapticsEnabled &&
           parallaxEnabled == other.parallaxEnabled &&
           selectedEdition == other.selectedEdition &&
-          isProSimulated == other.isProSimulated;
+          isProSimulated == other.isProSimulated &&
+          alarmChimeId == other.alarmChimeId;
 
   @override
   int get hashCode =>
@@ -105,7 +110,8 @@ class DeskPreferencesState {
       hapticsEnabled.hashCode ^
       parallaxEnabled.hashCode ^
       selectedEdition.hashCode ^
-      isProSimulated.hashCode;
+      isProSimulated.hashCode ^
+      alarmChimeId.hashCode;
 }
 
 class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
@@ -147,6 +153,7 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
         hapticsEnabled: pref.hapticsEnabled,
         selectedEdition: effectiveEdition,
         isProSimulated: pref.isProSimulated,
+        alarmChimeId: pref.alarmChimeId,
       );
       _audioService?.setVolume(pref.soundVolume);
       _audioService?.setFoleyEnabled(pref.foleyEnabled);
@@ -204,6 +211,11 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
       isProSimulated: value,
       selectedEdition: activeEdition,
     );
+  }
+
+  Future<void> setAlarmChime(String chimeId) async {
+    state = state.copyWith(alarmChimeId: chimeId);
+    await _database?.updatePreferences(alarmChimeId: chimeId);
   }
 
   Future<void> clearAllSessions() async {
