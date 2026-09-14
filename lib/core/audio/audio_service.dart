@@ -51,7 +51,12 @@ class AudioService {
 
   void play(SoundEffect effect) => playFoley(effect);
 
-  void startAmbient(int trackIndex) {
+  void startAmbient({
+    required int trackIndex,
+    double primaryVolume = 0.80,
+    double crackleVolume = 0.35,
+    double binauralVolume = 0.25,
+  }) {
     if (!_initialized) return;
     _activeTrackIndex = trackIndex;
     _isAmbientPlaying = true;
@@ -59,6 +64,24 @@ class AudioService {
       channel.invokeMethod('startAmbient', {
         'trackIndex': trackIndex,
         'volume': _volume,
+        'primaryVolume': primaryVolume.clamp(0.0, 1.0),
+        'crackleVolume': crackleVolume.clamp(0.0, 1.0),
+        'binauralVolume': binauralVolume.clamp(0.0, 1.0),
+      }).catchError((_) {});
+    }
+  }
+
+  void setMixerLevels({
+    required double primaryVolume,
+    required double crackleVolume,
+    required double binauralVolume,
+  }) {
+    if (!_initialized) return;
+    if (!isMock) {
+      channel.invokeMethod('setMixerLevels', {
+        'primaryVolume': primaryVolume.clamp(0.0, 1.0),
+        'crackleVolume': crackleVolume.clamp(0.0, 1.0),
+        'binauralVolume': binauralVolume.clamp(0.0, 1.0),
       }).catchError((_) {});
     }
   }

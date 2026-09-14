@@ -33,7 +33,7 @@ void main() {
     audio.setVolume(-0.5);
     expect(audio.volume, 0.0);
 
-    audio.startAmbient(2);
+    audio.startAmbient(trackIndex: 2);
     expect(audio.isAmbientPlaying, isTrue);
     expect(audio.activeTrackIndex, 2);
 
