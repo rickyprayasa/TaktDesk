@@ -87,8 +87,8 @@ class MaterialChassisBox extends ConsumerWidget {
     this.showRivets = true,
     this.showTexture = true,
     this.showChamfer = true,
-    this.showGlassRim = true,
-    this.enablePerspective = true,
+    this.showGlassRim = false,
+    this.enablePerspective = false,
   });
 
   @override

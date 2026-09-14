@@ -469,6 +469,7 @@ void main() {
           child: const MaterialApp(
             home: Scaffold(
               body: MaterialChassisBox(
+                showGlassRim: true,
                 child: Text('Glass Rim Inspection'),
               ),
             ),
@@ -503,14 +504,13 @@ void main() {
       expect(painter.isDark, isFalse);
     });
 
-    testWidgets('omits GlassRimPainter when showGlassRim is false', (tester) async {
+    testWidgets('omits GlassRimPainter by default when showGlassRim is false', (tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(
             home: Scaffold(
               body: MaterialChassisBox(
-                showGlassRim: false,
-                child: Text('No Glass Rim'),
+                child: Text('No Glass Rim Default'),
               ),
             ),
           ),
@@ -523,12 +523,13 @@ void main() {
       expect(glassPaintFinder, findsNothing);
     });
 
-    testWidgets('applies Transform with Matrix4 perspective projection by default', (tester) async {
+    testWidgets('applies Transform with Matrix4 perspective projection when enablePerspective is true', (tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(
             home: Scaffold(
               body: MaterialChassisBox(
+                enablePerspective: true,
                 child: Text('3D Perspective Box'),
               ),
             ),
@@ -547,14 +548,13 @@ void main() {
       expect(transformWidget.transform.entry(3, 2), equals(0.0012));
     });
 
-    testWidgets('omits Transform when enablePerspective is false', (tester) async {
+    testWidgets('omits Transform by default when enablePerspective is false', (tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(
             home: Scaffold(
               body: MaterialChassisBox(
-                enablePerspective: false,
-                child: Text('Flat Box'),
+                child: Text('Flat Box Default'),
               ),
             ),
           ),
@@ -568,7 +568,7 @@ void main() {
       expect(transformFinder, findsNothing);
     });
 
-    testWidgets('dynamically shifts drop shadow offset and perspective transform on parallax tilt', (tester) async {
+    testWidgets('dynamically shifts drop shadow offset and perspective transform on parallax tilt when enablePerspective is true', (tester) async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
@@ -578,6 +578,8 @@ void main() {
           child: const MaterialApp(
             home: Scaffold(
               body: MaterialChassisBox(
+                enablePerspective: true,
+                showGlassRim: true,
                 child: Text('Tilt Dynamic Box'),
               ),
             ),

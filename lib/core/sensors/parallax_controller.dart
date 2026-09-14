@@ -50,25 +50,24 @@ class ParallaxState {
 class ParallaxController extends StateNotifier<ParallaxState> {
   ParallaxController() : super(const ParallaxState());
 
-  static const double _alpha = 0.20; // Low-pass filter smoothing coefficient
-  static const double maxTiltRadians = 0.22; // ~12.6 degrees for pronounced 3D floating glass perspective
-  static const double deadband = 0.00005; // Deadband to suppress sensor noise and idle rebuilds
+  static const double _alpha = 0.08; // Low-pass filter smoothing coefficient (smooth dampening)
+  static const double maxTiltRadians = 0.05; // ~2.8 degrees subtle tactile tilt (calm, non-dizzying)
+  static const double deadband = 0.0001; // Deadband to suppress idle sensor noise
 
   void updateSensorInput({required double rawX, required double rawY}) {
-    final targetX = (rawX * 0.01).clamp(-maxTiltRadians, maxTiltRadians);
-    final targetY = (rawY * 0.01).clamp(-maxTiltRadians, maxTiltRadians);
+    final targetX = (rawX * 0.005).clamp(-maxTiltRadians, maxTiltRadians);
+    final targetY = (rawY * 0.005).clamp(-maxTiltRadians, maxTiltRadians);
 
     _applyTarget(targetX, targetY);
   }
 
   void updateFromGyroscope({required double x, required double y}) {
-    // Gyroscope angular velocity (rad/s) during physical device movement
-    // Adds angular impulse to orientation so rapid movement responds instantly without resetting resting tilt
-    final dynamicX = (y * 0.04).clamp(-maxTiltRadians, maxTiltRadians);
-    final dynamicY = (-x * 0.04).clamp(-maxTiltRadians, maxTiltRadians);
+    // Damped gyroscope response to eliminate rapid twitching while responding naturally to intentional turns
+    final dynamicX = (y * 0.01).clamp(-maxTiltRadians, maxTiltRadians);
+    final dynamicY = (-x * 0.01).clamp(-maxTiltRadians, maxTiltRadians);
 
-    final targetX = (state.tiltX + dynamicX * 0.35).clamp(-maxTiltRadians, maxTiltRadians);
-    final targetY = (state.tiltY + dynamicY * 0.35).clamp(-maxTiltRadians, maxTiltRadians);
+    final targetX = (state.tiltX + dynamicX * 0.10).clamp(-maxTiltRadians, maxTiltRadians);
+    final targetY = (state.tiltY + dynamicY * 0.10).clamp(-maxTiltRadians, maxTiltRadians);
 
     _applyTarget(targetX, targetY);
   }
@@ -77,6 +76,7 @@ class ParallaxController extends StateNotifier<ParallaxState> {
     required double x,
     required double y,
     double? z,
+    bool isLandscape = false,
   }) {
     final double norm;
     if (z != null) {
@@ -89,21 +89,24 @@ class ParallaxController extends StateNotifier<ParallaxState> {
     final double targetX;
     final double targetY;
 
-    if (z != null) {
+    if (isLandscape) {
+      targetX = (y / norm * 0.35).clamp(-maxTiltRadians, maxTiltRadians);
+      targetY = (-x / norm * 0.35).clamp(-maxTiltRadians, maxTiltRadians);
+    } else if (z != null) {
       final pitch = math.atan2(y, z.abs());
       if (pitch > 0.50) {
         // Handheld portrait mode (pitch > ~28°): center around ~41°-45° resting angle (~0.72 rad)
         final deltaPitch = pitch - 0.72;
-        targetX = (x / norm * 0.70).clamp(-maxTiltRadians, maxTiltRadians);
-        targetY = (deltaPitch * 0.85).clamp(-maxTiltRadians, maxTiltRadians);
+        targetX = (x / norm * 0.35).clamp(-maxTiltRadians, maxTiltRadians);
+        targetY = (deltaPitch * 0.40).clamp(-maxTiltRadians, maxTiltRadians);
       } else {
         // Desk / flat mode (pitch <= ~28°): direct gravity projection
-        targetX = (x / norm * 0.70).clamp(-maxTiltRadians, maxTiltRadians);
-        targetY = (y / norm * 0.70).clamp(-maxTiltRadians, maxTiltRadians);
+        targetX = (x / norm * 0.35).clamp(-maxTiltRadians, maxTiltRadians);
+        targetY = (y / norm * 0.35).clamp(-maxTiltRadians, maxTiltRadians);
       }
     } else {
-      targetX = (x / norm * 0.70).clamp(-maxTiltRadians, maxTiltRadians);
-      targetY = (y / norm * 0.70).clamp(-maxTiltRadians, maxTiltRadians);
+      targetX = (x / norm * 0.35).clamp(-maxTiltRadians, maxTiltRadians);
+      targetY = (y / norm * 0.35).clamp(-maxTiltRadians, maxTiltRadians);
     }
 
     _applyTarget(targetX, targetY);

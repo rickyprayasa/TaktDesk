@@ -39,6 +39,13 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
   StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
   int _selectedInstrumentIndex = 0; // 0: Dial, 1: Tasks, 2: Vinyl
   bool _sensorsPaused = false;
+  bool _isLandscape = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+  }
 
   @override
   void initState() {
@@ -89,6 +96,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                   x: event.x,
                   y: event.y,
                   z: event.z,
+                  isLandscape: _isLandscape,
                 );
           },
           onError: (Object error) {},
@@ -99,7 +107,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
 
     if (widget.gyroscopeStream == null && widget.accelerometerStream == null) {
       try {
-        _gyroscopeSubscription = gyroscopeEventStream(samplingPeriod: SensorInterval.gameInterval).listen(
+        _gyroscopeSubscription = gyroscopeEventStream(samplingPeriod: SensorInterval.uiInterval).listen(
           (event) {
             if (!mounted || _sensorsPaused) return;
             ref.read(parallaxProvider.notifier).updateFromGyroscope(
@@ -113,13 +121,14 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
       } catch (_) {}
 
       try {
-        _accelerometerSubscription = accelerometerEventStream(samplingPeriod: SensorInterval.gameInterval).listen(
+        _accelerometerSubscription = accelerometerEventStream(samplingPeriod: SensorInterval.uiInterval).listen(
           (event) {
             if (!mounted || _sensorsPaused) return;
             ref.read(parallaxProvider.notifier).updateTiltFromAccelerometer(
                   x: event.x,
                   y: event.y,
                   z: event.z,
+                  isLandscape: _isLandscape,
                 );
           },
           onError: (Object error) {},
