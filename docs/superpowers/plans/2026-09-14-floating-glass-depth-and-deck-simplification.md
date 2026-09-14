@@ -34,7 +34,7 @@
 - Consumes: `VinylController`, `AudioService`.
 - Produces: Clean minimalist `VinylPlayerWidget` rendering only platter, tonearm, status row, and `VinylDiscDrawerWidget`.
 
-- [ ] **Step 1: Write test asserting clean Vinyl Deck without mixer**
+- [x] **Step 1: Write test asserting clean Vinyl Deck without mixer**
 
 In `test/features/vinyl/vinyl_player_widget_test.dart`:
 Remove `TurntableMixerStrip` import and assertion, and assert `find.byKey(const ValueKey('fader_rec_track'))` is nothing:
@@ -44,31 +44,31 @@ Remove `TurntableMixerStrip` import and assertion, and assert `find.byKey(const 
     expect(find.text('SOUNDSCAPE MIXER // 3-CH'), findsNothing);
 ```
 
-- [ ] **Step 2: Remove mixer strip from `VinylPlayerWidget`**
+- [x] **Step 2: Remove mixer strip from `VinylPlayerWidget`**
 
 In `lib/features/vinyl/presentation/vinyl_player_widget.dart`:
 Remove `import 'widgets/turntable_mixer_strip.dart';`.
 Remove lines 218-220 (`const SizedBox(height: 10), const TurntableMixerStrip(),`).
 Delete `lib/features/vinyl/presentation/widgets/turntable_mixer_strip.dart` and `test/features/vinyl/turntable_mixer_strip_test.dart`.
 
-- [ ] **Step 3: Simplify `VinylController`**
+- [x] **Step 3: Simplify `VinylController`**
 
 In `lib/features/vinyl/presentation/vinyl_controller.dart`:
 Remove `_getMixerState` and `soundscape_mixer_controller.dart` import.
 Call `_audioService?.startAmbient(trackIndex: state.selectedTrackIndex)` without mixer arguments.
 
-- [ ] **Step 4: Streamline native `MainActivity.kt` audio engine**
+- [x] **Step 4: Streamline native `MainActivity.kt` audio engine**
 
 In `android/app/src/main/kotlin/com/example/takt_desk/MainActivity.kt`:
 In `startAmbient`: keep primary soundscape player cleanly prepared and started inside `.use { fd -> ... }`, and safely stop auxiliary crackle/binaural players if running.
 
-- [ ] **Step 5: Run tests to verify pass**
+- [x] **Step 5: Run tests to verify pass**
 
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter test test/features/vinyl/`
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter test test/core/audio/`
 Expected: PASS (All tests green).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/features/vinyl/ lib/core/ test/ android/
@@ -92,7 +92,7 @@ git commit -m "refactor(vinyl): remove soundscape mixer console and restore pure
   - `double lightY`: normalized 2D light vector Y coordinate ($-1.0 \dots 1.0$).
   - `double lightIntensity`: specular glare intensity ($0.0 \dots 1.0$).
 
-- [ ] **Step 1: Write failing unit test for extended ParallaxState**
+- [x] **Step 1: Write failing unit test for extended ParallaxState**
 
 Update `test/core/parallax_test.dart`:
 ```dart
@@ -137,14 +137,14 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter test test/core/parallax_test.dart`
-Expected: FAIL (`lightX`, `lightY`, `lightIntensity` undefined).
+Expected: FAIL (`lightX`, `lightY`, `lightIntensity` not defined on `ParallaxState`).
 
-- [ ] **Step 3: Implement light vector calculation in `ParallaxController`**
+- [x] **Step 3: Implement `ParallaxState` extensions and light vector calculation**
 
-Update `lib/core/sensors/parallax_controller.dart`:
+In `lib/core/sensors/parallax_controller.dart`:
 ```dart
 import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -245,12 +245,12 @@ final parallaxProvider = StateNotifierProvider<ParallaxController, ParallaxState
 });
 ```
 
-- [ ] **Step 4: Run unit tests to verify pass**
+- [x] **Step 4: Run unit tests to verify pass**
 
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter test test/core/parallax_test.dart`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/core/sensors/parallax_controller.dart test/core/parallax_test.dart
@@ -269,7 +269,7 @@ git commit -m "feat(sensors): compute 2D/3D virtual light vector and glare inten
 - Consumes: `lightX`, `lightY`, `lightIntensity`, `BorderRadius`, `isDark`.
 - Produces: `GlassRimPainter` rendering dynamic curved specular rim highlights and chromatic refraction caustics.
 
-- [ ] **Step 1: Write failing unit test for `GlassRimPainter`**
+- [x] **Step 1: Write failing unit test for `GlassRimPainter`**
 
 Create `test/app/theme/widgets/glass_rim_painter_test.dart`:
 ```dart
@@ -313,12 +313,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter test test/app/theme/widgets/glass_rim_painter_test.dart`
 Expected: FAIL (`GlassRimPainter` not found).
 
-- [ ] **Step 3: Implement `GlassRimPainter`**
+- [x] **Step 3: Implement `GlassRimPainter`**
 
 Create `lib/app/theme/widgets/glass_rim_painter.dart`:
 ```dart
@@ -417,12 +417,12 @@ class GlassRimPainter extends CustomPainter {
 }
 ```
 
-- [ ] **Step 4: Run unit tests to verify pass**
+- [x] **Step 4: Run unit tests to verify pass**
 
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter test test/app/theme/widgets/glass_rim_painter_test.dart`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/app/theme/widgets/glass_rim_painter.dart test/app/theme/widgets/glass_rim_painter_test.dart
@@ -444,7 +444,7 @@ git commit -m "feat(theme): implement procedural GlassRimPainter for Liquid Glas
 - Consumes: `parallaxProvider`, `GlassRimPainter`, `MaterialChassisBox`.
 - Produces: 3D Floating Glass depth effect on all instrument panels (Dial, Tasks, Vinyl) with counter-projected drop shadows and dynamic gyro glares.
 
-- [ ] **Step 1: Write widget test verifying 3D Floating Glass integration**
+- [x] **Step 1: Write widget test verifying 3D Floating Glass integration**
 
 Create or update `test/app/theme/widgets/material_chassis_box_test.dart`:
 ```dart
@@ -488,7 +488,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Update `MaterialChassisBox` with 3D Matrix4 perspective & `GlassRimPainter`**
+- [x] **Step 2: Update `MaterialChassisBox` with 3D Matrix4 perspective & `GlassRimPainter`**
 
 In `lib/app/theme/widgets/material_chassis_box.dart`:
 1. Watch `parallaxProvider`.
@@ -496,29 +496,29 @@ In `lib/app/theme/widgets/material_chassis_box.dart`:
 3. Compute dynamic counter-projected drop shadow based on `parallax.tiltX` and `parallax.tiltY`.
 4. Render `GlassRimPainter` in `foregroundPainter` with `lightX: parallax.lightX`, `lightY: parallax.lightY`, `intensity: parallax.lightIntensity`.
 
-- [ ] **Step 3: Run widget tests**
+- [x] **Step 3: Run widget tests**
 
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter test test/app/theme/widgets/material_chassis_box_test.dart`
 Expected: PASS.
 
-- [ ] **Step 4: Run full repository verification**
+- [x] **Step 4: Run full repository verification**
 
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter test`
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter analyze`
 Expected: 100% test pass rate, 0 analyzer issues.
 
-- [ ] **Step 5: Verify zero occurrences of `tuneeca`**
+- [x] **Step 5: Verify zero occurrences of `tuneeca`**
 
 Run: `git diff | grep "tuneeca" || true`
 Expected: 0 occurrences found.
 
-- [ ] **Step 6: Build production release APK**
+- [x] **Step 6: Build production release APK**
 
 Run: `/home/tuneeca/RSQUARE/flutter/bin/flutter build apk --release`
 Run: `cp build/app/outputs/flutter-apk/app-release.apk /home/tuneeca/RSQUARE/Takt_Desk_Release.apk`
 Run: `ls -lh /home/tuneeca/RSQUARE/Takt_Desk_Release.apk`
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/app/theme/widgets/material_chassis_box.dart test/app/theme/widgets/material_chassis_box_test.dart
