@@ -88,6 +88,7 @@ class VinylController extends StateNotifier<VinylState> {
     }
     state = state.copyWith(selectedTrackIndex: index);
     HapticService.dialTick();
+    _audioService?.playFoley(SoundEffect.discLoad);
     if (state.needleOnRecord) {
       _audioService?.startAmbient(index);
     }

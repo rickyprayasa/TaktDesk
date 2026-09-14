@@ -110,13 +110,21 @@ void main() {
       controller.selectTrack(2); // Library Atmosphere
       controller.dropNeedle();
 
-      expect(mockAudio.playedEffects, equals([SoundEffect.stylusDrop]));
+      expect(mockAudio.playedEffects, equals([SoundEffect.discLoad, SoundEffect.stylusDrop]));
       expect(mockAudio.ambientStarted, equals([2]));
       expect(mockAudio.ambientStoppedCount, equals(0));
 
       controller.liftNeedle();
-      expect(mockAudio.playedEffects, equals([SoundEffect.stylusDrop, SoundEffect.stylusStop]));
+      expect(mockAudio.playedEffects, equals([SoundEffect.discLoad, SoundEffect.stylusDrop, SoundEffect.stylusStop]));
       expect(mockAudio.ambientStoppedCount, equals(1));
+    });
+
+    test('selectTrack triggers discLoad foley sound effect', () {
+      final mockAudio = MockAudioService();
+      final controller = VinylController(mockAudio);
+
+      controller.selectTrack(1);
+      expect(mockAudio.playedEffects, equals([SoundEffect.discLoad]));
     });
 
     test('selectTrack updates ambient track if needle is currently dropped', () {
@@ -128,6 +136,7 @@ void main() {
 
       controller.selectTrack(3);
       expect(mockAudio.ambientStarted, equals([0, 3]));
+      expect(mockAudio.playedEffects, contains(SoundEffect.discLoad));
     });
 
     test('selectTrack does NOT start ambient if needle is lifted', () {
@@ -136,6 +145,7 @@ void main() {
 
       controller.selectTrack(1);
       expect(mockAudio.ambientStarted, isEmpty);
+      expect(mockAudio.playedEffects, equals([SoundEffect.discLoad]));
     });
 
     test('selectTrack guards premium tracks when not Pro and permits when Pro', () {

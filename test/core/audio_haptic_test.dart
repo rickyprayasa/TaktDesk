@@ -13,6 +13,7 @@ void main() {
     expect(SoundEffect.values.contains(SoundEffect.inkStamp), isTrue);
     expect(SoundEffect.values.contains(SoundEffect.stylusDrop), isTrue);
     expect(SoundEffect.values.contains(SoundEffect.stylusStop), isTrue);
+    expect(SoundEffect.values.contains(SoundEffect.discLoad), isTrue);
   });
 
   test('AudioService handles mock/graceful mode when audio devices unavailable', () async {

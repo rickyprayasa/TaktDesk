@@ -10,4 +10,5 @@ enum SoundEffect {
   drawerLatch,
   switchClick,
   bellChime,
+  discLoad,
 }

@@ -164,6 +164,7 @@ class MainActivity : FlutterActivity() {
                             "bellChime" -> "flutter_assets/assets/audio/foley_bell_chime.wav"
                             "drawerSlide" -> "flutter_assets/assets/audio/foley_drawer_slide.wav"
                             "drawerLatch" -> "flutter_assets/assets/audio/foley_drawer_latch.wav"
+                            "discLoad" -> "flutter_assets/assets/audio/foley_disc_load.wav"
                             else -> null
                         }
                         if (foleyAsset != null) {
