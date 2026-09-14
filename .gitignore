@@ -39,3 +39,7 @@ migrate_working_dir/
 
 # User source assets in root
 /RSQUARE.png
+
+# Kotlin daemon / incremental build cache
+.kotlin/
+android/.kotlin/
