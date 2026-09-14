@@ -6,14 +6,22 @@ import '../../../core/haptics/haptic_service.dart';
 import '../../../core/audio/audio_service.dart';
 import '../../../core/audio/sound_effect.dart';
 import '../../../core/database/app_database.dart';
+import '../../../core/focus/focus_lock_controller.dart';
+import '../../settings/presentation/settings_controller.dart';
 
 class ChronoDialController extends StateNotifier<TimerState> {
   final AudioService? _audioService;
   final AppDatabase? _database;
+  final FocusLockController? _focusLockController;
+  final DeskPreferencesController? _preferencesController;
   DateTime? _sessionStartedAt;
 
-  ChronoDialController([this._audioService, this._database])
-      : super(const TimerState(
+  ChronoDialController([
+    this._audioService,
+    this._database,
+    this._focusLockController,
+    this._preferencesController,
+  ])  : super(const TimerState(
           targetMinutes: 25,
           remainingSeconds: 25 * 60.0,
           isRunning: false,
@@ -144,8 +152,13 @@ class ChronoDialController extends StateNotifier<TimerState> {
       }
       _sessionStartedAt = null;
 
-      _audioService?.playFoley(SoundEffect.bellChime);
+      final chimeId = _preferencesController?.state.alarmChimeId ?? 'braunBell';
+      _audioService?.playAlarmChime(chimeId);
       HapticService.mechanicalPress();
+
+      if (state.phase == PomodoroPhase.focus && _focusLockController?.state.isLocked == true) {
+        _focusLockController?.completeUnlock();
+      }
 
       final next = _nextPhaseAndCycle();
       final nextPhase = next.phase;
@@ -228,7 +241,14 @@ class ChronoDialController extends StateNotifier<TimerState> {
 final chronoDialProvider = StateNotifierProvider<ChronoDialController, TimerState>((ref) {
   final audioService = ref.watch(audioServiceProvider);
   final database = ref.watch(appDatabaseProvider);
-  return ChronoDialController(audioService, database);
+  final focusLockController = ref.watch(focusLockProvider.notifier);
+  final preferencesController = ref.watch(deskPreferencesControllerProvider.notifier);
+  return ChronoDialController(
+    audioService,
+    database,
+    focusLockController,
+    preferencesController,
+  );
 });
 
 final chronoDialControllerProvider = chronoDialProvider;

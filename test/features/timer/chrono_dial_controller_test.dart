@@ -9,10 +9,16 @@ import 'package:takt_desk/features/timer/presentation/chrono_dial_controller.dar
 
 class MockAudioService extends AudioService {
   final List<SoundEffect> playedEffects = [];
+  final List<String> playedChimes = [];
 
   @override
   void playFoley(SoundEffect effect) {
     playedEffects.add(effect);
+  }
+
+  @override
+  void playAlarmChime(String chimeId) {
+    playedChimes.add(chimeId);
   }
 }
 
@@ -44,7 +50,7 @@ void main() {
 
         // Verifications:
         // 1. Chime played
-        expect(mockAudio.playedEffects, contains(SoundEffect.bellChime));
+        expect(mockAudio.playedChimes, contains('braunBell'));
         // 2. Switched to Short Break (Cycle 1/4)
         expect(controller.state.phase, equals(PomodoroPhase.shortBreak));
         expect(controller.state.targetMinutes, equals(5));
@@ -58,13 +64,13 @@ void main() {
         expect(sessions.first.targetMinutes, equals(25));
 
         // Now start and complete short break
-        mockAudio.playedEffects.clear();
+        mockAudio.playedChimes.clear();
         controller.start();
         controller.tick(5 * 60.0);
 
         // Verifications for Break completion:
         // 1. Chime played
-        expect(mockAudio.playedEffects, contains(SoundEffect.bellChime));
+        expect(mockAudio.playedChimes, contains('braunBell'));
         // 2. Switched to Focus (Cycle 2/4)
         expect(controller.state.phase, equals(PomodoroPhase.focus));
         expect(controller.state.cycleCount, equals(2));
