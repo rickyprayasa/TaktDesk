@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/sensors/parallax_controller.dart';
 import '../theme_controller.dart';
+import 'glass_rim_painter.dart';
 import 'material_texture_painter.dart';
 
 /// Paints a top-lit specular chamfer highlight rim along the top and left edges
@@ -69,6 +71,8 @@ class MaterialChassisBox extends ConsumerWidget {
   final bool showRivets;
   final bool showTexture;
   final bool showChamfer;
+  final bool showGlassRim;
+  final bool enablePerspective;
 
   const MaterialChassisBox({
     super.key,
@@ -83,13 +87,16 @@ class MaterialChassisBox extends ConsumerWidget {
     this.showRivets = true,
     this.showTexture = true,
     this.showChamfer = true,
+    this.showGlassRim = true,
+    this.enablePerspective = true,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeState = ref.watch(chassisThemeProvider);
+    final parallax = ref.watch(parallaxProvider);
 
-    return Container(
+    Widget chassis = Container(
       width: width,
       height: height,
       margin: margin,
@@ -106,14 +113,20 @@ class MaterialChassisBox extends ConsumerWidget {
                 ? Colors.black.withValues(alpha: 0.45)
                 : const Color(0x1F000000),
             blurRadius: 14,
-            offset: const Offset(0, 6),
+            offset: Offset(
+              (-parallax.tiltX * 20.0).clamp(-12.0, 12.0),
+              6.0 + (-parallax.tiltY * 20.0).clamp(-12.0, 12.0),
+            ),
           ),
           BoxShadow(
             color: themeState.isDarkMode
                 ? Colors.black.withValues(alpha: 0.25)
                 : const Color(0x0F000000),
             blurRadius: 4,
-            offset: const Offset(0, 1),
+            offset: Offset(
+              (-parallax.tiltX * 6.0).clamp(-4.0, 4.0),
+              1.0 + (-parallax.tiltY * 6.0).clamp(-4.0, 4.0),
+            ),
           ),
         ],
       ),
@@ -147,6 +160,20 @@ class MaterialChassisBox extends ConsumerWidget {
                 ),
               ),
             ),
+          if (showGlassRim)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  foregroundPainter: GlassRimPainter(
+                    lightX: parallax.lightX,
+                    lightY: parallax.lightY,
+                    intensity: parallax.lightIntensity,
+                    borderRadius: borderRadius,
+                    isDark: themeState.isDarkMode,
+                  ),
+                ),
+              ),
+            ),
           if (showRivets) ...[
             Positioned(
               top: 6,
@@ -176,6 +203,19 @@ class MaterialChassisBox extends ConsumerWidget {
         ],
       ),
     );
+
+    if (enablePerspective) {
+      chassis = Transform(
+        alignment: Alignment.center,
+        transform: Matrix4.identity()
+          ..setEntry(3, 2, 0.0012)
+          ..rotateX(-parallax.tiltY)
+          ..rotateY(parallax.tiltX),
+        child: chassis,
+      );
+    }
+
+    return chassis;
   }
 
   Widget _buildCornerRivet(int index, Color color) {

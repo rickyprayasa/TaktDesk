@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/app/theme/hardware_edition.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
+import 'package:takt_desk/app/theme/widgets/glass_rim_painter.dart';
 import 'package:takt_desk/app/theme/widgets/material_chassis_box.dart';
 import 'package:takt_desk/app/theme/widgets/material_texture_painter.dart';
+import 'package:takt_desk/core/sensors/parallax_controller.dart';
 
 void main() {
   group('MaterialTexturePainter Unit Tests', () {
@@ -342,6 +344,7 @@ void main() {
               body: MaterialChassisBox(
                 showTexture: false,
                 showChamfer: false,
+                showGlassRim: false,
                 child: Text('Smooth Box'),
               ),
             ),
@@ -453,6 +456,188 @@ void main() {
       rivet = tester.widget<Container>(find.byKey(const ValueKey('chassis_rivet_0')));
       rivetDeco = rivet.decoration as BoxDecoration;
       expect(rivetDeco.color, HardwareEdition.titaniumStealth.rivetLight);
+    });
+
+    testWidgets('renders GlassRimPainter in foreground by default and updates when theme switches', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      container.read(chassisThemeProvider.notifier).setDarkMode(true);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: Scaffold(
+              body: MaterialChassisBox(
+                child: Text('Glass Rim Inspection'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final glassPaintFinder = find.byWidgetPredicate(
+        (w) => w is CustomPaint && w.foregroundPainter is GlassRimPainter,
+      );
+      expect(glassPaintFinder, findsOneWidget);
+
+      final ignorePointerFinder = find.ancestor(
+        of: glassPaintFinder,
+        matching: find.byWidgetPredicate((w) => w is IgnorePointer && w.ignoring == true),
+      );
+      expect(ignorePointerFinder, findsOneWidget);
+
+      var customPaint = tester.widget<CustomPaint>(glassPaintFinder);
+      var painter = customPaint.foregroundPainter as GlassRimPainter;
+      expect(painter.lightX, equals(-0.4));
+      expect(painter.lightY, equals(-0.6));
+      expect(painter.intensity, equals(0.5));
+      expect(painter.isDark, isTrue);
+
+      // Switch to Light Mode
+      container.read(chassisThemeProvider.notifier).setDarkMode(false);
+      await tester.pumpAndSettle();
+
+      customPaint = tester.widget<CustomPaint>(glassPaintFinder);
+      painter = customPaint.foregroundPainter as GlassRimPainter;
+      expect(painter.isDark, isFalse);
+    });
+
+    testWidgets('omits GlassRimPainter when showGlassRim is false', (tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: MaterialChassisBox(
+                showGlassRim: false,
+                child: Text('No Glass Rim'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final glassPaintFinder = find.byWidgetPredicate(
+        (w) => w is CustomPaint && w.foregroundPainter is GlassRimPainter,
+      );
+      expect(glassPaintFinder, findsNothing);
+    });
+
+    testWidgets('applies Transform with Matrix4 perspective projection by default', (tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: MaterialChassisBox(
+                child: Text('3D Perspective Box'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final transformFinder = find.descendant(
+        of: find.byType(MaterialChassisBox),
+        matching: find.byType(Transform),
+      );
+      expect(transformFinder, findsOneWidget);
+
+      final transformWidget = tester.widget<Transform>(transformFinder);
+      expect(transformWidget.alignment, equals(Alignment.center));
+      expect(transformWidget.transform.entry(3, 2), equals(0.0012));
+    });
+
+    testWidgets('omits Transform when enablePerspective is false', (tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: MaterialChassisBox(
+                enablePerspective: false,
+                child: Text('Flat Box'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final transformFinder = find.descendant(
+        of: find.byType(MaterialChassisBox),
+        matching: find.byType(Transform),
+      );
+      expect(transformFinder, findsNothing);
+    });
+
+    testWidgets('dynamically shifts drop shadow offset and perspective transform on parallax tilt', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: Scaffold(
+              body: MaterialChassisBox(
+                child: Text('Tilt Dynamic Box'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Verify baseline shadow offset at 0 tilt
+      var boxContainer = tester.widget<Container>(find.byType(Container).first);
+      var deco = boxContainer.decoration as BoxDecoration;
+      expect(deco.boxShadow![0].offset, equals(const Offset(0.0, 6.0)));
+      expect(deco.boxShadow![1].offset, equals(const Offset(0.0, 1.0)));
+
+      // Simulate accelerometer sensor tilt
+      container.read(parallaxProvider.notifier).updateTiltFromAccelerometer(
+        x: 3.5,
+        y: -4.2,
+      );
+      await tester.pump();
+
+      final parallax = container.read(parallaxProvider);
+      expect(parallax.tiltX.abs(), greaterThan(0.0));
+      expect(parallax.tiltY.abs(), greaterThan(0.0));
+
+      boxContainer = tester.widget<Container>(find.byType(Container).first);
+      deco = boxContainer.decoration as BoxDecoration;
+
+      final expectedOffset0 = Offset(
+        (-parallax.tiltX * 20.0).clamp(-12.0, 12.0),
+        6.0 + (-parallax.tiltY * 20.0).clamp(-12.0, 12.0),
+      );
+      final expectedOffset1 = Offset(
+        (-parallax.tiltX * 6.0).clamp(-4.0, 4.0),
+        1.0 + (-parallax.tiltY * 6.0).clamp(-4.0, 4.0),
+      );
+
+      expect(deco.boxShadow![0].offset, equals(expectedOffset0));
+      expect(deco.boxShadow![1].offset, equals(expectedOffset1));
+
+      // Verify GlassRimPainter updated with dynamic light coordinates
+      final glassPaintFinder = find.byWidgetPredicate(
+        (w) => w is CustomPaint && w.foregroundPainter is GlassRimPainter,
+      );
+      final customPaint = tester.widget<CustomPaint>(glassPaintFinder);
+      final painter = customPaint.foregroundPainter as GlassRimPainter;
+      expect(painter.lightX, equals(parallax.lightX));
+      expect(painter.lightY, equals(parallax.lightY));
+      expect(painter.intensity, equals(parallax.lightIntensity));
+
+      // Verify Transform rotation matches tilt
+      final transformFinder = find.descendant(
+        of: find.byType(MaterialChassisBox),
+        matching: find.byType(Transform),
+      );
+      final transformWidget = tester.widget<Transform>(transformFinder);
+      final expectedTransform = Matrix4.identity()
+        ..setEntry(3, 2, 0.0012)
+        ..rotateX(-parallax.tiltY)
+        ..rotateY(parallax.tiltX);
+      expect(transformWidget.transform, equals(expectedTransform));
     });
   });
 }
