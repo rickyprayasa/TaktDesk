@@ -30,27 +30,15 @@ class GlassRimPainter extends CustomPainter {
 
     // 1. Primary Specular Rim Sweep aligned with light vector
     final lightAngle = math.atan2(lightY, lightX);
-    final highlightStart = Offset(
-      size.width / 2 + math.cos(lightAngle) * (size.width / 2),
-      size.height / 2 + math.sin(lightAngle) * (size.height / 2),
-    );
-    final highlightEnd = Offset(
-      size.width / 2 - math.cos(lightAngle) * (size.width / 2),
-      size.height / 2 - math.sin(lightAngle) * (size.height / 2),
-    );
+    final cosAngle = math.cos(lightAngle);
+    final sinAngle = math.sin(lightAngle);
 
     final highlightPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..shader = LinearGradient(
-        begin: Alignment(
-          (highlightStart.dx / size.width) * 2 - 1,
-          (highlightStart.dy / size.height) * 2 - 1,
-        ),
-        end: Alignment(
-          (highlightEnd.dx / size.width) * 2 - 1,
-          (highlightEnd.dy / size.height) * 2 - 1,
-        ),
+        begin: Alignment(cosAngle, sinAngle),
+        end: Alignment(-cosAngle, -sinAngle),
         colors: [
           Colors.white.withValues(alpha: (0.45 * intensity).clamp(0.1, 0.75)),
           Colors.white.withValues(alpha: (0.12 * intensity).clamp(0.02, 0.25)),
