@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/theme/takt_colors.dart';
 import '../../../../app/theme/theme_controller.dart';
 import '../../../../app/theme/widgets/rsquare_hardware_plaque.dart';
-import '../../../../core/audio/audio_service.dart';
-import '../../../../core/audio/sound_effect.dart';
 import '../../../../core/haptics/haptic_service.dart';
 import '../../desk/presentation/desk_canvas_screen.dart';
 
@@ -94,13 +92,12 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
   }
 
   void _handleAnimationProgress() {
-    // Haptic & sound calibration ticks at quarter marks of needle sweep
+    // Subtle tactile haptic calibration ticks at quarter marks of needle sweep (unobtrusive & silent)
     if (_needleSweepAnimation.value > 0) {
       final quarter = (_needleSweepAnimation.value * 4).floor();
       if (quarter != _lastTickQuarter && quarter > 0 && quarter <= 4) {
         _lastTickQuarter = quarter;
         HapticService.selectionClick();
-        ref.read(audioServiceProvider).playFoley(SoundEffect.dialClick);
       }
     }
   }

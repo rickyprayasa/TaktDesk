@@ -62,20 +62,25 @@ void main() {
 
     controller.setPrimaryVolume(0.65);
     expect(container.read(soundscapeMixerProvider).primaryVolume, 0.65);
+    expect(mockAudio.primaryVolume, 0.65);
 
     controller.setCrackleVolume(0.50);
     expect(container.read(soundscapeMixerProvider).crackleVolume, 0.50);
+    expect(mockAudio.crackleVolume, 0.50);
 
     controller.setBinauralVolume(0.10);
     expect(container.read(soundscapeMixerProvider).binauralVolume, 0.10);
+    expect(mockAudio.binauralVolume, 0.10);
 
     controller.toggleCrackleMute();
     expect(container.read(soundscapeMixerProvider).isCrackleMuted, isTrue);
     expect(container.read(soundscapeMixerProvider).effectiveCrackle, 0.0);
+    expect(mockAudio.crackleVolume, 0.0);
 
     controller.toggleCrackleMute();
     expect(container.read(soundscapeMixerProvider).isCrackleMuted, isFalse);
     expect(container.read(soundscapeMixerProvider).effectiveCrackle, 0.50);
+    expect(mockAudio.crackleVolume, 0.50);
   });
 
   test('SoundscapeMixerController persists changes to AppDatabase', () async {

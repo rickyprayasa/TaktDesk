@@ -22,6 +22,7 @@ class SoundscapeMixerController extends StateNotifier<SoundscapeMixerState> {
   Future<void> _loadFromDatabase() async {
     try {
       final prefs = await _db.getDeskPreferences();
+      if (!mounted) return;
       if (prefs != null) {
         state = SoundscapeMixerState(
           primaryVolume: prefs.primaryVolume,
