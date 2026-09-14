@@ -14,8 +14,8 @@ class IsometricDeskLayout extends ConsumerWidget {
     return Transform(
       transform: Matrix4.identity()
         ..setEntry(3, 2, 0.001) // perspective
-        ..rotateX(parallax.tiltY)
-        ..rotateY(parallax.tiltX),
+        ..rotateX(-parallax.tiltY * 0.25)
+        ..rotateY(parallax.tiltX * 0.25),
       alignment: Alignment.center,
       child: child,
     );

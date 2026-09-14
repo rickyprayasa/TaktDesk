@@ -99,7 +99,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
 
     if (widget.gyroscopeStream == null && widget.accelerometerStream == null) {
       try {
-        _gyroscopeSubscription = gyroscopeEventStream(samplingPeriod: SensorInterval.uiInterval).listen(
+        _gyroscopeSubscription = gyroscopeEventStream(samplingPeriod: SensorInterval.gameInterval).listen(
           (event) {
             if (!mounted || _sensorsPaused) return;
             ref.read(parallaxProvider.notifier).updateFromGyroscope(
@@ -113,7 +113,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
       } catch (_) {}
 
       try {
-        _accelerometerSubscription = accelerometerEventStream(samplingPeriod: SensorInterval.uiInterval).listen(
+        _accelerometerSubscription = accelerometerEventStream(samplingPeriod: SensorInterval.gameInterval).listen(
           (event) {
             if (!mounted || _sensorsPaused) return;
             ref.read(parallaxProvider.notifier).updateTiltFromAccelerometer(
@@ -221,15 +221,27 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
       },
       child: Scaffold(
         backgroundColor: theme.canvasColor,
-        body: MouseRegion(
-          onHover: (event) {
+        body: Listener(
+          behavior: HitTestBehavior.translucent,
+          onPointerMove: (event) {
             final size = MediaQuery.of(context).size;
             if (size.width > 0 && size.height > 0) {
               final normX = ((event.position.dx / size.width) - 0.5) * 2;
               final normY = ((event.position.dy / size.height) - 0.5) * 2;
               ref.read(parallaxProvider.notifier).updateSensorInput(
-                    rawX: normX * 3.0,
-                    rawY: -normY * 3.0,
+                    rawX: normX * 8.0,
+                    rawY: -normY * 8.0,
+                  );
+            }
+          },
+          onPointerHover: (event) {
+            final size = MediaQuery.of(context).size;
+            if (size.width > 0 && size.height > 0) {
+              final normX = ((event.position.dx / size.width) - 0.5) * 2;
+              final normY = ((event.position.dy / size.height) - 0.5) * 2;
+              ref.read(parallaxProvider.notifier).updateSensorInput(
+                    rawX: normX * 8.0,
+                    rawY: -normY * 8.0,
                   );
             }
           },

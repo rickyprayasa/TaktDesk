@@ -28,10 +28,29 @@ class GlassRimPainter extends CustomPainter {
     final rect = Offset.zero & size;
     final rrect = borderRadius.toRRect(rect);
 
-    // 1. Primary Specular Rim Sweep aligned with light vector
     final lightAngle = math.atan2(lightY, lightX);
     final cosAngle = math.cos(lightAngle);
     final sinAngle = math.sin(lightAngle);
+
+    // 1. Dynamic Surface Specular Sheen (Apple Liquid Glass surface reflection)
+    final surfaceSheenPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..shader = LinearGradient(
+        begin: Alignment(cosAngle * 1.6, sinAngle * 1.6),
+        end: Alignment(-cosAngle * 1.6, -sinAngle * 1.6),
+        colors: [
+          Colors.white.withValues(alpha: (0.10 * intensity).clamp(0.01, 0.20)),
+          Colors.white.withValues(alpha: (0.03 * intensity).clamp(0.005, 0.08)),
+          Colors.transparent,
+          isDark
+              ? TaktColors.filamentAmber.withValues(alpha: (0.04 * intensity).clamp(0.005, 0.08))
+              : Colors.white.withValues(alpha: 0.05),
+        ],
+        stops: const [0.0, 0.30, 0.70, 1.0],
+      ).createShader(rect);
+    canvas.drawRRect(rrect, surfaceSheenPaint);
+
+    // 2. Primary Specular Rim Sweep aligned with light vector
 
     final highlightPaint = Paint()
       ..style = PaintingStyle.stroke
@@ -40,28 +59,28 @@ class GlassRimPainter extends CustomPainter {
         begin: Alignment(cosAngle, sinAngle),
         end: Alignment(-cosAngle, -sinAngle),
         colors: [
-          Colors.white.withValues(alpha: (0.45 * intensity).clamp(0.1, 0.75)),
-          Colors.white.withValues(alpha: (0.12 * intensity).clamp(0.02, 0.25)),
+          Colors.white.withValues(alpha: (0.65 * intensity).clamp(0.15, 0.90)),
+          Colors.white.withValues(alpha: (0.22 * intensity).clamp(0.05, 0.40)),
           Colors.transparent,
           isDark
-              ? TaktColors.filamentAmber.withValues(alpha: (0.15 * intensity).clamp(0.02, 0.25))
-              : Colors.black.withValues(alpha: 0.10),
+              ? TaktColors.filamentAmber.withValues(alpha: (0.20 * intensity).clamp(0.03, 0.35))
+              : Colors.black.withValues(alpha: 0.12),
         ],
         stops: const [0.0, 0.28, 0.70, 1.0],
       ).createShader(rect);
 
     canvas.drawRRect(rrect, highlightPaint);
 
-    // 2. Soft Refractive Inner Caustic Glow along illuminated corner
+    // 3. Soft Refractive Inner Caustic Glow along illuminated corner
     final causticPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5)
+      ..strokeWidth = 2.4
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.8)
       ..shader = RadialGradient(
         center: Alignment(lightX * 0.8, lightY * 0.8),
-        radius: 0.8,
+        radius: 0.85,
         colors: [
-          Colors.white.withValues(alpha: (0.20 * intensity).clamp(0.05, 0.35)),
+          Colors.white.withValues(alpha: (0.28 * intensity).clamp(0.08, 0.45)),
           Colors.transparent,
         ],
       ).createShader(rect);

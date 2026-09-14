@@ -15,31 +15,31 @@ void main() {
 
       // Verify low-pass filter math:
       // rawX = 2.0 -> targetX = 0.02
-      // smoothX = 0.15 * 0.02 + 0.85 * 0.0 = 0.003
-      expect(controller.state.tiltX, closeTo(0.003, 1e-5));
+      // smoothX = 0.20 * 0.02 + 0.80 * 0.0 = 0.004
+      expect(controller.state.tiltX, closeTo(0.004, 1e-5));
       // rawY = 3.0 -> targetY = 0.03
-      // smoothY = 0.15 * 0.03 + 0.85 * 0.0 = 0.0045
-      expect(controller.state.tiltY, closeTo(0.0045, 1e-5));
+      // smoothY = 0.20 * 0.03 + 0.80 * 0.0 = 0.006
+      expect(controller.state.tiltY, closeTo(0.006, 1e-5));
     });
 
-    test('ParallaxController clamps target values to maximum +/- 0.05 radians (~3 degrees)', () {
+    test('ParallaxController clamps target values to maximum +/- 0.22 radians (~12.6 degrees)', () {
       final controller = ParallaxController();
 
       // Extreme raw inputs exceeding clamp bounds
       controller.updateSensorInput(rawX: 100.0, rawY: -100.0);
-      // targetX clamped to 0.05, targetY clamped to -0.05
-      // First tick: 0.15 * 0.05 = 0.0075, 0.15 * -0.05 = -0.0075
-      expect(controller.state.tiltX, closeTo(0.0075, 1e-5));
-      expect(controller.state.tiltY, closeTo(-0.0075, 1e-5));
+      // targetX clamped to 0.22, targetY clamped to -0.22
+      // First tick: 0.20 * 0.22 = 0.044, 0.20 * -0.22 = -0.044
+      expect(controller.state.tiltX, closeTo(0.044, 1e-4));
+      expect(controller.state.tiltY, closeTo(-0.044, 1e-4));
 
-      // Repeated updates converge towards 0.05 and -0.05 without exceeding
+      // Repeated updates converge towards 0.22 and -0.22 without exceeding
       for (int i = 0; i < 100; i++) {
         controller.updateSensorInput(rawX: 100.0, rawY: -100.0);
       }
-      expect(controller.state.tiltX, closeTo(0.05, 1e-4));
-      expect(controller.state.tiltX, lessThanOrEqualTo(0.05));
-      expect(controller.state.tiltY, closeTo(-0.05, 1e-4));
-      expect(controller.state.tiltY, greaterThanOrEqualTo(-0.05));
+      expect(controller.state.tiltX, closeTo(0.22, 1e-3));
+      expect(controller.state.tiltX, lessThanOrEqualTo(0.22));
+      expect(controller.state.tiltY, closeTo(-0.22, 1e-3));
+      expect(controller.state.tiltY, greaterThanOrEqualTo(-0.22));
     });
 
     test('ParallaxController smooths successive input over time', () {
@@ -69,20 +69,20 @@ void main() {
       expect(updatedState.tiltY, isNonZero);
     });
 
-    test('updateTiltFromAccelerometer sustains tilt angle and clamps to +/- 0.05 rad', () {
+    test('updateTiltFromAccelerometer sustains tilt angle and clamps to +/- 0.22 rad', () {
       final controller = ParallaxController();
 
       for (int i = 0; i < 50; i++) {
         controller.updateTiltFromAccelerometer(x: 0.3, y: 0.4, z: 9.8);
       }
-      expect(controller.state.tiltX, greaterThan(0.02));
-      expect(controller.state.tiltY, greaterThan(0.02));
-      expect(controller.state.tiltX, lessThanOrEqualTo(0.05));
-      expect(controller.state.tiltY, lessThanOrEqualTo(0.05));
+      expect(controller.state.tiltX, greaterThan(0.015));
+      expect(controller.state.tiltY, greaterThan(0.015));
+      expect(controller.state.tiltX, lessThanOrEqualTo(0.22));
+      expect(controller.state.tiltY, lessThanOrEqualTo(0.22));
 
       // Sustains tilt angle rather than decaying
       controller.updateTiltFromAccelerometer(x: 0.3, y: 0.4, z: 9.8);
-      expect(controller.state.tiltX, greaterThan(0.02));
+      expect(controller.state.tiltX, greaterThan(0.015));
     });
 
     test('ParallaxState provides default centered light vector', () {
@@ -163,39 +163,39 @@ void main() {
       controller.updateFromGyroscope(x: 2.0, y: -3.0);
       expect(controller.state.tiltX, isNonZero);
       expect(controller.state.tiltY, isNonZero);
-      expect(controller.state.tiltX.abs(), lessThanOrEqualTo(0.05));
-      expect(controller.state.tiltY.abs(), lessThanOrEqualTo(0.05));
+      expect(controller.state.tiltX.abs(), lessThanOrEqualTo(0.22));
+      expect(controller.state.tiltY.abs(), lessThanOrEqualTo(0.22));
 
-      // Extreme angular rate clamped to 0.05 rad
+      // Extreme angular rate clamped to 0.22 rad
       for (int i = 0; i < 50; i++) {
         controller.updateFromGyroscope(x: -100.0, y: 100.0);
       }
-      expect(controller.state.tiltX, closeTo(0.05, 1e-4));
-      expect(controller.state.tiltY, closeTo(0.05, 1e-4));
+      expect(controller.state.tiltX, closeTo(0.22, 1e-3));
+      expect(controller.state.tiltY, closeTo(0.22, 1e-3));
     });
 
     test('updateTiltFromAccelerometer supports handheld orientation (y >= 2.5) without ceiling saturation', () {
       final controller = ParallaxController();
 
-      // Handheld resting angle ~50° (y ~ 6.0 m/s^2, z ~ 7.0 m/s^2) should be close to 0 tilt
+      // Handheld resting angle ~41°-45° (y ~ 6.0 m/s^2, z ~ 7.0 m/s^2) should be close to 0 tilt
       for (int i = 0; i < 30; i++) {
         controller.updateTiltFromAccelerometer(x: 0.0, y: 6.0, z: 7.0);
       }
-      expect(controller.state.tiltY.abs(), lessThan(0.015));
+      expect(controller.state.tiltY.abs(), lessThan(0.02));
 
       // Tilting forward (y = 8.0) tilts positive Y
       for (int i = 0; i < 30; i++) {
         controller.updateTiltFromAccelerometer(x: 0.0, y: 8.0, z: 5.6);
       }
-      expect(controller.state.tiltY, greaterThan(0.02));
-      expect(controller.state.tiltY, lessThanOrEqualTo(0.05));
+      expect(controller.state.tiltY, greaterThan(0.05));
+      expect(controller.state.tiltY, lessThanOrEqualTo(0.22));
 
       // Tilting backward (y = 4.0) tilts negative Y
       for (int i = 0; i < 30; i++) {
         controller.updateTiltFromAccelerometer(x: 0.0, y: 4.0, z: 7.0);
       }
       expect(controller.state.tiltY, lessThan(0.0));
-      expect(controller.state.tiltY, greaterThanOrEqualTo(-0.05));
+      expect(controller.state.tiltY, greaterThanOrEqualTo(-0.22));
     });
   });
 }

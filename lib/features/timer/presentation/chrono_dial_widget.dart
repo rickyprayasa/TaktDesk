@@ -269,12 +269,6 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                                 hubCapColor: themeState.isDarkMode
                                     ? const Color(0xFF22252A)
                                     : const Color(0xFF2B2E34),
-                                glassHighlightAlphas: themeState.isDarkMode
-                                    ? const [0.15, 0.03]
-                                    : const [0.28, 0.06],
-                                lightX: parallax.lightX,
-                                lightY: parallax.lightY,
-                                lightIntensity: parallax.lightIntensity,
                               ),
                               child: Center(
                                 child: Transform.translate(

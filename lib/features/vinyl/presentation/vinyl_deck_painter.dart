@@ -99,8 +99,8 @@ class VinylDeckPainter extends CustomPainter {
     // Anisotropic "Butterfly" Light Reflection Sheen (microgroove light refraction)
     canvas.save();
     canvas.translate(center.dx, center.dy);
-    // Subtle sheen rotation that tracks with rotation
-    canvas.rotate(rotationAngle * 0.35);
+    // Full 360-degree continuous anisotropic sheen rotation tracking turntable platter
+    canvas.rotate(rotationAngle);
 
     final sheenPaint = Paint()
       ..shader = const SweepGradient(
@@ -158,6 +158,18 @@ class VinylDeckPainter extends CustomPainter {
     canvas.drawLine(
       Offset(-labelRadius * 0.75, 0),
       Offset(labelRadius * 0.75, 0),
+      labelAccentPaint,
+    );
+
+    // Asymmetrical 360° rotation indicator (Braun index pip and radial mark)
+    canvas.drawCircle(
+      Offset(0, -labelRadius * 0.58),
+      2.0,
+      labelAccentPaint,
+    );
+    canvas.drawLine(
+      Offset(0, -labelRadius * 0.45),
+      Offset(0, -labelRadius * 0.75),
       labelAccentPaint,
     );
 

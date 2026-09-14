@@ -540,7 +540,6 @@ void main() {
     expect(lightPainter.numeralColor, equals(const Color(0xFF1B1E23).withValues(alpha: 0.78)));
     expect(lightPainter.dishShadowColor, equals(Colors.black.withValues(alpha: 0.12)));
     expect(lightPainter.hubCapColor, equals(const Color(0xFF2B2E34)));
-    expect(lightPainter.glassHighlightAlphas, equals(const [0.28, 0.06]));
     expect(lightPainter.knurlColor, equals(Colors.black.withValues(alpha: 0.08 * 0.75)));
 
     // Check numeral painter color
@@ -776,51 +775,31 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  test('ChronoDialHandPainter shouldRepaint returns true when light vector or intensity changes', () {
+  test('ChronoDialHandPainter shouldRepaint returns true when needleColor, hubCapColor, or remainingSeconds changes', () {
     final painter1 = ChronoDialHandPainter(
       remainingSeconds: 1500,
       needleColor: Colors.amber,
       hubCapColor: Colors.black,
-      glassHighlightAlphas: const [0.15, 0.03],
-      lightX: -0.4,
-      lightY: -0.6,
-      lightIntensity: 0.5,
     );
     final painter2 = ChronoDialHandPainter(
-      remainingSeconds: 1500,
+      remainingSeconds: 1200,
       needleColor: Colors.amber,
       hubCapColor: Colors.black,
-      glassHighlightAlphas: const [0.15, 0.03],
-      lightX: 0.2,
-      lightY: -0.6,
-      lightIntensity: 0.5,
     );
     final painter3 = ChronoDialHandPainter(
       remainingSeconds: 1500,
-      needleColor: Colors.amber,
+      needleColor: Colors.red,
       hubCapColor: Colors.black,
-      glassHighlightAlphas: const [0.15, 0.03],
-      lightX: -0.4,
-      lightY: 0.1,
-      lightIntensity: 0.5,
     );
     final painter4 = ChronoDialHandPainter(
       remainingSeconds: 1500,
       needleColor: Colors.amber,
-      hubCapColor: Colors.black,
-      glassHighlightAlphas: const [0.15, 0.03],
-      lightX: -0.4,
-      lightY: -0.6,
-      lightIntensity: 0.9,
+      hubCapColor: Colors.grey,
     );
     final painterIdentical = ChronoDialHandPainter(
       remainingSeconds: 1500,
       needleColor: Colors.amber,
       hubCapColor: Colors.black,
-      glassHighlightAlphas: const [0.15, 0.03],
-      lightX: -0.4,
-      lightY: -0.6,
-      lightIntensity: 0.5,
     );
 
     expect(painter1.shouldRepaint(painter2), isTrue);
@@ -829,7 +808,7 @@ void main() {
     expect(painter1.shouldRepaint(painterIdentical), isFalse);
   });
 
-  testWidgets('ChronoDialWidget forwards parallax light coordinates to ChronoDialHandPainter and applies 3D perspective', (tester) async {
+  testWidgets('ChronoDialWidget mounts ChronoDialHandPainter with pure minimalist needle and applies 3D perspective', (tester) async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
@@ -847,12 +826,11 @@ void main() {
     );
     await tester.pump();
 
-    // Default light coordinates
+    // Verify ChronoDialHandPainter is mounted
     var customPaint = tester.widget<CustomPaint>(dialFinder);
+    expect(customPaint.foregroundPainter, isA<ChronoDialHandPainter>());
     var handPainter = customPaint.foregroundPainter as ChronoDialHandPainter;
-    expect(handPainter.lightX, equals(-0.4));
-    expect(handPainter.lightY, equals(-0.6));
-    expect(handPainter.lightIntensity, equals(0.5));
+    expect(handPainter.remainingSeconds, equals(1500.0));
 
     // Verify 3D perspective transform exists around dial
     final transformFinder = find.ancestor(
@@ -869,12 +847,9 @@ void main() {
     );
     await tester.pump();
 
-    final parallax = container.read(parallaxProvider);
     customPaint = tester.widget<CustomPaint>(dialFinder);
     handPainter = customPaint.foregroundPainter as ChronoDialHandPainter;
-    expect(handPainter.lightX, equals(parallax.lightX));
-    expect(handPainter.lightY, equals(parallax.lightY));
-    expect(handPainter.lightIntensity, equals(parallax.lightIntensity));
+    expect(handPainter.remainingSeconds, equals(1500.0));
 
     await tester.pumpWidget(const SizedBox());
   });
