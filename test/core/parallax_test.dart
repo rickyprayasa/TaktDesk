@@ -84,5 +84,55 @@ void main() {
       controller.updateTiltFromAccelerometer(x: 0.3, y: 0.4, z: 9.8);
       expect(controller.state.tiltX, greaterThan(0.02));
     });
+
+    test('ParallaxState provides default centered light vector', () {
+      const state = ParallaxState();
+      expect(state.tiltX, 0.0);
+      expect(state.tiltY, 0.0);
+      expect(state.lightX, -0.4);
+      expect(state.lightY, -0.6);
+      expect(state.lightIntensity, 0.5);
+    });
+
+    test('updateTiltFromAccelerometer computes dynamic light vector based on tilt', () {
+      final controller = ParallaxController();
+
+      // Tilt device right (+X) and forward (+Y)
+      controller.updateTiltFromAccelerometer(x: 3.0, y: 3.0, z: 9.0);
+
+      final state = controller.state;
+      expect(state.tiltX, greaterThan(0.0));
+      expect(state.tiltY, greaterThan(0.0));
+      expect(state.lightX, isNotNull);
+      expect(state.lightY, isNotNull);
+      expect(state.lightIntensity, greaterThan(0.5));
+    });
+
+    test('reset restores default centered light vector and zero tilt', () {
+      final controller = ParallaxController();
+      controller.updateTiltFromAccelerometer(x: 5.0, y: 5.0, z: 8.0);
+      controller.reset();
+
+      expect(controller.state.tiltX, 0.0);
+      expect(controller.state.tiltY, 0.0);
+      expect(controller.state.lightX, -0.4);
+      expect(controller.state.lightY, -0.6);
+      expect(controller.state.lightIntensity, 0.5);
+    });
+
+    test('ParallaxState copyWith works correctly', () {
+      const state1 = ParallaxState();
+      final state2 = state1.copyWith(
+        tiltX: 0.02,
+        lightX: 0.1,
+        lightIntensity: 0.8,
+      );
+
+      expect(state2.tiltX, 0.02);
+      expect(state2.tiltY, 0.0);
+      expect(state2.lightX, 0.1);
+      expect(state2.lightY, -0.6);
+      expect(state2.lightIntensity, 0.8);
+    });
   });
 }
