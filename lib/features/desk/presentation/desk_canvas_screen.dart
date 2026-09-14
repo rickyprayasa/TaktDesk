@@ -210,13 +210,14 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
+                                  // Top Section: Header + Segmented Instrument Navigation
                                   Column(
                                     mainAxisSize: MainAxisSize.min,
                                     crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
                                       // Row 1: Header - Branding and Chassis Hardware Controls (Monastic + Theme Switch)
                                       Padding(
-                                        padding: const EdgeInsets.only(bottom: 16.0),
+                                        padding: const EdgeInsets.only(bottom: 14.0),
                                         child: Row(
                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -269,20 +270,19 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                                         ),
                                       ),
                                       // Row 2: Dedicated Segmented Instrument Navigation
-                                      Padding(
-                                        padding: const EdgeInsets.only(bottom: 20.0),
-                                        child: Center(
-                                          child: _buildInstrumentSelector(theme),
-                                        ),
+                                      Center(
+                                        child: _buildInstrumentSelector(theme),
                                       ),
-                                      // Row 3: Active Instrument Console
-                                      if (_selectedInstrumentIndex == 0)
-                                        const Center(child: ChronoDialWidget())
-                                      else if (_selectedInstrumentIndex == 1)
-                                        const Center(child: ReceiptRunnerWidget())
-                                      else
-                                        const Center(child: VinylPlayerWidget()),
                                     ],
+                                  ),
+                                  // Middle Section: Active Instrument Console (Vertically Centered in viewport)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 24.0),
+                                    child: _selectedInstrumentIndex == 0
+                                        ? const Center(child: ChronoDialWidget())
+                                        : _selectedInstrumentIndex == 1
+                                            ? const Center(child: ReceiptRunnerWidget())
+                                            : const Center(child: VinylPlayerWidget()),
                                   ),
                                   // Bottom Dock: Emergency Unlatch (pinned at bottom when locked) + Desk Spec Plate
                                   const Column(
