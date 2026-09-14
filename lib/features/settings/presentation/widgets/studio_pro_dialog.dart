@@ -52,7 +52,7 @@ void showStudioProDialog(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'TAKT DESK STUDIO PRO',
+            'ZYKL STUDIO PRO',
             style: TextStyle(
               fontFamily: 'monospace',
               fontSize: 13,

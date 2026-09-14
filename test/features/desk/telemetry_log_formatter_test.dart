@@ -97,7 +97,7 @@ void main() {
         sessions: [],
       );
 
-      expect(log, contains('TAKT DESK // SESSION TELEMETRY'));
+      expect(log, contains('ZYKL // SESSION TELEMETRY'));
       expect(log, contains('BRAUN CLASSIC · 1960'));
       expect(log, contains('DATE    : 2026-09-10'));
       expect(log, contains('NO SESSIONS RECORDED TODAY'));
@@ -137,7 +137,7 @@ void main() {
       );
 
       expect(log, contains('================================'));
-      expect(log, contains('TAKT DESK // SESSION TELEMETRY'));
+      expect(log, contains('ZYKL // SESSION TELEMETRY'));
       expect(log, contains('EDITION : BRAUN CLASSIC · 1960'));
       expect(log, contains('SUMMARY : 2 CYCLES · 50 MIN'));
       expect(log, contains('RATE    : 100% FOCUS EFFICIENCY'));

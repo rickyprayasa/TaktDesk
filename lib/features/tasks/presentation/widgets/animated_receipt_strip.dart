@@ -138,7 +138,7 @@ class _AnimatedReceiptStripState extends State<AnimatedReceiptStrip>
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '#${(widget.index + 1).toString().padLeft(2, '0')} // TAKT DESK',
+                              '#${(widget.index + 1).toString().padLeft(2, '0')} // ZYKL',
                               style: TextStyle(
                                 fontFamily: 'monospace',
                                 fontSize: 8.5,

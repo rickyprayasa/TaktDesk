@@ -5,8 +5,8 @@ import 'package:takt_desk/main.dart';
 
 void main() {
   test('scaffold baseline smoke test', () {
-    const appName = 'Takt Desk';
-    expect(appName, equals('Takt Desk'));
+    const appName = 'ZYKL';
+    expect(appName, equals('ZYKL'));
   });
 
   testWidgets('TaktApp launches with TaktOpeningScreen as root widget', (tester) async {

@@ -13,7 +13,7 @@ import '../../desk/presentation/desk_canvas_screen.dart';
 /// 1. Power Ignition: Warm amber micro-LED powers on with filament glow bloom.
 /// 2. Bezel & Dial Calibration: Concentric grooves, ticks, and RSQUARE emblem reveal.
 /// 3. Chrono Needle Sweep: Signature amber needle performs a full 360° chronometer calibration.
-/// 4. Typographic Lockup: TAKT DESK and calibrated readiness status.
+/// 4. Typographic Lockup: ZYKL and calibrated readiness status.
 /// 5. Frictionless: Instant tap-to-skip allows immediate bypass to DeskCanvasScreen.
 class TaktOpeningScreen extends ConsumerStatefulWidget {
   final bool autoNavigate;
@@ -294,12 +294,12 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
         ),
         const SizedBox(height: 10),
         Text(
-          'TAKT DESK',
+          'ZYKL',
           style: TextStyle(
             fontFamily: 'monospace',
-            fontSize: 14.0,
+            fontSize: 15.0,
             fontWeight: FontWeight.w800,
-            letterSpacing: 2.5,
+            letterSpacing: 3.0,
             color: isDark
                 ? TaktColors.warmBone.withValues(alpha: 0.90)
                 : const Color(0xFF1E2126),

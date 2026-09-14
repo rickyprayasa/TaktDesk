@@ -30,7 +30,7 @@ void main() {
     await tester.tap(find.text('OPEN PRO DIALOG'));
     await tester.pumpAndSettle();
 
-    expect(find.text('TAKT DESK STUDIO PRO'), findsOneWidget);
+    expect(find.text('ZYKL STUDIO PRO'), findsOneWidget);
     expect(find.text('RSQUARE'), findsOneWidget);
     final logoFinder = find.byWidgetPredicate(
       (w) => w is Image && w.image is AssetImage && (w.image as AssetImage).assetName == 'assets/images/rsquare_logo.png',
@@ -65,7 +65,7 @@ void main() {
     await tester.tap(find.text('OPEN PRO DIALOG'));
     await tester.pumpAndSettle();
 
-    expect(find.text('TAKT DESK STUDIO PRO'), findsOneWidget);
+    expect(find.text('ZYKL STUDIO PRO'), findsOneWidget);
     expect(find.byKey(const ValueKey('material_showcase_plaque')), findsNothing);
   });
 
@@ -95,7 +95,7 @@ void main() {
     await tester.tap(find.text('OPEN PRO DIALOG'));
     await tester.pumpAndSettle();
 
-    expect(find.text('TAKT DESK STUDIO PRO'), findsOneWidget);
+    expect(find.text('ZYKL STUDIO PRO'), findsOneWidget);
     expect(find.textContaining('FORGED CARBON'), findsOneWidget);
     expect(find.text('STUDIO PRO FINISH'), findsOneWidget);
     expect(find.textContaining('MOD. 07 · 2024'), findsOneWidget);

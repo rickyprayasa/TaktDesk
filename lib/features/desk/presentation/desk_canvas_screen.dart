@@ -291,14 +291,14 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                                                   ),
                                                 ),
                                                 Text(
-                                                  'TAKT DESK',
+                                                  'ZYKL',
                                                   style: TaktTypography.controlLabel.copyWith(
                                                     color: theme.hasDarkChassis
                                                         ? TaktColors.warmBone.withValues(alpha: 0.85)
                                                         : const Color(0xFF2C3038),
-                                                    letterSpacing: 1.5,
-                                                    fontSize: 11.5,
-                                                    fontWeight: FontWeight.w700,
+                                                    letterSpacing: 2.0,
+                                                    fontSize: 12.0,
+                                                    fontWeight: FontWeight.w800,
                                                   ),
                                                 ),
                                               ],

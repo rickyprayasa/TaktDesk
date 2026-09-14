@@ -163,7 +163,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Studio Pro dialog should appear
-      expect(find.text('TAKT DESK STUDIO PRO'), findsOneWidget);
+      expect(find.text('ZYKL STUDIO PRO'), findsOneWidget);
       expect(
         find.descendant(
           of: find.byType(AlertDialog),

@@ -448,7 +448,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify Studio Pro dialog appears
-      expect(find.text('TAKT DESK STUDIO PRO'), findsOneWidget);
+      expect(find.text('ZYKL STUDIO PRO'), findsOneWidget);
       expect(find.textContaining('TITANIUM STEALTH'), findsWidgets);
 
       final unlockButton = find.byKey(const ValueKey('pro_dialog_unlock_button'));
@@ -458,7 +458,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Dialog should be dismissed
-      expect(find.text('TAKT DESK STUDIO PRO'), findsNothing);
+      expect(find.text('ZYKL STUDIO PRO'), findsNothing);
 
       // Pro is now unlocked and titaniumStealth is equipped
       final switchWidgetAfter = tester.widget<Switch>(switchFinder);
@@ -502,7 +502,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify StudioProDialog did NOT open
-      expect(find.text('TAKT DESK STUDIO PRO'), findsNothing);
+      expect(find.text('ZYKL STUDIO PRO'), findsNothing);
 
       // Verify Atelier Cream is equipped
       expect(
@@ -536,13 +536,13 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify Studio Pro dialog appears for Mid-Century Walnut
-      expect(find.text('TAKT DESK STUDIO PRO'), findsOneWidget);
+      expect(find.text('ZYKL STUDIO PRO'), findsOneWidget);
       expect(find.textContaining('MID-CENTURY WALNUT'), findsWidgets);
 
       // Dismiss dialog
       await tester.tap(find.text('CANCEL'));
       await tester.pumpAndSettle();
-      expect(find.text('TAKT DESK STUDIO PRO'), findsNothing);
+      expect(find.text('ZYKL STUDIO PRO'), findsNothing);
 
       // Advance to index 6 (Forged Carbon)
       await tester.tap(find.byKey(const ValueKey('edition_next_button')));
@@ -555,13 +555,13 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify Studio Pro dialog appears for Forged Carbon
-      expect(find.text('TAKT DESK STUDIO PRO'), findsOneWidget);
+      expect(find.text('ZYKL STUDIO PRO'), findsOneWidget);
       expect(find.textContaining('FORGED CARBON'), findsWidgets);
 
       // Dismiss dialog
       await tester.tap(find.text('CANCEL'));
       await tester.pumpAndSettle();
-      expect(find.text('TAKT DESK STUDIO PRO'), findsNothing);
+      expect(find.text('ZYKL STUDIO PRO'), findsNothing);
     });
 
     testWidgets('TaktSettingsSheet displays gallery counter, arrows, and page dots', (tester) async {

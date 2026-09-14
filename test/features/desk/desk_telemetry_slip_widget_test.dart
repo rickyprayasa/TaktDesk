@@ -39,7 +39,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('TAKT DESK // SESSION TELEMETRY'), findsOneWidget);
+    expect(find.textContaining('ZYKL // SESSION TELEMETRY'), findsOneWidget);
     expect(find.textContaining('1 CYCLES · 25 MIN'), findsOneWidget);
     expect(find.textContaining('STATUS: COMPLETED ●'), findsOneWidget);
     expect(find.text('[ COPY TEXT LOG ]'), findsOneWidget);
@@ -99,7 +99,7 @@ void main() {
     await tester.pump();
 
     expect(clipboardData, isNotNull);
-    expect(clipboardData, contains('TAKT DESK // SESSION TELEMETRY'));
+    expect(clipboardData, contains('ZYKL // SESSION TELEMETRY'));
     expect(clipboardData, contains('STATUS: COMPLETED ●'));
     expect(find.text('[ COPIED! ]'), findsOneWidget);
   });
@@ -122,7 +122,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('TAKT DESK // SESSION TELEMETRY'), findsOneWidget);
+    expect(find.textContaining('ZYKL // SESSION TELEMETRY'), findsOneWidget);
     expect(find.textContaining('[ NO SESSIONS RECORDED TODAY ]'), findsOneWidget);
     expect(find.textContaining('STANDBY // COMMENCE CHRONO DIAL'), findsOneWidget);
   });
@@ -234,7 +234,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('TAKT DESK // SESSION TELEMETRY'), findsOneWidget);
+    expect(find.textContaining('ZYKL // SESSION TELEMETRY'), findsOneWidget);
   });
 
   testWidgets('DeskTelemetryDialog.show displays centered modal dialog and closes on button tap', (tester) async {
@@ -264,7 +264,7 @@ void main() {
 
     expect(find.byType(DeskTelemetryDialog), findsOneWidget);
     expect(find.byType(DeskTelemetrySlipWidget), findsOneWidget);
-    expect(find.textContaining('TAKT DESK // SESSION TELEMETRY'), findsOneWidget);
+    expect(find.textContaining('ZYKL // SESSION TELEMETRY'), findsOneWidget);
     expect(find.text('[ CLOSE ✕ ]'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('telemetry_close_button')));

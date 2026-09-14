@@ -364,7 +364,7 @@ void main() {
     // Dialog is now displayed centered on screen
     expect(find.byType(DeskTelemetryDialog), findsOneWidget);
     expect(find.byType(DeskTelemetrySlipWidget), findsOneWidget);
-    expect(find.textContaining('TAKT DESK // SESSION TELEMETRY'), findsOneWidget);
+    expect(find.textContaining('ZYKL // SESSION TELEMETRY'), findsOneWidget);
     expect(find.byKey(const ValueKey('telemetry_copy_button')), findsOneWidget);
     expect(find.byKey(const ValueKey('telemetry_close_button')), findsOneWidget);
     expect(mockAudio.playedEffects, contains(SoundEffect.dialClick));

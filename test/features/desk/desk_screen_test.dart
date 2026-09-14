@@ -231,7 +231,7 @@ void main() {
       );
 
       // Verifies pure mobile console branding and presence of MonasticSwitchWidget
-      expect(find.text('TAKT DESK'), findsOneWidget);
+      expect(find.text('ZYKL'), findsOneWidget);
       expect(find.byType(MonasticSwitchWidget), findsOneWidget);
       expect(find.text('DIAL'), findsOneWidget);
       expect(find.text('TASKS'), findsOneWidget);

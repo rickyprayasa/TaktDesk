@@ -16,7 +16,7 @@ class TaktApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = ref.watch(chassisThemeProvider);
     return MaterialApp(
-      title: 'Takt Desk',
+      title: 'ZYKL',
       debugShowCheckedModeBanner: false,
       theme: theme.isDarkMode ? TaktTheme.darkThemeData : TaktTheme.lightThemeData,
       home: const TaktOpeningScreen(),

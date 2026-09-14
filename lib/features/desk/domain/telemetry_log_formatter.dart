@@ -54,7 +54,7 @@ class TelemetryLogFormatter {
 
     final buffer = StringBuffer();
     buffer.writeln('================================');
-    buffer.writeln('TAKT DESK // SESSION TELEMETRY');
+    buffer.writeln('ZYKL // SESSION TELEMETRY');
     buffer.writeln('EDITION : $editionTitle · $cleanYear');
     buffer.writeln('DATE    : $dateStr');
     buffer.writeln('================================');

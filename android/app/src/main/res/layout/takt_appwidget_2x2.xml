@@ -19,7 +19,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="TAKT DESK"
+            android:text="ZYKL"
             android:textColor="#F2EFE9"
             android:textSize="10sp"
             android:textStyle="bold"
