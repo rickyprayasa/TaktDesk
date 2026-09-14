@@ -31,6 +31,20 @@ class ParallaxState {
       lightIntensity: lightIntensity ?? this.lightIntensity,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ParallaxState &&
+          runtimeType == other.runtimeType &&
+          tiltX == other.tiltX &&
+          tiltY == other.tiltY &&
+          lightX == other.lightX &&
+          lightY == other.lightY &&
+          lightIntensity == other.lightIntensity;
+
+  @override
+  int get hashCode => Object.hash(tiltX, tiltY, lightX, lightY, lightIntensity);
 }
 
 class ParallaxController extends StateNotifier<ParallaxState> {
@@ -38,15 +52,13 @@ class ParallaxController extends StateNotifier<ParallaxState> {
 
   static const double _alpha = 0.15; // Low-pass filter smoothing coefficient
   static const double maxTiltRadians = 0.05; // ~3 degrees
+  static const double deadband = 0.00005; // Deadband to suppress sensor noise and idle rebuilds
 
   void updateSensorInput({required double rawX, required double rawY}) {
     final targetX = (rawX * 0.01).clamp(-maxTiltRadians, maxTiltRadians);
     final targetY = (rawY * 0.01).clamp(-maxTiltRadians, maxTiltRadians);
 
-    final smoothX = _alpha * targetX + (1 - _alpha) * state.tiltX;
-    final smoothY = _alpha * targetY + (1 - _alpha) * state.tiltY;
-
-    _updateStateWithLight(smoothX, smoothY);
+    _applyTarget(targetX, targetY);
   }
 
   void updateTiltFromAccelerometer({
@@ -65,6 +77,17 @@ class ParallaxController extends StateNotifier<ParallaxState> {
     final targetX = (x / norm).clamp(-maxTiltRadians, maxTiltRadians);
     final targetY = (y / norm).clamp(-maxTiltRadians, maxTiltRadians);
 
+    _applyTarget(targetX, targetY);
+  }
+
+  void _applyTarget(double targetX, double targetY) {
+    final diffX = (targetX - state.tiltX).abs();
+    final diffY = (targetY - state.tiltY).abs();
+
+    if (diffX < deadband && diffY < deadband) {
+      return;
+    }
+
     final smoothX = _alpha * targetX + (1 - _alpha) * state.tiltX;
     final smoothY = _alpha * targetY + (1 - _alpha) * state.tiltY;
 
@@ -72,6 +95,10 @@ class ParallaxController extends StateNotifier<ParallaxState> {
   }
 
   void _updateStateWithLight(double smoothX, double smoothY) {
+    if (smoothX == state.tiltX && smoothY == state.tiltY) {
+      return;
+    }
+
     // Virtual overhead light source at (-0.4, -0.6) shifted dynamically by device tilt
     final lx = (-0.4 - (smoothX / maxTiltRadians) * 0.6).clamp(-1.0, 1.0);
     final ly = (-0.6 - (smoothY / maxTiltRadians) * 0.4).clamp(-1.0, 1.0);

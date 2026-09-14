@@ -113,20 +113,24 @@ class MaterialChassisBox extends ConsumerWidget {
                 ? Colors.black.withValues(alpha: 0.45)
                 : const Color(0x1F000000),
             blurRadius: 14,
-            offset: Offset(
-              (-parallax.tiltX * 20.0).clamp(-12.0, 12.0),
-              6.0 + (-parallax.tiltY * 20.0).clamp(-12.0, 12.0),
-            ),
+            offset: enablePerspective
+                ? Offset(
+                    (-parallax.tiltX * 20.0).clamp(-12.0, 12.0),
+                    6.0 + (-parallax.tiltY * 20.0).clamp(-12.0, 12.0),
+                  )
+                : const Offset(0, 6),
           ),
           BoxShadow(
             color: themeState.isDarkMode
                 ? Colors.black.withValues(alpha: 0.25)
                 : const Color(0x0F000000),
             blurRadius: 4,
-            offset: Offset(
-              (-parallax.tiltX * 6.0).clamp(-4.0, 4.0),
-              1.0 + (-parallax.tiltY * 6.0).clamp(-4.0, 4.0),
-            ),
+            offset: enablePerspective
+                ? Offset(
+                    (-parallax.tiltX * 6.0).clamp(-4.0, 4.0),
+                    1.0 + (-parallax.tiltY * 6.0).clamp(-4.0, 4.0),
+                  )
+                : const Offset(0, 1),
           ),
         ],
       ),

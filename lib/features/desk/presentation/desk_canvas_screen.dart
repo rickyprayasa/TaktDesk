@@ -9,6 +9,7 @@ import '../../../core/focus/focus_lock_controller.dart';
 import '../../../core/haptics/haptic_service.dart';
 import '../../../core/sensors/parallax_controller.dart';
 import '../../../core/services/app_widget_service.dart';
+import '../../settings/presentation/settings_controller.dart';
 import '../../tasks/presentation/receipt_runner_widget.dart';
 import '../../timer/presentation/chrono_dial_widget.dart';
 import '../../vinyl/presentation/vinyl_player_widget.dart';
@@ -37,6 +38,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
   StreamSubscription<GyroscopeEvent>? _gyroscopeSubscription;
   StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
   int _selectedInstrumentIndex = 0; // 0: Dial, 1: Tasks, 2: Vinyl
+  bool _sensorsPaused = false;
 
   @override
   void initState() {
@@ -44,12 +46,29 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
     _initSensors();
   }
 
+  void _setSensorsActive(bool active) {
+    if (active) {
+      if (_sensorsPaused) {
+        _gyroscopeSubscription?.resume();
+        _accelerometerSubscription?.resume();
+        _sensorsPaused = false;
+      }
+    } else {
+      if (!_sensorsPaused) {
+        _gyroscopeSubscription?.pause();
+        _accelerometerSubscription?.pause();
+        _sensorsPaused = true;
+        ref.read(parallaxProvider.notifier).reset();
+      }
+    }
+  }
+
   void _initSensors() {
     if (widget.gyroscopeStream != null) {
       try {
         _gyroscopeSubscription = widget.gyroscopeStream!.listen(
           (event) {
-            if (!mounted) return;
+            if (!mounted || _sensorsPaused) return;
             ref.read(parallaxProvider.notifier).updateSensorInput(
                   rawX: event.x,
                   rawY: event.y,
@@ -65,7 +84,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
       try {
         _accelerometerSubscription = widget.accelerometerStream!.listen(
           (event) {
-            if (!mounted) return;
+            if (!mounted || _sensorsPaused) return;
             ref.read(parallaxProvider.notifier).updateTiltFromAccelerometer(
                   x: event.x,
                   y: event.y,
@@ -82,7 +101,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
       try {
         _accelerometerSubscription = accelerometerEventStream().listen(
           (event) {
-            if (!mounted) return;
+            if (!mounted || _sensorsPaused) return;
             ref.read(parallaxProvider.notifier).updateTiltFromAccelerometer(
                   x: event.x,
                   y: event.y,
@@ -93,6 +112,11 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
           cancelOnError: false,
         );
       } catch (_) {}
+    }
+
+    final initialEnabled = ref.read(deskPreferencesControllerProvider).parallaxEnabled;
+    if (!initialEnabled) {
+      _setSensorsActive(false);
     }
   }
 
@@ -166,6 +190,13 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
     final theme = ref.watch(chassisThemeProvider);
     final focusState = ref.watch(focusLockProvider);
     ref.watch(appWidgetSyncProvider);
+
+    ref.listen<bool>(
+      deskPreferencesControllerProvider.select((p) => p.parallaxEnabled),
+      (prev, enabled) {
+        _setSensorsActive(enabled);
+      },
+    );
 
     return PopScope(
       canPop: !focusState.isLocked,

@@ -20,12 +20,7 @@ class MainActivity : FlutterActivity() {
     private val WIDGET_CHANNEL = "com.takt.desk/app_widget"
     private var previousInterruptionFilter: Int? = null
     private var soundscapePlayer: MediaPlayer? = null
-    private var cracklePlayer: MediaPlayer? = null
-    private var binauralPlayer: MediaPlayer? = null
     private var masterVolume: Float = 0.8f
-    private var primaryGain: Float = 0.80f
-    private var crackleGain: Float = 0.35f
-    private var binauralGain: Float = 0.25f
 
     private fun safeStopAndReset(player: MediaPlayer?) {
         try {
@@ -49,18 +44,10 @@ class MainActivity : FlutterActivity() {
         } catch (_: Exception) {}
     }
 
-    private fun updateAllVolumes() {
-        val pVol = (masterVolume * primaryGain).coerceIn(0f, 1f)
-        val cVol = (masterVolume * crackleGain).coerceIn(0f, 1f)
-        val bVol = (masterVolume * binauralGain).coerceIn(0f, 1f)
+    private fun updateVolume() {
+        val vol = masterVolume.coerceIn(0f, 1f)
         try {
-            soundscapePlayer?.setVolume(pVol, pVol)
-        } catch (_: Exception) {}
-        try {
-            cracklePlayer?.setVolume(cVol, cVol)
-        } catch (_: Exception) {}
-        try {
-            binauralPlayer?.setVolume(bVol, bVol)
+            soundscapePlayer?.setVolume(vol, vol)
         } catch (_: Exception) {}
     }
 
@@ -139,9 +126,6 @@ class MainActivity : FlutterActivity() {
                     try {
                         val trackIndex = call.argument<Number>("trackIndex")?.toInt() ?: 0
                         masterVolume = (call.argument<Number>("volume")?.toDouble() ?: 0.8).toFloat()
-                        primaryGain = (call.argument<Number>("primaryVolume")?.toDouble() ?: primaryGain.toDouble()).toFloat()
-                        crackleGain = (call.argument<Number>("crackleVolume")?.toDouble() ?: crackleGain.toDouble()).toFloat()
-                        binauralGain = (call.argument<Number>("binauralVolume")?.toDouble() ?: binauralGain.toDouble()).toFloat()
 
                         val assetPath = when (trackIndex) {
                             0 -> "flutter_assets/assets/audio/vinyl_lofi_rain.wav"
@@ -155,7 +139,7 @@ class MainActivity : FlutterActivity() {
                             else -> "flutter_assets/assets/audio/vinyl_lofi_rain.wav"
                         }
 
-                        // 1. Primary Soundscape Player
+                        // Primary Soundscape Player
                         safeStopAndReset(soundscapePlayer)
                         val pPlayer = soundscapePlayer ?: MediaPlayer().also { soundscapePlayer = it }
                         context.assets.openFd(assetPath).use { fd ->
@@ -164,10 +148,7 @@ class MainActivity : FlutterActivity() {
                             pPlayer.prepare()
                         }
 
-                        safeStopAndReset(cracklePlayer)
-                        safeStopAndReset(binauralPlayer)
-
-                        updateAllVolumes()
+                        updateVolume()
 
                         pPlayer.start()
 
@@ -179,19 +160,6 @@ class MainActivity : FlutterActivity() {
                 "stopAmbient" -> {
                     try {
                         safeStopAndReset(soundscapePlayer)
-                        safeStopAndReset(cracklePlayer)
-                        safeStopAndReset(binauralPlayer)
-                        result.success(true)
-                    } catch (e: Exception) {
-                        result.success(false)
-                    }
-                }
-                "setMixerLevels" -> {
-                    try {
-                        primaryGain = (call.argument<Number>("primaryVolume")?.toDouble() ?: primaryGain.toDouble()).toFloat()
-                        crackleGain = (call.argument<Number>("crackleVolume")?.toDouble() ?: crackleGain.toDouble()).toFloat()
-                        binauralGain = (call.argument<Number>("binauralVolume")?.toDouble() ?: binauralGain.toDouble()).toFloat()
-                        updateAllVolumes()
                         result.success(true)
                     } catch (e: Exception) {
                         result.success(false)
@@ -200,7 +168,7 @@ class MainActivity : FlutterActivity() {
                 "setVolume" -> {
                     try {
                         masterVolume = (call.argument<Number>("volume")?.toDouble() ?: 0.8).toFloat()
-                        updateAllVolumes()
+                        updateVolume()
                         result.success(true)
                     } catch (e: Exception) {
                         result.success(false)
@@ -317,10 +285,6 @@ class MainActivity : FlutterActivity() {
     override fun onDestroy() {
         safeRelease(soundscapePlayer)
         soundscapePlayer = null
-        safeRelease(cracklePlayer)
-        cracklePlayer = null
-        safeRelease(binauralPlayer)
-        binauralPlayer = null
         super.onDestroy()
     }
 }

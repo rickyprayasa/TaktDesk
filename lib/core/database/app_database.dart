@@ -25,7 +25,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -36,14 +36,6 @@ class AppDatabase extends _$AppDatabase {
           if (from < 2) {
             await m.addColumn(deskPreferences, deskPreferences.selectedEdition);
             await m.addColumn(deskPreferences, deskPreferences.isProSimulated);
-          }
-          if (from < 3) {
-            await m.addColumn(deskPreferences, deskPreferences.primaryVolume);
-            await m.addColumn(deskPreferences, deskPreferences.crackleVolume);
-            await m.addColumn(deskPreferences, deskPreferences.binauralVolume);
-            await m.addColumn(deskPreferences, deskPreferences.primaryMuted);
-            await m.addColumn(deskPreferences, deskPreferences.crackleMuted);
-            await m.addColumn(deskPreferences, deskPreferences.binauralMuted);
           }
         },
       );
@@ -166,12 +158,6 @@ class AppDatabase extends _$AppDatabase {
     bool? hapticsEnabled,
     String? selectedEdition,
     bool? isProSimulated,
-    double? primaryVolume,
-    double? crackleVolume,
-    double? binauralVolume,
-    bool? primaryMuted,
-    bool? crackleMuted,
-    bool? binauralMuted,
   }) {
     return transaction(() async {
       final existing = await (select(deskPreferences)..limit(1)).getSingleOrNull();
@@ -184,12 +170,6 @@ class AppDatabase extends _$AppDatabase {
         hapticsEnabled: hapticsEnabled != null ? Value(hapticsEnabled) : const Value.absent(),
         selectedEdition: selectedEdition != null ? Value(selectedEdition) : const Value.absent(),
         isProSimulated: isProSimulated != null ? Value(isProSimulated) : const Value.absent(),
-        primaryVolume: primaryVolume != null ? Value(primaryVolume) : const Value.absent(),
-        crackleVolume: crackleVolume != null ? Value(crackleVolume) : const Value.absent(),
-        binauralVolume: binauralVolume != null ? Value(binauralVolume) : const Value.absent(),
-        primaryMuted: primaryMuted != null ? Value(primaryMuted) : const Value.absent(),
-        crackleMuted: crackleMuted != null ? Value(crackleMuted) : const Value.absent(),
-        binauralMuted: binauralMuted != null ? Value(binauralMuted) : const Value.absent(),
       );
 
       if (existing == null) {
@@ -208,12 +188,6 @@ class AppDatabase extends _$AppDatabase {
     bool? hapticsEnabled,
     String? selectedEdition,
     bool? isProSimulated,
-    double? primaryVolume,
-    double? crackleVolume,
-    double? binauralVolume,
-    bool? primaryMuted,
-    bool? crackleMuted,
-    bool? binauralMuted,
   }) =>
       updateDeskPreferences(
         soundVolume: soundVolume,
@@ -223,12 +197,6 @@ class AppDatabase extends _$AppDatabase {
         hapticsEnabled: hapticsEnabled,
         selectedEdition: selectedEdition,
         isProSimulated: isProSimulated,
-        primaryVolume: primaryVolume,
-        crackleVolume: crackleVolume,
-        binauralVolume: binauralVolume,
-        primaryMuted: primaryMuted,
-        crackleMuted: crackleMuted,
-        binauralMuted: binauralMuted,
       );
 }
 

@@ -134,5 +134,27 @@ void main() {
       expect(state2.lightY, -0.6);
       expect(state2.lightIntensity, 0.8);
     });
+
+    test('ParallaxState implements equality and hashCode correctly', () {
+      const state1 = ParallaxState(tiltX: 0.02, tiltY: -0.01, lightX: -0.5, lightY: -0.5, lightIntensity: 0.6);
+      const state2 = ParallaxState(tiltX: 0.02, tiltY: -0.01, lightX: -0.5, lightY: -0.5, lightIntensity: 0.6);
+      const state3 = ParallaxState(tiltX: 0.01, tiltY: -0.01, lightX: -0.5, lightY: -0.5, lightIntensity: 0.6);
+
+      expect(state1, equals(state2));
+      expect(state1.hashCode, equals(state2.hashCode));
+      expect(state1, isNot(equals(state3)));
+    });
+
+    test('ParallaxController suppresses state updates below deadband threshold', () {
+      final controller = ParallaxController();
+      final initialState = controller.state;
+
+      // Microscopic sensor noise below deadband (0.0005)
+      // rawX = 0.001 -> targetX = 0.00001 -> smoothX = 0.15 * 0.00001 = 0.0000015 < 0.0005
+      controller.updateSensorInput(rawX: 0.001, rawY: 0.001);
+
+      // State reference remains unchanged (no new state object created)
+      expect(identical(controller.state, initialState), isTrue);
+    });
   });
 }
