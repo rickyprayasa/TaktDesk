@@ -134,41 +134,39 @@ class MechanicalCounterDisplay extends StatelessWidget {
     final digitStyle = TextStyle(
       fontFamily: 'monospace',
       fontWeight: FontWeight.w700,
-      fontSize: isDialInset ? 13.0 : 14.0,
-      letterSpacing: 0.5,
+      fontSize: isDialInset ? 11.5 : 14.0,
+      letterSpacing: 0.4,
       color: TaktColors.warmBone,
     );
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isDialInset ? 8 : 6,
-        vertical: isDialInset ? 3 : 2,
+        horizontal: isDialInset ? 3 : 6,
+        vertical: isDialInset ? 0.5 : 2,
       ),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0C0E10),
-        borderRadius: BorderRadius.circular(4.0),
-        border: Border.all(
-          color: isDialInset
-              ? const Color(0xFF383C44)
-              : const Color(0xFF2E3238),
-          width: 1.2,
-        ),
-        boxShadow: [
-          const BoxShadow(
-            color: Color(0xDD000000),
-            offset: Offset(0, 2),
-            blurRadius: 4.0,
-            spreadRadius: -1.0,
-          ),
-          BoxShadow(
-            color: isDialInset
-                ? const Color(0x44FFFFFF)
-                : const Color(0x33FFFFFF),
-            offset: const Offset(0, -0.8),
-            blurRadius: 0.5,
-          ),
-        ],
-      ),
+      decoration: isDialInset
+          ? const BoxDecoration(color: Colors.transparent)
+          : BoxDecoration(
+              color: const Color(0xFF0C0E10),
+              borderRadius: BorderRadius.circular(4.0),
+              border: Border.all(
+                color: const Color(0xFF2E3238),
+                width: 1.2,
+              ),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0xDD000000),
+                  offset: Offset(0, 2),
+                  blurRadius: 4.0,
+                  spreadRadius: -1.0,
+                ),
+                BoxShadow(
+                  color: Color(0x33FFFFFF),
+                  offset: Offset(0, -0.8),
+                  blurRadius: 0.5,
+                ),
+              ],
+            ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -176,23 +174,23 @@ class MechanicalCounterDisplay extends StatelessWidget {
           MechanicalFlipDigit(
             digit: mStr[0],
             style: digitStyle,
-            slotWidth: isDialInset ? 10.0 : 11.5,
-            slotHeight: isDialInset ? 17.0 : 19.0,
+            slotWidth: isDialInset ? 9.5 : 11.5,
+            slotHeight: isDialInset ? 15.0 : 19.0,
           ),
           MechanicalFlipDigit(
             digit: mStr[1],
             style: digitStyle,
-            slotWidth: isDialInset ? 10.0 : 11.5,
-            slotHeight: isDialInset ? 17.0 : 19.0,
+            slotWidth: isDialInset ? 9.5 : 11.5,
+            slotHeight: isDialInset ? 15.0 : 19.0,
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2.0),
+            padding: EdgeInsets.symmetric(horizontal: isDialInset ? 1.0 : 2.0),
             child: Text(
               ':',
               style: TextStyle(
                 fontFamily: 'monospace',
                 fontWeight: FontWeight.w700,
-                fontSize: isDialInset ? 12.0 : 13.0,
+                fontSize: isDialInset ? 10.5 : 13.0,
                 color: TaktColors.filamentAmber,
               ),
             ),
@@ -200,14 +198,14 @@ class MechanicalCounterDisplay extends StatelessWidget {
           MechanicalFlipDigit(
             digit: sStr[0],
             style: digitStyle,
-            slotWidth: isDialInset ? 10.0 : 11.5,
-            slotHeight: isDialInset ? 17.0 : 19.0,
+            slotWidth: isDialInset ? 9.5 : 11.5,
+            slotHeight: isDialInset ? 15.0 : 19.0,
           ),
           MechanicalFlipDigit(
             digit: sStr[1],
             style: digitStyle,
-            slotWidth: isDialInset ? 10.0 : 11.5,
-            slotHeight: isDialInset ? 17.0 : 19.0,
+            slotWidth: isDialInset ? 9.5 : 11.5,
+            slotHeight: isDialInset ? 15.0 : 19.0,
           ),
         ],
       ),

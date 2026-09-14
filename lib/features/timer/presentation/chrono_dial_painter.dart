@@ -36,7 +36,10 @@ class ChronoDialPainter extends CustomPainter {
     this.textureType = HardwareTextureType.matteAbsGrain,
     this.isDark = true,
     this.dialFaceColor,
+    this.drawHand = true,
   });
+
+  final bool drawHand;
 
   Color get activeDialFaceColor =>
       isDark ? const Color(0xFF16181B) : (dialFaceColor ?? const Color(0xFFEBE8DF));
@@ -212,6 +215,29 @@ class ChronoDialPainter extends CustomPainter {
       }
     }
 
+    // 5b. Recessed Odometer Aperture Bezel Window Bed (6 o'clock position)
+    final apertureRect = Rect.fromCenter(
+      center: Offset(center.dx, center.dy + 38),
+      width: 58.0,
+      height: 19.0,
+    );
+    final apertureRRect = RRect.fromRectAndRadius(apertureRect, const Radius.circular(3.0));
+
+    final apertureBedPaint = Paint()..color = const Color(0xFF0C0E10);
+    canvas.drawRRect(apertureRRect, apertureBedPaint);
+
+    final apertureBorderPaint = Paint()
+      ..color = hasDarkDialFace
+          ? const Color(0xFF2A2D34)
+          : const Color(0xFFB5B0A4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    canvas.drawRRect(apertureRRect, apertureBorderPaint);
+
+    if (!drawHand) {
+      return;
+    }
+
     // 6. Dynamic Cast Shadow of the Needle (Directional depth)
     // Synchronize needle directly with the 60-minute dial marks:
     final currentMinutes = (remainingSeconds / 60.0);
@@ -300,6 +326,113 @@ class ChronoDialPainter extends CustomPainter {
         oldDelegate.innerBezelColor != innerBezelColor ||
         oldDelegate.textureType != textureType ||
         oldDelegate.isDark != isDark ||
-        oldDelegate.dialFaceColor != dialFaceColor;
+        oldDelegate.dialFaceColor != dialFaceColor ||
+        oldDelegate.drawHand != drawHand;
+  }
+}
+
+/// Foreground painter specifically rendering the needle hand, center pivot cap,
+/// and convex mineral glass glare ON TOP of the embedded digital counter.
+/// This guarantees the analog hand sweeps visibly over the numbers without clipping.
+class ChronoDialHandPainter extends CustomPainter {
+  final double remainingSeconds;
+  final Color needleColor;
+  final Color hubCapColor;
+  final List<double> glassHighlightAlphas;
+
+  ChronoDialHandPainter({
+    required this.remainingSeconds,
+    required this.needleColor,
+    required this.hubCapColor,
+    required this.glassHighlightAlphas,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final outerRadius = math.min(size.width, size.height) / 2 - 8;
+    final dialRadius = outerRadius - 14;
+
+    // 1. Dynamic Cast Shadow of the Needle (Directional depth)
+    final currentMinutes = (remainingSeconds / 60.0);
+    final handAngle = (currentMinutes / 60.0) * 2 * math.pi - math.pi / 2;
+    final shadowOffset = Offset(
+      3.0 * math.cos(handAngle + math.pi / 4),
+      3.5 * math.sin(handAngle + math.pi / 4),
+    );
+
+    final needleLength = dialRadius - 16;
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.40)
+      ..strokeWidth = 3.5
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+
+    final shadowStart = center + shadowOffset - Offset(10 * math.cos(handAngle), 10 * math.sin(handAngle));
+    final shadowEnd = center + shadowOffset + Offset(needleLength * math.cos(handAngle), needleLength * math.sin(handAngle));
+    canvas.drawLine(shadowStart, shadowEnd, shadowPaint);
+
+    // 2. Tapered Needle Hand (Muted Ochre / Braun AW Design)
+    final needlePaint = Paint()
+      ..color = needleColor
+      ..style = PaintingStyle.fill;
+
+    final handPath = Path();
+    final tip = center + Offset(needleLength * math.cos(handAngle), needleLength * math.sin(handAngle));
+    final leftShoulder = center + Offset(2.8 * math.cos(handAngle - math.pi / 2), 2.8 * math.sin(handAngle - math.pi / 2));
+    final rightShoulder = center + Offset(2.8 * math.cos(handAngle + math.pi / 2), 2.8 * math.sin(handAngle + math.pi / 2));
+    final counterTail = center - Offset(14.0 * math.cos(handAngle), 14.0 * math.sin(handAngle));
+
+    handPath.moveTo(leftShoulder.dx, leftShoulder.dy);
+    handPath.lineTo(tip.dx, tip.dy);
+    handPath.lineTo(rightShoulder.dx, rightShoulder.dy);
+    handPath.lineTo(counterTail.dx, counterTail.dy);
+    handPath.close();
+    canvas.drawPath(handPath, needlePaint);
+
+    // Counterweight teardrop disc
+    canvas.drawCircle(counterTail, 3.8, needlePaint);
+
+    // Center Pivot Cap (metallic brass/slate core)
+    final capBasePaint = Paint()..color = hubCapColor;
+    canvas.drawCircle(center, 5.5, capBasePaint);
+
+    final capCorePaint = Paint()..color = TaktColors.warmBone;
+    canvas.drawCircle(center, 2.0, capCorePaint);
+
+    // 3. Convex Curved Mineral Glass Glare (Optical Highlight)
+    final highlights = glassHighlightAlphas;
+    final glassGlarePaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.white.withValues(alpha: highlights[0]),
+          Colors.white.withValues(alpha: highlights[1]),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.45, 0.70],
+      ).createShader(Rect.fromCircle(center: center, radius: dialRadius));
+
+    final glassPath = Path();
+    glassPath.addArc(
+      Rect.fromCircle(center: center, radius: dialRadius - 1),
+      -math.pi * 0.85,
+      math.pi * 0.70,
+    );
+    glassPath.quadraticBezierTo(
+      center.dx,
+      center.dy - dialRadius * 0.15,
+      center.dx + (dialRadius - 1) * math.cos(-math.pi * 0.85),
+      center.dy + (dialRadius - 1) * math.sin(-math.pi * 0.85),
+    );
+    canvas.drawPath(glassPath, glassGlarePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant ChronoDialHandPainter oldDelegate) {
+    return oldDelegate.remainingSeconds != remainingSeconds ||
+        oldDelegate.needleColor != needleColor ||
+        oldDelegate.hubCapColor != hubCapColor;
   }
 }

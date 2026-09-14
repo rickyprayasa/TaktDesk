@@ -720,5 +720,59 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('ChronoDialWidget mounts ChronoDialHandPainter as foregroundPainter over embedded MechanicalCounterDisplay child', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final customPaint = tester.widget<CustomPaint>(dialFinder);
+    final painter = customPaint.painter as ChronoDialPainter;
+    expect(painter.drawHand, isFalse);
+
+    expect(customPaint.foregroundPainter, isA<ChronoDialHandPainter>());
+    final handPainter = customPaint.foregroundPainter as ChronoDialHandPainter;
+    expect(handPainter.remainingSeconds, equals(25 * 60.0));
+
+    final counter = tester.widget<MechanicalCounterDisplay>(find.byType(MechanicalCounterDisplay));
+    expect(counter.isDialInset, isTrue);
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('ChronoProfileSelectorWidget renders 4-cycle pips gauge and theme-adaptive telemetry badge', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('CYCLE 1/4'), findsOneWidget);
+    expect(find.text('STANDBY // READY'), findsOneWidget);
+
+    // Start timer -> changes to RUNNING // SEC-ROLL
+    await tester.tap(dialFinder);
+    await tester.pump();
+
+    expect(find.text('RUNNING // SEC-ROLL'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+  });
 }
 

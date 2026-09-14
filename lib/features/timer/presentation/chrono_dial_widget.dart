@@ -209,6 +209,8 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                     child: ValueListenableBuilder<double>(
                       valueListenable: _remainingSecondsNotifier,
                       builder: (context, seconds, _) {
+                        final m = (seconds / 60).floor();
+                        final s = (seconds % 60).floor();
                         return CustomPaint(
                           size: dialDimensions,
                           painter: ChronoDialPainter(
@@ -223,28 +225,33 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                             textureType: themeState.textureType,
                             isDark: themeState.isDarkMode,
                             dialFaceColor: lightDialColor,
+                            drawHand: false,
+                          ),
+                          foregroundPainter: ChronoDialHandPainter(
+                            remainingSeconds: seconds,
+                            needleColor: effectiveNeedleColor,
+                            hubCapColor: themeState.isDarkMode
+                                ? const Color(0xFF22252A)
+                                : const Color(0xFF2B2E34),
+                            glassHighlightAlphas: themeState.isDarkMode
+                                ? const [0.15, 0.03]
+                                : const [0.28, 0.06],
+                          ),
+                          child: Center(
+                            child: Transform.translate(
+                              offset: const Offset(0, 38),
+                              child: IgnorePointer(
+                                child: MechanicalCounterDisplay(
+                                  minutes: m,
+                                  seconds: s,
+                                  isDialInset: true,
+                                ),
+                              ),
+                            ),
                           ),
                         );
                       },
                     ),
-                  ),
-                ),
-              ),
-              // Sub-dial Mechanical Odometer Aperture (Integrated inside dial face at 6 o'clock)
-              Positioned(
-                top: 14 + 148,
-                child: IgnorePointer(
-                  child: ValueListenableBuilder<double>(
-                    valueListenable: _remainingSecondsNotifier,
-                    builder: (context, seconds, _) {
-                      final m = (seconds / 60).floor();
-                      final s = (seconds % 60).floor();
-                      return MechanicalCounterDisplay(
-                        minutes: m,
-                        seconds: s,
-                        isDialInset: true,
-                      );
-                    },
                   ),
                 ),
               ),
