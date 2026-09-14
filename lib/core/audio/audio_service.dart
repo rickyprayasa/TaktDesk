@@ -19,6 +19,10 @@ class AudioService {
   bool _isAmbientPlaying = false;
   bool _foleyEnabled = true;
 
+  double _primaryVolume = 0.80;
+  double _crackleVolume = 0.35;
+  double _binauralVolume = 0.25;
+
   AudioService({this.isMock = false});
 
   bool get isInitialized => _initialized;
@@ -26,6 +30,9 @@ class AudioService {
   bool get isAmbientPlaying => _isAmbientPlaying;
   int get activeTrackIndex => _activeTrackIndex;
   bool get foleyEnabled => _foleyEnabled;
+  double get primaryVolume => _primaryVolume;
+  double get crackleVolume => _crackleVolume;
+  double get binauralVolume => _binauralVolume;
 
   Future<void> init() async {
     _initialized = true;
@@ -53,20 +60,29 @@ class AudioService {
 
   void startAmbient({
     required int trackIndex,
-    double primaryVolume = 0.80,
-    double crackleVolume = 0.35,
-    double binauralVolume = 0.25,
+    double? primaryVolume,
+    double? crackleVolume,
+    double? binauralVolume,
   }) {
     if (!_initialized) return;
     _activeTrackIndex = trackIndex;
     _isAmbientPlaying = true;
+    if (primaryVolume != null) {
+      _primaryVolume = primaryVolume.clamp(0.0, 1.0);
+    }
+    if (crackleVolume != null) {
+      _crackleVolume = crackleVolume.clamp(0.0, 1.0);
+    }
+    if (binauralVolume != null) {
+      _binauralVolume = binauralVolume.clamp(0.0, 1.0);
+    }
     if (!isMock) {
       channel.invokeMethod('startAmbient', {
         'trackIndex': trackIndex,
         'volume': _volume,
-        'primaryVolume': primaryVolume.clamp(0.0, 1.0),
-        'crackleVolume': crackleVolume.clamp(0.0, 1.0),
-        'binauralVolume': binauralVolume.clamp(0.0, 1.0),
+        'primaryVolume': _primaryVolume,
+        'crackleVolume': _crackleVolume,
+        'binauralVolume': _binauralVolume,
       }).catchError((_) {});
     }
   }
@@ -76,12 +92,15 @@ class AudioService {
     required double crackleVolume,
     required double binauralVolume,
   }) {
+    _primaryVolume = primaryVolume.clamp(0.0, 1.0);
+    _crackleVolume = crackleVolume.clamp(0.0, 1.0);
+    _binauralVolume = binauralVolume.clamp(0.0, 1.0);
     if (!_initialized) return;
     if (!isMock) {
       channel.invokeMethod('setMixerLevels', {
-        'primaryVolume': primaryVolume.clamp(0.0, 1.0),
-        'crackleVolume': crackleVolume.clamp(0.0, 1.0),
-        'binauralVolume': binauralVolume.clamp(0.0, 1.0),
+        'primaryVolume': _primaryVolume,
+        'crackleVolume': _crackleVolume,
+        'binauralVolume': _binauralVolume,
       }).catchError((_) {});
     }
   }

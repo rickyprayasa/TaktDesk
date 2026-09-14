@@ -27,6 +27,28 @@ class MainActivity : FlutterActivity() {
     private var crackleGain: Float = 0.35f
     private var binauralGain: Float = 0.25f
 
+    private fun safeStopAndReset(player: MediaPlayer?) {
+        try {
+            if (player?.isPlaying == true) {
+                player.stop()
+            }
+        } catch (_: Exception) {}
+        try {
+            player?.reset()
+        } catch (_: Exception) {}
+    }
+
+    private fun safeRelease(player: MediaPlayer?) {
+        try {
+            if (player?.isPlaying == true) {
+                player.stop()
+            }
+        } catch (_: Exception) {}
+        try {
+            player?.release()
+        } catch (_: Exception) {}
+    }
+
     private fun updateAllVolumes() {
         val pVol = (masterVolume * primaryGain).coerceIn(0f, 1f)
         val cVol = (masterVolume * crackleGain).coerceIn(0f, 1f)
@@ -115,11 +137,11 @@ class MainActivity : FlutterActivity() {
             when (call.method) {
                 "startAmbient" -> {
                     try {
-                        val trackIndex = call.argument<Int>("trackIndex") ?: 0
-                        masterVolume = (call.argument<Double>("volume") ?: 0.8).toFloat()
-                        primaryGain = (call.argument<Double>("primaryVolume") ?: 0.8).toFloat()
-                        crackleGain = (call.argument<Double>("crackleVolume") ?: 0.35).toFloat()
-                        binauralGain = (call.argument<Double>("binauralVolume") ?: 0.25).toFloat()
+                        val trackIndex = call.argument<Number>("trackIndex")?.toInt() ?: 0
+                        masterVolume = (call.argument<Number>("volume")?.toDouble() ?: 0.8).toFloat()
+                        primaryGain = (call.argument<Number>("primaryVolume")?.toDouble() ?: primaryGain.toDouble()).toFloat()
+                        crackleGain = (call.argument<Number>("crackleVolume")?.toDouble() ?: crackleGain.toDouble()).toFloat()
+                        binauralGain = (call.argument<Number>("binauralVolume")?.toDouble() ?: binauralGain.toDouble()).toFloat()
 
                         val assetPath = when (trackIndex) {
                             0 -> "flutter_assets/assets/audio/vinyl_lofi_rain.wav"
@@ -134,54 +156,38 @@ class MainActivity : FlutterActivity() {
                         }
 
                         // 1. Primary Soundscape Player
-                        soundscapePlayer?.apply {
-                            if (isPlaying) stop()
-                            reset()
+                        safeStopAndReset(soundscapePlayer)
+                        val pPlayer = soundscapePlayer ?: MediaPlayer().also { soundscapePlayer = it }
+                        context.assets.openFd(assetPath).use { fd ->
+                            pPlayer.setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
                         }
-                        soundscapePlayer = soundscapePlayer ?: MediaPlayer()
-                        val fdPrimary = context.assets.openFd(assetPath)
-                        soundscapePlayer?.apply {
-                            reset()
-                            setDataSource(fdPrimary.fileDescriptor, fdPrimary.startOffset, fdPrimary.length)
-                            isLooping = true
-                            prepare()
-                            start()
-                        }
-                        fdPrimary.close()
+                        pPlayer.isLooping = true
+                        pPlayer.prepare()
 
                         // 2. Vinyl Surface Crackle Player
-                        cracklePlayer?.apply {
-                            if (isPlaying) stop()
-                            reset()
+                        safeStopAndReset(cracklePlayer)
+                        val cPlayer = cracklePlayer ?: MediaPlayer().also { cracklePlayer = it }
+                        context.assets.openFd("flutter_assets/assets/audio/vinyl_surface_crackle.wav").use { fd ->
+                            cPlayer.setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
                         }
-                        cracklePlayer = cracklePlayer ?: MediaPlayer()
-                        val fdCrackle = context.assets.openFd("flutter_assets/assets/audio/vinyl_surface_crackle.wav")
-                        cracklePlayer?.apply {
-                            reset()
-                            setDataSource(fdCrackle.fileDescriptor, fdCrackle.startOffset, fdCrackle.length)
-                            isLooping = true
-                            prepare()
-                            start()
-                        }
-                        fdCrackle.close()
+                        cPlayer.isLooping = true
+                        cPlayer.prepare()
 
                         // 3. Binaural Alpha 432 Hz Drone Player
-                        binauralPlayer?.apply {
-                            if (isPlaying) stop()
-                            reset()
+                        safeStopAndReset(binauralPlayer)
+                        val bPlayer = binauralPlayer ?: MediaPlayer().also { binauralPlayer = it }
+                        context.assets.openFd("flutter_assets/assets/audio/binaural_alpha_432.wav").use { fd ->
+                            bPlayer.setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
                         }
-                        binauralPlayer = binauralPlayer ?: MediaPlayer()
-                        val fdBinaural = context.assets.openFd("flutter_assets/assets/audio/binaural_alpha_432.wav")
-                        binauralPlayer?.apply {
-                            reset()
-                            setDataSource(fdBinaural.fileDescriptor, fdBinaural.startOffset, fdBinaural.length)
-                            isLooping = true
-                            prepare()
-                            start()
-                        }
-                        fdBinaural.close()
+                        bPlayer.isLooping = true
+                        bPlayer.prepare()
 
                         updateAllVolumes()
+
+                        pPlayer.start()
+                        cPlayer.start()
+                        bPlayer.start()
+
                         result.success(true)
                     } catch (e: Exception) {
                         result.success(false)
@@ -189,9 +195,9 @@ class MainActivity : FlutterActivity() {
                 }
                 "stopAmbient" -> {
                     try {
-                        soundscapePlayer?.apply { if (isPlaying) stop(); reset() }
-                        cracklePlayer?.apply { if (isPlaying) stop(); reset() }
-                        binauralPlayer?.apply { if (isPlaying) stop(); reset() }
+                        safeStopAndReset(soundscapePlayer)
+                        safeStopAndReset(cracklePlayer)
+                        safeStopAndReset(binauralPlayer)
                         result.success(true)
                     } catch (e: Exception) {
                         result.success(false)
@@ -199,9 +205,9 @@ class MainActivity : FlutterActivity() {
                 }
                 "setMixerLevels" -> {
                     try {
-                        primaryGain = (call.argument<Double>("primaryVolume") ?: primaryGain.toDouble()).toFloat()
-                        crackleGain = (call.argument<Double>("crackleVolume") ?: crackleGain.toDouble()).toFloat()
-                        binauralGain = (call.argument<Double>("binauralVolume") ?: binauralGain.toDouble()).toFloat()
+                        primaryGain = (call.argument<Number>("primaryVolume")?.toDouble() ?: primaryGain.toDouble()).toFloat()
+                        crackleGain = (call.argument<Number>("crackleVolume")?.toDouble() ?: crackleGain.toDouble()).toFloat()
+                        binauralGain = (call.argument<Number>("binauralVolume")?.toDouble() ?: binauralGain.toDouble()).toFloat()
                         updateAllVolumes()
                         result.success(true)
                     } catch (e: Exception) {
@@ -210,7 +216,7 @@ class MainActivity : FlutterActivity() {
                 }
                 "setVolume" -> {
                     try {
-                        masterVolume = (call.argument<Double>("volume") ?: 0.8).toFloat()
+                        masterVolume = (call.argument<Number>("volume")?.toDouble() ?: 0.8).toFloat()
                         updateAllVolumes()
                         result.success(true)
                     } catch (e: Exception) {
@@ -234,14 +240,14 @@ class MainActivity : FlutterActivity() {
                             else -> null
                         }
                         if (foleyAsset != null) {
-                            val fd = context.assets.openFd(foleyAsset)
-                            val foleyPlayer = MediaPlayer().apply {
-                                setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
-                                setOnCompletionListener { mp -> mp.release() }
-                                prepare()
-                                start()
+                            context.assets.openFd(foleyAsset).use { fd ->
+                                MediaPlayer().apply {
+                                    setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
+                                    setOnCompletionListener { mp -> mp.release() }
+                                    prepare()
+                                    start()
+                                }
                             }
-                            fd.close()
                         }
                         result.success(true)
                     } catch (e: Exception) {
@@ -326,14 +332,12 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
-        try {
-            soundscapePlayer?.apply { if (isPlaying) stop(); release() }
-            soundscapePlayer = null
-            cracklePlayer?.apply { if (isPlaying) stop(); release() }
-            cracklePlayer = null
-            binauralPlayer?.apply { if (isPlaying) stop(); release() }
-            binauralPlayer = null
-        } catch (_: Exception) {}
+        safeRelease(soundscapePlayer)
+        soundscapePlayer = null
+        safeRelease(cracklePlayer)
+        cracklePlayer = null
+        safeRelease(binauralPlayer)
+        binauralPlayer = null
         super.onDestroy()
     }
 }

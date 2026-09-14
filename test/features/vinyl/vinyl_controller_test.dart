@@ -17,9 +17,9 @@ class MockAudioService extends AudioService {
   @override
   void startAmbient({
     required int trackIndex,
-    double primaryVolume = 0.80,
-    double crackleVolume = 0.35,
-    double binauralVolume = 0.25,
+    double? primaryVolume,
+    double? crackleVolume,
+    double? binauralVolume,
   }) {
     ambientStarted.add(trackIndex);
   }
