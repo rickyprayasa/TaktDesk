@@ -1,4 +1,4 @@
-# Specification: ZYKL Dual-Pane Master Console (Tablet/Landscape Mode) & Auto-Unlock Monastic Mode
+# Specification: ZYKL Dual-Pane Master Console (Tablet/Landscape Mode), Auto-Unlock Monastic Mode & Natural Alarm Suite (FREE vs PRO)
 
 **Date:** 2026-09-14  
 **Author:** AI Pair Programmer & Ricky Prayasa  
@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary & Intent
 
-This specification establishes two core system enhancements for **ZYKL**:
+This specification establishes three core system enhancements for **ZYKL**:
 1. **Dual-Pane Master Console (Landscape / Tablet Mode)**:
    - When opened on an Android tablet, large screen, foldable in unfolded mode, or rotated into landscape orientation, ZYKL transitions from its single-instrument mobile view into an expansive **Braun Studio Console** inspired by Dieter Rams' *Braun Audio 310*.
    - Left Pane (~45% width): Pure horology and focus unit with the 3D Floating Glass Chrono Dial, preset cassette selectors, mechanical flip digits, and Monastic toggle.
@@ -18,7 +18,10 @@ This specification establishes two core system enhancements for **ZYKL**:
    - When a focus pomodoro cycle naturally concludes at `00:00`, the system automatically plays the mechanical drawer latch foley, vibrates with a tactile haptic click, and disengages the Monastic Focus Lock.
    - Eliminates the friction of holding the 5-second emergency unlatch button after a full, successful focus session.
    - The 5-second hold unlatch button remains exclusively as an *Emergency Unlatch* for early aborts prior to cycle completion.
-3. **Landscape Parallax & Sensor Mapping**:
+3. **Natural Acoustic Alarm Chime Suite (FREE vs PRO Gating)**:
+   - Replaces synthetic generated sine-wave alarms with authentic physical acoustic sound recordings (metal bells, meditation bowls, temple gongs, tubular horological chimes).
+   - Cleanly separates sounds between **FREE** and **STUDIO PRO** accounts, with preview auditioning, persistence in `DeskPreferences`, and upgrade gating via `StudioProDialog`.
+4. **Landscape Parallax & Sensor Mapping**:
    - Accelerometer gravity projection automatically remaps roll and pitch coordinates when in landscape orientation so that 3D floating glass perspective and dynamic shadows track physical tablet tilt naturally.
 
 ---
@@ -54,7 +57,8 @@ In `lib/features/desk/presentation/desk_canvas_screen.dart`:
 1. User flips the Monastic Switch (`engageLock()`). `PopScope.canPop` is set to `false`.
 2. Pomodoro countdown is active in `ChronoDialController`.
 3. Countdown reaches `nextRemaining <= 0` during `PomodoroPhase.focus`:
-   - `_audioService.playFoley(SoundEffect.bellChime)` plays the physical brass chime.
+   - Active alarm chime is retrieved from `deskPreferencesControllerProvider.alarmChimeId`.
+   - `_audioService.playChime(alarmChime)` plays the physical brass chime / singing bowl.
    - `HapticService.mechanicalPress()` delivers physical feedback.
    - Database records the completed session.
    - **Auto-Unlock Trigger**: If `ref.read(focusLockProvider).isLocked` is true:
@@ -68,9 +72,43 @@ In `lib/features/desk/presentation/desk_canvas_screen.dart`:
 
 ---
 
-## 4. Landscape Sensor & Parallax Coordination
+## 4. Natural Acoustic Alarm Chime Suite & FREE vs PRO Gating
 
-### 4.1 Coordinate Remapping
+### 4.1 Alarm Sound Catalog
+Each alarm chime is an authentic physical recording mastered to 44.1kHz 16-bit mono WAV:
+
+| ID | Name | Category | Acoustic Source | Tier |
+|---|---|---|---|---|
+| `braunBell` | **BRAUN DUAL-HAMMER** | Mechanical | Authentic clockwork twin-bell struck by physical hammer | **FREE** |
+| `deskBell` | **BRASS DESK BELL** | Horological | Physical reception counter desk bell with high-frequency ring | **FREE** |
+| `tibetanBowl` | **TIBETAN SINGING BOWL**| Meditative | Hand-hammered bronze singing bowl with deep rich harmonic overtones | **PRO** |
+| `zenGong` | **ZEN TEMPLE GONG** | Organic | Large bronze Japanese Buddhist temple bell gong with deep resonance | **PRO** |
+| `tubularChime` | **TUBULAR CHIME** | Horological | Solid brass tubular clock chime with warm acoustic sustain | **PRO** |
+
+### 4.2 Settings UI Integration
+In `TaktSettingsSheet`:
+- Add dedicated section: `ALARM ACOUSTICS & COMPLETION CHIMES`.
+- Each sound card displays:
+  - Sound Title & description of acoustic material.
+  - Tactile Play button to preview / audition the sound.
+  - Radio selection indicator.
+  - Amber `PRO` badge for Pro-tier chimes.
+- Tapping a PRO chime when `isProSimulated == false`:
+  - Plays preview audition.
+  - Displays `StudioProDialog` explaining Studio Pro clearance and enabling 1-tap simulation/unlock.
+- Tapping a valid chime:
+  - Updates `deskPreferencesControllerProvider.setAlarmChimeId(id)` and persists to SQLite Drift database.
+
+### 4.3 SQLite Drift Schema Migration (v5)
+- In `lib/core/database/tables/desk_preferences_table.dart`:
+  - `TextColumn get alarmChimeId => text().withDefault(const Constant('braunBell'))();`
+- Schema version bumped to `5` with migration in `app_database.dart`.
+
+---
+
+## 5. Landscape Sensor & Parallax Coordination
+
+### 5.1 Coordinate Remapping
 In `lib/core/sensors/parallax_controller.dart` or `lib/features/desk/presentation/desk_canvas_screen.dart`:
 - When in `Orientation.landscape`:
   - Tilting the tablet left/right corresponds to the device's physical Y or X axis depending on landscape rotation (`landscapeLeft` vs `landscapeRight`).
@@ -79,7 +117,7 @@ In `lib/core/sensors/parallax_controller.dart` or `lib/features/desk/presentatio
 
 ---
 
-## 5. Non-Functional Constraints & Integrity
+## 6. Non-Functional Constraints & Integrity
 
 1. **Aesthetic Compliance**:
    - Strictly adhere to Dieter Rams / Braun modernist industrial aesthetics (honest materials, uncluttered typography, amber accent `#FF9E00`).
