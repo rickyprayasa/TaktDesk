@@ -639,5 +639,30 @@ void main() {
         ..rotateY(parallax.tiltX);
       expect(transformWidget.transform, equals(expectedTransform));
     });
+
+    testWidgets('allows interactive touch events on child to pass through 3D transform and GlassRimPainter', (tester) async {
+      int tapCount = 0;
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: MaterialChassisBox(
+                  child: ElevatedButton(
+                    onPressed: () => tapCount++,
+                    child: const Text('Touch Target'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(tapCount, equals(0));
+      await tester.tap(find.text('Touch Target'));
+      await tester.pump();
+      expect(tapCount, equals(1));
+    });
   });
 }

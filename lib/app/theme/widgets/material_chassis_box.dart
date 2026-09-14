@@ -198,7 +198,9 @@ class MaterialChassisBox extends ConsumerWidget {
           ],
           Padding(
             padding: padding ?? EdgeInsets.zero,
-            child: child,
+            child: RepaintBoundary(
+              child: child,
+            ),
           ),
         ],
       ),
