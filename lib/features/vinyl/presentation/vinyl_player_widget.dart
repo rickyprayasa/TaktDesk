@@ -7,6 +7,7 @@ import 'vinyl_deck_painter.dart';
 import '../../../app/theme/takt_typography.dart';
 import '../../../app/theme/theme_controller.dart';
 import '../../../app/theme/widgets/material_chassis_box.dart';
+import 'widgets/turntable_mixer_strip.dart';
 import 'widgets/vinyl_disc_drawer_widget.dart';
 
 class VinylPlayerWidget extends ConsumerStatefulWidget {
@@ -214,6 +215,9 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
           ),
           // Slide-Out Archival Disc Drawer
           const VinylDiscDrawerWidget(),
+          const SizedBox(height: 10),
+          // 3-Channel Soundscape Mixer Strip
+          const TurntableMixerStrip(),
         ],
       ),
     );

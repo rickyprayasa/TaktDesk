@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -38,6 +39,8 @@ class MockAudioService extends AudioService {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   testWidgets('VinylPlayerWidget renders initial state with VinylDeckPainter and track info', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
