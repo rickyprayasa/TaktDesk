@@ -10,6 +10,7 @@ import 'package:takt_desk/core/audio/audio_service.dart';
 import 'package:takt_desk/core/audio/sound_effect.dart';
 import 'package:takt_desk/features/vinyl/presentation/vinyl_deck_painter.dart';
 import 'package:takt_desk/features/vinyl/presentation/vinyl_player_widget.dart';
+import 'package:takt_desk/features/vinyl/presentation/widgets/turntable_mixer_strip.dart';
 import 'package:takt_desk/features/vinyl/presentation/widgets/vinyl_disc_drawer_widget.dart';
 
 class MockAudioService extends AudioService {
@@ -63,6 +64,9 @@ void main() {
     // Verify VinylDiscDrawerWidget is present
     expect(find.byType(VinylDiscDrawerWidget), findsOneWidget);
     expect(find.text('[ RECORD DRAWER // 08 DISCS ▾ ]'), findsOneWidget);
+
+    // Verify TurntableMixerStrip is present
+    expect(find.byType(TurntableMixerStrip), findsOneWidget);
 
     // Verify CustomPaint with VinylDeckPainter
     final painterFinder = find.byWidgetPredicate(

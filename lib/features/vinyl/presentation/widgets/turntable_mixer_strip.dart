@@ -151,7 +151,7 @@ class TurntableMixerStrip extends ConsumerWidget {
     required String muteKey,
     required ValueChanged<double> onChanged,
     required VoidCallback onMuteToggle,
-    required dynamic themeState,
+    required ChassisThemeState themeState,
     required bool isDark,
   }) {
     const faderHeight = 52.0;
@@ -199,18 +199,22 @@ class TurntableMixerStrip extends ConsumerWidget {
             ),
             const SizedBox(width: 3),
             // Physical Machined Fader Track
-            GestureDetector(
-              key: ValueKey(faderKey),
-              behavior: HitTestBehavior.opaque,
-              onVerticalDragUpdate: (details) {
-                // Dragging up increases volume, dragging down decreases
-                final delta = -details.primaryDelta! / faderHeight;
-                final newVal = (value + delta).clamp(0.0, 1.0);
-                if ((value < 0.75 && newVal >= 0.75) || (value > 0.75 && newVal <= 0.75)) {
-                  HapticService.dialTick();
-                }
-                onChanged(newVal);
-              },
+            Semantics(
+              label: '$label channel volume fader',
+              value: '${(value * 100).round()}%',
+              slider: true,
+              child: GestureDetector(
+                key: ValueKey(faderKey),
+                behavior: HitTestBehavior.opaque,
+                onVerticalDragUpdate: (details) {
+                  // Dragging up increases volume, dragging down decreases
+                  final delta = -(details.primaryDelta ?? details.delta.dy) / faderHeight;
+                  final newVal = (value + delta).clamp(0.0, 1.0);
+                  if ((value < 0.75 && newVal >= 0.75) || (value > 0.75 && newVal <= 0.75)) {
+                    HapticService.dialTick();
+                  }
+                  onChanged(newVal);
+                },
               child: Container(
                 width: 22,
                 height: faderHeight,
@@ -270,6 +274,7 @@ class TurntableMixerStrip extends ConsumerWidget {
                 ),
               ),
             ),
+          ),
           ],
         ),
         const SizedBox(height: 6),
@@ -290,7 +295,7 @@ class TurntableMixerStrip extends ConsumerWidget {
               borderRadius: BorderRadius.circular(3),
               border: Border.all(
                 color: isMuted
-                    ? const Color(0xFFC85A32).withValues(alpha: 0.6)
+                    ? TaktColors.mutedOchre.withValues(alpha: 0.6)
                     : (isDark ? const Color(0xFF2C3038) : const Color(0xFFBBB5A7)),
                 width: 0.8,
               ),
@@ -304,7 +309,7 @@ class TurntableMixerStrip extends ConsumerWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: isMuted
-                        ? const Color(0xFFC85A32)
+                        ? TaktColors.mutedOchre
                         : (isDark ? const Color(0xFF333842) : const Color(0xFFA09B8E)),
                   ),
                 ),
@@ -316,7 +321,7 @@ class TurntableMixerStrip extends ConsumerWidget {
                     fontSize: 7.0,
                     fontWeight: FontWeight.w700,
                     color: isMuted
-                        ? const Color(0xFFC85A32)
+                        ? TaktColors.mutedOchre
                         : (isDark ? const Color(0xFF7A808A) : const Color(0xFF7E796E)),
                   ),
                 ),
