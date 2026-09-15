@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/theme/takt_colors.dart';
 import '../../../../app/theme/theme_controller.dart';
-import '../../../../app/theme/widgets/rsquare_hardware_plaque.dart';
 import '../../../../core/audio/audio_service.dart';
 import '../../../../core/audio/sound_effect.dart';
 import '../../../../core/haptics/haptic_service.dart';
@@ -64,21 +63,15 @@ class FocusAnalyticsDialog extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      RsquareHardwarePlaque(size: 22, isDark: isDark, showRivets: false),
-                      const SizedBox(width: 8),
-                      Text(
-                        'FOCUS ANALYTICS',
-                        style: TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.0,
-                          color: primaryTextColor,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'FOCUS ANALYTICS',
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 13.0,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.0,
+                      color: primaryTextColor,
+                    ),
                   ),
                   IconButton(
                     key: const ValueKey('focus_analytics_close_btn'),
