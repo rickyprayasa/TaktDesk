@@ -241,6 +241,42 @@ void main() {
     await tester.pump();
 
     expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.none));
+    expect(find.text('PULL CROWN // SET'), findsOneWidget);
+  });
+
+  testWidgets('telemetry status plaque displays PULL CROWN // SET when custom profile is idle in standby', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoProfileSelectorWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Initially CLASSIC 25: plaque should display STANDBY // READY
+    expect(find.text('STANDBY // READY'), findsOneWidget);
+
+    // Switch to CUSTOM profile
+    await tester.tap(find.text('CUSTOM'));
+    await tester.pump();
+
+    // Plaque should now guide user with PULL CROWN // SET in filamentAmber
+    expect(find.text('PULL CROWN // SET'), findsOneWidget);
+    final plaqueText = tester.widget<Text>(find.text('PULL CROWN // SET'));
+    expect(plaqueText.style?.color, equals(TaktColors.filamentAmber));
+
+    // Switch back to 25/5 CLS: plaque returns to STANDBY // READY
+    await tester.tap(find.text('25/5 CLS'));
+    await tester.pump();
     expect(find.text('STANDBY // READY'), findsOneWidget);
   });
 }

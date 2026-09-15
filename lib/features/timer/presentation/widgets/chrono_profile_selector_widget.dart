@@ -62,13 +62,19 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
     final inactiveLedColor = isDark ? const Color(0xFF22252A) : const Color(0xFFC0BCB2);
     final textColor = isDark ? const Color(0xFF8A909A) : const Color(0xFF656A72);
 
+    final isCustomStandby = !timerState.isRunning &&
+        !timerState.setupStage.isActive &&
+        timerState.profile.type == PomodoroProfileType.custom;
+
     final plaqueText = timerState.setupStage.isActive
         ? timerState.setupStage.telemetryLabel
-        : (timerState.isRunning ? 'RUNNING // SEC-ROLL' : 'STANDBY // READY');
+        : (timerState.isRunning
+            ? 'RUNNING // SEC-ROLL'
+            : (isCustomStandby ? 'PULL CROWN // SET' : 'STANDBY // READY'));
     final isCalibrating = timerState.setupStage.isActive;
-    final plaqueColor = isCalibrating
+    final plaqueColor = isCalibrating || timerState.isRunning || isCustomStandby
         ? TaktColors.filamentAmber
-        : (timerState.isRunning ? TaktColors.filamentAmber : textColor);
+        : textColor;
 
     Widget plaqueWidget = Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
