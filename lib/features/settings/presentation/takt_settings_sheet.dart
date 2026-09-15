@@ -7,6 +7,7 @@ import '../../../app/theme/widgets/rsquare_hardware_plaque.dart';
 import '../../../core/audio/audio_service.dart';
 import '../../../core/haptics/haptic_service.dart';
 import '../../timer/domain/alarm_chime.dart';
+import '../../timer/domain/pomodoro_profile.dart';
 import '../../timer/presentation/chrono_dial_controller.dart';
 import 'settings_controller.dart';
 import 'widgets/studio_pro_dialog.dart';
@@ -1303,6 +1304,52 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 10),
+
+              // Quick preset selector cassette keys
+              Row(
+                children: [
+                  _buildPresetButton(
+                    label: '25/5 CLS',
+                    type: PomodoroProfileType.classic,
+                    isSelected: activeProfile.type == PomodoroProfileType.classic,
+                    isRunning: isRunning,
+                    onTap: () => controller.setProfile(PomodoroProfile.classic),
+                    primaryTextColor: primaryTextColor,
+                    borderColor: borderColor,
+                  ),
+                  const SizedBox(width: 6),
+                  _buildPresetButton(
+                    label: '50/10 MON',
+                    type: PomodoroProfileType.monastic,
+                    isSelected: activeProfile.type == PomodoroProfileType.monastic,
+                    isRunning: isRunning,
+                    onTap: () => controller.setProfile(PomodoroProfile.monastic),
+                    primaryTextColor: primaryTextColor,
+                    borderColor: borderColor,
+                  ),
+                  const SizedBox(width: 6),
+                  _buildPresetButton(
+                    label: '15/3 SPR',
+                    type: PomodoroProfileType.sprint,
+                    isSelected: activeProfile.type == PomodoroProfileType.sprint,
+                    isRunning: isRunning,
+                    onTap: () => controller.setProfile(PomodoroProfile.sprint),
+                    primaryTextColor: primaryTextColor,
+                    borderColor: borderColor,
+                  ),
+                  const SizedBox(width: 6),
+                  _buildPresetButton(
+                    label: 'CUSTOM',
+                    type: PomodoroProfileType.custom,
+                    isSelected: activeProfile.type == PomodoroProfileType.custom,
+                    isRunning: isRunning,
+                    onTap: () => controller.setProfile(customProfile),
+                    primaryTextColor: primaryTextColor,
+                    borderColor: borderColor,
+                  ),
+                ],
+              ),
               const SizedBox(height: 12),
               Divider(color: borderColor.withValues(alpha: 0.5), height: 1),
               const SizedBox(height: 12),
@@ -1310,18 +1357,20 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
               // Stepper 1: Focus Duration
               _buildStepperRow(
                 title: 'FOCUS DURATION',
-                subtitle: 'Custom work interval (1 – 90 min)',
-                value: '${customProfile.focusMinutes} MIN',
+                subtitle: 'Work interval (1 – 90 min)',
+                value: '${activeProfile.focusMinutes} MIN',
                 valueKey: const ValueKey('custom_focus_value'),
                 minusKey: const ValueKey('custom_focus_minus'),
                 plusKey: const ValueKey('custom_focus_plus'),
-                canDecrement: !isRunning && customProfile.focusMinutes > 1,
-                canIncrement: !isRunning && customProfile.focusMinutes < 90,
+                canDecrement: !isRunning && activeProfile.focusMinutes > 1,
+                canIncrement: !isRunning && activeProfile.focusMinutes < 90,
                 onDecrement: () => controller.updateCustomDurations(
-                  focusMinutes: customProfile.focusMinutes - 1,
+                  focusMinutes: activeProfile.focusMinutes - 1,
+                  activate: true,
                 ),
                 onIncrement: () => controller.updateCustomDurations(
-                  focusMinutes: customProfile.focusMinutes + 1,
+                  focusMinutes: activeProfile.focusMinutes + 1,
+                  activate: true,
                 ),
                 primaryTextColor: primaryTextColor,
                 secondaryTextColor: secondaryTextColor,
@@ -1332,18 +1381,20 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
               // Stepper 2: Short Break
               _buildStepperRow(
                 title: 'SHORT BREAK',
-                subtitle: 'Custom cycle rest (1 – 30 min)',
-                value: '${customProfile.shortBreakMinutes} MIN',
+                subtitle: 'Cycle rest interval (1 – 30 min)',
+                value: '${activeProfile.shortBreakMinutes} MIN',
                 valueKey: const ValueKey('custom_short_break_value'),
                 minusKey: const ValueKey('custom_short_break_minus'),
                 plusKey: const ValueKey('custom_short_break_plus'),
-                canDecrement: !isRunning && customProfile.shortBreakMinutes > 1,
-                canIncrement: !isRunning && customProfile.shortBreakMinutes < 30,
+                canDecrement: !isRunning && activeProfile.shortBreakMinutes > 1,
+                canIncrement: !isRunning && activeProfile.shortBreakMinutes < 30,
                 onDecrement: () => controller.updateCustomDurations(
-                  shortBreakMinutes: customProfile.shortBreakMinutes - 1,
+                  shortBreakMinutes: activeProfile.shortBreakMinutes - 1,
+                  activate: true,
                 ),
                 onIncrement: () => controller.updateCustomDurations(
-                  shortBreakMinutes: customProfile.shortBreakMinutes + 1,
+                  shortBreakMinutes: activeProfile.shortBreakMinutes + 1,
+                  activate: true,
                 ),
                 primaryTextColor: primaryTextColor,
                 secondaryTextColor: secondaryTextColor,
@@ -1354,18 +1405,44 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
               // Stepper 3: Long Break
               _buildStepperRow(
                 title: 'LONG BREAK',
-                subtitle: 'Custom 4th cycle recovery (1 – 45 min)',
-                value: '${customProfile.longBreakMinutes} MIN',
+                subtitle: 'Extended recovery interval (1 – 45 min)',
+                value: '${activeProfile.longBreakMinutes} MIN',
                 valueKey: const ValueKey('custom_long_break_value'),
                 minusKey: const ValueKey('custom_long_break_minus'),
                 plusKey: const ValueKey('custom_long_break_plus'),
-                canDecrement: !isRunning && customProfile.longBreakMinutes > 1,
-                canIncrement: !isRunning && customProfile.longBreakMinutes < 45,
+                canDecrement: !isRunning && activeProfile.longBreakMinutes > 1,
+                canIncrement: !isRunning && activeProfile.longBreakMinutes < 45,
                 onDecrement: () => controller.updateCustomDurations(
-                  longBreakMinutes: customProfile.longBreakMinutes - 1,
+                  longBreakMinutes: activeProfile.longBreakMinutes - 1,
+                  activate: true,
                 ),
                 onIncrement: () => controller.updateCustomDurations(
-                  longBreakMinutes: customProfile.longBreakMinutes + 1,
+                  longBreakMinutes: activeProfile.longBreakMinutes + 1,
+                  activate: true,
+                ),
+                primaryTextColor: primaryTextColor,
+                secondaryTextColor: secondaryTextColor,
+                borderColor: borderColor,
+              ),
+              const SizedBox(height: 10),
+
+              // Stepper 4: Cycle Count
+              _buildStepperRow(
+                title: 'CYCLE COUNT',
+                subtitle: 'Cycles before long recovery (2 – 8 cycles)',
+                value: '${activeProfile.longBreakInterval} CYCLES',
+                valueKey: const ValueKey('custom_cycle_count_value'),
+                minusKey: const ValueKey('custom_cycle_count_minus'),
+                plusKey: const ValueKey('custom_cycle_count_plus'),
+                canDecrement: !isRunning && activeProfile.longBreakInterval > 2,
+                canIncrement: !isRunning && activeProfile.longBreakInterval < 8,
+                onDecrement: () => controller.updateCustomDurations(
+                  longBreakInterval: activeProfile.longBreakInterval - 1,
+                  activate: true,
+                ),
+                onIncrement: () => controller.updateCustomDurations(
+                  longBreakInterval: activeProfile.longBreakInterval + 1,
+                  activate: true,
                 ),
                 primaryTextColor: primaryTextColor,
                 secondaryTextColor: secondaryTextColor,
@@ -1375,6 +1452,80 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPresetButton({
+    required String label,
+    required PomodoroProfileType type,
+    required bool isSelected,
+    required bool isRunning,
+    required VoidCallback onTap,
+    required Color primaryTextColor,
+    required Color borderColor,
+  }) {
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: isRunning ? null : onTap,
+          borderRadius: BorderRadius.circular(4.0),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 6.0),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? TaktColors.filamentAmber.withValues(alpha: 0.15)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(4.0),
+              border: Border.all(
+                color: isSelected
+                    ? TaktColors.filamentAmber
+                    : borderColor.withValues(alpha: 0.5),
+                width: isSelected ? 1.2 : 0.8,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 4.0,
+                  height: 4.0,
+                  margin: const EdgeInsets.only(bottom: 3.0),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isSelected
+                        ? TaktColors.filamentAmber
+                        : borderColor.withValues(alpha: 0.4),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: TaktColors.filamentAmber.withValues(alpha: 0.6),
+                              blurRadius: 3.0,
+                            ),
+                          ]
+                        : null,
+                  ),
+                ),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 8.5,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    letterSpacing: 0.5,
+                    color: isSelected
+                        ? TaktColors.filamentAmber
+                        : (isRunning
+                            ? primaryTextColor.withValues(alpha: 0.35)
+                            : primaryTextColor.withValues(alpha: 0.8)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 

@@ -24,6 +24,7 @@ class TimerState {
       focusMinutes: 25,
       shortBreakMinutes: 5,
       longBreakMinutes: 15,
+      longBreakInterval: 4,
     ),
   });
 

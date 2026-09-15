@@ -18,7 +18,7 @@ class SplitFlapBoardWidget extends ConsumerWidget {
     final controller = ref.read(chronoDialProvider.notifier);
 
     final phaseText = _formatPhaseText(state.phase);
-    final cycleText = 'CYCLE ${state.cycleCount}/4';
+    final cycleText = 'CYCLE ${state.cycleCount}/${state.profile.longBreakInterval}';
 
     Color ledColor;
     switch (state.phase) {

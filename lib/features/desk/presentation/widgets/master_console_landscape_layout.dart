@@ -213,36 +213,43 @@ class _MasterConsoleLandscapeLayoutState
                       color: theme.borderColor.withValues(alpha: 0.25),
                     ),
 
-                    // Right Column: Tab Menu Separating Dispenser & Vinyl
+                    // Right Column: Tab Menu Permanently Docked at Top with Generous Spacing
                     Expanded(
                       flex: 6,
-                      child: Center(
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                _buildRightModuleSelector(theme),
-                                const SizedBox(height: 16),
-                                AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 250),
-                                  child: _selectedModuleIndex == 0
-                                      ? const Center(
-                                          key: ValueKey('landscape_dispenser_module'),
-                                          child: ReceiptRunnerWidget(),
-                                        )
-                                      : const Center(
-                                          key: ValueKey('landscape_vinyl_module'),
-                                          child: VinylPlayerWidget(),
-                                        ),
-                                ),
-                              ],
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // 1. Permanently docked top tab menu
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2.0, bottom: 20.0),
+                            child: Center(
+                              child: _buildRightModuleSelector(theme),
                             ),
                           ),
-                        ),
+                          // 2. Hardware UI module centered in scroll container
+                          Expanded(
+                            child: Center(
+                              child: SingleChildScrollView(
+                                physics: const BouncingScrollPhysics(),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 250),
+                                    child: _selectedModuleIndex == 0
+                                        ? const Center(
+                                            key: ValueKey('landscape_dispenser_module'),
+                                            child: ReceiptRunnerWidget(),
+                                          )
+                                        : const Center(
+                                            key: ValueKey('landscape_vinyl_module'),
+                                            child: VinylPlayerWidget(),
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],

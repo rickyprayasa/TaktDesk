@@ -60,15 +60,21 @@ class ChronoDialController extends StateNotifier<TimerState> {
     int? focusMinutes,
     int? shortBreakMinutes,
     int? longBreakMinutes,
+    int? longBreakInterval,
+    bool activate = false,
   }) {
     if (state.isRunning) return;
+    final base = (activate || state.profile.type == PomodoroProfileType.custom)
+        ? (state.profile.type == PomodoroProfileType.custom ? state.customProfile : state.profile)
+        : state.customProfile;
     final updatedCustom = PomodoroProfile.custom(
-      focusMinutes: (focusMinutes ?? state.customProfile.focusMinutes).clamp(1, 90),
-      shortBreakMinutes: (shortBreakMinutes ?? state.customProfile.shortBreakMinutes).clamp(1, 30),
-      longBreakMinutes: (longBreakMinutes ?? state.customProfile.longBreakMinutes).clamp(1, 45),
+      focusMinutes: (focusMinutes ?? base.focusMinutes).clamp(1, 90),
+      shortBreakMinutes: (shortBreakMinutes ?? base.shortBreakMinutes).clamp(1, 30),
+      longBreakMinutes: (longBreakMinutes ?? base.longBreakMinutes).clamp(1, 45),
+      longBreakInterval: (longBreakInterval ?? base.longBreakInterval).clamp(2, 8),
     );
 
-    if (state.profile.type == PomodoroProfileType.custom) {
+    if (activate || state.profile.type == PomodoroProfileType.custom) {
       final int currentPhaseMinutes;
       switch (state.phase) {
         case PomodoroPhase.focus:
@@ -182,15 +188,16 @@ class ChronoDialController extends StateNotifier<TimerState> {
   }
 
   ({PomodoroPhase phase, int cycleCount}) _nextPhaseAndCycle() {
+    final maxCycles = state.profile.longBreakInterval;
     switch (state.phase) {
       case PomodoroPhase.focus:
-        if (state.cycleCount < 4) {
+        if (state.cycleCount < maxCycles) {
           return (phase: PomodoroPhase.shortBreak, cycleCount: state.cycleCount);
         } else {
           return (phase: PomodoroPhase.longBreak, cycleCount: state.cycleCount);
         }
       case PomodoroPhase.shortBreak:
-        return (phase: PomodoroPhase.focus, cycleCount: (state.cycleCount + 1).clamp(1, 4));
+        return (phase: PomodoroPhase.focus, cycleCount: (state.cycleCount + 1).clamp(1, maxCycles));
       case PomodoroPhase.longBreak:
         return (phase: PomodoroPhase.focus, cycleCount: 1);
     }

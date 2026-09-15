@@ -188,7 +188,7 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'CYCLE ${timerState.cycleCount}/4',
+                          'CYCLE ${timerState.cycleCount}/${timerState.profile.longBreakInterval}',
                           style: TextStyle(
                             fontFamily: 'monospace',
                             fontSize: 9.0,
@@ -198,7 +198,7 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        for (int c = 1; c <= 4; c++) ...[
+                        for (int c = 1; c <= timerState.profile.longBreakInterval; c++) ...[
                           Container(
                             margin: const EdgeInsets.symmetric(horizontal: 1.2),
                             width: 5.0,

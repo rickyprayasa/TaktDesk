@@ -268,5 +268,54 @@ void main() {
       expect(controller.state.phase, equals(PomodoroPhase.focus));
       expect(controller.state.cycleCount, equals(1));
     });
+    test('updateCustomDurations with activate=true switches active profile to custom and updates duration', () {
+      final controller = ChronoDialController();
+      controller.setProfile(PomodoroProfile.monastic);
+      expect(controller.state.targetMinutes, equals(50));
+      expect(controller.state.profile.type, equals(PomodoroProfileType.monastic));
+
+      controller.updateCustomDurations(
+        focusMinutes: 52,
+        longBreakInterval: 3,
+        activate: true,
+      );
+
+      expect(controller.state.profile.type, equals(PomodoroProfileType.custom));
+      expect(controller.state.targetMinutes, equals(52));
+      expect(controller.state.profile.longBreakInterval, equals(3));
+      expect(controller.state.customProfile.longBreakInterval, equals(3));
+    });
+
+    test('custom longBreakInterval triggers long break after specified cycle count', () {
+      final controller = ChronoDialController();
+      // Set custom profile with longBreakInterval: 2
+      final custom2 = PomodoroProfile.custom(
+        focusMinutes: 20,
+        shortBreakMinutes: 5,
+        longBreakMinutes: 15,
+        longBreakInterval: 2,
+      );
+      controller.setProfile(custom2);
+      expect(controller.state.profile.longBreakInterval, equals(2));
+
+      // Cycle 1: Focus (20m) -> Short Break (5m)
+      controller.start();
+      controller.tick(20 * 60.0);
+      expect(controller.state.phase, equals(PomodoroPhase.shortBreak));
+      expect(controller.state.cycleCount, equals(1));
+
+      // Cycle 1: Short Break (5m) -> Focus Cycle 2 (20m)
+      controller.start();
+      controller.tick(5 * 60.0);
+      expect(controller.state.phase, equals(PomodoroPhase.focus));
+      expect(controller.state.cycleCount, equals(2));
+
+      // Cycle 2: Focus (20m) -> LONG BREAK (since longBreakInterval is 2!)
+      controller.start();
+      controller.tick(20 * 60.0);
+      expect(controller.state.phase, equals(PomodoroPhase.longBreak));
+      expect(controller.state.cycleCount, equals(2));
+      expect(controller.state.targetMinutes, equals(15));
+    });
   });
 }

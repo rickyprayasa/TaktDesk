@@ -660,19 +660,19 @@ void main() {
       expect(find.text('5 MIN'), findsWidgets);
       expect(find.text('15 MIN'), findsWidgets);
 
-      // Increment Focus duration
+      // Increment Focus duration: automatically switches to CUSTOM and updates duration
       await tester.tap(find.byKey(const ValueKey('custom_focus_plus')));
       await tester.pumpAndSettle();
       expect(find.text('26 MIN'), findsOneWidget);
       expect(container.read(chronoDialProvider).customProfile.focusMinutes, equals(26));
-      // Active profile is classic and untouched
-      expect(container.read(chronoDialProvider).profile.type, equals(PomodoroProfileType.classic));
-      expect(container.read(chronoDialProvider).targetMinutes, equals(25));
+      expect(container.read(chronoDialProvider).profile.type, equals(PomodoroProfileType.custom));
+      expect(container.read(chronoDialProvider).targetMinutes, equals(26));
 
       // Decrement Focus duration
       await tester.tap(find.byKey(const ValueKey('custom_focus_minus')));
       await tester.pumpAndSettle();
       expect(container.read(chronoDialProvider).customProfile.focusMinutes, equals(25));
+      expect(container.read(chronoDialProvider).targetMinutes, equals(25));
 
       // Increment Short Break
       await tester.tap(find.byKey(const ValueKey('custom_short_break_plus')));
@@ -687,6 +687,25 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('16 MIN'), findsOneWidget);
       expect(container.read(chronoDialProvider).customProfile.longBreakMinutes, equals(16));
+
+      // Increment Cycle Count
+      await tester.ensureVisible(find.byKey(const ValueKey('custom_cycle_count_plus')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('custom_cycle_count_plus')));
+      await tester.pumpAndSettle();
+      expect(find.text('5 CYCLES'), findsOneWidget);
+      expect(container.read(chronoDialProvider).customProfile.longBreakInterval, equals(5));
+
+      // Switch to Monastic preset and verify durations update automatically
+      await tester.ensureVisible(find.text('50/10 MON'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('50/10 MON'));
+      await tester.pumpAndSettle();
+      expect(container.read(chronoDialProvider).profile.type, equals(PomodoroProfileType.monastic));
+      expect(find.text('50 MIN'), findsOneWidget);
+      expect(find.text('10 MIN'), findsOneWidget);
+      expect(find.text('30 MIN'), findsOneWidget);
+      expect(find.text('4 CYCLES'), findsOneWidget);
     });
 
     testWidgets('Pomodoro Interval Engine steppers are disabled while timer is running', (tester) async {

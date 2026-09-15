@@ -24,19 +24,23 @@ void main() {
         focusMinutes: 120, // should clamp to 90
         shortBreakMinutes: 50, // should clamp to 30
         longBreakMinutes: 60, // should clamp to 45
+        longBreakInterval: 12, // should clamp to 8
       );
       expect(customUpper.focusMinutes, equals(90));
       expect(customUpper.shortBreakMinutes, equals(30));
       expect(customUpper.longBreakMinutes, equals(45));
+      expect(customUpper.longBreakInterval, equals(8));
 
       final customLower = PomodoroProfile.custom(
         focusMinutes: 0, // should clamp to 1
         shortBreakMinutes: 0, // should clamp to 1
         longBreakMinutes: 0, // should clamp to 1
+        longBreakInterval: 0, // should clamp to 2
       );
       expect(customLower.focusMinutes, equals(1));
       expect(customLower.shortBreakMinutes, equals(1));
       expect(customLower.longBreakMinutes, equals(1));
+      expect(customLower.longBreakInterval, equals(2));
     });
 
     test('PomodoroProfileType exposes correct human-readable labels', () {
