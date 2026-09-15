@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
@@ -989,7 +990,21 @@ void main() {
     // Counter display should show 04:00 (default interval 4)
     expectDisplay(tester, 4, 0);
 
-    // Drag to 9 o'clock position (fraction 0.75 -> (0.75 * 8).round() = 6 cycles)
+    // Drag to 6-minute tick (angle 36 deg from 12 o'clock -> 6 cycles)
+    const angle6 = 6.0 / 60.0 * 2 * math.pi;
+    final offset6 = Offset(50 * math.sin(angle6), -50 * math.cos(angle6));
+    final move6 = Offset(25 * math.sin(angle6), -25 * math.cos(angle6));
+    gesture = await tester.startGesture(dialCenter + offset6);
+    await tester.pump();
+    await gesture.moveBy(move6);
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+
+    expect(container.read(chronoDialProvider).customProfile.longBreakInterval, equals(6));
+    expectDisplay(tester, 6, 0);
+
+    // Drag past 8 to 9 o'clock position (45 min mark -> clamped to max 8 cycles)
     gesture = await tester.startGesture(dialCenter + const Offset(-50, 0));
     await tester.pump();
     await gesture.moveBy(const Offset(-25, 0));
@@ -997,8 +1012,8 @@ void main() {
     await gesture.up();
     await tester.pump();
 
-    expect(container.read(chronoDialProvider).customProfile.longBreakInterval, equals(6));
-    expectDisplay(tester, 6, 0);
+    expect(container.read(chronoDialProvider).customProfile.longBreakInterval, equals(8));
+    expectDisplay(tester, 8, 0);
 
     // Clean up
     await tester.pumpWidget(const SizedBox());

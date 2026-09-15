@@ -104,14 +104,19 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
     final fraction = angle / (2 * math.pi);
 
     if (state.setupStage.isActive) {
+      var rawValue = (fraction * 60.0).round();
+      if (rawValue == 0) rawValue = 60;
+
       if (state.setupStage == ChronoSetupStage.cycleCount) {
-        final cycles = (fraction * 8).round().clamp(2, 8);
+        final cycles = rawValue.clamp(2, 8);
+        _remainingSecondsNotifier.value = cycles * 60.0;
         ref.read(chronoDialProvider.notifier).setTargetMinutes(cycles);
       } else {
         final maxMins = state.setupStage == ChronoSetupStage.focus
             ? 90
             : (state.setupStage == ChronoSetupStage.shortBreak ? 30 : 45);
-        final rawMinutes = (fraction * 60.0).round().clamp(1, maxMins);
+        final rawMinutes = rawValue.clamp(1, maxMins);
+        _remainingSecondsNotifier.value = rawMinutes * 60.0;
         ref.read(chronoDialProvider.notifier).setTargetMinutes(rawMinutes);
       }
       return;
