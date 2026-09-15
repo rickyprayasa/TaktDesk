@@ -60,6 +60,45 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
 
     final activeColor = timerState.isBreak ? TaktColors.patinaOlive : themeState.filamentColor;
     final inactiveLedColor = isDark ? const Color(0xFF22252A) : const Color(0xFFC0BCB2);
+    final textColor = isDark ? const Color(0xFF8A909A) : const Color(0xFF656A72);
+
+    final plaqueText = timerState.setupStage.isActive
+        ? timerState.setupStage.telemetryLabel
+        : (timerState.isRunning ? 'RUNNING // SEC-ROLL' : 'STANDBY // READY');
+    final isCalibrating = timerState.setupStage.isActive;
+    final plaqueColor = isCalibrating
+        ? TaktColors.filamentAmber
+        : (timerState.isRunning ? TaktColors.filamentAmber : textColor);
+
+    Widget plaqueWidget = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF121416) : const Color(0xFFDDD8CD),
+        borderRadius: BorderRadius.circular(3.0),
+        border: Border.all(
+          color: isDark ? const Color(0xFF262930) : const Color(0xFFC7C2B4),
+          width: 0.8,
+        ),
+      ),
+      child: Text(
+        plaqueText,
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 8.0,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+          color: plaqueColor,
+        ),
+      ),
+    );
+
+    if (timerState.setupStage.isActive) {
+      plaqueWidget = GestureDetector(
+        onTap: () => ref.read(chronoDialProvider.notifier).cancelCalibration(),
+        behavior: HitTestBehavior.opaque,
+        child: plaqueWidget,
+      );
+    }
 
     Color phaseLedColor;
     switch (timerState.phase) {
@@ -155,29 +194,7 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
                 ),
                 const SizedBox(width: 4),
                 // Center: Telemetry Status Plaque (Theme-Adaptive Anodized Finish)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF121416) : const Color(0xFFDDD8CD),
-                    borderRadius: BorderRadius.circular(3.0),
-                    border: Border.all(
-                      color: isDark ? const Color(0xFF262930) : const Color(0xFFC7C2B4),
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Text(
-                    timerState.isRunning ? 'RUNNING // SEC-ROLL' : 'STANDBY // READY',
-                    style: TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 8.0,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                      color: timerState.isRunning
-                          ? activeColor
-                          : (isDark ? const Color(0xFF8A909A) : const Color(0xFF656A72)),
-                    ),
-                  ),
-                ),
+                plaqueWidget,
                 const SizedBox(width: 4),
                 // Right: 4-Cycle Pomodoro Gauge (Cycle Label + Tactile Micro-Pips)
                 Flexible(
@@ -308,13 +325,21 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
           onTap: isRunning
               ? null
               : () {
-                  if (isActive) return;
+                  if (isActive) {
+                    if (segment.type == PomodoroProfileType.custom) {
+                      ref.read(chronoDialProvider.notifier).enterCustomCalibration();
+                    }
+                    return;
+                  }
                   final currentState = ref.read(chronoDialProvider);
                   final targetProfile = (segment.type == PomodoroProfileType.custom)
                       ? currentState.customProfile
                       : segment.profile;
                   ref.read(chronoDialProvider.notifier).setProfile(targetProfile);
                 },
+          onLongPress: segment.type == PomodoroProfileType.custom
+              ? () => ref.read(chronoDialProvider.notifier).enterCustomCalibration()
+              : null,
           borderRadius: BorderRadius.circular(4.0),
           child: Container(
             decoration: isActive

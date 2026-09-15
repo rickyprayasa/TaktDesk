@@ -12,6 +12,7 @@ import 'package:takt_desk/core/database/app_database.dart';
 import 'package:takt_desk/core/sensors/parallax_controller.dart';
 import 'package:takt_desk/core/services/timer_background_service.dart';
 import 'package:takt_desk/features/timer/domain/pomodoro_phase.dart';
+import 'package:takt_desk/features/timer/domain/timer_state.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_controller.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_painter.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_widget.dart';
@@ -853,6 +854,156 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('Crown push-button and dial face tap advance calibration stage when setupStage is active', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Enter calibration
+    container.read(chronoDialProvider.notifier).enterCustomCalibration();
+    await tester.pump();
+
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.focus));
+    expect(container.read(chronoDialProvider).isRunning, isFalse);
+
+    // Tap CrownPushButton: advances to shortBreak, does NOT start timer
+    await tester.tap(find.byType(CrownPushButton));
+    await tester.pump();
+
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.shortBreak));
+    expect(container.read(chronoDialProvider).isRunning, isFalse);
+
+    // Tap dial face: advances to longBreak
+    await tester.tap(dialFinder);
+    await tester.pump();
+
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.longBreak));
+    expect(container.read(chronoDialProvider).isRunning, isFalse);
+
+    // Tap crown button again: advances to cycleCount
+    await tester.tap(find.byType(CrownPushButton));
+    await tester.pump();
+
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.cycleCount));
+    expect(container.read(chronoDialProvider).isRunning, isFalse);
+
+    // Tap crown button again: completes calibration, exits to none
+    await tester.tap(find.byType(CrownPushButton));
+    await tester.pump();
+
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.none));
+    expect(container.read(chronoDialProvider).isRunning, isFalse);
+
+    // Clean up
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('Rotary pan drag calibrates duration according to active setup stage bounds and displays cycles in counter', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Enter calibration: ChronoSetupStage.focus (max 90)
+    container.read(chronoDialProvider.notifier).enterCustomCalibration();
+    await tester.pump();
+
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.focus));
+
+    final dialCenter = tester.getCenter(dialFinder);
+
+    // Drag to 3 o'clock position (15 min)
+    var gesture = await tester.startGesture(dialCenter + const Offset(50, 0));
+    await tester.pump();
+    await gesture.moveBy(const Offset(25, 0));
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+
+    expect(container.read(chronoDialProvider).customProfile.focusMinutes, equals(15));
+    expectDisplay(tester, 15, 0);
+
+    // Advance to shortBreak (max 30)
+    container.read(chronoDialProvider.notifier).advanceCalibrationStage();
+    await tester.pump();
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.shortBreak));
+
+    // Drag to 6 o'clock position (fraction 0.5 -> 30 min)
+    gesture = await tester.startGesture(dialCenter + const Offset(0, 50));
+    await tester.pump();
+    await gesture.moveBy(const Offset(0, 25));
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+
+    expect(container.read(chronoDialProvider).customProfile.shortBreakMinutes, equals(30));
+    expectDisplay(tester, 30, 0);
+
+    // Advance to longBreak (max 45)
+    container.read(chronoDialProvider.notifier).advanceCalibrationStage();
+    await tester.pump();
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.longBreak));
+
+    // Drag to 6 o'clock position (fraction 0.5 -> 30 min, clamped to max 45)
+    gesture = await tester.startGesture(dialCenter + const Offset(0, 50));
+    await tester.pump();
+    await gesture.moveBy(const Offset(0, 25));
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+
+    expect(container.read(chronoDialProvider).customProfile.longBreakMinutes, equals(30));
+    expectDisplay(tester, 30, 0);
+
+    // Advance to cycleCount (2..8 cycles)
+    container.read(chronoDialProvider.notifier).advanceCalibrationStage();
+    await tester.pump();
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.cycleCount));
+
+    // Counter display should show 04:00 (default interval 4)
+    expectDisplay(tester, 4, 0);
+
+    // Drag to 9 o'clock position (fraction 0.75 -> (0.75 * 8).round() = 6 cycles)
+    gesture = await tester.startGesture(dialCenter + const Offset(-50, 0));
+    await tester.pump();
+    await gesture.moveBy(const Offset(-25, 0));
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+
+    expect(container.read(chronoDialProvider).customProfile.longBreakInterval, equals(6));
+    expectDisplay(tester, 6, 0);
+
+    // Clean up
+    await tester.pumpWidget(const SizedBox());
+  });
 }
+
 
 

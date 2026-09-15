@@ -4,6 +4,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'chrono_dial_controller.dart';
 import 'chrono_dial_painter.dart';
+import '../domain/timer_state.dart';
 import 'widgets/crown_push_button.dart';
 import 'widgets/chrono_profile_selector_widget.dart';
 import 'widgets/mechanical_flip_digit.dart';
@@ -69,6 +70,10 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
 
   void _handleToggle() {
     final state = ref.read(chronoDialProvider);
+    if (state.setupStage.isActive) {
+      ref.read(chronoDialProvider.notifier).advanceCalibrationStage();
+      return;
+    }
     if (state.isRunning) {
       if (_accumulatedDelta > 0) {
         ref.read(chronoDialProvider.notifier).tick(_accumulatedDelta);
@@ -97,6 +102,21 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
     if (angle < 0) angle += 2 * math.pi;
 
     final fraction = angle / (2 * math.pi);
+
+    if (state.setupStage.isActive) {
+      if (state.setupStage == ChronoSetupStage.cycleCount) {
+        final cycles = (fraction * 8).round().clamp(2, 8);
+        ref.read(chronoDialProvider.notifier).setTargetMinutes(cycles);
+      } else {
+        final maxMins = state.setupStage == ChronoSetupStage.focus
+            ? 90
+            : (state.setupStage == ChronoSetupStage.shortBreak ? 30 : 45);
+        final rawMinutes = (fraction * 60.0).round().clamp(1, maxMins);
+        ref.read(chronoDialProvider.notifier).setTargetMinutes(rawMinutes);
+      }
+      return;
+    }
+
     var minutes = (fraction * 60).round();
     if (minutes == 0) minutes = 60;
     minutes = minutes.clamp(1, 90);
@@ -275,8 +295,12 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                                   offset: const Offset(0, 38),
                                   child: IgnorePointer(
                                     child: MechanicalCounterDisplay(
-                                      minutes: m,
-                                      seconds: s,
+                                      minutes: state.setupStage == ChronoSetupStage.cycleCount
+                                          ? state.customProfile.longBreakInterval
+                                          : m,
+                                      seconds: state.setupStage == ChronoSetupStage.cycleCount
+                                          ? 0
+                                          : s,
                                       isDialInset: true,
                                     ),
                                   ),
