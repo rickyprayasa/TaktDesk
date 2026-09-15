@@ -1405,7 +1405,7 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
               // Stepper 3: Long Break
               _buildStepperRow(
                 title: 'LONG BREAK',
-                subtitle: 'Extended recovery interval (1 – 45 min)',
+                subtitle: 'Extended recovery (1 – 45 min)',
                 value: '${activeProfile.longBreakMinutes} MIN',
                 valueKey: const ValueKey('custom_long_break_value'),
                 minusKey: const ValueKey('custom_long_break_minus'),
@@ -1429,7 +1429,7 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
               // Stepper 4: Cycle Count
               _buildStepperRow(
                 title: 'CYCLE COUNT',
-                subtitle: 'Cycles before long recovery (2 – 8 cycles)',
+                subtitle: 'Cycles to long recovery (2 – 8)',
                 value: '${activeProfile.longBreakInterval} CYCLES',
                 valueKey: const ValueKey('custom_cycle_count_value'),
                 minusKey: const ValueKey('custom_cycle_count_minus'),
@@ -1544,45 +1544,48 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
     required Color secondaryTextColor,
     required Color borderColor,
   }) {
-    return Wrap(
-      alignment: WrapAlignment.spaceBetween,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 8,
-      runSpacing: 6,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 10.5,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.0,
-                color: primaryTextColor,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 10.0,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                  color: primaryTextColor,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 9.0,
-                color: secondaryTextColor,
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 8.5,
+                  color: secondaryTextColor,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+        const SizedBox(width: 8),
         Row(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             IconButton(
               key: minusKey,
               visualDensity: VisualDensity.compact,
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+              constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
               icon: Icon(
                 Icons.remove_circle_outline,
                 color: canDecrement ? primaryTextColor : borderColor,
@@ -1590,8 +1593,9 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
               ),
               onPressed: canDecrement ? onDecrement : null,
             ),
-            SizedBox(
-              width: 54,
+            Container(
+              width: 70,
+              alignment: Alignment.center,
               child: Text(
                 value,
                 key: valueKey,
@@ -1608,7 +1612,7 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
               key: plusKey,
               visualDensity: VisualDensity.compact,
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+              constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
               icon: Icon(
                 Icons.add_circle_outline,
                 color: canIncrement ? primaryTextColor : borderColor,
@@ -1637,21 +1641,23 @@ class _SectionHeader extends StatelessWidget {
     return Row(
       children: [
         Flexible(
+          flex: 10,
           child: Text(
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontFamily: 'monospace',
-              fontSize: 10.0,
+              fontSize: 9.5,
               fontWeight: FontWeight.w700,
-              letterSpacing: 1.2,
+              letterSpacing: 0.7,
               color: textColor,
             ),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
+          flex: 1,
           child: Container(
             height: 1.0,
             color: textColor.withValues(alpha: 0.25),

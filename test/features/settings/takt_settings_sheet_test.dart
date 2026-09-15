@@ -1,5 +1,6 @@
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
@@ -804,6 +805,103 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('PURGE SESSION LOGS'), findsOneWidget);
       expect(find.textContaining('Weniger, aber besser'), findsOneWidget);
+    });
+
+    testWidgets('Interval steppers remain strictly horizontal on narrow viewport (width 320) and section headers do not truncate', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(320, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(buildSheet());
+      await tester.pumpAndSettle();
+
+      // Ensure Pomodoro section is visible
+      final sectionHeaderFinder = find.text('POMODORO INTERVAL ENGINE');
+      await tester.ensureVisible(sectionHeaderFinder);
+      await tester.pumpAndSettle();
+
+      // 1. Section header must render without premature truncation
+      final RenderParagraph headerParagraph = tester.renderObject(
+        find.descendant(
+          of: sectionHeaderFinder,
+          matching: find.byType(RichText),
+        ),
+      );
+      expect(headerParagraph.didExceedMaxLines, isFalse,
+          reason: 'POMODORO INTERVAL ENGINE header should not be truncated');
+
+      // 2. All 4 steppers must remain strictly horizontal (title column and stepper controls on the same horizontal band)
+      final steppers = [
+        (
+          title: 'FOCUS DURATION',
+          valueKey: const ValueKey('custom_focus_value'),
+          minusKey: const ValueKey('custom_focus_minus'),
+          plusKey: const ValueKey('custom_focus_plus'),
+        ),
+        (
+          title: 'SHORT BREAK',
+          valueKey: const ValueKey('custom_short_break_value'),
+          minusKey: const ValueKey('custom_short_break_minus'),
+          plusKey: const ValueKey('custom_short_break_plus'),
+        ),
+        (
+          title: 'LONG BREAK',
+          valueKey: const ValueKey('custom_long_break_value'),
+          minusKey: const ValueKey('custom_long_break_minus'),
+          plusKey: const ValueKey('custom_long_break_plus'),
+        ),
+        (
+          title: 'CYCLE COUNT',
+          valueKey: const ValueKey('custom_cycle_count_value'),
+          minusKey: const ValueKey('custom_cycle_count_minus'),
+          plusKey: const ValueKey('custom_cycle_count_plus'),
+        ),
+      ];
+
+      for (final s in steppers) {
+        final titleFinder = find.text(s.title);
+        final minusFinder = find.byKey(s.minusKey);
+        final valueFinder = find.byKey(s.valueKey);
+        final plusFinder = find.byKey(s.plusKey);
+
+        await tester.ensureVisible(titleFinder);
+        await tester.pumpAndSettle();
+
+        expect(titleFinder, findsOneWidget);
+        expect(minusFinder, findsOneWidget);
+        expect(valueFinder, findsOneWidget);
+        expect(plusFinder, findsOneWidget);
+
+        final titleRect = tester.getRect(titleFinder);
+        final minusRect = tester.getRect(minusFinder);
+
+        // Control widgets are to the right of title
+        expect(minusRect.left, greaterThan(titleRect.left),
+            reason: '${s.title} controls should be to the right of the title column');
+
+        // Controls and title are vertically aligned in the same row
+        final verticalOffset = (minusRect.center.dy - titleRect.center.dy).abs();
+        expect(verticalOffset, lessThan(20.0),
+            reason: '${s.title} controls must be horizontally aligned with the title column, not wrapped below');
+
+        // Value text container width must be 70 and text must fit completely without line breaks
+        final valueContainerFinder = find.ancestor(
+          of: valueFinder,
+          matching: find.byType(Container),
+        ).first;
+        final valueContainerSize = tester.getSize(valueContainerFinder);
+        expect(valueContainerSize.width, equals(70.0),
+            reason: '${s.title} value container width should be 70');
+
+        final RenderParagraph valueParagraph = tester.renderObject(
+          find.descendant(of: valueFinder, matching: find.byType(RichText)),
+        );
+        expect(valueParagraph.didExceedMaxLines, isFalse,
+            reason: '${s.title} value text should fit completely');
+      }
+
+      // Also verify concise subtitles are present
+      expect(find.text('Extended recovery (1 – 45 min)'), findsOneWidget);
+      expect(find.text('Cycles to long recovery (2 – 8)'), findsOneWidget);
     });
   });
 }
