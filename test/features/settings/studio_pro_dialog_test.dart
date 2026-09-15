@@ -101,4 +101,30 @@ void main() {
     expect(find.textContaining('MOD. 07 · 2024'), findsOneWidget);
     expect(find.byKey(const ValueKey('material_showcase_plaque')), findsOneWidget);
   });
+
+  testWidgets('showStudioProDialog displays updated Rp 69.000 and Rp 129.000 pricing tiers', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => Consumer(
+                builder: (context, ref, _) => ElevatedButton(
+                  onPressed: () => showStudioProDialog(context, ref),
+                  child: const Text('OPEN PRO DIALOG'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('OPEN PRO DIALOG'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Rp 69.000'), findsOneWidget);
+    expect(find.text('Rp 129.000'), findsOneWidget);
+    expect(find.textContaining('47% OFF'), findsOneWidget);
+  });
 }

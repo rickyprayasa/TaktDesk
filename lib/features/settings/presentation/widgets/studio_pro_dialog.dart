@@ -146,7 +146,7 @@ void showStudioProDialog(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'FOUNDER LAUNCH EDITION · 38% OFF',
+                        'FOUNDER LAUNCH EDITION · 47% OFF',
                         style: TextStyle(
                           fontFamily: 'monospace',
                           fontSize: 8.0,
@@ -161,7 +161,7 @@ void showStudioProDialog(
                         textBaseline: TextBaseline.alphabetic,
                         children: [
                           Text(
-                            'Rp 49.000',
+                            'Rp 69.000',
                             style: TextStyle(
                               fontFamily: 'monospace',
                               fontSize: 15.0,
@@ -171,12 +171,22 @@ void showStudioProDialog(
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Rp 79.000',
+                            'Rp 129.000',
                             style: TextStyle(
                               fontFamily: 'monospace',
                               fontSize: 10.0,
                               fontWeight: FontWeight.w500,
                               decoration: TextDecoration.lineThrough,
+                              color: secondary,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '· \$9.99',
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 9.0,
+                              fontWeight: FontWeight.w600,
                               color: secondary,
                             ),
                           ),
