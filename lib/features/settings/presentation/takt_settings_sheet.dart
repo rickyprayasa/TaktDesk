@@ -6,6 +6,7 @@ import '../../../app/theme/theme_controller.dart';
 import '../../../app/theme/widgets/rsquare_hardware_plaque.dart';
 import '../../../core/audio/audio_service.dart';
 import '../../../core/haptics/haptic_service.dart';
+import '../../../core/services/url_service.dart';
 import '../../timer/domain/alarm_chime.dart';
 import '../../timer/domain/pomodoro_profile.dart';
 import '../../timer/presentation/chrono_dial_controller.dart';
@@ -940,6 +941,51 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
             ),
           ),
           const SizedBox(height: 14),
+          InkWell(
+            key: const ValueKey('zykl_portal_button'),
+            onTap: () {
+              HapticService.selectionClick();
+              UrlService.openUrl('https://zykl.app');
+            },
+            borderRadius: BorderRadius.circular(4.0),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E2125) : const Color(0xFFDDD9CE),
+                borderRadius: BorderRadius.circular(4.0),
+                border: Border.all(
+                  color: TaktColors.filamentAmber.withValues(alpha: 0.6),
+                  width: 1.0,
+                ),
+              ),
+              child: const Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.language, size: 14, color: TaktColors.filamentAmber),
+                      SizedBox(width: 8),
+                      Text(
+                        'ZYKL.APP // PORTAL & PRIVACY',
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 10.0,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.2,
+                          color: TaktColors.filamentAmber,
+                        ),
+                      ),
+                      SizedBox(width: 6),
+                      Icon(Icons.arrow_outward, size: 12, color: TaktColors.filamentAmber),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
           OutlinedButton(
             style: OutlinedButton.styleFrom(
               foregroundColor: primaryTextColor,

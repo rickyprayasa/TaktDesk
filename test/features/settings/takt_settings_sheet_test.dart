@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/services.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
 import 'package:takt_desk/core/audio/audio_service.dart';
 import 'package:takt_desk/core/database/app_database.dart';
@@ -902,6 +903,38 @@ void main() {
       // Also verify concise subtitles are present
       expect(find.text('Extended recovery (1 – 45 min)'), findsOneWidget);
       expect(find.text('Cycles to long recovery (2 – 8)'), findsOneWidget);
+    });
+
+    testWidgets('ZYKL.APP portal button is rendered and tapping it invokes openUrl on focus_lock channel', (tester) async {
+      const MethodChannel channel = MethodChannel('com.takt.desk/focus_lock');
+      final List<MethodCall> log = <MethodCall>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
+        log.add(methodCall);
+        return true;
+      });
+      addTearDown(() {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, null);
+      });
+
+      await tester.pumpWidget(buildSheet());
+      await tester.pump();
+
+      final portalButton = find.byKey(const ValueKey('zykl_portal_button'));
+      await tester.ensureVisible(portalButton);
+      await tester.pumpAndSettle();
+
+      expect(portalButton, findsOneWidget);
+      expect(find.text('ZYKL.APP // PORTAL & PRIVACY'), findsOneWidget);
+
+      await tester.tap(portalButton);
+      await tester.pumpAndSettle();
+
+      expect(
+        log.any((call) => call.method == 'openUrl' && call.arguments['url'] == 'https://zykl.app'),
+        isTrue,
+      );
     });
   });
 }
