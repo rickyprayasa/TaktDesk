@@ -5,7 +5,7 @@ import 'package:takt_desk/features/desk/presentation/desk_canvas_screen.dart';
 import 'package:takt_desk/features/opening/presentation/takt_opening_screen.dart';
 
 void main() {
-  testWidgets('TaktOpeningScreen renders initial ignition phase with micro-LED and RSQUARE branding', (tester) async {
+  testWidgets('TaktOpeningScreen renders initial ignition phase with micro-LED, Pomodoro clock dial, and bold ZYKL branding without developer logo', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
@@ -18,12 +18,15 @@ void main() {
     expect(find.byType(TaktOpeningScreen), findsOneWidget);
     expect(find.byKey(const ValueKey('opening_micro_led')), findsOneWidget);
     expect(find.byKey(const ValueKey('opening_dial_canvas')), findsOneWidget);
-    expect(find.textContaining('ENGINEERED BY RSQUARE'), findsOneWidget);
 
-    final logoFinder = find.byWidgetPredicate(
-      (w) => w is Image && w.image is AssetImage && (w.image as AssetImage).assetName == 'assets/images/rsquare_logo.png',
-    );
-    expect(logoFinder, findsOneWidget);
+    // Assert prominent ZYKL identity and Pomodoro system subtitle
+    expect(find.text('ZYKL'), findsOneWidget);
+    expect(find.text('ANALOG POMODORO SYSTEM'), findsOneWidget);
+
+    // Assert NO developer logo image or developer text is displayed
+    expect(find.byType(Image), findsNothing);
+    expect(find.textContaining('ENGINEERED BY RSQUARE'), findsNothing);
+    expect(find.textContaining('DEVELOPED BY RSQUARE'), findsNothing);
 
     // Verify scaffold uses dark background by default
     final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
@@ -53,7 +56,7 @@ void main() {
     expect(find.byType(DeskCanvasScreen), findsOneWidget);
   });
 
-  testWidgets('TaktOpeningScreen automatically navigates to DeskCanvasScreen upon completion', (tester) async {
+  testWidgets('TaktOpeningScreen automatically navigates to DeskCanvasScreen upon completion (relaxed 4200ms sequence)', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
@@ -62,9 +65,9 @@ void main() {
       ),
     );
 
-    // Pump through full 2400ms duration plus transition
-    await tester.pump(const Duration(milliseconds: 1000));
-    await tester.pump(const Duration(milliseconds: 1500));
+    // Pump through full 4200ms duration plus 600ms transition
+    await tester.pump(const Duration(milliseconds: 2000));
+    await tester.pump(const Duration(milliseconds: 2500));
     await tester.pumpAndSettle();
 
     expect(find.byType(DeskCanvasScreen), findsOneWidget);

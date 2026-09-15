@@ -3,18 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/theme/takt_colors.dart';
 import '../../../../app/theme/theme_controller.dart';
-import '../../../../app/theme/widgets/rsquare_hardware_plaque.dart';
 import '../../../../core/haptics/haptic_service.dart';
 import '../../desk/presentation/desk_canvas_screen.dart';
 
-/// Authentic 2.4-second procedural vector horological opening boot sequence.
+/// Authentic 4.2-second procedural vector horological opening boot sequence.
 ///
 /// Features:
-/// 1. Power Ignition: Warm amber micro-LED powers on with filament glow bloom.
-/// 2. Bezel & Dial Calibration: Concentric grooves, ticks, and RSQUARE emblem reveal.
-/// 3. Chrono Needle Sweep: Signature amber needle performs a full 360° chronometer calibration.
-/// 4. Typographic Lockup: ZYKL and calibrated readiness status.
-/// 5. Frictionless: Instant tap-to-skip allows immediate bypass to DeskCanvasScreen.
+/// 1. Power Ignition: Warm amber micro-LED gently powers on with filament glow bloom.
+/// 2. Horological Dial Calibration: Concentric grooves, 5-minute numerals, and precision ticks reveal.
+/// 3. Chrono Needle Sweep: Signature amber needle performs a smooth chronometer calibration settling at 25m Pomodoro.
+/// 4. Prominent ZYKL Lockup: Bold horological typographic identity and analog Pomodoro readiness.
+/// 5. Relaxed & Frictionless: Serene unhurried pacing with instant tap-to-skip.
 class TaktOpeningScreen extends ConsumerStatefulWidget {
   final bool autoNavigate;
   final VoidCallback? onComplete;
@@ -45,39 +44,40 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
   void initState() {
     super.initState();
 
+    // Relaxed, serene 4.2s unhurried calibration sequence
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2400),
+      duration: const Duration(milliseconds: 4200),
     );
 
-    // 1. Power Ignition (0 - 400ms = 0.0 - 0.17)
+    // 1. Power Ignition (0 - 750ms = 0.0 - 0.18)
     _ledGlowAnimation = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.0, 0.17, curve: Curves.easeIn),
+      curve: const Interval(0.0, 0.18, curve: Curves.easeInOut),
     );
 
-    // 2. Dial & Bezel expansion (400 - 1000ms = 0.17 - 0.42)
-    _dialScaleAnimation = Tween<double>(begin: 0.82, end: 1.0).animate(
+    // 2. Horological Dial & Bezel reveal (500 - 1700ms = 0.12 - 0.40)
+    _dialScaleAnimation = Tween<double>(begin: 0.90, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.17, 0.42, curve: Curves.easeOutBack),
+        curve: const Interval(0.12, 0.40, curve: Curves.easeOutCubic),
       ),
     );
     _dialAlphaAnimation = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.17, 0.38, curve: Curves.easeIn),
+      curve: const Interval(0.12, 0.38, curve: Curves.easeIn),
     );
 
-    // 3. Chrono Needle Sweep 360° (1000 - 1800ms = 0.42 - 0.75)
+    // 3. Chrono Needle Calibration Sweep (1470 - 3440ms = 0.35 - 0.82)
     _needleSweepAnimation = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.42, 0.75, curve: Curves.easeInOutCubic),
+      curve: const Interval(0.35, 0.82, curve: Curves.easeInOutCubic),
     );
 
-    // 4. RSQUARE Brand Lockup & Readiness (1700 - 2300ms = 0.70 - 0.96)
+    // 4. Bold ZYKL Brand Lockup (2730 - 3990ms = 0.65 - 0.95)
     _brandAlphaAnimation = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.70, 0.96, curve: Curves.easeOut),
+      curve: const Interval(0.65, 0.95, curve: Curves.easeOut),
     );
 
     _controller.addListener(_handleAnimationProgress);
@@ -111,7 +111,7 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
     if (widget.autoNavigate && mounted) {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 350),
+          transitionDuration: const Duration(milliseconds: 600),
           pageBuilder: (context, animation, secondaryAnimation) =>
               const DeskCanvasScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -176,7 +176,7 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
                     ),
                   ),
 
-                  // 2. Central Assembly (Micro-LED, Dial, Needle, Branding)
+                  // 2. Central Assembly (Micro-LED, Pomodoro Clock Dial, ZYKL Branding)
                   Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -186,19 +186,19 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
                         _buildTopMicroLed(isDark),
                         const SizedBox(height: 18),
 
-                        // Horological Dial Canvas Assembly
+                        // Horological Pomodoro Clock Dial Assembly
                         Transform.scale(
                           scale: _dialScaleAnimation.value,
                           child: Opacity(
                             opacity: _dialAlphaAnimation.value,
                             child: SizedBox(
                               key: const ValueKey('opening_dial_canvas'),
-                              width: 220,
-                              height: 236, // extra 16px for crown socket
+                              width: 260,
+                              height: 278, // extra 18px for crown socket
                               child: CustomPaint(
                                 painter: _OpeningDialPainter(
-                                  needleRotation:
-                                      _needleSweepAnimation.value * 2 * math.pi,
+                                  needleRotation: _needleSweepAnimation.value *
+                                      (2 * math.pi + (25 / 60) * 2 * math.pi),
                                   isIlluminated: _needleSweepAnimation.value > 0,
                                   isDark: isDark,
                                 ),
@@ -206,9 +206,9 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 24),
 
-                        // Typographic Lockup & RSQUARE Logo Reveal
+                        // Typographic Lockup & ZYKL Reveal (Developer logo removed)
                         Opacity(
                           opacity: _brandAlphaAnimation.value,
                           child: _buildBrandLockup(isDark),
@@ -276,43 +276,37 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Industrial chamfered RSQUARE hardware plaque with micro-rivets
-        RsquareHardwarePlaque(
-          size: 40,
-          isDark: isDark,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'ENGINEERED BY RSQUARE',
-          style: TextStyle(
-            fontFamily: 'monospace',
-            fontSize: 8.5,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-            color: isDark ? TaktColors.filamentAmber : const Color(0xFFB05F00),
-          ),
-        ),
-        const SizedBox(height: 10),
         Text(
           'ZYKL',
           style: TextStyle(
             fontFamily: 'monospace',
-            fontSize: 15.0,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 3.0,
+            fontSize: 22.0,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 6.0,
             color: isDark
-                ? TaktColors.warmBone.withValues(alpha: 0.90)
+                ? TaktColors.warmBone
                 : const Color(0xFF1E2126),
+          ),
+        ),
+        const SizedBox(height: 5),
+        const Text(
+          'ANALOG POMODORO SYSTEM',
+          style: TextStyle(
+            fontFamily: 'monospace',
+            fontSize: 9.0,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 2.2,
+            color: TaktColors.filamentAmber,
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          'STATUS: CALIBRATED // READY',
+          'PRECISION TIME HARVESTER // READY',
           style: TextStyle(
             fontFamily: 'monospace',
             fontSize: 7.8,
             fontWeight: FontWeight.w600,
-            letterSpacing: 1.0,
+            letterSpacing: 1.2,
             color: isDark
                 ? TaktColors.warmBone.withValues(alpha: 0.50)
                 : const Color(0xFF6B7280),
@@ -467,6 +461,53 @@ class _OpeningDialPainter extends CustomPainter {
         center.dy + (dialRadius - 6) * math.sin(angle),
       );
       canvas.drawLine(start, end, isMajor ? majorTickPaint : minorTickPaint);
+    }
+
+    // 8a. 5-Minute Horological Numerals (05, 10, 15 ... 25 ... 60)
+    final textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+    );
+    const numerals = [
+      '60',
+      '05',
+      '10',
+      '15',
+      '20',
+      '25',
+      '30',
+      '35',
+      '40',
+      '45',
+      '50',
+      '55',
+    ];
+    for (int i = 0; i < 12; i++) {
+      final angle = (i * 30) * math.pi / 180.0 - math.pi / 2;
+      final numRadius = dialRadius - 20;
+      final pos = Offset(
+        center.dx + numRadius * math.cos(angle),
+        center.dy + numRadius * math.sin(angle),
+      );
+
+      final isPomodoro25 = (i == 5);
+      textPainter.text = TextSpan(
+        text: numerals[i],
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 8.5,
+          fontWeight: isPomodoro25 ? FontWeight.w800 : FontWeight.w600,
+          color: isPomodoro25
+              ? TaktColors.filamentAmber
+              : (isDark
+                  ? TaktColors.warmBone.withValues(alpha: 0.75)
+                  : const Color(0xFF22262C).withValues(alpha: 0.70)),
+        ),
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(pos.dx - textPainter.width / 2, pos.dy - textPainter.height / 2),
+      );
     }
 
     // 9. Signature Amber Needle & Cast Shadow
