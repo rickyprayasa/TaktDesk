@@ -119,11 +119,17 @@ class MainActivity : FlutterActivity() {
                     val url = call.argument<String>("url")
                     if (!url.isNullOrBlank()) {
                         try {
-                            val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)).apply {
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            val uri = android.net.Uri.parse(url)
+                            val scheme = uri.scheme?.lowercase()
+                            if (scheme == "http" || scheme == "https") {
+                                val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                startActivity(intent)
+                                result.success(true)
+                            } else {
+                                result.error("INVALID_SCHEME", "Only http/https allowed", null)
                             }
-                            startActivity(intent)
-                            result.success(true)
                         } catch (e: Exception) {
                             result.error("URL_ERROR", e.localizedMessage, null)
                         }

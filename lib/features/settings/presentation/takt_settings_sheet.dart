@@ -948,7 +948,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
               UrlService.openUrl('https://zykl.app');
             },
             borderRadius: BorderRadius.circular(4.0),
-            child: Container(
+            child: Ink(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E2125) : const Color(0xFFDDD9CE),
