@@ -968,7 +968,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
             ),
           ),
           Text(
-            'Takt Desk v1.0.0 (Build 2026.09) · Developed by RSQUARE',
+            'ZYKL v1.0.0 (Build 2026.09) · Developed by RSQUARE',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'monospace',
@@ -1061,7 +1061,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
             onPressed: () {
               showLicensePage(
                 context: context,
-                applicationName: 'Takt Desk by RSQUARE',
+                applicationName: 'ZYKL by RSQUARE',
                 applicationVersion: 'v1.0.0 (Build 2026.09)',
                 applicationLegalese:
                     'Weniger, aber besser — Dieter Rams · Developed by RSQUARE',

@@ -157,7 +157,7 @@ class TimerForegroundService : Service() {
 
         val alertNotif = NotificationCompat.Builder(this, CHANNEL_ALERT_ID)
             .setSmallIcon(R.drawable.ic_takt_timer)
-            .setContentTitle("TAKT DESK · $phaseLabel COMPLETED")
+            .setContentTitle("ZYKL · $phaseLabel COMPLETED")
             .setContentText("Standby active. Tap to enter console and begin next phase.")
             .setAutoCancel(true)
             .setColor(0xFFFF9E00.toInt())
@@ -199,9 +199,9 @@ class TimerForegroundService : Service() {
 
     private fun formatTitle(phase: String, cycleCount: Int): String {
         return when (phase) {
-            "shortBreak" -> "TAKT DESK · SHORT BRK"
-            "longBreak" -> "TAKT DESK · LONG BRK"
-            else -> "TAKT DESK · FOCUS (CYCLE $cycleCount/4)"
+            "shortBreak" -> "ZYKL · SHORT BRK"
+            "longBreak" -> "ZYKL · LONG BRK"
+            else -> "ZYKL · FOCUS (CYCLE $cycleCount/4)"
         }
     }
 
@@ -274,7 +274,7 @@ class TimerForegroundService : Service() {
 
             val timerChannel = NotificationChannel(
                 CHANNEL_TIMER_ID,
-                "Takt Desk Active Timer",
+                "ZYKL Active Timer",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
                 description = "Live analog timer telemetry on Lockscreen and Always-On Display"
@@ -285,7 +285,7 @@ class TimerForegroundService : Service() {
 
             val alertChannel = NotificationChannel(
                 CHANNEL_ALERT_ID,
-                "Takt Desk Session Alerts",
+                "ZYKL Session Alerts",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Pomodoro focus and break interval completion alarms"

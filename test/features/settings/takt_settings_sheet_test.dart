@@ -298,7 +298,7 @@ void main() {
 
       expect(find.textContaining('Weniger, aber besser — Less, but better.'), findsOneWidget);
       expect(find.textContaining('Dieter Rams'), findsOneWidget);
-      expect(find.textContaining('Takt Desk v1.0.0 (Build 2026.09) · Developed by RSQUARE'), findsOneWidget);
+      expect(find.textContaining('ZYKL v1.0.0 (Build 2026.09) · Developed by RSQUARE'), findsOneWidget);
       expect(find.text('DEVELOPED BY RSQUARE'), findsWidgets);
       expect(
         find.textContaining('100% Offline. Zero analytics. Zero telemetry. All session data remains exclusively on this device.'),
