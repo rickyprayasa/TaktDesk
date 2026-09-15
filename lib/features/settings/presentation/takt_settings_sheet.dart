@@ -5,11 +5,13 @@ import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/theme_controller.dart';
 import '../../../app/theme/widgets/rsquare_hardware_plaque.dart';
 import '../../../core/audio/audio_service.dart';
+import '../../../core/audio/sound_effect.dart';
 import '../../../core/haptics/haptic_service.dart';
 import '../../../core/services/url_service.dart';
 import '../../timer/domain/alarm_chime.dart';
 import '../../timer/domain/pomodoro_profile.dart';
 import '../../timer/presentation/chrono_dial_controller.dart';
+import '../../analytics/presentation/widgets/focus_analytics_dialog.dart';
 import 'settings_controller.dart';
 import 'widgets/studio_pro_dialog.dart';
 
@@ -825,6 +827,64 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
             ],
           ),
           const SizedBox(height: 14),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4.0),
+              border: Border.all(
+                color: TaktColors.filamentAmber.withValues(alpha: 0.6),
+                width: 1.2,
+              ),
+              color: TaktColors.filamentAmber.withValues(alpha: 0.08),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                key: const ValueKey('open_focus_analytics_btn'),
+                borderRadius: BorderRadius.circular(4.0),
+                onTap: () {
+                  ref.read(audioServiceProvider).play(SoundEffect.dialClick);
+                  HapticService.selectionClick();
+                  FocusAnalyticsDialog.show(context);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.bar_chart,
+                        size: 16,
+                        color: TaktColors.filamentAmber,
+                      ),
+                      const SizedBox(width: 8),
+                      const Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'FOCUS ANALYTICS & CHARTS',
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.2,
+                              color: TaktColors.filamentAmber,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.chevron_right,
+                        size: 16,
+                        color: TaktColors.filamentAmber,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
           OutlinedButton(
             style: OutlinedButton.styleFrom(
               foregroundColor: TaktColors.mutedOchre,

@@ -9,6 +9,7 @@ import '../../../../core/audio/sound_effect.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/haptics/haptic_service.dart';
 import '../../domain/telemetry_log_formatter.dart';
+import '../../../analytics/presentation/widgets/focus_analytics_dialog.dart';
 export 'desk_telemetry_dialog.dart';
 
 /// Stream provider for observing today's focus timer sessions.
@@ -194,7 +195,32 @@ class _DeskTelemetrySlipWidgetState extends ConsumerState<DeskTelemetrySlipWidge
                           ),
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        key: const ValueKey('telemetry_open_analytics_button'),
+                        onTap: () {
+                          HapticService.selectionClick();
+                          ref.read(audioServiceProvider).play(SoundEffect.dialClick);
+                          FocusAnalyticsDialog.show(context);
+                        },
+                        borderRadius: BorderRadius.circular(4),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                          child: Center(
+                            child: Text(
+                              '[ 📊 VIEW FOCUS ANALYTICS & CHARTS ➔ ]',
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 8.0,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.4,
+                                color: isDark ? themeState.filamentColor : const Color(0xFFD35400),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [

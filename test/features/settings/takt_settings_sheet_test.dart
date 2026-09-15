@@ -266,6 +266,32 @@ void main() {
       expect(afterSessions, isEmpty);
     });
 
+    testWidgets('Focus Analytics button is present and opens FocusAnalyticsDialog', (tester) async {
+      await tester.pumpWidget(buildSheet());
+      await tester.pump();
+
+      final analyticsButton = find.byKey(const ValueKey('open_focus_analytics_btn'));
+      await tester.ensureVisible(analyticsButton);
+      await tester.pumpAndSettle();
+
+      expect(analyticsButton, findsOneWidget);
+      expect(find.text('FOCUS ANALYTICS & CHARTS'), findsOneWidget);
+
+      await tester.tap(analyticsButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text('FOCUS ANALYTICS'), findsOneWidget);
+
+      // Close dialog
+      await tester.tap(find.byKey(const ValueKey('focus_analytics_close_btn')));
+      await tester.pumpAndSettle();
+      expect(find.text('FOCUS ANALYTICS'), findsNothing);
+
+      // Unmount and flush drift query stream timer
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(milliseconds: 100));
+    });
+
     testWidgets('Braun creed section displays quote, metadata, and privacy declaration', (tester) async {
       await tester.pumpWidget(buildSheet());
       await tester.pump();
