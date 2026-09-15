@@ -337,9 +337,9 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
                       : segment.profile;
                   ref.read(chronoDialProvider.notifier).setProfile(targetProfile);
                 },
-          onLongPress: segment.type == PomodoroProfileType.custom
-              ? () => ref.read(chronoDialProvider.notifier).enterCustomCalibration()
-              : null,
+          onLongPress: (isRunning || segment.type != PomodoroProfileType.custom)
+              ? null
+              : () => ref.read(chronoDialProvider.notifier).enterCustomCalibration(),
           borderRadius: BorderRadius.circular(4.0),
           child: Container(
             decoration: isActive
