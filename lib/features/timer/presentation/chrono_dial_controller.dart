@@ -121,6 +121,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
 
   void cancelCalibration() {
     if (!state.setupStage.isActive) return;
+    _sessionStartedAt = null;
     final focusMins = state.profile.focusMinutes;
     state = state.copyWith(
       setupStage: ChronoSetupStage.none,
@@ -227,6 +228,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
   }
 
   void start() {
+    if (state.setupStage.isActive) return;
     if (state.remainingSeconds <= 0) {
       state = state.copyWith(
         remainingSeconds: state.targetMinutes * 60.0,
@@ -341,6 +343,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
 
   void setPhase(PomodoroPhase nextPhase) {
     if (state.isRunning) return;
+    if (state.setupStage.isActive) return;
     final mins = _minutesForPhase(nextPhase, state.profile);
     _sessionStartedAt = null;
     state = state.copyWith(
@@ -355,6 +358,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
 
   void advancePhase() {
     if (state.isRunning) return;
+    if (state.setupStage.isActive) return;
     final next = _nextPhaseAndCycle();
     final mins = _minutesForPhase(next.phase, state.profile);
     _sessionStartedAt = null;

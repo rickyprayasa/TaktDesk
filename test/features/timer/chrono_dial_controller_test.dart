@@ -475,6 +475,65 @@ void main() {
         controller.advanceCalibrationStage();
         expect(controller.state.setupStage, equals(ChronoSetupStage.none));
       });
+
+      test(
+        'start, setPhase, and advancePhase are ignored while setupStage is active',
+        () {
+          final controller = ChronoDialController();
+          controller.enterCustomCalibration();
+          expect(controller.state.setupStage.isActive, isTrue);
+          expect(controller.state.phase, equals(PomodoroPhase.focus));
+          expect(controller.state.isRunning, isFalse);
+
+          // start() is ignored and does not start the timer
+          controller.start();
+          expect(controller.state.isRunning, isFalse);
+
+          // setPhase() is ignored and does not change phase
+          controller.setPhase(PomodoroPhase.shortBreak);
+          expect(controller.state.phase, equals(PomodoroPhase.focus));
+
+          // advancePhase() is ignored and does not advance phase or cycle count
+          controller.advancePhase();
+          expect(controller.state.phase, equals(PomodoroPhase.focus));
+          expect(controller.state.cycleCount, equals(1));
+        },
+      );
+
+      test(
+        'boundary clamps enforce limits during calibration for focus (0 -> 1, 95 -> 90) and longBreak (0 -> 1, 60 -> 45)',
+        () {
+          final controller = ChronoDialController();
+          controller.enterCustomCalibration();
+          expect(controller.state.setupStage, equals(ChronoSetupStage.focus));
+
+          // Focus lower bound: 0 -> 1
+          controller.setTargetMinutes(0);
+          expect(controller.state.targetMinutes, equals(1));
+          expect(controller.state.customProfile.focusMinutes, equals(1));
+
+          // Focus upper bound: 95 -> 90
+          controller.setTargetMinutes(95);
+          expect(controller.state.targetMinutes, equals(90));
+          expect(controller.state.customProfile.focusMinutes, equals(90));
+
+          // Advance to shortBreak, then longBreak
+          controller.advanceCalibrationStage();
+          expect(controller.state.setupStage, equals(ChronoSetupStage.shortBreak));
+          controller.advanceCalibrationStage();
+          expect(controller.state.setupStage, equals(ChronoSetupStage.longBreak));
+
+          // Long break lower bound: 0 -> 1
+          controller.setTargetMinutes(0);
+          expect(controller.state.targetMinutes, equals(1));
+          expect(controller.state.customProfile.longBreakMinutes, equals(1));
+
+          // Long break upper bound: 60 -> 45
+          controller.setTargetMinutes(60);
+          expect(controller.state.targetMinutes, equals(45));
+          expect(controller.state.customProfile.longBreakMinutes, equals(45));
+        },
+      );
     });
   });
 }
