@@ -59,7 +59,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
       lastTickMinute: mins,
     );
     HapticService.selectionClick();
-    _audioService?.playFoley(SoundEffect.dialClick);
+    _audioService?.playFoley(SoundEffect.drawerLatch);
   }
 
   void advanceCalibrationStage() {
@@ -129,8 +129,8 @@ class ChronoDialController extends StateNotifier<TimerState> {
       remainingSeconds: focusMins * 60.0,
       lastTickMinute: focusMins,
     );
-    HapticService.dialTick();
-    _audioService?.playFoley(SoundEffect.dialClick);
+    HapticService.mechanicalPress();
+    _audioService?.playFoley(SoundEffect.springButton);
   }
 
   void setTargetMinutes(int minutes) {

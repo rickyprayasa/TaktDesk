@@ -323,7 +323,17 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                   top: 6,
                   child: CrownPushButton(
                     isPressed: state.isRunning,
+                    isPulledOut: state.setupStage.isActive,
                     onTap: _handleToggle,
+                    onPullOut: () {
+                      if (state.isRunning) return;
+                      ref.read(chronoDialProvider.notifier).enterCustomCalibration();
+                    },
+                    onPushIn: () {
+                      if (state.setupStage.isActive) {
+                        ref.read(chronoDialProvider.notifier).cancelCalibration();
+                      }
+                    },
                     gradientColors: themeState.plateGradient,
                     borderColor: themeState.borderColor,
                     stemColor: themeState.moduleChassisColor,

@@ -262,8 +262,10 @@ void main() {
     );
     await tester.pump();
 
-    // Initially CLASSIC 25: plaque should display STANDBY // READY
+    // Initially CLASSIC 25: plaque should display STANDBY // READY in muted textColor
     expect(find.text('STANDBY // READY'), findsOneWidget);
+    var readyText = tester.widget<Text>(find.text('STANDBY // READY'));
+    expect(readyText.style?.color, isNot(equals(TaktColors.filamentAmber)));
 
     // Switch to CUSTOM profile
     await tester.tap(find.text('CUSTOM'));
@@ -271,13 +273,27 @@ void main() {
 
     // Plaque should now guide user with PULL CROWN // SET in filamentAmber
     expect(find.text('PULL CROWN // SET'), findsOneWidget);
-    final plaqueText = tester.widget<Text>(find.text('PULL CROWN // SET'));
+    var plaqueText = tester.widget<Text>(find.text('PULL CROWN // SET'));
     expect(plaqueText.style?.color, equals(TaktColors.filamentAmber));
 
-    // Switch back to 25/5 CLS: plaque returns to STANDBY // READY
+    // When running under CUSTOM profile, RUNNING // SEC-ROLL takes priority
+    container.read(chronoDialProvider.notifier).start();
+    await tester.pump();
+    expect(find.text('RUNNING // SEC-ROLL'), findsOneWidget);
+    var runningText = tester.widget<Text>(find.text('RUNNING // SEC-ROLL'));
+    expect(runningText.style?.color, equals(TaktColors.filamentAmber));
+
+    // When paused, reverts to PULL CROWN // SET
+    container.read(chronoDialProvider.notifier).pause();
+    await tester.pump();
+    expect(find.text('PULL CROWN // SET'), findsOneWidget);
+
+    // Switch back to 25/5 CLS: plaque returns to STANDBY // READY and textColor reverts
     await tester.tap(find.text('25/5 CLS'));
     await tester.pump();
     expect(find.text('STANDBY // READY'), findsOneWidget);
+    readyText = tester.widget<Text>(find.text('STANDBY // READY'));
+    expect(readyText.style?.color, isNot(equals(TaktColors.filamentAmber)));
   });
 }
 

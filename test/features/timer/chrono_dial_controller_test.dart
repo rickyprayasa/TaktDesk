@@ -351,7 +351,7 @@ void main() {
           expect(controller.state.profile.type, equals(PomodoroProfileType.custom));
           expect(controller.state.targetMinutes, equals(controller.state.customProfile.focusMinutes));
           expect(controller.state.remainingSeconds, equals(controller.state.customProfile.focusMinutes * 60.0));
-          expect(mockAudio.playedEffects, contains(SoundEffect.dialClick));
+          expect(mockAudio.playedEffects, contains(SoundEffect.drawerLatch));
         },
       );
 
@@ -458,10 +458,12 @@ void main() {
         expect(controller.state.setupStage, equals(ChronoSetupStage.shortBreak));
 
         // Cancel calibration
+        mockAudio.playedEffects.clear();
         controller.cancelCalibration();
         expect(controller.state.setupStage, equals(ChronoSetupStage.none));
         expect(controller.state.targetMinutes, equals(controller.state.profile.focusMinutes));
         expect(controller.state.remainingSeconds, equals(controller.state.profile.focusMinutes * 60.0));
+        expect(mockAudio.playedEffects, contains(SoundEffect.springButton));
       });
 
       test('enterCustomCalibration and advanceCalibrationStage are ignored when timer is running', () {

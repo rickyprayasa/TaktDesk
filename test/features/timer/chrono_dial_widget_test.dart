@@ -13,6 +13,7 @@ import 'package:takt_desk/core/database/app_database.dart';
 import 'package:takt_desk/core/sensors/parallax_controller.dart';
 import 'package:takt_desk/core/services/timer_background_service.dart';
 import 'package:takt_desk/features/timer/domain/pomodoro_phase.dart';
+import 'package:takt_desk/features/timer/domain/pomodoro_profile.dart';
 import 'package:takt_desk/features/timer/domain/timer_state.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_controller.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_painter.dart';
@@ -1016,6 +1017,187 @@ void main() {
     expectDisplay(tester, 8, 0);
 
     // Clean up
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('Dragging up on CrownPushButton pulls crown and transitions setupStage to focus and profile to custom', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Verify initial idle state
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.none));
+    var crown = tester.widget<CrownPushButton>(find.byType(CrownPushButton));
+    expect(crown.isPulledOut, isFalse);
+
+    // Drag up on CrownPushButton
+    await tester.drag(find.byType(CrownPushButton), const Offset(0, -30));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    // Verify calibration entered
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.focus));
+    expect(container.read(chronoDialProvider).profile.type, equals(PomodoroProfileType.custom));
+    expect(find.text('SET 1/4 // FOCUS'), findsOneWidget);
+
+    // Verify CrownPushButton reflects isPulledOut == true
+    crown = tester.widget<CrownPushButton>(find.byType(CrownPushButton));
+    expect(crown.isPulledOut, isTrue);
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('Dragging down on CrownPushButton while calibrating pushes crown in and cancels calibration', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Pull out crown to enter calibration
+    await tester.drag(find.byType(CrownPushButton), const Offset(0, -30));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.focus));
+    var crown = tester.widget<CrownPushButton>(find.byType(CrownPushButton));
+    expect(crown.isPulledOut, isTrue);
+
+    // Push crown back in by dragging down
+    await tester.drag(find.byType(CrownPushButton), const Offset(0, 30));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    // Calibration should be cancelled and setupStage returned to none
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.none));
+    crown = tester.widget<CrownPushButton>(find.byType(CrownPushButton));
+    expect(crown.isPulledOut, isFalse);
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('Dragging up on CrownPushButton while timer is running is ignored', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Start timer by tapping dial
+    await tester.tap(dialFinder);
+    await tester.pump();
+    expect(container.read(chronoDialProvider).isRunning, isTrue);
+
+    // Attempt to drag up on CrownPushButton
+    await tester.drag(find.byType(CrownPushButton), const Offset(0, -30));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    // Setup stage must remain none and timer running
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.none));
+    expect(container.read(chronoDialProvider).isRunning, isTrue);
+
+    // Pause timer before tearing down
+    await tester.tap(dialFinder);
+    await tester.pump();
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('Tapping CrownPushButton starts and pauses timer, and advances calibration stages when pulled out', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // 1. Idle tap: starts timer
+    await tester.tap(find.byType(CrownPushButton));
+    await tester.pump();
+    expect(container.read(chronoDialProvider).isRunning, isTrue);
+
+    // 2. Running tap: pauses timer
+    await tester.tap(find.byType(CrownPushButton));
+    await tester.pump();
+    expect(container.read(chronoDialProvider).isRunning, isFalse);
+
+    // 3. Pull crown out: enters calibration stage 1 (focus)
+    await tester.drag(find.byType(CrownPushButton), const Offset(0, -30));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.focus));
+
+    // 4. Tap crown: advances to stage 2 (shortBreak)
+    await tester.tap(find.byType(CrownPushButton));
+    await tester.pump();
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.shortBreak));
+
+    // 5. Tap crown: advances to stage 3 (longBreak)
+    await tester.tap(find.byType(CrownPushButton));
+    await tester.pump();
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.longBreak));
+
+    // 6. Tap crown: advances to stage 4 (cycleCount)
+    await tester.tap(find.byType(CrownPushButton));
+    await tester.pump();
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.cycleCount));
+
+    // 7. Tap crown: completes calibration, exits to none
+    await tester.tap(find.byType(CrownPushButton));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.none));
+    expect(container.read(chronoDialProvider).isRunning, isFalse);
+
+    final crown = tester.widget<CrownPushButton>(find.byType(CrownPushButton));
+    expect(crown.isPulledOut, isFalse);
+
     await tester.pumpWidget(const SizedBox());
   });
 }
