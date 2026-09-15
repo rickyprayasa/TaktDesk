@@ -5,6 +5,7 @@ import 'package:takt_desk/core/audio/sound_effect.dart';
 import 'package:takt_desk/core/database/app_database.dart';
 import 'package:takt_desk/features/timer/domain/pomodoro_phase.dart';
 import 'package:takt_desk/features/timer/domain/pomodoro_profile.dart';
+import 'package:takt_desk/features/timer/domain/timer_state.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_controller.dart';
 
 class MockAudioService extends AudioService {
@@ -316,6 +317,164 @@ void main() {
       expect(controller.state.phase, equals(PomodoroPhase.longBreak));
       expect(controller.state.cycleCount, equals(2));
       expect(controller.state.targetMinutes, equals(15));
+    });
+
+    group('ChronoDialController Custom Calibration State Machine', () {
+      test('ChronoSetupStage enum properties and telemetryLabel', () {
+        expect(ChronoSetupStage.none.isActive, isFalse);
+        expect(ChronoSetupStage.none.telemetryLabel, equals('STANDBY // READY'));
+
+        expect(ChronoSetupStage.focus.isActive, isTrue);
+        expect(ChronoSetupStage.focus.telemetryLabel, equals('SET 1/4 // FOCUS'));
+
+        expect(ChronoSetupStage.shortBreak.isActive, isTrue);
+        expect(ChronoSetupStage.shortBreak.telemetryLabel, equals('SET 2/4 // SHORT BRK'));
+
+        expect(ChronoSetupStage.longBreak.isActive, isTrue);
+        expect(ChronoSetupStage.longBreak.telemetryLabel, equals('SET 3/4 // LONG BRK'));
+
+        expect(ChronoSetupStage.cycleCount.isActive, isTrue);
+        expect(ChronoSetupStage.cycleCount.telemetryLabel, equals('SET 4/4 // CYCLES'));
+      });
+
+      test(
+        'enterCustomCalibration transitions setupStage to focus, sets profile to custom, and loads customProfile.focusMinutes',
+        () {
+          final mockAudio = MockAudioService();
+          final controller = ChronoDialController(mockAudio);
+          controller.setProfile(PomodoroProfile.monastic); // Currently 50 min monastic
+          expect(controller.state.setupStage, equals(ChronoSetupStage.none));
+
+          controller.enterCustomCalibration();
+
+          expect(controller.state.setupStage, equals(ChronoSetupStage.focus));
+          expect(controller.state.profile.type, equals(PomodoroProfileType.custom));
+          expect(controller.state.targetMinutes, equals(controller.state.customProfile.focusMinutes));
+          expect(controller.state.remainingSeconds, equals(controller.state.customProfile.focusMinutes * 60.0));
+          expect(mockAudio.playedEffects, contains(SoundEffect.dialClick));
+        },
+      );
+
+      test('setting minutes during setup updates current stage value in customProfile with clamping', () {
+        final controller = ChronoDialController();
+        controller.enterCustomCalibration();
+        expect(controller.state.setupStage, equals(ChronoSetupStage.focus));
+
+        // Stage 1: Focus (1 - 90 min)
+        controller.setTargetMinutes(42);
+        expect(controller.state.targetMinutes, equals(42));
+        expect(controller.state.customProfile.focusMinutes, equals(42));
+        expect(controller.state.profile.focusMinutes, equals(42));
+
+        // Stage 2: Short Break (1 - 30 min)
+        controller.advanceCalibrationStage();
+        expect(controller.state.setupStage, equals(ChronoSetupStage.shortBreak));
+        controller.setTargetMinutes(12);
+        expect(controller.state.targetMinutes, equals(12));
+        expect(controller.state.customProfile.shortBreakMinutes, equals(12));
+
+        // Clamp test on short break: 50 -> 30
+        controller.setTargetMinutes(50);
+        expect(controller.state.targetMinutes, equals(30));
+        expect(controller.state.customProfile.shortBreakMinutes, equals(30));
+
+        // Stage 3: Long Break (1 - 45 min)
+        controller.advanceCalibrationStage();
+        expect(controller.state.setupStage, equals(ChronoSetupStage.longBreak));
+        controller.setTargetMinutes(22);
+        expect(controller.state.targetMinutes, equals(22));
+        expect(controller.state.customProfile.longBreakMinutes, equals(22));
+
+        // Stage 4: Cycle Count (2 - 8 cycles)
+        controller.advanceCalibrationStage();
+        expect(controller.state.setupStage, equals(ChronoSetupStage.cycleCount));
+        controller.setTargetMinutes(6);
+        expect(controller.state.targetMinutes, equals(6));
+        expect(controller.state.customProfile.longBreakInterval, equals(6));
+
+        // Clamp test on cycles: 1 -> 2, 10 -> 8
+        controller.setTargetMinutes(1);
+        expect(controller.state.targetMinutes, equals(2));
+        expect(controller.state.customProfile.longBreakInterval, equals(2));
+
+        controller.setTargetMinutes(10);
+        expect(controller.state.targetMinutes, equals(8));
+        expect(controller.state.customProfile.longBreakInterval, equals(8));
+      });
+
+      test(
+        'advanceCalibrationStage cycles through focus -> shortBreak -> longBreak -> cycleCount -> none and exits in standby',
+        () {
+          final mockAudio = MockAudioService();
+          final controller = ChronoDialController(mockAudio);
+
+          // Configure custom values across the flow
+          controller.enterCustomCalibration();
+          expect(controller.state.setupStage, equals(ChronoSetupStage.focus));
+          controller.setTargetMinutes(35);
+
+          controller.advanceCalibrationStage();
+          expect(controller.state.setupStage, equals(ChronoSetupStage.shortBreak));
+          controller.setTargetMinutes(8);
+
+          controller.advanceCalibrationStage();
+          expect(controller.state.setupStage, equals(ChronoSetupStage.longBreak));
+          controller.setTargetMinutes(25);
+
+          controller.advanceCalibrationStage();
+          expect(controller.state.setupStage, equals(ChronoSetupStage.cycleCount));
+          controller.setTargetMinutes(3);
+
+          // Advance past cycleCount -> exits setup to none
+          mockAudio.playedEffects.clear();
+          controller.advanceCalibrationStage();
+
+          expect(controller.state.setupStage, equals(ChronoSetupStage.none));
+          expect(controller.state.isRunning, isFalse);
+          expect(controller.state.phase, equals(PomodoroPhase.focus));
+          expect(controller.state.cycleCount, equals(1));
+          expect(controller.state.targetMinutes, equals(35));
+          expect(controller.state.remainingSeconds, equals(35 * 60.0));
+          expect(mockAudio.playedEffects, contains(SoundEffect.springButton));
+
+          // Verify customProfile holds all calibrated values
+          final custom = controller.state.customProfile;
+          expect(custom.focusMinutes, equals(35));
+          expect(custom.shortBreakMinutes, equals(8));
+          expect(custom.longBreakMinutes, equals(25));
+          expect(custom.longBreakInterval, equals(3));
+          expect(controller.state.profile, equals(custom));
+        },
+      );
+
+      test('cancelCalibration restores setupStage to none and resets targetMinutes', () {
+        final mockAudio = MockAudioService();
+        final controller = ChronoDialController(mockAudio);
+        controller.enterCustomCalibration();
+        expect(controller.state.setupStage, equals(ChronoSetupStage.focus));
+
+        // Advance to shortBreak
+        controller.advanceCalibrationStage();
+        expect(controller.state.setupStage, equals(ChronoSetupStage.shortBreak));
+
+        // Cancel calibration
+        controller.cancelCalibration();
+        expect(controller.state.setupStage, equals(ChronoSetupStage.none));
+        expect(controller.state.targetMinutes, equals(controller.state.profile.focusMinutes));
+        expect(controller.state.remainingSeconds, equals(controller.state.profile.focusMinutes * 60.0));
+      });
+
+      test('enterCustomCalibration and advanceCalibrationStage are ignored when timer is running', () {
+        final controller = ChronoDialController();
+        controller.start();
+        expect(controller.state.isRunning, isTrue);
+
+        controller.enterCustomCalibration();
+        expect(controller.state.setupStage, equals(ChronoSetupStage.none));
+
+        controller.advanceCalibrationStage();
+        expect(controller.state.setupStage, equals(ChronoSetupStage.none));
+      });
     });
   });
 }

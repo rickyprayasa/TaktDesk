@@ -1,15 +1,41 @@
 import 'pomodoro_phase.dart';
 import 'pomodoro_profile.dart';
 
+enum ChronoSetupStage {
+  none,
+  focus,
+  shortBreak,
+  longBreak,
+  cycleCount;
+
+  bool get isActive => this != ChronoSetupStage.none;
+
+  String get telemetryLabel {
+    switch (this) {
+      case ChronoSetupStage.none:
+        return 'STANDBY // READY';
+      case ChronoSetupStage.focus:
+        return 'SET 1/4 // FOCUS';
+      case ChronoSetupStage.shortBreak:
+        return 'SET 2/4 // SHORT BRK';
+      case ChronoSetupStage.longBreak:
+        return 'SET 3/4 // LONG BRK';
+      case ChronoSetupStage.cycleCount:
+        return 'SET 4/4 // CYCLES';
+    }
+  }
+}
+
 class TimerState {
   final int targetMinutes;
   final double remainingSeconds;
   final bool isRunning;
   final int lastTickMinute;
   final PomodoroPhase phase;
-  final int cycleCount; // 1 to 4
+  final int cycleCount; // 1 to longBreakInterval
   final PomodoroProfile profile;
   final PomodoroProfile customProfile;
+  final ChronoSetupStage setupStage;
 
   const TimerState({
     required this.targetMinutes,
@@ -26,6 +52,7 @@ class TimerState {
       longBreakMinutes: 15,
       longBreakInterval: 4,
     ),
+    this.setupStage = ChronoSetupStage.none,
   });
 
   bool get isBreak =>
@@ -44,6 +71,7 @@ class TimerState {
     int? cycleCount,
     PomodoroProfile? profile,
     PomodoroProfile? customProfile,
+    ChronoSetupStage? setupStage,
   }) {
     return TimerState(
       targetMinutes: targetMinutes ?? this.targetMinutes,
@@ -54,6 +82,7 @@ class TimerState {
       cycleCount: cycleCount ?? this.cycleCount,
       profile: profile ?? this.profile,
       customProfile: customProfile ?? this.customProfile,
+      setupStage: setupStage ?? this.setupStage,
     );
   }
 }

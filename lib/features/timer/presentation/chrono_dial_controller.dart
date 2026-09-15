@@ -34,6 +34,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
     state = state.copyWith(
       profile: profile,
       customProfile: profile.type == PomodoroProfileType.custom ? profile : state.customProfile,
+      setupStage: ChronoSetupStage.none,
       phase: PomodoroPhase.focus,
       cycleCount: 1,
       targetMinutes: profile.focusMinutes,
@@ -44,10 +45,134 @@ class ChronoDialController extends StateNotifier<TimerState> {
     _audioService?.playFoley(SoundEffect.dialClick);
   }
 
+  void enterCustomCalibration() {
+    if (state.isRunning) return;
+    _sessionStartedAt = null;
+    final mins = state.customProfile.focusMinutes;
+    state = state.copyWith(
+      setupStage: ChronoSetupStage.focus,
+      profile: state.customProfile,
+      phase: PomodoroPhase.focus,
+      cycleCount: 1,
+      targetMinutes: mins,
+      remainingSeconds: mins * 60.0,
+      lastTickMinute: mins,
+    );
+    HapticService.selectionClick();
+    _audioService?.playFoley(SoundEffect.dialClick);
+  }
+
+  void advanceCalibrationStage() {
+    if (state.isRunning || !state.setupStage.isActive) return;
+    _sessionStartedAt = null;
+
+    switch (state.setupStage) {
+      case ChronoSetupStage.focus:
+        final nextMins = state.customProfile.shortBreakMinutes;
+        state = state.copyWith(
+          setupStage: ChronoSetupStage.shortBreak,
+          targetMinutes: nextMins,
+          remainingSeconds: nextMins * 60.0,
+          lastTickMinute: nextMins,
+        );
+        HapticService.dialTick();
+        _audioService?.playFoley(SoundEffect.dialClick);
+        break;
+      case ChronoSetupStage.shortBreak:
+        final nextMins = state.customProfile.longBreakMinutes;
+        state = state.copyWith(
+          setupStage: ChronoSetupStage.longBreak,
+          targetMinutes: nextMins,
+          remainingSeconds: nextMins * 60.0,
+          lastTickMinute: nextMins,
+        );
+        HapticService.dialTick();
+        _audioService?.playFoley(SoundEffect.dialClick);
+        break;
+      case ChronoSetupStage.longBreak:
+        final nextCycles = state.customProfile.longBreakInterval;
+        state = state.copyWith(
+          setupStage: ChronoSetupStage.cycleCount,
+          targetMinutes: nextCycles,
+          remainingSeconds: nextCycles * 60.0,
+          lastTickMinute: nextCycles,
+        );
+        HapticService.dialTick();
+        _audioService?.playFoley(SoundEffect.dialClick);
+        break;
+      case ChronoSetupStage.cycleCount:
+        final focusMins = state.customProfile.focusMinutes;
+        state = state.copyWith(
+          setupStage: ChronoSetupStage.none,
+          profile: state.customProfile,
+          phase: PomodoroPhase.focus,
+          cycleCount: 1,
+          targetMinutes: focusMins,
+          remainingSeconds: focusMins * 60.0,
+          lastTickMinute: focusMins,
+        );
+        HapticService.mechanicalPress();
+        _audioService?.playFoley(SoundEffect.springButton);
+        break;
+      case ChronoSetupStage.none:
+        break;
+    }
+  }
+
+  void cancelCalibration() {
+    if (!state.setupStage.isActive) return;
+    final focusMins = state.profile.focusMinutes;
+    state = state.copyWith(
+      setupStage: ChronoSetupStage.none,
+      targetMinutes: focusMins,
+      remainingSeconds: focusMins * 60.0,
+      lastTickMinute: focusMins,
+    );
+    HapticService.dialTick();
+    _audioService?.playFoley(SoundEffect.dialClick);
+  }
+
   void setTargetMinutes(int minutes) {
     if (state.isRunning) return;
-    final clamped = minutes.clamp(1, 90);
     _sessionStartedAt = null;
+
+    if (state.setupStage.isActive) {
+      final PomodoroProfile updated;
+      final int activeVal;
+      switch (state.setupStage) {
+        case ChronoSetupStage.focus:
+          activeVal = minutes.clamp(1, 90);
+          updated = state.customProfile.copyWith(focusMinutes: activeVal);
+          break;
+        case ChronoSetupStage.shortBreak:
+          activeVal = minutes.clamp(1, 30);
+          updated = state.customProfile.copyWith(shortBreakMinutes: activeVal);
+          break;
+        case ChronoSetupStage.longBreak:
+          activeVal = minutes.clamp(1, 45);
+          updated = state.customProfile.copyWith(longBreakMinutes: activeVal);
+          break;
+        case ChronoSetupStage.cycleCount:
+          activeVal = minutes.clamp(2, 8);
+          updated = state.customProfile.copyWith(longBreakInterval: activeVal);
+          break;
+        case ChronoSetupStage.none:
+          activeVal = minutes.clamp(1, 90);
+          updated = state.customProfile;
+          break;
+      }
+      state = state.copyWith(
+        customProfile: updated,
+        profile: updated,
+        targetMinutes: activeVal,
+        remainingSeconds: activeVal * 60.0,
+        lastTickMinute: activeVal,
+      );
+      HapticService.dialTick();
+      return;
+    }
+
+    final clamped = minutes.clamp(1, 90);
     state = state.copyWith(
       targetMinutes: clamped,
       remainingSeconds: clamped * 60.0,
