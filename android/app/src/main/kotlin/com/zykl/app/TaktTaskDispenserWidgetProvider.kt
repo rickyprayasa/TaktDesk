@@ -47,18 +47,35 @@ class TaktTaskDispenserWidgetProvider : AppWidgetProvider() {
 
             val totalCount = jsonArray.length()
             var completedCount = 0
+            for (j in 0 until totalCount) {
+                if (jsonArray.optJSONObject(j)?.optBoolean("is_completed", false) == true) {
+                    completedCount++
+                }
+            }
 
             for (i in 0 until 5) {
                 if (i < totalCount) {
                     val obj = jsonArray.optJSONObject(i)
                     val title = obj?.optString("title", "") ?: ""
                     val isDone = obj?.optBoolean("is_completed", false) ?: false
-                    if (isDone) completedCount++
 
                     views.setViewVisibility(rowIds[i], View.VISIBLE)
                     views.setTextViewText(checkIds[i], if (isDone) "[✓]" else "[ ]")
                     views.setTextColor(checkIds[i], if (isDone) Color.parseColor("#B45309") else Color.parseColor("#14171A"))
-                    views.setTextViewText(titleIds[i], title)
+
+                    val titleText: CharSequence = if (isDone && title.isNotEmpty()) {
+                        android.text.SpannableString(title).apply {
+                            setSpan(
+                                android.text.style.StrikethroughSpan(),
+                                0,
+                                length,
+                                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                            )
+                        }
+                    } else {
+                        title
+                    }
+                    views.setTextViewText(titleIds[i], titleText)
                     views.setTextColor(titleIds[i], if (isDone) Color.parseColor("#8E8E93") else Color.parseColor("#14171A"))
                 } else if (totalCount == 0 && i == 0) {
                     views.setViewVisibility(rowIds[0], View.VISIBLE)
