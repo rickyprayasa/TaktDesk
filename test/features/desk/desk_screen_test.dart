@@ -234,10 +234,16 @@ void main() {
       expect(find.text('ZYKL'), findsOneWidget);
       expect(find.byType(MonasticSwitchWidget), findsOneWidget);
 
-      // In master console mode on wide screens, all instruments are mounted simultaneously
+      // In master console mode on wide screens, left pane shows dial and right pane shows dispenser tab
       expect(find.byType(ChronoDialWidget), findsOneWidget);
       expect(find.byType(ReceiptRunnerWidget), findsOneWidget);
+      expect(find.byType(VinylPlayerWidget), findsNothing);
+
+      // Switching right pane tab displays vinyl player
+      await tester.tap(find.text('VINYL'));
+      await tester.pumpAndSettle();
       expect(find.byType(VinylPlayerWidget), findsOneWidget);
+      expect(find.byType(ReceiptRunnerWidget), findsNothing);
 
       await tester.pumpWidget(const SizedBox());
     });

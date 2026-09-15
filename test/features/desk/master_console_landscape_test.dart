@@ -51,7 +51,7 @@ void main() {
       await testDb.close();
     });
 
-    testWidgets('DeskCanvasScreen renders dual-pane master console in landscape/tablet mode showing ChronoDial, Tasks, and Vinyl simultaneously', (tester) async {
+    testWidgets('DeskCanvasScreen renders dual-pane master console in landscape/tablet mode with separate right pane tab menu for Dispenser and Vinyl', (tester) async {
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -74,19 +74,33 @@ void main() {
       expect(find.byType(MonasticSwitchWidget), findsOneWidget);
       expect(find.byType(EmergencyUnlatchWidget), findsOneWidget);
 
-      // Right pane instruments (simultaneous, without tab switching)
+      // Right pane tab menu
+      expect(find.text('DISPENSER'), findsOneWidget);
+      expect(find.text('VINYL'), findsOneWidget);
+
+      // Initially Dispenser is selected and Vinyl is not mounted
       expect(find.byType(ReceiptRunnerWidget), findsOneWidget);
+      expect(find.byType(VinylPlayerWidget), findsNothing);
+
+      // Tapping VINYL tab switches right pane to VinylPlayerWidget
+      await tester.tap(find.text('VINYL'));
+      await tester.pumpAndSettle();
+
       expect(find.byType(VinylPlayerWidget), findsOneWidget);
+      expect(find.byType(ReceiptRunnerWidget), findsNothing);
+
+      // Tapping DISPENSER tab switches back
+      await tester.tap(find.text('DISPENSER'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ReceiptRunnerWidget), findsOneWidget);
+      expect(find.byType(VinylPlayerWidget), findsNothing);
 
       // Header and footer controls
       expect(find.byType(ChassisThemeSwitch), findsOneWidget);
       expect(find.byType(SettingsRivetButton), findsOneWidget);
       expect(find.byType(DeskSpecPlateWidget), findsOneWidget);
       expect(find.text('ZYKL'), findsOneWidget);
-
-      // Tab switcher is omitted in master console mode because all modules are visible
-      expect(find.text('TASKS'), findsNothing);
-      expect(find.text('VINYL'), findsNothing);
 
       await tester.pumpWidget(const SizedBox());
     });

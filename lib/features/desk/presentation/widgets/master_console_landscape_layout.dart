@@ -4,6 +4,7 @@ import '../../../../app/theme/takt_colors.dart';
 import '../../../../app/theme/takt_typography.dart';
 import '../../../../app/theme/theme_controller.dart';
 import '../../../../core/focus/focus_lock_controller.dart';
+import '../../../../core/haptics/haptic_service.dart';
 import '../../../tasks/presentation/receipt_runner_widget.dart';
 import '../../../timer/presentation/chrono_dial_widget.dart';
 import '../../../vinyl/presentation/vinyl_player_widget.dart';
@@ -16,12 +17,83 @@ import 'settings_rivet_button.dart';
 /// on tablets and landscape displays.
 ///
 /// Left column: Chrono Dial with embedded Monastic focus toggle and emergency unlatch.
-/// Right column: Simultaneous Receipt Runner task dispenser and minimalist Vinyl Player.
-class MasterConsoleLandscapeLayout extends ConsumerWidget {
+/// Right column: Segmented tab menu separating Dispenser and Vinyl Player to prevent
+/// vertical stretching and clipping.
+class MasterConsoleLandscapeLayout extends ConsumerStatefulWidget {
   const MasterConsoleLandscapeLayout({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MasterConsoleLandscapeLayout> createState() =>
+      _MasterConsoleLandscapeLayoutState();
+}
+
+class _MasterConsoleLandscapeLayoutState
+    extends ConsumerState<MasterConsoleLandscapeLayout> {
+  int _selectedModuleIndex = 0; // 0: Dispenser, 1: Vinyl
+
+  Widget _buildRightModuleSelector(ChassisThemeState theme) {
+    const labels = ['DISPENSER', 'VINYL'];
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: theme.isDarkMode ? TaktColors.basaltSlate : const Color(0xFFD2D6DC),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: theme.isDarkMode ? TaktColors.slateBorder : const Color(0xFFB0B5BC),
+          width: 0.8,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(labels.length, (index) {
+          final isSelected = _selectedModuleIndex == index;
+          return InkWell(
+            onTap: () {
+              if (_selectedModuleIndex != index) {
+                HapticService.selectionClick();
+                setState(() {
+                  _selectedModuleIndex = index;
+                });
+              }
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? (theme.isDarkMode ? TaktColors.chassisObsidian : Colors.white)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: isSelected
+                    ? const [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          offset: Offset(0, 1),
+                          blurRadius: 2,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Text(
+                labels[index],
+                style: TaktTypography.controlLabel.copyWith(
+                  fontSize: 10.5,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected
+                      ? (theme.isDarkMode ? TaktColors.filamentAmber : const Color(0xFF141517))
+                      : (theme.isDarkMode ? Colors.white54 : Colors.black45),
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = ref.watch(chassisThemeProvider);
     final focusState = ref.watch(focusLockProvider);
 
@@ -141,21 +213,32 @@ class MasterConsoleLandscapeLayout extends ConsumerWidget {
                       color: theme.borderColor.withValues(alpha: 0.25),
                     ),
 
-                    // Right Column: Simultaneous Receipt Runner & Vinyl Player
-                    const Expanded(
+                    // Right Column: Tab Menu Separating Dispenser & Vinyl
+                    Expanded(
                       flex: 6,
                       child: Center(
                         child: SingleChildScrollView(
-                          physics: BouncingScrollPhysics(),
+                          physics: const BouncingScrollPhysics(),
                           child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                ReceiptRunnerWidget(),
-                                SizedBox(height: 20),
-                                VinylPlayerWidget(),
+                                _buildRightModuleSelector(theme),
+                                const SizedBox(height: 16),
+                                AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 250),
+                                  child: _selectedModuleIndex == 0
+                                      ? const Center(
+                                          key: ValueKey('landscape_dispenser_module'),
+                                          child: ReceiptRunnerWidget(),
+                                        )
+                                      : const Center(
+                                          key: ValueKey('landscape_vinyl_module'),
+                                          child: VinylPlayerWidget(),
+                                        ),
+                                ),
                               ],
                             ),
                           ),
