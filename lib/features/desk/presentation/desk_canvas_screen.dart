@@ -18,6 +18,7 @@ import 'isometric_desk_layout.dart';
 import 'widgets/chassis_theme_switch.dart';
 import 'widgets/desk_spec_plate_widget.dart';
 import 'widgets/emergency_unlatch_widget.dart';
+import 'widgets/master_console_landscape_layout.dart';
 import 'widgets/settings_rivet_button.dart';
 
 class DeskCanvasScreen extends ConsumerStatefulWidget {
@@ -257,13 +258,20 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
           child: AmbientLightingLayer(
             child: SafeArea(
               child: IsometricDeskLayout(
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 440),
-                    child: LayoutBuilder(
-                      builder: (context, viewportConstraints) {
-                        return SingleChildScrollView(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape ||
+                        constraints.maxWidth >= 720;
+                    if (isLandscape) {
+                      return const MasterConsoleLandscapeLayout();
+                    }
+                    return Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 440),
+                        child: LayoutBuilder(
+                          builder: (context, viewportConstraints) {
+                            return SingleChildScrollView(
                           physics: const BouncingScrollPhysics(),
                           child: ConstrainedBox(
                             constraints: BoxConstraints(
@@ -370,12 +378,14 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                       },
                     ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }

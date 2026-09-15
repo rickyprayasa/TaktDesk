@@ -4,9 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
 import 'package:takt_desk/core/audio/audio_service.dart';
 import 'package:takt_desk/features/settings/presentation/settings_controller.dart';
-import 'package:takt_desk/features/settings/presentation/widgets/studio_pro_dialog.dart';
 import 'package:takt_desk/features/settings/presentation/takt_settings_sheet.dart';
-import 'package:takt_desk/features/timer/domain/alarm_chime.dart';
 
 class MockAudioService extends AudioService {
   final List<String> playedChimes = [];

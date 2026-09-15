@@ -216,7 +216,7 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
-    testWidgets('DeskCanvasScreen retains pure mobile handheld layout on wide screens without horizontal multi-column rack', (tester) async {
+    testWidgets('DeskCanvasScreen renders master console layout on wide screens with simultaneous modules', (tester) async {
       tester.view.physicalSize = const Size(1024, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -230,17 +230,14 @@ void main() {
         ),
       );
 
-      // Verifies pure mobile console branding and presence of MonasticSwitchWidget
+      // Verifies branding and presence of MonasticSwitchWidget
       expect(find.text('ZYKL'), findsOneWidget);
       expect(find.byType(MonasticSwitchWidget), findsOneWidget);
-      expect(find.text('DIAL'), findsOneWidget);
-      expect(find.text('TASKS'), findsOneWidget);
-      expect(find.text('VINYL'), findsOneWidget);
 
-      // Only the selected instrument is displayed at a time
+      // In master console mode on wide screens, all instruments are mounted simultaneously
       expect(find.byType(ChronoDialWidget), findsOneWidget);
-      expect(find.byType(ReceiptRunnerWidget), findsNothing);
-      expect(find.byType(VinylPlayerWidget), findsNothing);
+      expect(find.byType(ReceiptRunnerWidget), findsOneWidget);
+      expect(find.byType(VinylPlayerWidget), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox());
     });
