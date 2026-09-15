@@ -317,7 +317,35 @@ class MainActivity : FlutterActivity() {
                             .putString(TaktAppWidgetProvider.KEY_STATUS, status)
                             .apply()
 
-                        TaktAppWidgetProvider.updateAllWidgets(this)
+                        notifyAllWidgets()
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("WIDGET_UPDATE_FAILED", e.message, null)
+                    }
+                }
+                "updateAllWidgetData" -> {
+                    try {
+                        val cycles = (call.argument<Number>("cyclesCompleted"))?.toInt() ?: 0
+                        val target = (call.argument<Number>("cyclesTarget"))?.toInt() ?: 4
+                        val minutes = (call.argument<Number>("minutesFocused"))?.toInt() ?: 0
+                        val status = call.argument<String>("status") ?: "STANDBY"
+                        val remainingSeconds = (call.argument<Number>("remainingSeconds"))?.toInt() ?: 0
+                        val targetMinutes = (call.argument<Number>("targetMinutes"))?.toInt() ?: 25
+                        val tasksList = call.argument<List<Map<String, Any>>>("tasks") ?: emptyList()
+                        val tasksJson = org.json.JSONArray(tasksList).toString()
+
+                        val prefs = getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
+                        prefs.edit()
+                            .putInt(TaktAppWidgetProvider.KEY_CYCLES_COMPLETED, cycles)
+                            .putInt(TaktAppWidgetProvider.KEY_CYCLES_TARGET, target)
+                            .putInt(TaktAppWidgetProvider.KEY_MINUTES_FOCUSED, minutes)
+                            .putString(TaktAppWidgetProvider.KEY_STATUS, status)
+                            .putInt(TaktAppWidgetProvider.KEY_REMAINING_SECONDS, remainingSeconds)
+                            .putInt(TaktAppWidgetProvider.KEY_TARGET_MINUTES, targetMinutes)
+                            .putString(TaktAppWidgetProvider.KEY_TASKS_JSON, tasksJson)
+                            .apply()
+
+                        notifyAllWidgets()
                         result.success(true)
                     } catch (e: Exception) {
                         result.error("WIDGET_UPDATE_FAILED", e.message, null)
@@ -325,6 +353,22 @@ class MainActivity : FlutterActivity() {
                 }
                 else -> result.notImplemented()
             }
+        }
+    }
+
+    private fun notifyAllWidgets() {
+        TaktAppWidgetProvider.updateAllWidgets(this)
+        val additionalProviders = listOf(
+            "com.zykl.app.TaktFocusStripWidgetProvider",
+            "com.zykl.app.TaktAnalogDialWidgetProvider",
+            "com.zykl.app.TaktTaskDispenserWidgetProvider"
+        )
+        for (className in additionalProviders) {
+            try {
+                val cls = Class.forName(className)
+                val method = cls.getMethod("updateAllWidgets", Context::class.java)
+                method.invoke(null, this)
+            } catch (_: Throwable) {}
         }
     }
 

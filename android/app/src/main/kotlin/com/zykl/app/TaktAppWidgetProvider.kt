@@ -26,6 +26,9 @@ class TaktAppWidgetProvider : AppWidgetProvider() {
         const val KEY_CYCLES_TARGET = "cycles_target"
         const val KEY_MINUTES_FOCUSED = "minutes_focused"
         const val KEY_STATUS = "status"
+        const val KEY_REMAINING_SECONDS = "remaining_seconds"
+        const val KEY_TARGET_MINUTES = "target_minutes"
+        const val KEY_TASKS_JSON = "tasks_json"
 
         fun updateAllWidgets(context: Context) {
             val appWidgetManager = AppWidgetManager.getInstance(context)
