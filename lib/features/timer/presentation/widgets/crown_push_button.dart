@@ -33,7 +33,7 @@ class CrownPushButton extends StatefulWidget {
     this.gradientColors,
     this.borderColor,
     this.stemColor,
-  });
+  }) : assert(!(isPressed && isPulledOut), 'Crown cannot be simultaneously pressed and pulled out');
 
   @override
   State<CrownPushButton> createState() => _CrownPushButtonState();

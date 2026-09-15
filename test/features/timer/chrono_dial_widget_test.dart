@@ -1271,6 +1271,15 @@ void main() {
     );
     expect(dialPositioned.top, equals(24.0));
 
+    // Verify parent SizedBox height allocates 24px extra headroom
+    final stackSizedBox = tester.widget<SizedBox>(
+      find.ancestor(
+        of: find.byType(CrownPushButton),
+        matching: find.byType(SizedBox),
+      ).first,
+    );
+    expect(stackSizedBox.height, equals(tester.getSize(dialFinder).height + 24.0));
+
     await tester.pumpWidget(const SizedBox());
   });
 }
