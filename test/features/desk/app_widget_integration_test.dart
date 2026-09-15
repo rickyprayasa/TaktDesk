@@ -73,6 +73,7 @@ void main() {
         (ref) => Stream.value(const LifetimeFocusStats(totalSessions: 0, totalHours: 0)),
       ),
       todayTimerSessionsStreamProvider.overrideWith((ref) => Stream.value(const [])),
+      activeTasksStreamProvider.overrideWith((ref) => Stream.value(const [])),
       chronoDialControllerProvider.overrideWith((ref) => chronoDialController),
     ];
   }
@@ -106,12 +107,15 @@ void main() {
     await tester.pump();
 
     expect(channelCalls, hasLength(1));
-    expect(channelCalls.first.method, equals('updateWidgetData'));
+    expect(channelCalls.first.method, equals('updateAllWidgetData'));
     expect(channelCalls.first.arguments, equals({
       'cyclesCompleted': 2,
       'cyclesTarget': 4,
       'minutesFocused': 50,
       'status': 'STANDBY',
+      'remainingSeconds': 1500,
+      'targetMinutes': 25,
+      'tasks': [],
     }));
 
     await tester.pumpWidget(const SizedBox());
@@ -152,12 +156,15 @@ void main() {
     await tester.pump();
 
     expect(channelCalls, hasLength(2));
-    expect(channelCalls.last.method, equals('updateWidgetData'));
+    expect(channelCalls.last.method, equals('updateAllWidgetData'));
     expect(channelCalls.last.arguments, equals({
       'cyclesCompleted': 1,
       'cyclesTarget': 4,
       'minutesFocused': 25,
       'status': 'FOCUS',
+      'remainingSeconds': 1500,
+      'targetMinutes': 25,
+      'tasks': [],
     }));
 
     await tester.pumpWidget(const SizedBox());
@@ -282,6 +289,7 @@ void main() {
           focusLockServiceProvider.overrideWithValue(MockFocusLockService()),
           todayFocusStatsProvider.overrideWith((ref) => statsStreamController.stream),
           todayTimerSessionsStreamProvider.overrideWith((ref) => Stream.value(const [])),
+          activeTasksStreamProvider.overrideWith((ref) => Stream.value(const [])),
           chronoDialControllerProvider.overrideWith((ref) => dialController),
         ],
         child: const MaterialApp(
@@ -313,6 +321,71 @@ void main() {
 
     // Assert zero additional MethodChannel calls were sent
     expect(channelCalls.length, equals(initialCallCount));
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('DeskCanvasScreen syncs active tasks payload to AppWidget channel when tasks stream emits', (tester) async {
+    final tasksStreamController = StreamController<List<Task>>.broadcast(sync: true);
+    addTearDown(tasksStreamController.close);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(testDb),
+          focusLockServiceProvider.overrideWithValue(MockFocusLockService()),
+          todayFocusStatsProvider.overrideWith((ref) => statsStreamController.stream),
+          lifetimeFocusStatsProvider.overrideWith(
+            (ref) => Stream.value(const LifetimeFocusStats(totalSessions: 0, totalHours: 0)),
+          ),
+          todayTimerSessionsStreamProvider.overrideWith((ref) => Stream.value(const [])),
+          activeTasksStreamProvider.overrideWith((ref) => tasksStreamController.stream),
+          chronoDialControllerProvider.overrideWith((ref) => chronoDialController),
+        ],
+        child: const MaterialApp(
+          home: DeskCanvasScreen(
+            gyroscopeStream: Stream.empty(),
+            accelerometerStream: Stream.empty(),
+          ),
+        ),
+      ),
+    );
+
+    statsStreamController.add(const TodayFocusStats(
+      completedCount: 2,
+      totalMinutes: 50,
+    ));
+    await tester.pump();
+    expect(channelCalls, hasLength(1));
+    expect(channelCalls.last.arguments['tasks'], equals([]));
+
+    // Emit 2 active tasks
+    tasksStreamController.add([
+      Task(
+        id: 10,
+        title: 'Calibrate Chrono',
+        isCompleted: false,
+        isArchived: false,
+        sortOrder: 0,
+        createdAt: DateTime(2026, 9, 15),
+      ),
+      Task(
+        id: 11,
+        title: 'Review Analog Dial',
+        isCompleted: true,
+        isArchived: false,
+        sortOrder: 1,
+        createdAt: DateTime(2026, 9, 15),
+      ),
+    ]);
+    await tester.pump();
+
+    expect(channelCalls, hasLength(2));
+    expect(channelCalls.last.method, equals('updateAllWidgetData'));
+    expect(channelCalls.last.arguments['tasks'], equals([
+      {'id': 10, 'title': 'Calibrate Chrono', 'is_completed': false},
+      {'id': 11, 'title': 'Review Analog Dial', 'is_completed': true},
+    ]));
 
     await tester.pumpWidget(const SizedBox());
   });

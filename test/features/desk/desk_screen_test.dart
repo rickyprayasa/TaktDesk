@@ -19,6 +19,7 @@ import 'package:takt_desk/features/desk/presentation/widgets/monastic_switch_wid
 import 'package:takt_desk/features/desk/presentation/widgets/settings_rivet_button.dart';
 import 'package:takt_desk/features/settings/presentation/settings_controller.dart';
 import 'package:takt_desk/features/settings/presentation/takt_settings_sheet.dart';
+import 'package:takt_desk/core/services/app_widget_service.dart';
 import 'package:takt_desk/features/tasks/presentation/receipt_runner_widget.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_widget.dart';
 import 'package:takt_desk/features/vinyl/presentation/vinyl_player_widget.dart';
@@ -40,6 +41,9 @@ List<Override> deskTestOverrides(AppDatabase testDb) => [
     (ref) => Stream.value(const LifetimeFocusStats(totalSessions: 0, totalHours: 0)),
   ),
   todayTimerSessionsStreamProvider.overrideWith(
+    (ref) => Stream.value(const []),
+  ),
+  activeTasksStreamProvider.overrideWith(
     (ref) => Stream.value(const []),
   ),
 ];
