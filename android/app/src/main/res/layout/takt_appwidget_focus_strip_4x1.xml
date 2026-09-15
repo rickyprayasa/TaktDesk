@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:minHeight="48dp"
+    android:background="@drawable/widget_chassis_bg"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingLeft="14dp"
+    android:paddingRight="14dp"
+    android:paddingStart="14dp"
+    android:paddingEnd="14dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
+
+    <!-- Left Block: ZYKL Monastic telemetry & status -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ZYKL // MOD. 01"
+            android:textColor="#8E8E93"
+            android:textSize="8sp"
+            android:letterSpacing="0.06"
+            android:fontFamily="monospace"
+            android:maxLines="1" />
+
+        <TextView
+            android:id="@+id/widget_status_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="STANDBY // READY"
+            android:textColor="#F2EFE9"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.04"
+            android:fontFamily="monospace"
+            android:maxLines="1" />
+    </LinearLayout>
+
+    <!-- Center Block: 4 Micro-LEDs and Cycle Telemetry -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginLeft="12dp"
+        android:layout_marginRight="12dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <ImageView
+                android:id="@+id/led_1"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_marginRight="4dp"
+                android:layout_marginEnd="4dp"
+                android:src="@drawable/ic_widget_led_dim"
+                android:contentDescription="Cycle 1 LED" />
+
+            <ImageView
+                android:id="@+id/led_2"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_marginRight="4dp"
+                android:layout_marginEnd="4dp"
+                android:src="@drawable/ic_widget_led_dim"
+                android:contentDescription="Cycle 2 LED" />
+
+            <ImageView
+                android:id="@+id/led_3"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_marginRight="4dp"
+                android:layout_marginEnd="4dp"
+                android:src="@drawable/ic_widget_led_dim"
+                android:contentDescription="Cycle 3 LED" />
+
+            <ImageView
+                android:id="@+id/led_4"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:src="@drawable/ic_widget_led_dim"
+                android:contentDescription="Cycle 4 LED" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/widget_cycles_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="0/4 CYC"
+            android:textColor="#8E8E93"
+            android:textSize="8sp"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:maxLines="1" />
+    </LinearLayout>
+
+    <!-- Right Block: Tactile Action Button -->
+    <TextView
+        android:id="@+id/widget_action_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="[ START ➔ ]"
+        android:textColor="#FF9E00"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:fontFamily="monospace"
+        android:background="@drawable/widget_action_btn_bg"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:gravity="center"
+        android:contentDescription="Action button" />
+
+</LinearLayout>
