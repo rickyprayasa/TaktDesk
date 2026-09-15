@@ -3,18 +3,19 @@ import 'package:takt_desk/features/timer/domain/alarm_chime.dart';
 
 void main() {
   group('AlarmChime Domain Model', () {
-    test('contains 5 standard acoustic chimes with correct FREE and PRO tiers', () {
+    test('contains 5 standard acoustic chimes all free without PRO restriction', () {
       const chimes = AlarmChimes.all;
       expect(chimes.length, equals(5));
 
       final freeChimes = chimes.where((c) => !c.isPro).toList();
-      final proChimes = chimes.where((c) => c.isPro).toList();
-
-      expect(freeChimes.length, equals(2));
-      expect(proChimes.length, equals(3));
-
-      expect(freeChimes.map((c) => c.id), containsAll(['braunBell', 'deskBell']));
-      expect(proChimes.map((c) => c.id), containsAll(['tibetanBowl', 'zenGong', 'tubularChime']));
+      expect(freeChimes.length, equals(5));
+      expect(freeChimes.map((c) => c.id), containsAll([
+        'braunBell',
+        'deskBell',
+        'tibetanBowl',
+        'zenGong',
+        'tubularChime',
+      ]));
     });
 
     test('findById returns correct chime and falls back to braunBell for unknown id', () {

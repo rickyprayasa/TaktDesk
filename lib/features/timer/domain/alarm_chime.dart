@@ -49,7 +49,7 @@ class AlarmChimes {
     category: 'MEDITATIVE',
     description: 'Hand-hammered bronze singing bowl with rich overtones',
     assetPath: 'assets/audio/alarm_tibetan_bowl.wav',
-    isPro: true,
+    isPro: false,
   );
 
   static const AlarmChime zenGong = AlarmChime(
@@ -58,7 +58,7 @@ class AlarmChimes {
     category: 'ORGANIC',
     description: 'Deep resonant Buddhist temple bell gong',
     assetPath: 'assets/audio/alarm_zen_gong.wav',
-    isPro: true,
+    isPro: false,
   );
 
   static const AlarmChime tubularChime = AlarmChime(
@@ -67,7 +67,7 @@ class AlarmChimes {
     category: 'HOROLOGICAL',
     description: 'Solid brass tubular grandfather clock chime',
     assetPath: 'assets/audio/alarm_tubular_chime.wav',
-    isPro: true,
+    isPro: false,
   );
 
   static const List<AlarmChime> all = [

@@ -39,11 +39,13 @@ class SettingsRivetButton extends ConsumerWidget {
           customBorder: const CircleBorder(),
           onTap: () {
             HapticService.lightClick();
+            final isLandscape =
+                MediaQuery.of(context).orientation == Orientation.landscape;
             showModalBottomSheet<void>(
               context: context,
               isScrollControlled: true,
               backgroundColor: Colors.transparent,
-              builder: (ctx) => const TaktSettingsSheet(),
+              builder: (ctx) => TaktSettingsSheet(isLandscape: isLandscape),
             );
           },
           child: Center(

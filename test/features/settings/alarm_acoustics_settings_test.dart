@@ -54,7 +54,7 @@ void main() {
       );
     }
 
-    testWidgets('renders Alarm Acoustics section with 5 chimes and PRO indicators', (tester) async {
+    testWidgets('renders Alarm Acoustics section with 5 free chimes', (tester) async {
       await tester.pumpWidget(buildSheet(isPro: false));
       await tester.pumpAndSettle();
 
@@ -64,9 +64,6 @@ void main() {
       expect(find.text('TIBETAN SINGING BOWL'), findsOneWidget);
       expect(find.text('ZEN TEMPLE GONG'), findsOneWidget);
       expect(find.text('TUBULAR CHIME'), findsOneWidget);
-
-      // PRO badges are visible for premium chimes
-      expect(find.text('PRO'), findsAtLeast(3));
     });
 
     testWidgets('audition play button triggers playAlarmChime on AudioService', (tester) async {
@@ -84,7 +81,7 @@ void main() {
       expect(mockAudioService.playedChimes, contains('deskBell'));
     });
 
-    testWidgets('tapping a FREE chime equips it directly', (tester) async {
+    testWidgets('tapping a chime equips it directly', (tester) async {
       await tester.pumpWidget(buildSheet(selectedChime: 'braunBell'));
       await tester.pumpAndSettle();
 
@@ -99,7 +96,7 @@ void main() {
       expect(mockAudioService.playedChimes, contains('deskBell'));
     });
 
-    testWidgets('tapping a PRO chime when isPro is false opens StudioProDialog', (tester) async {
+    testWidgets('tapping meditative/organic chimes equips directly without PRO block', (tester) async {
       await tester.pumpWidget(buildSheet(isPro: false, selectedChime: 'braunBell'));
       await tester.pumpAndSettle();
 
@@ -111,7 +108,7 @@ void main() {
       await tester.tap(proTile);
       await tester.pumpAndSettle();
 
-      expect(find.text('ZYKL STUDIO PRO'), findsOneWidget);
+      expect(mockAudioService.playedChimes, contains('tibetanBowl'));
     });
   });
 }

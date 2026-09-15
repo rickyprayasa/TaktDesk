@@ -15,11 +15,25 @@ import 'widgets/studio_pro_dialog.dart';
 ///
 /// Embodies Dieter Rams / Braun design language with tactile sliders,
 /// telemetry readouts, system clearance badges, and legal attributions.
-class TaktSettingsSheet extends ConsumerWidget {
-  const TaktSettingsSheet({super.key});
+class TaktSettingsSheet extends ConsumerStatefulWidget {
+  final bool? isLandscape;
+  const TaktSettingsSheet({super.key, this.isLandscape});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TaktSettingsSheet> createState() => _TaktSettingsSheetState();
+}
+
+class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
+  int _selectedTabIndex = 0;
+  static const List<String> _tabs = [
+    'EDITIONS',
+    'ACOUSTICS',
+    'INTERVALS',
+    'TELEMETRY',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
     final themeState = ref.watch(chassisThemeProvider);
     final isDark = themeState.isDarkMode;
     final prefs = ref.watch(deskPreferencesControllerProvider);
@@ -38,14 +52,25 @@ class TaktSettingsSheet extends ConsumerWidget {
     final secondaryTextColor =
         isDark ? const Color(0xFF9E9B93) : const Color(0xFF5A5D64);
 
+    final orientation = MediaQuery.of(context).orientation;
+    final size = MediaQuery.of(context).size;
+    final isLandscape = widget.isLandscape ??
+        (orientation == Orientation.landscape && size.height < 550);
+
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 440),
+        constraints: BoxConstraints(
+          maxWidth: isLandscape ? 760 : 440,
+          maxHeight: isLandscape
+              ? (size.height * 0.90).clamp(340.0, 640.0)
+              : double.infinity,
+        ),
         child: Container(
           decoration: BoxDecoration(
             color: bgColor,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(16.0)),
+            borderRadius: isLandscape
+                ? BorderRadius.circular(16.0)
+                : const BorderRadius.vertical(top: Radius.circular(16.0)),
             border: Border.all(color: borderColor, width: 1.0),
             boxShadow: [
               BoxShadow(
@@ -57,508 +82,130 @@ class TaktSettingsSheet extends ConsumerWidget {
           ),
           child: SafeArea(
             top: false,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Grip Handle
-                  Center(
-                    child: Container(
-                      key: const ValueKey('service_hatch_grip_handle'),
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? TaktColors.slateBorder
-                            : const Color(0xFFB5B0A4),
-                        borderRadius: BorderRadius.circular(2.0),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Header Title
-                  Text(
-                    'SERVICE HATCH // CALIBRATION & TELEMETRY',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.5,
-                      color: primaryTextColor,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  const Text(
-                    'DEVELOPED BY RSQUARE',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 8.5,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
-                      color: TaktColors.filamentAmber,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-
-                  // Section: Hardware Editions // Chassis Materiality
-                  _HardwareEditionsSection(
-                    prefs: prefs,
-                    isDark: isDark,
-                    primaryTextColor: primaryTextColor,
-                    secondaryTextColor: secondaryTextColor,
-                    panelBgColor: panelBgColor,
-                    borderColor: borderColor,
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Section 1: Hardware Acoustics & Tactility
-                  _SectionHeader(
-                    title: 'HARDWARE ACOUSTICS & TACTILITY',
-                    textColor: secondaryTextColor,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: panelBgColor,
-                      borderRadius: BorderRadius.circular(6.0),
-                      border: Border.all(color: borderColor, width: 0.8),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Master Volume
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: isLandscape
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Expanded(
-                              child: Text(
-                                'MASTER VOLUME',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 1.0,
-                                  color: primaryTextColor,
+                            // Grip Handle
+                            Center(
+                              child: Container(
+                                key: const ValueKey('service_hatch_grip_handle'),
+                                width: 40,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? TaktColors.slateBorder
+                                      : const Color(0xFFB5B0A4),
+                                  borderRadius: BorderRadius.circular(2.0),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(height: 12),
+
+                            // Header Title
                             Text(
-                              '${(prefs.soundVolume * 100).round()}%',
-                              style: const TextStyle(
+                              'SERVICE HATCH // CALIBRATION & TELEMETRY',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
                                 fontFamily: 'monospace',
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
+                                letterSpacing: 1.5,
+                                color: primaryTextColor,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            const Text(
+                              'DEVELOPED BY RSQUARE',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.2,
                                 color: TaktColors.filamentAmber,
                               ),
                             ),
+                            const SizedBox(height: 12),
+
+                            // Dieter Rams Tab Bar
+                            _buildTabBar(
+                              isDark: isDark,
+                              primaryTextColor: primaryTextColor,
+                              secondaryTextColor: secondaryTextColor,
+                              panelBgColor: panelBgColor,
+                              borderColor: borderColor,
+                            ),
+                            const SizedBox(height: 12),
                           ],
                         ),
-                        SliderTheme(
-                          data: SliderThemeData(
-                            activeTrackColor: TaktColors.filamentAmber,
-                            inactiveTrackColor: isDark
-                                ? TaktColors.slateLight
-                                : TaktColors.paperBorder,
-                            thumbColor: TaktColors.filamentAmber,
-                            overlayColor:
-                                TaktColors.filamentAmber.withValues(alpha: 0.2),
-                            trackHeight: 3.0,
-                            thumbShape: const RoundSliderThumbShape(
-                              enabledThumbRadius: 6.0,
-                            ),
-                          ),
-                          child: Slider(
-                            key: const ValueKey('master_volume_slider'),
-                            value: prefs.soundVolume.clamp(0.0, 1.0),
-                            min: 0.0,
-                            max: 1.0,
-                            onChanged: (val) {
-                              ref
-                                  .read(deskPreferencesControllerProvider
-                                      .notifier)
-                                  .setVolume(val);
-                            },
-                            onChangeEnd: (val) {
-                              ref
-                                  .read(deskPreferencesControllerProvider
-                                      .notifier)
-                                  .setVolume(val);
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-
-                        // Foley Clicks Switch
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'FOLEY CLICKS',
-                                    style: TextStyle(
-                                      fontFamily: 'monospace',
-                                      fontSize: 10.5,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 1.0,
-                                      color: primaryTextColor,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Mechanical click & tear feedback',
-                                    style: TextStyle(
-                                      fontFamily: 'monospace',
-                                      fontSize: 9.0,
-                                      color: secondaryTextColor,
-                                    ),
-                                  ),
-                                ],
+                      ),
+                      Flexible(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                          physics: const BouncingScrollPhysics(),
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            child: KeyedSubtree(
+                              key: ValueKey(_selectedTabIndex),
+                              child: _buildActiveTabContent(
+                                prefs: prefs,
+                                lifetimeStats: lifetimeStats,
+                                isDark: isDark,
+                                primaryTextColor: primaryTextColor,
+                                secondaryTextColor: secondaryTextColor,
+                                panelBgColor: panelBgColor,
+                                borderColor: borderColor,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Switch(
-                              key: const ValueKey('foley_clicks_switch'),
-                              value: prefs.foleyEnabled,
-                              activeThumbColor: TaktColors.filamentAmber,
-                              activeTrackColor: TaktColors.filamentAmber
-                                  .withValues(alpha: 0.5),
-                              inactiveThumbColor: isDark
-                                  ? const Color(0xFF6B7280)
-                                  : const Color(0xFF9CA3AF),
-                              inactiveTrackColor: isDark
-                                  ? TaktColors.slateLight
-                                  : TaktColors.paperBorder,
-                              onChanged: (val) {
-                                ref
-                                    .read(deskPreferencesControllerProvider
-                                        .notifier)
-                                    .setFoleyEnabled(val);
-                              },
-                            ),
-                          ],
+                          ),
                         ),
-                        const SizedBox(height: 8),
-
-                        // Tactile Haptics Switch
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'TACTILE HAPTICS',
-                                    style: TextStyle(
-                                      fontFamily: 'monospace',
-                                      fontSize: 10.5,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 1.0,
-                                      color: primaryTextColor,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Physical impulse on dial & switches',
-                                    style: TextStyle(
-                                      fontFamily: 'monospace',
-                                      fontSize: 9.0,
-                                      color: secondaryTextColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Switch(
-                              key: const ValueKey('tactile_haptics_switch'),
-                              value: prefs.hapticsEnabled,
-                              activeThumbColor: TaktColors.filamentAmber,
-                              activeTrackColor: TaktColors.filamentAmber
-                                  .withValues(alpha: 0.5),
-                              inactiveThumbColor: isDark
-                                  ? const Color(0xFF6B7280)
-                                  : const Color(0xFF9CA3AF),
-                              inactiveTrackColor: isDark
-                                  ? TaktColors.slateLight
-                                  : TaktColors.paperBorder,
-                              onChanged: (val) {
-                                ref
-                                    .read(deskPreferencesControllerProvider
-                                        .notifier)
-                                    .setHapticsEnabled(val);
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Section 1.5: Alarm Acoustics & Chimes
-                  _AlarmAcousticsSection(
-                    isDark: isDark,
-                    primaryTextColor: primaryTextColor,
-                    secondaryTextColor: secondaryTextColor,
-                    panelBgColor: panelBgColor,
-                    borderColor: borderColor,
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Section 2: Pomodoro Interval Engine
-                  _PomodoroIntervalEngineSection(
-                    isDark: isDark,
-                    primaryTextColor: primaryTextColor,
-                    secondaryTextColor: secondaryTextColor,
-                    panelBgColor: panelBgColor,
-                    borderColor: borderColor,
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Section 3: System Clearance & Lockdown
-                  _SectionHeader(
-                    title: 'SYSTEM CLEARANCE & LOCKDOWN',
-                    textColor: secondaryTextColor,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: panelBgColor,
-                      borderRadius: BorderRadius.circular(6.0),
-                      border: Border.all(color: borderColor, width: 0.8),
-                    ),
+                      ),
+                    ],
+                  )
+                : SingleChildScrollView(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Status Badge
-                        Row(
-                          key: const ValueKey('clearance_status_badge'),
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: TaktColors.patinaOlive,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Color(0x664D5D4B),
-                                    blurRadius: 4.0,
-                                    spreadRadius: 1.0,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'STATUS: VERIFIED (ANDROID DND / APP PINNING)',
-                                style: TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 10.0,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.8,
-                                  color: primaryTextColor,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'In Monastic Lockdown, press and hold the bottom unlatch lever for 5 continuous seconds to release the system.',
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 9.5,
-                            color: secondaryTextColor,
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Section 3: Telemetry & Logs
-                  _SectionHeader(
-                    title: 'TELEMETRY & LOGS',
-                    textColor: secondaryTextColor,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: panelBgColor,
-                      borderRadius: BorderRadius.circular(6.0),
-                      border: Border.all(color: borderColor, width: 0.8),
-                    ),
-                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'COMPLETED SESSIONS',
-                                    style: TextStyle(
-                                      fontFamily: 'monospace',
-                                      fontSize: 9.0,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 0.8,
-                                      color: secondaryTextColor,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${lifetimeStats.totalSessions}',
-                                    style: TextStyle(
-                                      fontFamily: 'monospace',
-                                      fontSize: 18.0,
-                                      fontWeight: FontWeight.w700,
-                                      color: primaryTextColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'HOURS FOCUSED',
-                                    style: TextStyle(
-                                      fontFamily: 'monospace',
-                                      fontSize: 9.0,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 0.8,
-                                      color: secondaryTextColor,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${lifetimeStats.totalHours.toStringAsFixed(1)}h',
-                                    style: TextStyle(
-                                      fontFamily: 'monospace',
-                                      fontSize: 18.0,
-                                      fontWeight: FontWeight.w700,
-                                      color: primaryTextColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: TaktColors.mutedOchre,
-                            side: const BorderSide(
-                              color: TaktColors.mutedOchre,
-                              width: 1.2,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4.0),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          onPressed: () => _confirmPurge(
-                            context,
-                            ref,
-                            isDark,
-                            primaryTextColor,
-                            secondaryTextColor,
-                          ),
-                          child: const Text(
-                            'PURGE SESSION LOGS',
-                            style: TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.2,
+                        // Grip Handle
+                        Center(
+                          child: Container(
+                            key: const ValueKey('service_hatch_grip_handle'),
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? TaktColors.slateBorder
+                                  : const Color(0xFFB5B0A4),
+                              borderRadius: BorderRadius.circular(2.0),
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+                        const SizedBox(height: 16),
 
-                  // Section 4: The Braun Creed & Legal
-                  _SectionHeader(
-                    title: 'THE BRAUN CREED & LEGAL',
-                    textColor: secondaryTextColor,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: panelBgColor,
-                      borderRadius: BorderRadius.circular(6.0),
-                      border: Border.all(color: borderColor, width: 0.8),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
+                        // Header Title
                         Text(
-                          '“Weniger, aber besser — Less, but better.”',
+                          'SERVICE HATCH // CALIBRATION & TELEMETRY',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: 'monospace',
-                            fontSize: 11.0,
-                            fontStyle: FontStyle.italic,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.5,
                             color: primaryTextColor,
                           ),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '— Dieter Rams',
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w500,
-                            color: secondaryTextColor,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: RsquareHardwarePlaque(
-                            size: 38,
-                            isDark: isDark,
-                          ),
-                        ),
-                        Text(
-                          'Takt Desk v1.0.0 (Build 2026.09) · Developed by RSQUARE',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 9.0,
-                            fontWeight: FontWeight.w600,
-                            color: primaryTextColor,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         const Text(
                           'DEVELOPED BY RSQUARE',
                           textAlign: TextAlign.center,
@@ -570,58 +217,760 @@ class TaktSettingsSheet extends ConsumerWidget {
                             color: TaktColors.filamentAmber,
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '100% Offline. Zero analytics. Zero telemetry. All session data remains exclusively on this device.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 8.5,
-                            color: secondaryTextColor,
-                            height: 1.3,
-                          ),
+                        const SizedBox(height: 18),
+
+                        // Section: Hardware Editions
+                        _HardwareEditionsSection(
+                          prefs: prefs,
+                          isDark: isDark,
+                          primaryTextColor: primaryTextColor,
+                          secondaryTextColor: secondaryTextColor,
+                          panelBgColor: panelBgColor,
+                          borderColor: borderColor,
                         ),
-                        const SizedBox(height: 14),
-                        OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: primaryTextColor,
-                            side: BorderSide(color: borderColor, width: 1.0),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4.0),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: 16,
-                            ),
-                          ),
-                          onPressed: () {
-                            showLicensePage(
-                              context: context,
-                              applicationName: 'Takt Desk by RSQUARE',
-                              applicationVersion: 'v1.0.0 (Build 2026.09)',
-                              applicationLegalese:
-                                  'Weniger, aber besser — Dieter Rams · Developed by RSQUARE',
-                            );
-                          },
-                          child: const Text(
-                            'OPEN SOURCE LICENSES',
-                            style: TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
+                        const SizedBox(height: 20),
+
+                        // Section 1: Hardware Acoustics & Tactility
+                        _SectionHeader(
+                          title: 'HARDWARE ACOUSTICS & TACTILITY',
+                          textColor: secondaryTextColor,
                         ),
+                        const SizedBox(height: 8),
+                        _buildHardwareAcousticsCard(
+                          prefs: prefs,
+                          isDark: isDark,
+                          primaryTextColor: primaryTextColor,
+                          secondaryTextColor: secondaryTextColor,
+                          panelBgColor: panelBgColor,
+                          borderColor: borderColor,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Section 1.5: Alarm Acoustics & Chimes
+                        _AlarmAcousticsSection(
+                          isDark: isDark,
+                          primaryTextColor: primaryTextColor,
+                          secondaryTextColor: secondaryTextColor,
+                          panelBgColor: panelBgColor,
+                          borderColor: borderColor,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Section 2: Pomodoro Interval Engine
+                        _PomodoroIntervalEngineSection(
+                          isDark: isDark,
+                          primaryTextColor: primaryTextColor,
+                          secondaryTextColor: secondaryTextColor,
+                          panelBgColor: panelBgColor,
+                          borderColor: borderColor,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Section 3: System Clearance & Lockdown
+                        _SectionHeader(
+                          title: 'SYSTEM CLEARANCE & LOCKDOWN',
+                          textColor: secondaryTextColor,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildSystemClearanceCard(
+                          isDark: isDark,
+                          primaryTextColor: primaryTextColor,
+                          secondaryTextColor: secondaryTextColor,
+                          panelBgColor: panelBgColor,
+                          borderColor: borderColor,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Section 4: Telemetry & Logs
+                        _SectionHeader(
+                          title: 'TELEMETRY & LOGS',
+                          textColor: secondaryTextColor,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildTelemetryCard(
+                          context: context,
+                          lifetimeStats: lifetimeStats,
+                          isDark: isDark,
+                          primaryTextColor: primaryTextColor,
+                          secondaryTextColor: secondaryTextColor,
+                          panelBgColor: panelBgColor,
+                          borderColor: borderColor,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Section 5: The Braun Creed & Legal
+                        _SectionHeader(
+                          title: 'THE BRAUN CREED & LEGAL',
+                          textColor: secondaryTextColor,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildBraunCreedCard(
+                          context: context,
+                          isDark: isDark,
+                          primaryTextColor: primaryTextColor,
+                          secondaryTextColor: secondaryTextColor,
+                          panelBgColor: panelBgColor,
+                          borderColor: borderColor,
+                        ),
+                        const SizedBox(height: 12),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabBar({
+    required bool isDark,
+    required Color primaryTextColor,
+    required Color secondaryTextColor,
+    required Color panelBgColor,
+    required Color borderColor,
+  }) {
+    return Container(
+      key: const ValueKey('settings_landscape_tab_bar'),
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: panelBgColor,
+        borderRadius: BorderRadius.circular(4.0),
+        border: Border.all(color: borderColor, width: 0.8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        children: List.generate(_tabs.length, (index) {
+          final isSelected = _selectedTabIndex == index;
+          return Expanded(
+            child: InkWell(
+              key: ValueKey('settings_tab_${_tabs[index]}'),
+              borderRadius: BorderRadius.circular(2.0),
+              onTap: () {
+                HapticService.selectionClick();
+                setState(() {
+                  _selectedTabIndex = index;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                curve: Curves.easeOutCubic,
+                padding: const EdgeInsets.symmetric(vertical: 7),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? (isDark ? TaktColors.chassisObsidian : Colors.white)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(2.0),
+                  border: isSelected
+                      ? Border.all(color: borderColor, width: 0.8)
+                      : null,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  _tabs[index],
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 10,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                    letterSpacing: 1.0,
+                    color: isSelected
+                        ? TaktColors.filamentAmber
+                        : secondaryTextColor,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildActiveTabContent({
+    required dynamic prefs,
+    required dynamic lifetimeStats,
+    required bool isDark,
+    required Color primaryTextColor,
+    required Color secondaryTextColor,
+    required Color panelBgColor,
+    required Color borderColor,
+  }) {
+    switch (_selectedTabIndex) {
+      case 0:
+        return _HardwareEditionsSection(
+          prefs: prefs,
+          isDark: isDark,
+          primaryTextColor: primaryTextColor,
+          secondaryTextColor: secondaryTextColor,
+          panelBgColor: panelBgColor,
+          borderColor: borderColor,
+        );
+      case 1:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _SectionHeader(
+              title: 'HARDWARE ACOUSTICS & TACTILITY',
+              textColor: secondaryTextColor,
+            ),
+            const SizedBox(height: 8),
+            _buildHardwareAcousticsCard(
+              prefs: prefs,
+              isDark: isDark,
+              primaryTextColor: primaryTextColor,
+              secondaryTextColor: secondaryTextColor,
+              panelBgColor: panelBgColor,
+              borderColor: borderColor,
+            ),
+            const SizedBox(height: 16),
+            _AlarmAcousticsSection(
+              isDark: isDark,
+              primaryTextColor: primaryTextColor,
+              secondaryTextColor: secondaryTextColor,
+              panelBgColor: panelBgColor,
+              borderColor: borderColor,
+            ),
+          ],
+        );
+      case 2:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _PomodoroIntervalEngineSection(
+              isDark: isDark,
+              primaryTextColor: primaryTextColor,
+              secondaryTextColor: secondaryTextColor,
+              panelBgColor: panelBgColor,
+              borderColor: borderColor,
+            ),
+            const SizedBox(height: 16),
+            _SectionHeader(
+              title: 'SYSTEM CLEARANCE & LOCKDOWN',
+              textColor: secondaryTextColor,
+            ),
+            const SizedBox(height: 8),
+            _buildSystemClearanceCard(
+              isDark: isDark,
+              primaryTextColor: primaryTextColor,
+              secondaryTextColor: secondaryTextColor,
+              panelBgColor: panelBgColor,
+              borderColor: borderColor,
+            ),
+          ],
+        );
+      case 3:
+      default:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _SectionHeader(
+              title: 'TELEMETRY & LOGS',
+              textColor: secondaryTextColor,
+            ),
+            const SizedBox(height: 8),
+            _buildTelemetryCard(
+              context: context,
+              lifetimeStats: lifetimeStats,
+              isDark: isDark,
+              primaryTextColor: primaryTextColor,
+              secondaryTextColor: secondaryTextColor,
+              panelBgColor: panelBgColor,
+              borderColor: borderColor,
+            ),
+            const SizedBox(height: 16),
+            _SectionHeader(
+              title: 'THE BRAUN CREED & LEGAL',
+              textColor: secondaryTextColor,
+            ),
+            const SizedBox(height: 8),
+            _buildBraunCreedCard(
+              context: context,
+              isDark: isDark,
+              primaryTextColor: primaryTextColor,
+              secondaryTextColor: secondaryTextColor,
+              panelBgColor: panelBgColor,
+              borderColor: borderColor,
+            ),
+          ],
+        );
+    }
+  }
+
+  Widget _buildHardwareAcousticsCard({
+    required dynamic prefs,
+    required bool isDark,
+    required Color primaryTextColor,
+    required Color secondaryTextColor,
+    required Color panelBgColor,
+    required Color borderColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: panelBgColor,
+        borderRadius: BorderRadius.circular(6.0),
+        border: Border.all(color: borderColor, width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Master Volume
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  'MASTER VOLUME',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.0,
+                    color: primaryTextColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${(prefs.soundVolume * 100).round()}%',
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: TaktColors.filamentAmber,
+                ),
+              ),
+            ],
+          ),
+          SliderTheme(
+            data: SliderThemeData(
+              activeTrackColor: TaktColors.filamentAmber,
+              inactiveTrackColor:
+                  isDark ? TaktColors.slateLight : TaktColors.paperBorder,
+              thumbColor: TaktColors.filamentAmber,
+              overlayColor: TaktColors.filamentAmber.withValues(alpha: 0.2),
+              trackHeight: 3.0,
+              thumbShape: const RoundSliderThumbShape(
+                enabledThumbRadius: 6.0,
+              ),
+            ),
+            child: Slider(
+              key: const ValueKey('master_volume_slider'),
+              value: prefs.soundVolume.clamp(0.0, 1.0),
+              min: 0.0,
+              max: 1.0,
+              onChanged: (val) {
+                ref
+                    .read(deskPreferencesControllerProvider.notifier)
+                    .setVolume(val);
+              },
+              onChangeEnd: (val) {
+                ref
+                    .read(deskPreferencesControllerProvider.notifier)
+                    .setVolume(val);
+              },
+            ),
+          ),
+          const SizedBox(height: 4),
+
+          // Foley Clicks Switch
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'FOLEY CLICKS',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.0,
+                        color: primaryTextColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Mechanical click & tear feedback',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 9.0,
+                        color: secondaryTextColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Switch(
+                key: const ValueKey('foley_clicks_switch'),
+                value: prefs.foleyEnabled,
+                activeThumbColor: TaktColors.filamentAmber,
+                activeTrackColor:
+                    TaktColors.filamentAmber.withValues(alpha: 0.5),
+                inactiveThumbColor:
+                    isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
+                inactiveTrackColor:
+                    isDark ? TaktColors.slateLight : TaktColors.paperBorder,
+                onChanged: (val) {
+                  ref
+                      .read(deskPreferencesControllerProvider.notifier)
+                      .setFoleyEnabled(val);
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Tactile Haptics Switch
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'TACTILE HAPTICS',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.0,
+                        color: primaryTextColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Physical impulse on dial & switches',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 9.0,
+                        color: secondaryTextColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Switch(
+                key: const ValueKey('tactile_haptics_switch'),
+                value: prefs.hapticsEnabled,
+                activeThumbColor: TaktColors.filamentAmber,
+                activeTrackColor:
+                    TaktColors.filamentAmber.withValues(alpha: 0.5),
+                inactiveThumbColor:
+                    isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
+                inactiveTrackColor:
+                    isDark ? TaktColors.slateLight : TaktColors.paperBorder,
+                onChanged: (val) {
+                  ref
+                      .read(deskPreferencesControllerProvider.notifier)
+                      .setHapticsEnabled(val);
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSystemClearanceCard({
+    required bool isDark,
+    required Color primaryTextColor,
+    required Color secondaryTextColor,
+    required Color panelBgColor,
+    required Color borderColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: panelBgColor,
+        borderRadius: BorderRadius.circular(6.0),
+        border: Border.all(color: borderColor, width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Status Badge
+          Row(
+            key: const ValueKey('clearance_status_badge'),
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: TaktColors.patinaOlive,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0x664D5D4B),
+                      blurRadius: 4.0,
+                      spreadRadius: 1.0,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'STATUS: VERIFIED (ANDROID DND / APP PINNING)',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 10.0,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: primaryTextColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'In Monastic Lockdown, press and hold the bottom unlatch lever for 5 continuous seconds to release the system.',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 9.5,
+              color: secondaryTextColor,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTelemetryCard({
+    required BuildContext context,
+    required dynamic lifetimeStats,
+    required bool isDark,
+    required Color primaryTextColor,
+    required Color secondaryTextColor,
+    required Color panelBgColor,
+    required Color borderColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: panelBgColor,
+        borderRadius: BorderRadius.circular(6.0),
+        border: Border.all(color: borderColor, width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'COMPLETED SESSIONS',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 9.0,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.8,
+                        color: secondaryTextColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${lifetimeStats.totalSessions}',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.w700,
+                        color: primaryTextColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'HOURS FOCUSED',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 9.0,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.8,
+                        color: secondaryTextColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${lifetimeStats.totalHours.toStringAsFixed(1)}h',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.w700,
+                        color: primaryTextColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: TaktColors.mutedOchre,
+              side: const BorderSide(
+                color: TaktColors.mutedOchre,
+                width: 1.2,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4.0),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+            onPressed: () => _confirmPurge(
+              context,
+              ref,
+              isDark,
+              primaryTextColor,
+              secondaryTextColor,
+            ),
+            child: const Text(
+              'PURGE SESSION LOGS',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.2,
               ),
             ),
           ),
-        ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBraunCreedCard({
+    required BuildContext context,
+    required bool isDark,
+    required Color primaryTextColor,
+    required Color secondaryTextColor,
+    required Color panelBgColor,
+    required Color borderColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: panelBgColor,
+        borderRadius: BorderRadius.circular(6.0),
+        border: Border.all(color: borderColor, width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            '“Weniger, aber besser — Less, but better.”',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 11.0,
+              fontStyle: FontStyle.italic,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+              color: primaryTextColor,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '— Dieter Rams',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 9.5,
+              fontWeight: FontWeight.w500,
+              color: secondaryTextColor,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: RsquareHardwarePlaque(
+              size: 38,
+              isDark: isDark,
+            ),
+          ),
+          Text(
+            'Takt Desk v1.0.0 (Build 2026.09) · Developed by RSQUARE',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 9.0,
+              fontWeight: FontWeight.w600,
+              color: primaryTextColor,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'DEVELOPED BY RSQUARE',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 8.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.2,
+              color: TaktColors.filamentAmber,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '100% Offline. Zero analytics. Zero telemetry. All session data remains exclusively on this device.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 8.5,
+              color: secondaryTextColor,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 14),
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: primaryTextColor,
+              side: BorderSide(color: borderColor, width: 1.0),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4.0),
+              ),
+              padding: const EdgeInsets.symmetric(
+                vertical: 10,
+                horizontal: 16,
+              ),
+            ),
+            onPressed: () {
+              showLicensePage(
+                context: context,
+                applicationName: 'Takt Desk by RSQUARE',
+                applicationVersion: 'v1.0.0 (Build 2026.09)',
+                applicationLegalese:
+                    'Weniger, aber besser — Dieter Rams · Developed by RSQUARE',
+              );
+            },
+            child: const Text(
+              'OPEN SOURCE LICENSES',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -727,6 +727,65 @@ void main() {
       // Value remains unchanged at 25 MIN
       expect(container.read(chronoDialProvider).customProfile.focusMinutes, equals(25));
     });
+
+    testWidgets('TaktSettingsSheet renders 4-tab bar in landscape and switches tabs seamlessly', (tester) async {
+      await tester.pumpWidget(buildSheet(
+        overrides: [],
+      ));
+      // Rebuild with isLandscape: true
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            deskPreferencesControllerProvider.overrideWith(
+              (ref) => DeskPreferencesController(
+                null,
+                AudioService(isMock: true),
+                ref.watch(chassisThemeProvider.notifier),
+              ),
+            ),
+            lifetimeFocusStatsProvider.overrideWith(
+              (ref) => Stream.value(const LifetimeFocusStats(
+                totalSessions: 12,
+                totalHours: 5.0,
+              )),
+            ),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: TaktSettingsSheet(isLandscape: true),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Tab bar rendered
+      expect(find.byKey(const ValueKey('settings_landscape_tab_bar')), findsOneWidget);
+      expect(find.text('EDITIONS'), findsOneWidget);
+      expect(find.text('ACOUSTICS'), findsOneWidget);
+      expect(find.text('INTERVALS'), findsOneWidget);
+      expect(find.text('TELEMETRY'), findsOneWidget);
+
+      // Default tab: EDITIONS
+      expect(find.textContaining('HARDWARE EDITIONS'), findsOneWidget);
+
+      // Switch to ACOUSTICS
+      await tester.tap(find.byKey(const ValueKey('settings_tab_ACOUSTICS')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('master_volume_slider')), findsOneWidget);
+      expect(find.textContaining('ALARM ACOUSTICS'), findsOneWidget);
+
+      // Switch to INTERVALS
+      await tester.tap(find.byKey(const ValueKey('settings_tab_INTERVALS')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('clearance_status_badge')), findsOneWidget);
+
+      // Switch to TELEMETRY
+      await tester.tap(find.byKey(const ValueKey('settings_tab_TELEMETRY')));
+      await tester.pumpAndSettle();
+      expect(find.text('PURGE SESSION LOGS'), findsOneWidget);
+      expect(find.textContaining('Weniger, aber besser'), findsOneWidget);
+    });
   });
 }
 
