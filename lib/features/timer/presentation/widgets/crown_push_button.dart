@@ -69,7 +69,11 @@ class _CrownPushButtonState extends State<CrownPushButton>
       duration: const Duration(milliseconds: 160),
     );
     _pullAnimation = Tween<double>(begin: 0.0, end: -6.0).animate(
-      CurvedAnimation(parent: _pullController, curve: Curves.easeOutBack),
+      CurvedAnimation(
+        parent: _pullController,
+        curve: Curves.easeOutBack,
+        reverseCurve: Curves.easeIn,
+      ),
     );
 
     if (widget.isPulledOut) {
@@ -131,15 +135,20 @@ class _CrownPushButtonState extends State<CrownPushButton>
   }
 
   void _handleDragEnd(DragEndDetails details) {
-    if (!_dragTriggered) {
-      if (_dragOffsetY < -8.0) {
+    if (!_dragTriggered && details.primaryVelocity != null) {
+      if (details.primaryVelocity! < -200) {
         _dragTriggered = true;
         widget.onPullOut?.call();
-      } else if (_dragOffsetY > 8.0) {
+      } else if (details.primaryVelocity! > 200) {
         _dragTriggered = true;
         widget.onPushIn?.call();
       }
     }
+  }
+
+  void _handleDragCancel() {
+    _dragOffsetY = 0.0;
+    _dragTriggered = false;
   }
 
   @override
@@ -149,10 +158,11 @@ class _CrownPushButtonState extends State<CrownPushButton>
       onVerticalDragStart: _handleDragStart,
       onVerticalDragUpdate: _handleDragUpdate,
       onVerticalDragEnd: _handleDragEnd,
+      onVerticalDragCancel: _handleDragCancel,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        width: 32,
-        height: 16,
+        width: 36,
+        height: 24,
         child: Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.topCenter,
@@ -201,7 +211,7 @@ class _CrownPushButtonState extends State<CrownPushButton>
               animation: Listenable.merge([_pressAnimation, _pullAnimation]),
               builder: (context, child) {
                 return Positioned(
-                  top: _pressAnimation.value + _pullAnimation.value,
+                  top: 8.0 + _pressAnimation.value + _pullAnimation.value,
                   child: child!,
                 );
               },
