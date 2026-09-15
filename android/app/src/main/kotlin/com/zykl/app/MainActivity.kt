@@ -366,8 +366,14 @@ class MainActivity : FlutterActivity() {
         for (className in additionalProviders) {
             try {
                 val cls = Class.forName(className)
-                val method = cls.getMethod("updateAllWidgets", Context::class.java)
-                method.invoke(null, this)
+                try {
+                    val method = cls.getMethod("updateAllWidgets", Context::class.java)
+                    method.invoke(null, this)
+                } catch (_: NoSuchMethodException) {
+                    val companionField = cls.getField("Companion").get(null)
+                    val method = companionField.javaClass.getMethod("updateAllWidgets", Context::class.java)
+                    method.invoke(companionField, this)
+                }
             } catch (_: Throwable) {}
         }
     }

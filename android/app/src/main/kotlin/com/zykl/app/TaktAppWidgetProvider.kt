@@ -30,6 +30,7 @@ class TaktAppWidgetProvider : AppWidgetProvider() {
         const val KEY_TARGET_MINUTES = "target_minutes"
         const val KEY_TASKS_JSON = "tasks_json"
 
+        @JvmStatic
         fun updateAllWidgets(context: Context) {
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val thisWidget = ComponentName(context, TaktAppWidgetProvider::class.java)
@@ -39,6 +40,7 @@ class TaktAppWidgetProvider : AppWidgetProvider() {
             }
         }
 
+        @JvmStatic
         fun updateAppWidget(
             context: Context,
             appWidgetManager: AppWidgetManager,
