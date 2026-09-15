@@ -116,6 +116,7 @@ void main() {
       'remainingSeconds': 1500,
       'targetMinutes': 25,
       'tasks': [],
+      'isPro': true,
     }));
 
     await tester.pumpWidget(const SizedBox());
@@ -165,6 +166,7 @@ void main() {
       'remainingSeconds': 1500,
       'targetMinutes': 25,
       'tasks': [],
+      'isPro': true,
     }));
 
     await tester.pumpWidget(const SizedBox());

@@ -83,6 +83,7 @@ void main() {
       remainingSeconds: 1200,
       targetMinutes: 25,
       tasks: tasksPayload,
+      isPro: true,
     );
 
     expect(result, isTrue);
@@ -96,6 +97,7 @@ void main() {
       'remainingSeconds': 1200,
       'targetMinutes': 25,
       'tasks': tasksPayload,
+      'isPro': true,
     }));
   });
 
@@ -116,6 +118,7 @@ void main() {
       remainingSeconds: 1500,
       targetMinutes: 25,
       tasks: [],
+      isPro: false,
     );
 
     expect(result, isFalse);

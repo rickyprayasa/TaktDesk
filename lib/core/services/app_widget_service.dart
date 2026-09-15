@@ -20,6 +20,7 @@ final appWidgetSyncProvider = Provider.autoDispose<void>((ref) {
     final statsAsync = ref.read(todayFocusStatsProvider);
     final state = ref.read(chronoDialControllerProvider);
     final tasksAsync = ref.read(activeTasksStreamProvider);
+    final isPro = ref.read(deskPreferencesControllerProvider).isProSimulated;
     final status = state.isRunning ? (state.isBreak ? 'BREAK' : 'FOCUS') : 'STANDBY';
 
     statsAsync.whenData((stats) {
@@ -46,12 +47,14 @@ final appWidgetSyncProvider = Provider.autoDispose<void>((ref) {
         remainingSeconds: state.remainingSeconds.round(),
         targetMinutes: state.targetMinutes,
         tasks: tasks,
+        isPro: isPro,
       );
     });
   }
 
   ref.listen(todayFocusStatsProvider, (_, __) => sync(), fireImmediately: true);
   ref.listen(activeTasksStreamProvider, (_, __) => sync());
+  ref.listen(deskPreferencesControllerProvider.select((s) => s.isProSimulated), (_, __) => sync());
   ref.listen(chronoDialControllerProvider.select((state) {
     if (state.isRunning) return state.isBreak ? 'BREAK' : 'FOCUS';
     return 'STANDBY';
@@ -92,6 +95,7 @@ class AppWidgetService {
     required int remainingSeconds,
     required int targetMinutes,
     required List<Map<String, dynamic>> tasks,
+    required bool isPro,
   }) async {
     try {
       final res = await channel.invokeMethod<bool>('updateAllWidgetData', {
@@ -102,6 +106,7 @@ class AppWidgetService {
         'remainingSeconds': remainingSeconds,
         'targetMinutes': targetMinutes,
         'tasks': tasks,
+        'isPro': isPro,
       });
       return res ?? false;
     } on PlatformException catch (_) {
