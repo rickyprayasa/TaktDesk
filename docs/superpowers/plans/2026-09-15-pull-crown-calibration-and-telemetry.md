@@ -17,7 +17,7 @@
 - Clean namespace: Absolutely 0 occurrences of private directory names across Kotlin, Dart, XML, and Gradle files.
 - 0 analyzer issues (`flutter analyze`).
 - 100% test pass rate across repository (`flutter test`).
-- Production Release APK verified and deployed to `/home/tuneeca/RSQUARE/ZYKL_Release.apk` and `/home/tuneeca/RSQUARE/Takt_Desk_Release.apk`.
+- Production Release APK verified and deployed to `~/RSQUARE/ZYKL_Release.apk` and `~/RSQUARE/Takt_Desk_Release.apk`.
 
 ---
 
@@ -156,7 +156,7 @@ void main() {
 - [ ] **Step 2: Run test to verify it fails (RED)**
 
 ```bash
-/home/tuneeca/RSQUARE/flutter/bin/flutter test test/features/timer/crown_push_button_test.dart
+flutter test test/features/timer/crown_push_button_test.dart
 ```
 Expected: Compilation failure because `isPulledOut`, `onPullOut`, and `onPushIn` parameters are not yet defined.
 
@@ -171,7 +171,7 @@ Update `lib/features/timer/presentation/widgets/crown_push_button.dart`:
 - [ ] **Step 4: Run test to verify it passes (GREEN)**
 
 ```bash
-/home/tuneeca/RSQUARE/flutter/bin/flutter test test/features/timer/crown_push_button_test.dart
+flutter test test/features/timer/crown_push_button_test.dart
 ```
 Expected: All 4 tests PASS.
 
@@ -233,7 +233,7 @@ testWidgets('telemetry status plaque displays PULL CROWN // SET when custom prof
 - [ ] **Step 2: Run test to verify failure (RED)**
 
 ```bash
-/home/tuneeca/RSQUARE/flutter/bin/flutter test test/features/timer/chrono_profile_selector_widget_test.dart
+flutter test test/features/timer/chrono_profile_selector_widget_test.dart
 ```
 Expected: FAIL with `Expected: exactly one matching candidate, Actual: 0 (text 'PULL CROWN // SET' not found)`.
 
@@ -260,7 +260,7 @@ final plaqueColor = isCalibrating || timerState.isRunning || isCustomStandby
 - [ ] **Step 4: Run tests to verify pass (GREEN)**
 
 ```bash
-/home/tuneeca/RSQUARE/flutter/bin/flutter test test/features/timer/chrono_profile_selector_widget_test.dart
+flutter test test/features/timer/chrono_profile_selector_widget_test.dart
 ```
 Expected: All tests pass.
 
@@ -337,7 +337,7 @@ testWidgets('Swiping up on CrownPushButton pulls crown and enters custom calibra
 - [ ] **Step 2: Run test to verify failure (RED)**
 
 ```bash
-/home/tuneeca/RSQUARE/flutter/bin/flutter test test/features/timer/chrono_dial_widget_test.dart
+flutter test test/features/timer/chrono_dial_widget_test.dart
 ```
 
 - [ ] **Step 3: Implement crown wiring in `ChronoDialWidget`**
@@ -364,7 +364,7 @@ In `lib/features/timer/presentation/chrono_dial_widget.dart`:
 - [ ] **Step 4: Run test to verify pass (GREEN)**
 
 ```bash
-/home/tuneeca/RSQUARE/flutter/bin/flutter test test/features/timer/chrono_dial_widget_test.dart
+flutter test test/features/timer/chrono_dial_widget_test.dart
 ```
 
 - [ ] **Step 5: Commit**
@@ -380,41 +380,41 @@ git commit -m "feat(dial): wire CrownPushButton pull-out and push-in gestures to
 
 **Files:**
 - Output: `build/app/outputs/flutter-apk/app-release.apk`
-- Deploy: `/home/tuneeca/RSQUARE/ZYKL_Release.apk`, `/home/tuneeca/RSQUARE/Takt_Desk_Release.apk`
+- Deploy: `~/RSQUARE/ZYKL_Release.apk`, `~/RSQUARE/Takt_Desk_Release.apk`
 
 - [ ] **Step 1: Run full test suite across repository**
 
 ```bash
-/home/tuneeca/RSQUARE/flutter/bin/flutter test
+flutter test
 ```
 Expected: 100% PASS (all 350+ tests).
 
 - [ ] **Step 2: Run static analysis**
 
 ```bash
-/home/tuneeca/RSQUARE/flutter/bin/flutter analyze
+flutter analyze
 ```
 Expected: 0 errors, 0 warnings, 0 lints.
 
 - [ ] **Step 3: Verify clean namespace**
 
 ```bash
-git diff c663405..HEAD | grep -i "tuneeca" || true
+git diff c663405..HEAD | grep -iE "tune""eca" || true
 ```
 Expected: 0 occurrences.
 
 - [ ] **Step 4: Build production release APK**
 
 ```bash
-/home/tuneeca/RSQUARE/flutter/bin/flutter build apk --release
+flutter build apk --release
 ```
 
 - [ ] **Step 5: Deploy APK artifacts**
 
 ```bash
-cp build/app/outputs/flutter-apk/app-release.apk /home/tuneeca/RSQUARE/ZYKL_Release.apk
-cp build/app/outputs/flutter-apk/app-release.apk /home/tuneeca/RSQUARE/Takt_Desk_Release.apk
-ls -lh /home/tuneeca/RSQUARE/*Release.apk
+cp build/app/outputs/flutter-apk/app-release.apk ~/RSQUARE/ZYKL_Release.apk
+cp build/app/outputs/flutter-apk/app-release.apk ~/RSQUARE/Takt_Desk_Release.apk
+ls -lh ~/RSQUARE/*Release.apk
 ```
 
 - [ ] **Step 6: Whole-branch review & report**
