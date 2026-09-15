@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_receipt_paper_bg"
+    android:padding="12dp">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="ZYKL // TASK DISPENSER"
+            android:fontFamily="monospace"
+            android:textStyle="bold"
+            android:textSize="9sp"
+            android:textColor="#73716B"
+            android:letterSpacing="0.06"
+            android:maxLines="1" />
+
+        <TextView
+            android:id="@+id/widget_quota_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0/0 DONE"
+            android:fontFamily="monospace"
+            android:textStyle="bold"
+            android:textSize="9sp"
+            android:textColor="#B45309"
+            android:maxLines="1" />
+    </LinearLayout>
+
+    <!-- Divider -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="6dp"
+        android:background="#D6D3C7" />
+
+    <!-- Container for 5 Task Rows -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Row 1 -->
+        <LinearLayout
+            android:id="@+id/task_row_1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="3dp">
+
+            <TextView
+                android:id="@+id/task_check_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="[ ]"
+                android:fontFamily="monospace"
+                android:textStyle="bold"
+                android:textSize="10sp"
+                android:textColor="#14171A"
+                android:layout_marginEnd="6dp"
+                android:layout_marginRight="6dp" />
+
+            <TextView
+                android:id="@+id/task_title_1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text=""
+                android:fontFamily="monospace"
+                android:textSize="10sp"
+                android:textColor="#14171A"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <!-- Row 2 -->
+        <LinearLayout
+            android:id="@+id/task_row_2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="3dp">
+
+            <TextView
+                android:id="@+id/task_check_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="[ ]"
+                android:fontFamily="monospace"
+                android:textStyle="bold"
+                android:textSize="10sp"
+                android:textColor="#14171A"
+                android:layout_marginEnd="6dp"
+                android:layout_marginRight="6dp" />
+
+            <TextView
+                android:id="@+id/task_title_2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text=""
+                android:fontFamily="monospace"
+                android:textSize="10sp"
+                android:textColor="#14171A"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <!-- Row 3 -->
+        <LinearLayout
+            android:id="@+id/task_row_3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="3dp">
+
+            <TextView
+                android:id="@+id/task_check_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="[ ]"
+                android:fontFamily="monospace"
+                android:textStyle="bold"
+                android:textSize="10sp"
+                android:textColor="#14171A"
+                android:layout_marginEnd="6dp"
+                android:layout_marginRight="6dp" />
+
+            <TextView
+                android:id="@+id/task_title_3"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text=""
+                android:fontFamily="monospace"
+                android:textSize="10sp"
+                android:textColor="#14171A"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <!-- Row 4 -->
+        <LinearLayout
+            android:id="@+id/task_row_4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="3dp">
+
+            <TextView
+                android:id="@+id/task_check_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="[ ]"
+                android:fontFamily="monospace"
+                android:textStyle="bold"
+                android:textSize="10sp"
+                android:textColor="#14171A"
+                android:layout_marginEnd="6dp"
+                android:layout_marginRight="6dp" />
+
+            <TextView
+                android:id="@+id/task_title_4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text=""
+                android:fontFamily="monospace"
+                android:textSize="10sp"
+                android:textColor="#14171A"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <!-- Row 5 -->
+        <LinearLayout
+            android:id="@+id/task_row_5"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/task_check_5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="[ ]"
+                android:fontFamily="monospace"
+                android:textStyle="bold"
+                android:textSize="10sp"
+                android:textColor="#14171A"
+                android:layout_marginEnd="6dp"
+                android:layout_marginRight="6dp" />
+
+            <TextView
+                android:id="@+id/task_title_5"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text=""
+                android:fontFamily="monospace"
+                android:textSize="10sp"
+                android:textColor="#14171A"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Divider -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="6dp"
+        android:background="#D6D3C7" />
+
+    <!-- Footer -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/widget_footer_action"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="[ + OPEN ROTARY DISPENSER ↗ ]"
+            android:fontFamily="monospace"
+            android:textStyle="bold"
+            android:textSize="9sp"
+            android:textColor="#B45309"
+            android:letterSpacing="0.05"
+            android:maxLines="1" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="MOD. 01"
+            android:fontFamily="monospace"
+            android:textSize="8sp"
+            android:textColor="#8E8E93"
+            android:maxLines="1" />
+    </LinearLayout>
+
+</LinearLayout>
