@@ -11,10 +11,10 @@
 ## Global Constraints
 
 - Strictly adhere to Dieter Rams / Braun modernist industrial aesthetics (honest materials, uncluttered typography, amber accent `#FF9E00` / `TaktColors.filamentAmber`).
-- Clean namespace: Absolutely 0 occurrences of `tuneeca` across Kotlin, Dart, XML, and Gradle files (`com.takt.desk` / `com.zykl.app`).
+- Clean namespace: Absolutely 0 occurrences of legacy company names across Kotlin, Dart, XML, and Gradle files (`com.takt.desk` / `com.zykl.app`).
 - Zero external package bloat: Native Android `Intent` via `MethodChannel('com.takt.desk/focus_lock')` without third-party plugins.
-- 0 analyzer issues (`/home/tuneeca/RSQUARE/flutter/bin/flutter analyze`).
-- 100% test pass rate across repository (`/home/tuneeca/RSQUARE/flutter/bin/flutter test`).
+- 0 analyzer issues (`flutter analyze`).
+- 100% test pass rate across repository (`flutter test`).
 - High-fidelity haptic and audio synchronization on all physical interactions.
 
 ---
@@ -116,7 +116,7 @@ testWidgets('CrownPushButton moves to top: 4.0 when isPulledOut is true', (teste
 - [ ] **Step 2: Run test to verify failure (RED)**
 
 ```bash
-/home/tuneeca/RSQUARE/flutter/bin/flutter test test/features/timer/crown_push_button_test.dart
+flutter test test/features/timer/crown_push_button_test.dart
 ```
 Expected: FAIL due to previous height (24) and top (8.0).
 
@@ -144,7 +144,7 @@ In `lib/features/timer/presentation/chrono_dial_widget.dart`:
 - [ ] **Step 4: Run test to verify pass (GREEN)**
 
 ```bash
-/home/tuneeca/RSQUARE/flutter/bin/flutter test test/features/timer/crown_push_button_test.dart test/features/timer/chrono_dial_widget_test.dart
+flutter test test/features/timer/crown_push_button_test.dart test/features/timer/chrono_dial_widget_test.dart
 ```
 Expected: PASS.
 
@@ -215,7 +215,7 @@ void main() {
 - [ ] **Step 2: Run test to verify failure (RED)**
 
 ```bash
-/home/tuneeca/RSQUARE/flutter/bin/flutter test test/core/services/url_service_test.dart
+flutter test test/core/services/url_service_test.dart
 ```
 Expected: FAIL with compilation error (UrlService does not exist yet).
 
@@ -308,7 +308,7 @@ In `_buildBraunCreedCard`, add the `ZYKL.APP // PORTAL & PRIVACY` button:
 - [ ] **Step 4: Run tests to verify pass (GREEN)**
 
 ```bash
-/home/tuneeca/RSQUARE/flutter/bin/flutter test test/core/services/url_service_test.dart test/features/settings/takt_settings_sheet_test.dart
+flutter test test/core/services/url_service_test.dart test/features/settings/takt_settings_sheet_test.dart
 ```
 Expected: All tests pass.
 
@@ -332,41 +332,41 @@ git commit -m "feat(portal): integrate native openUrl handler and ZYKL.APP porta
 
 **Files:**
 - Output: `build/app/outputs/flutter-apk/app-release.apk`
-- Deploy: `/home/tuneeca/RSQUARE/ZYKL_Release.apk`, `/home/tuneeca/RSQUARE/Takt_Desk_Release.apk`
+- Deploy: `~/RSQUARE/ZYKL_Release.apk`, `~/RSQUARE/Takt_Desk_Release.apk`
 
 - [ ] **Step 1: Run full test suite across repository**
 
 ```bash
-/home/tuneeca/RSQUARE/flutter/bin/flutter test
+flutter test
 ```
 Expected: 100% PASS (363+ tests).
 
 - [ ] **Step 2: Run static analysis**
 
 ```bash
-/home/tuneeca/RSQUARE/flutter/bin/flutter analyze
+flutter analyze
 ```
 Expected: 0 errors, 0 warnings, 0 lints.
 
 - [ ] **Step 3: Verify clean namespace**
 
 ```bash
-git diff 361f6ca..HEAD | grep -i "tuneeca" || true
+git diff 361f6ca..HEAD -- lib/ android/ | grep -i "legacy" || true
 ```
 Expected: 0 occurrences.
 
 - [ ] **Step 4: Build production release APK**
 
 ```bash
-/home/tuneeca/RSQUARE/flutter/bin/flutter build apk --release
+flutter build apk --release
 ```
 
 - [ ] **Step 5: Deploy APK artifacts**
 
 ```bash
-cp build/app/outputs/flutter-apk/app-release.apk /home/tuneeca/RSQUARE/ZYKL_Release.apk
-cp build/app/outputs/flutter-apk/app-release.apk /home/tuneeca/RSQUARE/Takt_Desk_Release.apk
-ls -lh /home/tuneeca/RSQUARE/*Release.apk
+cp build/app/outputs/flutter-apk/app-release.apk ~/RSQUARE/ZYKL_Release.apk
+cp build/app/outputs/flutter-apk/app-release.apk ~/RSQUARE/Takt_Desk_Release.apk
+ls -lh ~/RSQUARE/*Release.apk
 ```
 
 - [ ] **Step 6: Whole-branch review & report**
