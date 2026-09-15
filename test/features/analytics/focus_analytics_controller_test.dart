@@ -36,7 +36,7 @@ void main() {
 
   test('FocusAnalyticsController computes aggregated weekly focus metrics from database sessions', () async {
     // Initialize controller so listener is active
-    final notifier = container.read(focusAnalyticsControllerProvider.notifier);
+    container.read(focusAnalyticsControllerProvider.notifier);
     final now = DateTime.now();
     // Insert 2 sessions on Monday and 1 on Tuesday
     final monday = DateTime(now.year, now.month, now.day)

@@ -220,7 +220,7 @@ class FocusAnalyticsDialog extends ConsumerWidget {
                         const SizedBox(height: 2),
                         Text(
                           _formatTotalTime(state.totalMinutes),
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontFamily: 'monospace',
                             fontSize: 20.0,
                             fontWeight: FontWeight.w800,

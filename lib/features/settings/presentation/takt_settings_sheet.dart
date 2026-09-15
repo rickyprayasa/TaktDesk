@@ -846,18 +846,18 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                   HapticService.selectionClick();
                   FocusAnalyticsDialog.show(context);
                 },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.bar_chart,
                         size: 16,
                         color: TaktColors.filamentAmber,
                       ),
-                      const SizedBox(width: 8),
-                      const Flexible(
+                      SizedBox(width: 8),
+                      Flexible(
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
@@ -872,8 +872,8 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      const Icon(
+                      SizedBox(width: 4),
+                      Icon(
                         Icons.chevron_right,
                         size: 16,
                         color: TaktColors.filamentAmber,
