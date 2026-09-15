@@ -3,9 +3,10 @@ import '../../../../app/theme/takt_colors.dart';
 
 /// An interactive 3D mechanical push-button crown modeled after classic Braun stopwatches.
 ///
-/// Features 2 physical positions:
-/// - Position 0 (Normal / Flush): Sits flush against dial socket, collar height 4px.
-/// - Position 1 (Pulled Out): Crown cap elevates upward by 6px with [Curves.easeOutBack] (160ms),
+/// Features 3 distinct physical positions:
+/// - Position 0 (Normal / Flush): Sits flush against dial socket at top 12.0, collar height 4px.
+/// - Position 1 (Start / Pressed): Depressed 4px into collar at top 16.0 when timer is running.
+/// - Position 2 (Pulled Out): Crown cap elevates upward by 8px to top 4.0 with [Curves.easeOutBack] (160ms),
 ///   revealing an 8px polished metallic stem shaft.
 ///
 /// Supports vertical drag gesture detection:
@@ -68,7 +69,7 @@ class _CrownPushButtonState extends State<CrownPushButton>
       vsync: this,
       duration: const Duration(milliseconds: 160),
     );
-    _pullAnimation = Tween<double>(begin: 0.0, end: -6.0).animate(
+    _pullAnimation = Tween<double>(begin: 0.0, end: -8.0).animate(
       CurvedAnimation(
         parent: _pullController,
         curve: Curves.easeOutBack,
@@ -162,7 +163,7 @@ class _CrownPushButtonState extends State<CrownPushButton>
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
         width: 36,
-        height: 24,
+        height: 28,
         child: Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.topCenter,
@@ -211,7 +212,7 @@ class _CrownPushButtonState extends State<CrownPushButton>
               animation: Listenable.merge([_pressAnimation, _pullAnimation]),
               builder: (context, child) {
                 return Positioned(
-                  top: 8.0 + _pressAnimation.value + _pullAnimation.value,
+                  top: 12.0 + _pressAnimation.value + _pullAnimation.value,
                   child: child!,
                 );
               },

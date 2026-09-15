@@ -20,10 +20,50 @@ void main() {
     await tester.pump();
 
     expect(find.byType(CrownPushButton), findsOneWidget);
+    expect(find.byKey(const Key('crown_stem_collar')), findsOneWidget);
     expect(find.byKey(const Key('crown_stem_shaft')), findsOneWidget);
+    expect(find.byKey(const Key('crown_cap')), findsOneWidget);
+
+    // Box dimensions: width: 36, height: 28
+    final size = tester.getSize(find.byType(CrownPushButton));
+    expect(size, equals(const Size(36.0, 28.0)));
+
+    // Normal resting top position at 12.0
+    final capPositioned = tester.widget<Positioned>(
+      find.ancestor(
+        of: find.byKey(const Key('crown_cap')),
+        matching: find.byType(Positioned),
+      ),
+    );
+    expect(capPositioned.top, equals(12.0));
   });
 
-  testWidgets('CrownPushButton elevates upward and reveals stem shaft when isPulledOut is true', (tester) async {
+  testWidgets('CrownPushButton renders depressed at top 16.0 when isPressed is true', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: CrownPushButton(
+              isPressed: true,
+              isPulledOut: false,
+              onTap: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final capPositioned = tester.widget<Positioned>(
+      find.ancestor(
+        of: find.byKey(const Key('crown_cap')),
+        matching: find.byType(Positioned),
+      ),
+    );
+    expect(capPositioned.top, equals(16.0));
+  });
+
+  testWidgets('CrownPushButton elevates upward to top 4.0 and reveals stem shaft when isPulledOut is true', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -56,12 +96,20 @@ void main() {
       ),
     );
 
-    // Advance animation by 160ms
+    // Advance animation
     await tester.pumpAndSettle();
 
     final elevatedCapPos = tester.getTopLeft(find.byKey(const Key('crown_cap')));
-    // Cap should have elevated upward by 6px
-    expect(elevatedCapPos.dy, equals(initialCapPos.dy - 6.0));
+    // Cap should have elevated upward by 8px
+    expect(elevatedCapPos.dy, equals(initialCapPos.dy - 8.0));
+
+    final capPositioned = tester.widget<Positioned>(
+      find.ancestor(
+        of: find.byKey(const Key('crown_cap')),
+        matching: find.byType(Positioned),
+      ),
+    );
+    expect(capPositioned.top, equals(4.0));
   });
 
   testWidgets('CrownPushButton triggers onPullOut on upward vertical drag', (tester) async {

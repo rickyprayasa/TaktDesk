@@ -1238,6 +1238,41 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('ChronoDialWidget allocates 24px dial headroom with crown at top 0 and dial canvas at top 24', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Verify CrownPushButton Positioned has top == 0
+    final crownPositioned = tester.widget<Positioned>(
+      find.ancestor(
+        of: find.byType(CrownPushButton),
+        matching: find.byType(Positioned),
+      ).first,
+    );
+    expect(crownPositioned.top, equals(0.0));
+
+    // Verify Dial Canvas Positioned has top == 24
+    final dialPositioned = tester.widget<Positioned>(
+      find.ancestor(
+        of: dialFinder,
+        matching: find.byType(Positioned),
+      ).first,
+    );
+    expect(dialPositioned.top, equals(24.0));
+
+    await tester.pumpWidget(const SizedBox());
+  });
 }
 
 

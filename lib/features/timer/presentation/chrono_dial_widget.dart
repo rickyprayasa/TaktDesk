@@ -224,14 +224,14 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
             ..rotateY(parallax.tiltX),
           child: SizedBox(
             width: dialDimensions.width,
-            height: dialDimensions.height + 14,
+            height: dialDimensions.height + 24,
             child: Stack(
               alignment: Alignment.topCenter,
               clipBehavior: Clip.none,
               children: [
                 // Main Dial Canvas with Unobstructed Analog Face
                 Positioned(
-                  top: 14,
+                  top: 24,
                   child: Container(
                     width: dialDimensions.width,
                     height: dialDimensions.height,
@@ -320,7 +320,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                 ),
                 // Top Crown Push-Button seated directly into the 12 o'clock dial bezel socket
                 Positioned(
-                  top: 6,
+                  top: 0,
                   child: CrownPushButton(
                     isPressed: state.isRunning,
                     isPulledOut: state.setupStage.isActive,
