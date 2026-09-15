@@ -326,7 +326,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                     isPulledOut: state.setupStage.isActive,
                     onTap: _handleToggle,
                     onPullOut: () {
-                      if (state.isRunning) return;
+                      if (state.isRunning || state.setupStage.isActive) return;
                       ref.read(chronoDialProvider.notifier).enterCustomCalibration();
                     },
                     onPushIn: () {

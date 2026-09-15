@@ -1200,6 +1200,44 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('Dragging up on CrownPushButton while already calibrating is ignored', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoDialWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Pull crown out: enters stage 1 (focus)
+    await tester.drag(find.byType(CrownPushButton), const Offset(0, -30));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.focus));
+
+    // Tap to advance to stage 2 (shortBreak)
+    await tester.tap(find.byType(CrownPushButton));
+    await tester.pump();
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.shortBreak));
+
+    // Drag up again: should remain in stage 2 (shortBreak) without resetting to focus
+    await tester.drag(find.byType(CrownPushButton), const Offset(0, -30));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.shortBreak));
+
+    await tester.pumpWidget(const SizedBox());
+  });
 }
 
 
