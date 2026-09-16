@@ -85,7 +85,7 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
 
         @JvmStatic
         fun renderAnalogDial(status: String, remainingSeconds: Int, targetMinutes: Int): Bitmap {
-            val size = 400
+            val size = 240
             val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bitmap)
             val center = size / 2f
@@ -99,7 +99,7 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
             val bezelStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = Color.parseColor("#2A2C30")
                 style = Paint.Style.STROKE
-                strokeWidth = 3f
+                strokeWidth = 2f
             }
             val facePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = Color.parseColor("#EDEAE2") // Braun warm bone
@@ -107,25 +107,25 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
             }
             val tickMajorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = Color.parseColor("#14171A")
-                strokeWidth = 3.5f
+                strokeWidth = 2.2f
                 style = Paint.Style.STROKE
                 strokeCap = Paint.Cap.ROUND
             }
             val tickMinorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = Color.parseColor("#8E8E93")
-                strokeWidth = 1.5f
+                strokeWidth = 1f
                 style = Paint.Style.STROKE
                 strokeCap = Paint.Cap.ROUND
             }
             val brandTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = Color.parseColor("#14171A")
-                textSize = 20f
+                textSize = 12f
                 typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
                 textAlign = Paint.Align.CENTER
             }
             val needlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = Color.parseColor("#FF9E00") // Signature filament amber
-                strokeWidth = 4.5f
+                strokeWidth = 3f
                 style = Paint.Style.STROKE
                 strokeCap = Paint.Cap.ROUND
             }
@@ -156,8 +156,8 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
 
                 val startX = (center + (innerRadius - tickLength) * Math.sin(angleRad)).toFloat()
                 val startY = (center - (innerRadius - tickLength) * Math.cos(angleRad)).toFloat()
-                val endX = (center + (innerRadius - 4f) * Math.sin(angleRad)).toFloat()
-                val endY = (center - (innerRadius - 4f) * Math.cos(angleRad)).toFloat()
+                val endX = (center + (innerRadius - 3f) * Math.sin(angleRad)).toFloat()
+                val endY = (center - (innerRadius - 3f) * Math.cos(angleRad)).toFloat()
                 canvas.drawLine(startX, startY, endX, endY, p)
             }
 
@@ -182,8 +182,8 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
             canvas.drawLine(needleTailX, needleTailY, needleEndX, needleEndY, needlePaint)
 
             // Center boss & amber pip
-            canvas.drawCircle(center, center, 10f, centerBossPaint)
-            canvas.drawCircle(center, center, 4f, centerPipPaint)
+            canvas.drawCircle(center, center, 6f, centerBossPaint)
+            canvas.drawCircle(center, center, 2.5f, centerPipPaint)
 
             return bitmap
         }

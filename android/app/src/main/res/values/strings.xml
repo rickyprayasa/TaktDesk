@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ZYKL</string>
+
+    <!-- Widget 1: Monastic Console 2x2 -->
+    <string name="widget_console_label">ZYKL Monastic Console</string>
+    <string name="widget_console_desc">Micro-LED telemetry, daily focus cycles, and standby status</string>
+
+    <!-- Widget 2: Focus Strip 4x1 -->
+    <string name="widget_focus_strip_label">ZYKL Focus Strip</string>
+    <string name="widget_focus_strip_desc">Compact horizontal telemetry bar with one-tap quickstart</string>
+
+    <!-- Widget 3: Analog Chronometer Dial 2x2 -->
+    <string name="widget_analog_dial_label">ZYKL Analog Chronometer</string>
+    <string name="widget_analog_dial_desc">Precision Dieter Rams AW10 style chronometer dial face</string>
+
+    <!-- Widget 4: Task Dispenser 4x2 -->
+    <string name="widget_task_dispenser_label">ZYKL Task Dispenser</string>
+    <string name="widget_task_dispenser_desc">Tactile printed thermal receipt with five active focus tasks</string>
 </resources>

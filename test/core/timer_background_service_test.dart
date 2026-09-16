@@ -46,6 +46,22 @@ void main() {
     expect(log.first.arguments['phase'], equals('focus'));
     expect(log.first.arguments['cycleCount'], equals(1));
     expect(log.first.arguments['profileName'], equals('CLASSIC 25/5'));
+    expect(log.first.arguments['alarmChimeId'], equals('braunBell'));
+  });
+
+  test('startService sends custom alarmChimeId when provided', () async {
+    final result = await service.start(
+      remainingSeconds: 1500.0,
+      targetMinutes: 25,
+      phase: PomodoroPhase.focus,
+      cycleCount: 1,
+      profileName: 'CLASSIC 25/5',
+      alarmChimeId: 'zenGong',
+    );
+
+    expect(result, isTrue);
+    expect(log, hasLength(1));
+    expect(log.first.arguments['alarmChimeId'], equals('zenGong'));
   });
 
   test('startService returns false when platform channel throws', () async {

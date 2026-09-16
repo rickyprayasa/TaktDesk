@@ -14,6 +14,7 @@ import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/theme_controller.dart';
 import '../../../core/sensors/parallax_controller.dart';
 import '../../../core/services/timer_background_service.dart';
+import '../../settings/presentation/settings_controller.dart';
 
 class ChronoDialWidget extends ConsumerStatefulWidget {
   const ChronoDialWidget({super.key});
@@ -147,12 +148,14 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
           if (!_ticker.isActive) {
             _ticker.start();
           }
+          final alarmChimeId = ref.read(deskPreferencesControllerProvider).alarmChimeId;
           bgService.start(
             remainingSeconds: currentTimerState.remainingSeconds,
             targetMinutes: currentTimerState.targetMinutes,
             phase: currentTimerState.phase,
             cycleCount: currentTimerState.cycleCount,
             profileName: currentTimerState.profile.label,
+            alarmChimeId: alarmChimeId,
           );
         } else {
           if (_ticker.isActive) {

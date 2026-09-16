@@ -18,6 +18,7 @@ class TimerBackgroundService {
     required PomodoroPhase phase,
     required int cycleCount,
     required String profileName,
+    String alarmChimeId = 'braunBell',
   }) async {
     try {
       final res = await channel.invokeMethod<bool>('startService', {
@@ -26,6 +27,7 @@ class TimerBackgroundService {
         'phase': phase.name,
         'cycleCount': cycleCount,
         'profileName': profileName,
+        'alarmChimeId': alarmChimeId,
       });
       return res ?? false;
     } catch (_) {

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Outer Bezel -->
+    <path
+        android:fillColor="#1C1E22"
+        android:strokeColor="#2A2C30"
+        android:strokeWidth="2"
+        android:pathData="M60,8A52,52 0 1,0 60,112A52,52 0 1,0 60,8Z" />
+
+    <!-- Inner Face (Braun Warm Bone) -->
+    <path
+        android:fillColor="#EDEAE2"
+        android:pathData="M60,15A45,45 0 1,0 60,105A45,45 0 1,0 60,15Z" />
+
+    <!-- 12 Major Hour/Minute Ticks -->
+    <!-- 12 o'clock -->
+    <path
+        android:strokeColor="#14171A"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round"
+        android:pathData="M60,17 L60,25" />
+    <!-- 6 o'clock -->
+    <path
+        android:strokeColor="#14171A"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round"
+        android:pathData="M60,103 L60,95" />
+    <!-- 3 o'clock -->
+    <path
+        android:strokeColor="#14171A"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round"
+        android:pathData="M103,60 L95,60" />
+    <!-- 9 o'clock -->
+    <path
+        android:strokeColor="#14171A"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round"
+        android:pathData="M17,60 L25,60" />
+    <!-- 1 o'clock (cos 60, sin 60) -->
+    <path
+        android:strokeColor="#8E8E93"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M81.5,22.8 L77.5,29.7" />
+    <!-- 2 o'clock -->
+    <path
+        android:strokeColor="#8E8E93"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M97.2,38.5 L90.3,42.5" />
+    <!-- 4 o'clock -->
+    <path
+        android:strokeColor="#8E8E93"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M97.2,81.5 L90.3,77.5" />
+    <!-- 5 o'clock -->
+    <path
+        android:strokeColor="#8E8E93"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M81.5,97.2 L77.5,90.3" />
+    <!-- 7 o'clock -->
+    <path
+        android:strokeColor="#8E8E93"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M38.5,97.2 L42.5,90.3" />
+    <!-- 8 o'clock -->
+    <path
+        android:strokeColor="#8E8E93"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M22.8,81.5 L29.7,77.5" />
+    <!-- 10 o'clock -->
+    <path
+        android:strokeColor="#8E8E93"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M22.8,38.5 L29.7,42.5" />
+    <!-- 11 o'clock -->
+    <path
+        android:strokeColor="#8E8E93"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M38.5,22.8 L42.5,29.7" />
+
+    <!-- Amber Needle (Standby Parked at 12 o'clock) -->
+    <path
+        android:strokeColor="#FF9E00"
+        android:strokeWidth="2.8"
+        android:strokeLineCap="round"
+        android:pathData="M60,67 L60,25" />
+
+    <!-- Center Boss & Amber Pip -->
+    <path
+        android:fillColor="#14171A"
+        android:pathData="M60,56A4,4 0 1,0 60,64A4,4 0 1,0 60,56Z" />
+    <path
+        android:fillColor="#FF9E00"
+        android:pathData="M60,58.5A1.5,1.5 0 1,0 60,61.5A1.5,1.5 0 1,0 60,58.5Z" />
+
+</vector>

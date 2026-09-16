@@ -36,12 +36,14 @@ class TimerForegroundService : Service() {
         const val EXTRA_PHASE = "EXTRA_PHASE"
         const val EXTRA_CYCLE_COUNT = "EXTRA_CYCLE_COUNT"
         const val EXTRA_PROFILE_NAME = "EXTRA_PROFILE_NAME"
+        const val EXTRA_ALARM_CHIME_ID = "EXTRA_ALARM_CHIME_ID"
     }
 
     private val handler = Handler(Looper.getMainLooper())
     private var completionRunnable: Runnable? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var bellPlayer: MediaPlayer? = null
+    private var activeAlarmChimeId: String = "braunBell"
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -58,8 +60,9 @@ class TimerForegroundService : Service() {
                 val phase = intent.getStringExtra(EXTRA_PHASE) ?: "focus"
                 val cycleCount = intent.getIntExtra(EXTRA_CYCLE_COUNT, 1)
                 val profileName = intent.getStringExtra(EXTRA_PROFILE_NAME) ?: "CLASSIC 25/5"
+                val alarmChimeId = intent.getStringExtra(EXTRA_ALARM_CHIME_ID) ?: "braunBell"
 
-                startCountdown(remainingSeconds, targetMinutes, phase, cycleCount, profileName)
+                startCountdown(remainingSeconds, targetMinutes, phase, cycleCount, profileName, alarmChimeId)
             }
             ACTION_STOP -> {
                 stopCountdown()
@@ -73,9 +76,11 @@ class TimerForegroundService : Service() {
         targetMinutes: Int,
         phase: String,
         cycleCount: Int,
-        profileName: String
+        profileName: String,
+        alarmChimeId: String
     ) {
         cancelScheduledCompletion()
+        activeAlarmChimeId = alarmChimeId
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
         notificationManager?.cancel(ALERT_NOTIFICATION_ID)
@@ -173,15 +178,19 @@ class TimerForegroundService : Service() {
         // 4. Dismiss ongoing countdown chronometer from notification shade
         stopForeground(STOP_FOREGROUND_REMOVE)
 
-        // 5. Fallback safety timer for service teardown if audio fails
-        val fallbackTeardown = Runnable {
-            stopSelf()
-        }
-        handler.postDelayed(fallbackTeardown, 2500)
+        // 5. Play selected gallery alarm chime unless Flutter in foreground already triggered playback
+        if (MainActivity.shouldPlayAlarm()) {
+            val fallbackTeardown = Runnable {
+                stopSelf()
+            }
+            handler.postDelayed(fallbackTeardown, 3500)
 
-        // 6. Play bell chime and cleanly terminate service once playback finishes
-        playBellChime {
-            handler.removeCallbacks(fallbackTeardown)
+            playSelectedAlarm(activeAlarmChimeId) {
+                handler.removeCallbacks(fallbackTeardown)
+                stopSelf()
+            }
+        } else {
+            // Already played by foreground Flutter activity; exit cleanly without duplicate audio
             stopSelf()
         }
     }
@@ -205,10 +214,22 @@ class TimerForegroundService : Service() {
         }
     }
 
-    private fun playBellChime(onComplete: (() -> Unit)? = null) {
+    private fun getAlarmAssetPath(chimeId: String): String {
+        return when (chimeId) {
+            "braunBell" -> "flutter_assets/assets/audio/alarm_braun_bell.wav"
+            "deskBell" -> "flutter_assets/assets/audio/alarm_desk_bell.wav"
+            "tibetanBowl" -> "flutter_assets/assets/audio/alarm_tibetan_bowl.wav"
+            "zenGong" -> "flutter_assets/assets/audio/alarm_zen_gong.wav"
+            "tubularChime" -> "flutter_assets/assets/audio/alarm_tubular_chime.wav"
+            else -> "flutter_assets/assets/audio/alarm_braun_bell.wav"
+        }
+    }
+
+    private fun playSelectedAlarm(chimeId: String, onComplete: (() -> Unit)? = null) {
         try {
             bellPlayer?.release()
-            assets.openFd("flutter_assets/assets/audio/foley_bell_chime.wav").use { afd ->
+            val assetPath = getAlarmAssetPath(chimeId)
+            assets.openFd(assetPath).use { afd ->
                 bellPlayer = MediaPlayer().apply {
                     setAudioAttributes(
                         AudioAttributes.Builder()

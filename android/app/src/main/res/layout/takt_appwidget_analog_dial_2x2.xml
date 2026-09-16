@@ -12,6 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="fitCenter"
+        android:src="@drawable/widget_dial_standby_face"
         android:contentDescription="AW10 Analog Dial Face" />
 
     <TextView

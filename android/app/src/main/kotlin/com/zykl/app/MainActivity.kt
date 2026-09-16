@@ -3,8 +3,12 @@ package com.zykl.app
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.WindowManager
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -14,6 +18,21 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
+    companion object {
+        @Volatile
+        var lastAlarmTimestamp: Long = 0L
+
+        fun shouldPlayAlarm(): Boolean {
+            val now = System.currentTimeMillis()
+            return if (now - lastAlarmTimestamp > 3500L) {
+                lastAlarmTimestamp = now
+                true
+            } else {
+                false
+            }
+        }
+    }
+
     private val FOCUS_CHANNEL = "com.takt.desk/focus_lock"
     private val AUDIO_CHANNEL = "com.takt.desk/audio"
     private val TIMER_CHANNEL = "com.takt.desk/timer_service"
@@ -23,6 +42,7 @@ class MainActivity : FlutterActivity() {
     private var previousInterruptionFilter: Int? = null
     private var soundscapePlayer: MediaPlayer? = null
     private var masterVolume: Float = 0.8f
+    private val screenWakeHandler = Handler(Looper.getMainLooper())
 
     private fun safeStopAndReset(player: MediaPlayer?) {
         try {
@@ -53,6 +73,16 @@ class MainActivity : FlutterActivity() {
         } catch (_: Exception) {}
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        notifyAllWidgets()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        notifyAllWidgets()
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         if (initialWidgetAction == null) {
@@ -63,6 +93,7 @@ class MainActivity : FlutterActivity() {
             when (call.method) {
                 "enableFocusLock" -> {
                     try {
+                        screenWakeHandler.removeCallbacksAndMessages(null)
                         // 1. Keep Screen Awake
                         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
@@ -71,12 +102,7 @@ class MainActivity : FlutterActivity() {
                         controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                         controller.hide(WindowInsetsCompat.Type.systemBars())
 
-                        // 3. Android Screen Pinning / Lock Task Mode
-                        try {
-                            startLockTask()
-                        } catch (_: Exception) {}
-
-                        // 4. Do Not Disturb (silence notifications if permitted)
+                        // 3. Do Not Disturb (silence notifications if permitted)
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             val notifManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                             if (notifManager != null && notifManager.isNotificationPolicyAccessGranted) {
@@ -91,19 +117,11 @@ class MainActivity : FlutterActivity() {
                 }
                 "disableFocusLock" -> {
                     try {
-                        // 1. Clear Screen On flag
-                        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
-                        // 2. Restore System Bars
+                        // 1. Restore System Bars
                         val controller = WindowCompat.getInsetsController(window, window.decorView)
                         controller.show(WindowInsetsCompat.Type.systemBars())
 
-                        // 3. Stop Lock Task Mode
-                        try {
-                            stopLockTask()
-                        } catch (_: Exception) {}
-
-                        // 4. Restore Do Not Disturb
+                        // 2. Restore Do Not Disturb
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             val notifManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                             if (notifManager != null && notifManager.isNotificationPolicyAccessGranted) {
@@ -112,6 +130,13 @@ class MainActivity : FlutterActivity() {
                                 previousInterruptionFilter = null
                             }
                         }
+
+                        // 3. Keep screen awake for 15s so user can observe completed timer & hear alarm before timeout
+                        screenWakeHandler.removeCallbacksAndMessages(null)
+                        screenWakeHandler.postDelayed({
+                            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                        }, 15000L)
+
                         result.success(true)
                     } catch (e: Exception) {
                         result.success(false)
@@ -215,7 +240,7 @@ class MainActivity : FlutterActivity() {
                             "paperTear" -> "flutter_assets/assets/audio/foley_paper_tear.wav"
                             "inkStamp" -> "flutter_assets/assets/audio/foley_ink_stamp.wav"
                             "switchClick" -> "flutter_assets/assets/audio/foley_switch_click.wav"
-                            "bellChime" -> "flutter_assets/assets/audio/foley_bell_chime.wav"
+                            "bellChime" -> "flutter_assets/assets/audio/alarm_braun_bell.wav"
                             "drawerSlide" -> "flutter_assets/assets/audio/foley_drawer_slide.wav"
                             "drawerLatch" -> "flutter_assets/assets/audio/foley_drawer_latch.wav"
                             "discLoad" -> "flutter_assets/assets/audio/foley_disc_load.wav"
@@ -238,6 +263,10 @@ class MainActivity : FlutterActivity() {
                 }
                 "playAlarmChime" -> {
                     try {
+                        if (!shouldPlayAlarm()) {
+                            result.success(true)
+                            return@setMethodCallHandler
+                        }
                         val chimeId = call.argument<String>("chimeId") ?: "braunBell"
                         val chimeAsset = when (chimeId) {
                             "braunBell" -> "flutter_assets/assets/audio/alarm_braun_bell.wav"
@@ -249,6 +278,12 @@ class MainActivity : FlutterActivity() {
                         }
                         context.assets.openFd(chimeAsset).use { fd ->
                             MediaPlayer().apply {
+                                setAudioAttributes(
+                                    AudioAttributes.Builder()
+                                        .setUsage(AudioAttributes.USAGE_ALARM)
+                                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                        .build()
+                                )
                                 setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
                                 setOnCompletionListener { mp -> mp.release() }
                                 prepare()
@@ -273,6 +308,7 @@ class MainActivity : FlutterActivity() {
                         val phase = call.argument<String>("phase") ?: "focus"
                         val cycleCount = (call.argument<Number>("cycleCount"))?.toInt() ?: 1
                         val profileName = call.argument<String>("profileName") ?: "CLASSIC 25/5"
+                        val alarmChimeId = call.argument<String>("alarmChimeId") ?: "braunBell"
 
                         val serviceIntent = Intent(this, TimerForegroundService::class.java).apply {
                             action = TimerForegroundService.ACTION_START
@@ -281,6 +317,7 @@ class MainActivity : FlutterActivity() {
                             putExtra(TimerForegroundService.EXTRA_PHASE, phase)
                             putExtra(TimerForegroundService.EXTRA_CYCLE_COUNT, cycleCount)
                             putExtra(TimerForegroundService.EXTRA_PROFILE_NAME, profileName)
+                            putExtra(TimerForegroundService.EXTRA_ALARM_CHIME_ID, alarmChimeId)
                         }
 
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -476,28 +513,16 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun notifyAllWidgets() {
-        TaktAppWidgetProvider.updateAllWidgets(this)
-        val additionalProviders = listOf(
-            "com.zykl.app.TaktFocusStripWidgetProvider",
-            "com.zykl.app.TaktAnalogDialWidgetProvider",
-            "com.zykl.app.TaktTaskDispenserWidgetProvider"
-        )
-        for (className in additionalProviders) {
-            try {
-                val cls = Class.forName(className)
-                try {
-                    val method = cls.getMethod("updateAllWidgets", Context::class.java)
-                    method.invoke(null, this)
-                } catch (_: NoSuchMethodException) {
-                    val companionField = cls.getField("Companion").get(null)
-                    val method = companionField.javaClass.getMethod("updateAllWidgets", Context::class.java)
-                    method.invoke(companionField, this)
-                }
-            } catch (_: Throwable) {}
-        }
+        try {
+            TaktAppWidgetProvider.updateAllWidgets(this)
+            TaktFocusStripWidgetProvider.updateAllWidgets(this)
+            TaktAnalogDialWidgetProvider.updateAllWidgets(this)
+            TaktTaskDispenserWidgetProvider.updateAllWidgets(this)
+        } catch (_: Throwable) {}
     }
 
     override fun onDestroy() {
+        screenWakeHandler.removeCallbacksAndMessages(null)
         MediaNotificationService.mediaControlListener = null
         safeRelease(soundscapePlayer)
         soundscapePlayer = null
