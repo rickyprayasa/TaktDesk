@@ -38,6 +38,10 @@ class _ArchiveDrawerWidgetState extends ConsumerState<ArchiveDrawerWidget> {
         _openDrawers.remove(drawerIndex);
       }
     });
+    if (drawerIndex == 0 && ref.read(receiptRunnerProvider).isArchiveOpen != nextOpen) {
+      ref.read(receiptRunnerProvider.notifier).state =
+          ref.read(receiptRunnerProvider).copyWith(isArchiveOpen: nextOpen);
+    }
     ref.read(audioServiceProvider).playFoley(
       nextOpen ? SoundEffect.drawerSlide : SoundEffect.drawerLatch,
     );
@@ -79,23 +83,27 @@ class _ArchiveDrawerWidgetState extends ConsumerState<ArchiveDrawerWidget> {
       }
     }
 
-    _openDrawers.removeWhere((idx) => idx >= chunks.length);
+    final drawerWidgets = <Widget>[];
+    for (int drawerIndex = 0; drawerIndex < chunks.length; drawerIndex++) {
+      if (drawerIndex > 0) {
+        drawerWidgets.add(const SizedBox(height: 6));
+      }
+      final bool isOpen = _openDrawers.contains(drawerIndex) && drawerIndex < chunks.length;
+      drawerWidgets.add(
+        _buildDrawerChassis(
+          drawerIndex: drawerIndex,
+          chunk: chunks[drawerIndex],
+          isOpen: isOpen,
+          controller: controller,
+          themeState: themeState,
+        ),
+      );
+    }
 
     return Column(
       key: const ValueKey('archive_drawer_multi_container'),
       mainAxisSize: MainAxisSize.min,
-      children: [
-        for (int drawerIndex = 0; drawerIndex < chunks.length; drawerIndex++) ...[
-          if (drawerIndex > 0) const SizedBox(height: 6),
-          _buildDrawerChassis(
-            drawerIndex: drawerIndex,
-            chunk: chunks[drawerIndex],
-            isOpen: _openDrawers.contains(drawerIndex),
-            controller: controller,
-            themeState: themeState,
-          ),
-        ],
-      ],
+      children: drawerWidgets,
     );
   }
 

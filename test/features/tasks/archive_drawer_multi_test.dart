@@ -205,4 +205,40 @@ void main() {
     expect(controller.state.tasks.length, 1);
     expect(controller.state.tasks.first.title, 'Restorable Alpha Task');
   });
+
+  testWidgets('syncs drawer 0 toggle with receiptRunnerProvider isArchiveOpen', (tester) async {
+    final controller = ReceiptRunnerController();
+    final container = ProviderContainer(
+      overrides: [
+        receiptRunnerProvider.overrideWith((ref) => controller),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ArchiveDrawerWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(container.read(receiptRunnerProvider).isArchiveOpen, isFalse);
+
+    // Tap drawer 0 to open
+    await tester.tap(find.byKey(const ValueKey('archive_drawer_handle_0')));
+    await tester.pumpAndSettle();
+    expect(container.read(receiptRunnerProvider).isArchiveOpen, isTrue);
+
+    // Tap drawer 0 to close
+    await tester.tap(find.byKey(const ValueKey('archive_drawer_handle_0')));
+    await tester.pumpAndSettle();
+    expect(container.read(receiptRunnerProvider).isArchiveOpen, isFalse);
+  });
 }
