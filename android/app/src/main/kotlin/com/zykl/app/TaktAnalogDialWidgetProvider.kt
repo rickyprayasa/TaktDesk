@@ -35,6 +35,7 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
         @JvmStatic
         fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
             val prefs = context.getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
+            val isPro = prefs.getBoolean(TaktAppWidgetProvider.KEY_IS_PRO, false)
             val status = prefs.getString(TaktAppWidgetProvider.KEY_STATUS, "STANDBY") ?: "STANDBY"
             val remainingSeconds = prefs.getInt(TaktAppWidgetProvider.KEY_REMAINING_SECONDS, 0).coerceAtLeast(0)
             val targetMinutes = prefs.getInt(TaktAppWidgetProvider.KEY_TARGET_MINUTES, 25).coerceAtLeast(1)
@@ -42,10 +43,13 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.takt_appwidget_analog_dial_2x2)
 
             // Draw procedural Bitmap (400x400 px)
-            val dialBitmap = renderAnalogDial(status, remainingSeconds, targetMinutes)
+            // If not Pro, needle remains parked in standby alignment (0°)
+            val dialBitmap = renderAnalogDial(if (isPro) status else "STANDBY", remainingSeconds, targetMinutes)
             views.setImageViewBitmap(R.id.widget_dial_image, dialBitmap)
 
-            val timeBadgeText = if (status == "FOCUS" || status == "BREAK") {
+            val timeBadgeText = if (!isPro) {
+                "[ STUDIO PRO // UNLOCK ]"
+            } else if (status == "FOCUS" || status == "BREAK") {
                 val mins = remainingSeconds / 60
                 val secs = remainingSeconds % 60
                 String.format(java.util.Locale.ROOT, "%02d:%02d", mins, secs)
@@ -53,12 +57,20 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
                 "STANDBY"
             }
             views.setTextViewText(R.id.widget_time_badge, timeBadgeText)
+            if (!isPro) {
+                views.setTextColor(R.id.widget_time_badge, Color.parseColor("#FF9E00"))
+            } else {
+                views.setTextColor(R.id.widget_time_badge, Color.parseColor("#F2EFE9"))
+            }
 
             // PendingIntent
             val launchIntent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                         Intent.FLAG_ACTIVITY_CLEAR_TOP or
                         Intent.FLAG_ACTIVITY_SINGLE_TOP
+                if (!isPro) {
+                    putExtra("open_feature", "studio_pro")
+                }
             }
             val pendingIntent = PendingIntent.getActivity(
                 context,
