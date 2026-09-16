@@ -407,13 +407,11 @@ class ChronoDialController extends StateNotifier<TimerState> {
   }
 
   void _syncMediaTelemetry({PomodoroPhase? phase, int? remainingSeconds, int? cycleCount}) {
-    if (_mediaNotificationService?.isActive == true) {
-      _mediaNotificationService?.updateTimerTelemetry(
-        phase: (phase ?? state.phase).name,
-        remainingSeconds: remainingSeconds ?? state.remainingSeconds.round(),
-        cycleCount: cycleCount ?? state.cycleCount,
-      );
-    }
+    _mediaNotificationService?.updateTimerTelemetry(
+      phase: (phase ?? state.phase).name,
+      remainingSeconds: remainingSeconds ?? state.remainingSeconds.round(),
+      cycleCount: cycleCount ?? state.cycleCount,
+    );
   }
 }
 
