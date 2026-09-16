@@ -29,6 +29,7 @@ class TaktAppWidgetProvider : AppWidgetProvider() {
         const val KEY_REMAINING_SECONDS = "remaining_seconds"
         const val KEY_TARGET_MINUTES = "target_minutes"
         const val KEY_TASKS_JSON = "tasks_json"
+        const val KEY_IS_PRO = "is_pro"
 
         @JvmStatic
         fun updateAllWidgets(context: Context) {

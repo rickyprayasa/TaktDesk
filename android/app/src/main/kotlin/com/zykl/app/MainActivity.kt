@@ -18,6 +18,8 @@ class MainActivity : FlutterActivity() {
     private val AUDIO_CHANNEL = "com.takt.desk/audio"
     private val TIMER_CHANNEL = "com.takt.desk/timer_service"
     private val WIDGET_CHANNEL = "com.takt.desk/app_widget"
+    private var widgetChannel: MethodChannel? = null
+    private var initialWidgetAction: String? = null
     private var previousInterruptionFilter: Int? = null
     private var soundscapePlayer: MediaPlayer? = null
     private var masterVolume: Float = 0.8f
@@ -53,6 +55,9 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        if (initialWidgetAction == null) {
+            initialWidgetAction = intent?.getStringExtra("open_feature")
+        }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, FOCUS_CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
@@ -300,8 +305,15 @@ class MainActivity : FlutterActivity() {
         }
 
         val widgetChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, WIDGET_CHANNEL)
+        this.widgetChannel = widgetChannel
         widgetChannel.setMethodCallHandler { call, result ->
             when (call.method) {
+                "getInitialAction" -> {
+                    val action = initialWidgetAction ?: intent?.getStringExtra("open_feature")
+                    initialWidgetAction = null
+                    intent?.removeExtra("open_feature")
+                    result.success(action)
+                }
                 "updateWidgetData" -> {
                     try {
                         val cycles = (call.argument<Number>("cyclesCompleted"))?.toInt() ?: 0
@@ -333,6 +345,7 @@ class MainActivity : FlutterActivity() {
                         val targetMinutes = (call.argument<Number>("targetMinutes"))?.toInt() ?: 25
                         val tasksList = call.argument<List<Map<String, Any>>>("tasks") ?: emptyList()
                         val tasksJson = org.json.JSONArray(tasksList).toString()
+                        val isPro = call.argument<Boolean>("isPro") ?: false
 
                         val prefs = getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
                         prefs.edit()
@@ -343,6 +356,7 @@ class MainActivity : FlutterActivity() {
                             .putInt(TaktAppWidgetProvider.KEY_REMAINING_SECONDS, remainingSeconds)
                             .putInt(TaktAppWidgetProvider.KEY_TARGET_MINUTES, targetMinutes)
                             .putString(TaktAppWidgetProvider.KEY_TASKS_JSON, tasksJson)
+                            .putBoolean(TaktAppWidgetProvider.KEY_IS_PRO, isPro)
                             .apply()
 
                         notifyAllWidgets()
@@ -353,6 +367,15 @@ class MainActivity : FlutterActivity() {
                 }
                 else -> result.notImplemented()
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val action = intent.getStringExtra("open_feature")
+        if (!action.isNullOrEmpty()) {
+            widgetChannel?.invokeMethod("onWidgetAction", mapOf("action" to action))
         }
     }
 
