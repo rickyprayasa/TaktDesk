@@ -139,7 +139,7 @@ void main() {
       expect(find.text('ALPINE MOUNTAIN BROOK'), findsOneWidget);
     });
 
-    testWidgets('both drawers can be open simultaneously and closed independently', (tester) async {
+    testWidgets('opening Drawer 2 closes Drawer 1, maintaining mutually exclusive single compact bay', (tester) async {
       final mockAudio = MockAudioService();
       await tester.pumpWidget(buildTestApp(audioService: mockAudio));
       await tester.pumpAndSettle();
@@ -148,24 +148,57 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('vinyl_drawer_1_handle')));
       await tester.pumpAndSettle();
 
-      // Open Drawer 2
+      // Drawer 1 is open
+      expect(find.text('[ RECORD DRAWER 01 // 06 DISCS · NATURE ▲ ]'), findsOneWidget);
+      expect(find.text('[ RECORD DRAWER 02 // 06 DISCS · HARMONICS ▾ ]'), findsOneWidget);
+      expect(find.byType(PageView), findsOneWidget);
+      expect(find.byKey(const ValueKey('record_sleeve_0')), findsOneWidget);
+
+      // Open Drawer 2 -> Drawer 1 is automatically closed/swapped, Drawer 2 is open
       await tester.tap(find.byKey(const ValueKey('vinyl_drawer_2_handle')));
       await tester.pumpAndSettle();
 
-      // Both drawers are open
-      expect(find.text('[ RECORD DRAWER 01 // 06 DISCS · NATURE ▲ ]'), findsOneWidget);
+      expect(find.text('[ RECORD DRAWER 01 // 06 DISCS · NATURE ▾ ]'), findsOneWidget);
       expect(find.text('[ RECORD DRAWER 02 // 06 DISCS · HARMONICS ▲ ]'), findsOneWidget);
-      expect(find.byType(PageView), findsNWidgets(2));
+      // Still exactly 1 PageView, never elongated
+      expect(find.byType(PageView), findsOneWidget);
+      expect(find.byKey(const ValueKey('record_sleeve_6')), findsOneWidget);
+      expect(mockAudio.playedEffects, contains(SoundEffect.switchClick));
 
-      // Close Drawer 1
+      // Close Drawer 2 by tapping its handle again
+      await tester.tap(find.byKey(const ValueKey('vinyl_drawer_2_handle')));
+      await tester.pumpAndSettle();
+
+      // Both show closed indicator, no PageView
+      expect(find.text('[ RECORD DRAWER 01 // 06 DISCS · NATURE ▾ ]'), findsOneWidget);
+      expect(find.text('[ RECORD DRAWER 02 // 06 DISCS · HARMONICS ▾ ]'), findsOneWidget);
+      expect(find.byType(PageView), findsNothing);
+      expect(mockAudio.playedEffects, contains(SoundEffect.drawerLatch));
+    });
+
+    testWidgets('interior segment rocker switches between Drawer 01 and Drawer 02', (tester) async {
+      final mockAudio = MockAudioService();
+      await tester.pumpWidget(buildTestApp(audioService: mockAudio));
+      await tester.pumpAndSettle();
+
+      // Open Drawer 1
       await tester.tap(find.byKey(const ValueKey('vinyl_drawer_1_handle')));
       await tester.pumpAndSettle();
 
-      // Drawer 1 closed, Drawer 2 remains open
-      expect(find.text('[ RECORD DRAWER 01 // 06 DISCS · NATURE ▾ ]'), findsOneWidget);
-      expect(find.text('[ RECORD DRAWER 02 // 06 DISCS · HARMONICS ▲ ]'), findsOneWidget);
-      expect(find.byType(PageView), findsOneWidget);
-      expect(mockAudio.playedEffects, contains(SoundEffect.drawerLatch));
+      expect(find.byKey(const ValueKey('record_sleeve_0')), findsOneWidget);
+
+      // Switch to Drawer 2 using interior segment pill
+      await tester.tap(find.byKey(const ValueKey('vinyl_drawer_segment_2')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('record_sleeve_6')), findsOneWidget);
+      expect(mockAudio.playedEffects, contains(SoundEffect.switchClick));
+
+      // Switch back to Drawer 1 using interior segment pill
+      await tester.tap(find.byKey(const ValueKey('vinyl_drawer_segment_1')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('record_sleeve_0')), findsOneWidget);
     });
 
     testWidgets('loading track in Drawer 1 selects it onto the platter', (tester) async {

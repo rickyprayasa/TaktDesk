@@ -1,21 +1,26 @@
 #!/usr/bin/env python3
 """
-Procedural Audio Generator for Takt Desk 12 Curated Focus Soundscapes
+Procedural Audio Generator for ZYKL / Takt Desk 12 Curated Focus Soundscapes
 Generates 16-second seamless looping 22050 Hz 16-bit mono PCM WAV files.
 
+All soundscapes are calibrated to have the same velvety, warm, soothing,
+and organic acoustic character as Deep Brown Noise (TK-02).
+Zero harsh sine beeps, zero digital clicks, zero abrasive TV static,
+and zero metallic clipping distortion.
+
 Track List:
-TK-01: vinyl_lofi_rain.wav        - Lo-fi Rain (Rhodes chords & rain)
-TK-02: vinyl_brown_noise.wav      - Deep Brown Noise (1/f² warmth)
-TK-03: vinyl_library.wav          - Library Atmosphere (Acoustic room tone)
-TK-04: vinyl_kyoto_bamboo.wav     - Kyoto Bamboo Stream (Bamboo trickle & moss stone)
-TK-05: vinyl_campfire.wav         - Campfire Embers (Warm hearth embers, no loud bursts)
-TK-06: vinyl_nordic_pines.wav     - Nordic Pine Whispers (High-altitude filtered pine wind)
-TK-07: vinyl_alpine_brook.wav     - Alpine Mountain Brook (Crystalline steady brook murmur)
-TK-08: vinyl_warm_tape.wav        - Warm Tape & Felt Piano (Warm analog saturation & muted chords)
-TK-09: vinyl_zen_bowl.wav         - Zen Temple Bowl (Singing bowl fundamental & decaying harmonics)
-TK-10: vinyl_morning_meadow.wav   - Misty Morning Meadow (Morning air dew blanket)
-TK-11: vinyl_pure_white_noise.wav - Pure Focus White Noise (Flat linear reading/coding noise)
-TK-12: vinyl_timber_chamber.wav   - Timber Acoustic Chamber (Dry timber room reflection)
+TK-01: vinyl_lofi_rain.wav        - Lo-fi Rain (Warm rain bed & soft droplet wash)
+TK-02: vinyl_brown_noise.wav      - Deep Brown Noise (1/f² warmth - golden standard)
+TK-03: vinyl_library.wav          - Library Atmosphere (Warm acoustic room tone & calm air)
+TK-04: vinyl_kyoto_bamboo.wav     - Kyoto Bamboo Stream (Gentle stream & distant wooden tap)
+TK-05: vinyl_campfire.wav         - Campfire Embers (Warm hearth rumble & soft glowing embers)
+TK-06: vinyl_nordic_pines.wav     - Nordic Pine Whispers (Silky high-altitude mountain wind)
+TK-07: vinyl_alpine_brook.wav     - Alpine Mountain Brook (Crystalline smooth water murmur)
+TK-08: vinyl_warm_tape.wav        - Warm Tape & Felt Piano (Subtle analog tape bed & warm pad)
+TK-09: vinyl_zen_bowl.wav         - Zen Temple Bowl (Deep warm 108 Hz bowl & meditative swell)
+TK-10: vinyl_morning_meadow.wav   - Misty Morning Meadow (Gentle sunrise dew breeze)
+TK-11: vinyl_pure_white_noise.wav - Pure Focus Velvet Noise (Smooth 1/f pink noise shelf)
+TK-12: vinyl_timber_chamber.wav   - Timber Acoustic Chamber (Warm wooden room resonance)
 """
 
 import os
@@ -34,6 +39,7 @@ TOTAL_SAMPLES = NUM_SAMPLES + FADE_SAMPLES
 
 
 def lowpass_filter(samples, sample_rate, cutoff):
+    """First-order lowpass filter (6 dB/octave)."""
     rc = 1.0 / (2.0 * math.pi * cutoff)
     dt = 1.0 / sample_rate
     alpha = dt / (rc + dt)
@@ -46,6 +52,7 @@ def lowpass_filter(samples, sample_rate, cutoff):
 
 
 def highpass_filter(samples, sample_rate, cutoff):
+    """First-order highpass filter (6 dB/octave)."""
     rc = 1.0 / (2.0 * math.pi * cutoff)
     dt = 1.0 / sample_rate
     alpha = rc / (rc + dt)
@@ -60,11 +67,43 @@ def highpass_filter(samples, sample_rate, cutoff):
 
 
 def bandpass_filter(samples, sample_rate, low_cut, high_cut):
+    """Cascaded bandpass filter."""
     hp = highpass_filter(samples, sample_rate, low_cut)
     return lowpass_filter(hp, sample_rate, high_cut)
 
 
+def generate_pink_noise(num_samples, seed=42):
+    """Paul Kellet's filter method for true 1/f Pink Noise (-3 dB/octave)."""
+    rng = random.Random(seed)
+    b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0
+    out = [0.0] * num_samples
+    for i in range(num_samples):
+        white = rng.gauss(0, 0.25)
+        b0 = 0.99886 * b0 + white * 0.0555179
+        b1 = 0.99332 * b1 + white * 0.0750759
+        b2 = 0.96900 * b2 + white * 0.1538520
+        b3 = 0.86650 * b3 + white * 0.3104856
+        b4 = 0.55000 * b4 + white * 0.5329522
+        b5 = -0.7616 * b5 - white * 0.0168980
+        out[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11
+        b6 = white * 0.115926
+    return out
+
+
+def generate_brown_noise_bed(num_samples, seed=42, leak=0.997, gain=0.05):
+    """Leaky integrator for true Brownian / 1/f² noise."""
+    rng = random.Random(seed)
+    out = [0.0] * num_samples
+    val = 0.0
+    for i in range(num_samples):
+        white = rng.gauss(0, 0.25)
+        val = leak * val + gain * white
+        out[i] = val
+    return out
+
+
 def crossfade_loop(samples, num_samples, fade_samples):
+    """Seamless sinusoidal crossfade loop."""
     out = list(samples[:num_samples])
     for i in range(fade_samples):
         t = i / fade_samples
@@ -76,6 +115,7 @@ def crossfade_loop(samples, num_samples, fade_samples):
 
 
 def save_wav(filepath, samples, target_peak=0.75):
+    """Normalizes to target_peak (leaving generous headroom) and saves 16-bit PCM WAV."""
     max_val = max(abs(s) for s in samples) if samples else 1.0
     if max_val < 1e-6:
         max_val = 1.0
@@ -97,80 +137,50 @@ def save_wav(filepath, samples, target_peak=0.75):
 
 
 # ----------------------------------------------------------------------
-# Track 1: TK-01 Lo-fi Rain
+# Track 1: TK-01 Lo-fi Rain (Warm Rain Bed & Soft Window Wash)
 # ----------------------------------------------------------------------
 def generate_lofi_rain():
-    random.seed(1001)
-    samples = [0.0] * TOTAL_SAMPLES
+    # 1. Deep rain rumble
+    brown = generate_brown_noise_bed(TOTAL_SAMPLES, seed=1001, leak=0.996, gain=0.045)
+    deep_rumble = lowpass_filter(brown, SAMPLE_RATE, 220.0)
+    deep_rumble = highpass_filter(deep_rumble, SAMPLE_RATE, 25.0)
 
-    # 1. Rain bed
-    white_noise = [random.gauss(0, 0.4) for _ in range(TOTAL_SAMPLES)]
-    rain_bed = bandpass_filter(white_noise, SAMPLE_RATE, 250.0, 4200.0)
+    # 2. Soft rain wash (pink noise bandpassed without harsh hiss)
+    pink = generate_pink_noise(TOTAL_SAMPLES, seed=1002)
+    rain_wash = bandpass_filter(pink, SAMPLE_RATE, 180.0, 780.0)
+    rain_wash = lowpass_filter(rain_wash, SAMPLE_RATE, 650.0)
 
-    # 2. Droplet micro-spatters
-    spatters = [0.0] * TOTAL_SAMPLES
-    prob = 90.0 / SAMPLE_RATE
+    # 3. Soft droplets (gentle organic low-amplitude water patter, no clicks)
+    rng = random.Random(1003)
+    droplets = [0.0] * TOTAL_SAMPLES
+    prob = 20.0 / SAMPLE_RATE
     for idx in range(TOTAL_SAMPLES):
-        if random.random() < prob:
-            freq = random.uniform(900.0, 2200.0)
-            amp = random.uniform(0.1, 0.35)
-            spat_len = min(TOTAL_SAMPLES - idx, int(0.03 * SAMPLE_RATE))
-            for k in range(spat_len):
+        if rng.random() < prob:
+            f = rng.uniform(320.0, 560.0)
+            amp = rng.uniform(0.04, 0.12)
+            d_len = min(TOTAL_SAMPLES - idx, int(0.025 * SAMPLE_RATE))
+            for k in range(d_len):
                 t = k / SAMPLE_RATE
-                spatters[idx + k] += amp * math.exp(-120.0 * t) * math.sin(2.0 * math.pi * freq * t)
+                env = math.exp(-110.0 * t) * math.sin(math.pi * (k / d_len))
+                droplets[idx + k] += amp * env * math.sin(2.0 * math.pi * f * t)
 
-    # 3. Electric Piano 4-chord progression (4.0s per chord)
-    # Fmaj7 -> Em7 -> Dm9 -> Cmaj7
-    chords = [
-        [174.61, 220.00, 261.63, 329.63],          # Fmaj7
-        [164.81, 196.00, 246.94, 293.66],          # Em7
-        [146.83, 174.61, 220.00, 261.63, 329.63],  # Dm9
-        [130.81, 196.00, 246.94, 329.63],          # Cmaj7
-    ]
-    chord_duration = 4.0
-    piano = [0.0] * TOTAL_SAMPLES
-
+    samples = [0.0] * TOTAL_SAMPLES
     for idx in range(TOTAL_SAMPLES):
         t = idx / SAMPLE_RATE
-        chord_idx = int(t / chord_duration) % len(chords)
-        t_chord = t % chord_duration
-        notes = chords[chord_idx]
-
-        # Piano note envelope: gentle attack, long exponential decay
-        env = math.exp(-0.75 * t_chord) * (1.0 - math.exp(-30.0 * t_chord))
-        # Tremolo
-        trem = 0.9 + 0.1 * math.sin(2.0 * math.pi * 4.5 * t)
-
-        chord_val = 0.0
-        for f in notes:
-            # Fundamental + 2nd harmonic + 3rd harmonic
-            tone = (
-                math.sin(2.0 * math.pi * f * t) * 0.65 +
-                math.sin(2.0 * math.pi * (2.0 * f) * t) * 0.25 +
-                math.sin(2.0 * math.pi * (3.0 * f) * t) * 0.10
-            )
-            chord_val += tone
-
-        chord_val /= len(notes)
-        piano[idx] = chord_val * env * trem
-
-    piano_filtered = lowpass_filter(piano, SAMPLE_RATE, 1600.0)
-
-    # Combine
-    for idx in range(TOTAL_SAMPLES):
-        samples[idx] = rain_bed[idx] * 0.50 + spatters[idx] * 0.35 + piano_filtered[idx] * 0.55
+        swell = 0.90 + 0.10 * math.sin(2.0 * math.pi * (1.0 / 8.0) * t)
+        samples[idx] = (deep_rumble[idx] * 0.55 + rain_wash[idx] * 0.40 * swell + droplets[idx] * 0.20)
 
     return crossfade_loop(samples, NUM_SAMPLES, FADE_SAMPLES)
 
 
 # ----------------------------------------------------------------------
-# Track 2: TK-02 Deep Brown Noise
+# Track 2: TK-02 Deep Brown Noise (1/f² Warmth - GOLDEN STANDARD)
 # ----------------------------------------------------------------------
 def generate_brown_noise():
+    # Exact original code preserved - user confirmed this track is perfect
     random.seed(1002)
     samples = [0.0] * TOTAL_SAMPLES
 
-    # Leaky integrator
     val = 0.0
     for idx in range(TOTAL_SAMPLES):
         white = random.gauss(0, 0.25)
@@ -181,7 +191,6 @@ def generate_brown_noise():
     filtered = lowpass_filter(filtered, SAMPLE_RATE, 360.0)
     filtered = highpass_filter(filtered, SAMPLE_RATE, 28.0)
 
-    # Gentle breathing envelope
     for idx in range(TOTAL_SAMPLES):
         t = idx / SAMPLE_RATE
         breath = 0.94 + 0.06 * math.sin(2.0 * math.pi * (1.0 / 16.0) * t)
@@ -191,383 +200,270 @@ def generate_brown_noise():
 
 
 # ----------------------------------------------------------------------
-# Track 3: TK-03 Library Atmosphere
+# Track 3: TK-03 Library Atmosphere (Warm Room Tone & Serene Air)
 # ----------------------------------------------------------------------
 def generate_library():
-    random.seed(1003)
+    # Deep, warm, quiet room presence (zero sine tones, zero buzzing)
+    brown = generate_brown_noise_bed(TOTAL_SAMPLES, seed=1003, leak=0.997, gain=0.04)
+    room_tone = bandpass_filter(brown, SAMPLE_RATE, 40.0, 240.0)
+
+    # Gentle, quiet library air flow
+    pink = generate_pink_noise(TOTAL_SAMPLES, seed=1004)
+    air_flow = bandpass_filter(pink, SAMPLE_RATE, 100.0, 380.0)
+
     samples = [0.0] * TOTAL_SAMPLES
-
-    # 1. Quiet air tone (subtle wooden hall resonance)
-    white_noise = [random.gauss(0, 0.3) for _ in range(TOTAL_SAMPLES)]
-    room_tone = bandpass_filter(white_noise, SAMPLE_RATE, 90.0, 480.0)
-
-    # Subtle acoustic modes (hall room resonances)
-    modes = [140.0, 275.0, 410.0]
     for idx in range(TOTAL_SAMPLES):
         t = idx / SAMPLE_RATE
-        mode_val = sum(math.sin(2.0 * math.pi * m * t) * 0.025 for m in modes)
-        room_tone[idx] += mode_val
-
-    # 2. Rare soft page turns at t=4.0s, 9.0s, 14.0s
-    page_times = [4.0, 9.0, 14.0]
-    page_buffer = [0.0] * TOTAL_SAMPLES
-    for pt in page_times:
-        start_idx = int(pt * SAMPLE_RATE)
-        dur = int(0.28 * SAMPLE_RATE)
-        for k in range(dur):
-            if start_idx + k >= TOTAL_SAMPLES:
-                break
-            tk = k / SAMPLE_RATE
-            p_env = math.sin(math.pi * (k / dur)) ** 2
-            p_noise = random.gauss(0, 0.15) * p_env
-            page_buffer[start_idx + k] += p_noise
-
-    page_filtered = bandpass_filter(page_buffer, SAMPLE_RATE, 1200.0, 3200.0)
-
-    # Combine
-    for idx in range(TOTAL_SAMPLES):
-        t = idx / SAMPLE_RATE
-        slow_air = 0.9 + 0.1 * math.sin(2.0 * math.pi * 0.125 * t)
-        samples[idx] = room_tone[idx] * 0.70 * slow_air + page_filtered[idx] * 0.30
+        breathe = 0.92 + 0.08 * math.sin(2.0 * math.pi * (1.0 / 12.0) * t)
+        samples[idx] = (room_tone[idx] * 0.65 + air_flow[idx] * 0.35) * breathe
 
     return crossfade_loop(samples, NUM_SAMPLES, FADE_SAMPLES)
 
 
 # ----------------------------------------------------------------------
-# Track 4: TK-04 Kyoto Bamboo Stream
+# Track 4: TK-04 Kyoto Bamboo Stream (Gentle Stream & Wooden Tap)
 # ----------------------------------------------------------------------
 def generate_kyoto_bamboo():
-    random.seed(1004)
-    samples = [0.0] * TOTAL_SAMPLES
+    # 1. Soothing water stream (warm bandpass, no harsh hiss)
+    pink = generate_pink_noise(TOTAL_SAMPLES, seed=1005)
+    stream = bandpass_filter(pink, SAMPLE_RATE, 140.0, 580.0)
+    stream = lowpass_filter(stream, SAMPLE_RATE, 500.0)
 
-    # 1. Gentle stream flow
-    white_noise = [random.gauss(0, 0.35) for _ in range(TOTAL_SAMPLES)]
-    stream = bandpass_filter(white_noise, SAMPLE_RATE, 350.0, 2400.0)
+    # 2. Warm stream bed depth
+    brown = generate_brown_noise_bed(TOTAL_SAMPLES, seed=1006, leak=0.996, gain=0.035)
+    bed = bandpass_filter(brown, SAMPLE_RATE, 35.0, 180.0)
 
-    # 2. Water trickle droplet pings
-    trickle = [0.0] * TOTAL_SAMPLES
-    prob = 35.0 / SAMPLE_RATE
-    for idx in range(TOTAL_SAMPLES):
-        if random.random() < prob:
-            f_base = random.uniform(650.0, 1500.0)
-            amp = random.uniform(0.12, 0.30)
-            drop_len = min(TOTAL_SAMPLES - idx, int(0.04 * SAMPLE_RATE))
-            for k in range(drop_len):
-                t = k / SAMPLE_RATE
-                f_inst = f_base * (1.0 + 0.25 * (1.0 - math.exp(-60.0 * t)))
-                trickle[idx + k] += amp * math.exp(-85.0 * t) * math.sin(2.0 * math.pi * f_inst * t)
-
-    # 3. Soft hollow bamboo resonance at t=3.0s, 8.5s, 14.0s
-    bamboo = [0.0] * TOTAL_SAMPLES
-    bamboo_times = [3.0, 8.5, 14.0]
-    for bt in bamboo_times:
-        start_idx = int(bt * SAMPLE_RATE)
-        dur = min(TOTAL_SAMPLES - start_idx, int(0.6 * SAMPLE_RATE))
+    # 3. Distant hollow wooden bamboo tap at t=4.0s and t=12.0s
+    taps = [0.0] * TOTAL_SAMPLES
+    tap_times = [4.0, 12.0]
+    for tt in tap_times:
+        start_idx = int(tt * SAMPLE_RATE)
+        dur = min(TOTAL_SAMPLES - start_idx, int(0.35 * SAMPLE_RATE))
         for k in range(dur):
             t = k / SAMPLE_RATE
-            b_env = math.exp(-14.0 * t) * (1.0 - math.exp(-150.0 * t))
-            strike = (
-                math.sin(2.0 * math.pi * 432.0 * t) * 0.60 +
-                math.sin(2.0 * math.pi * 864.0 * t) * 0.30 +
-                math.sin(2.0 * math.pi * 1296.0 * t) * 0.10
-            )
-            bamboo[start_idx + k] += strike * b_env * 0.28
+            env = math.exp(-18.0 * t) * (1.0 - math.exp(-120.0 * t))
+            tap_tone = math.sin(2.0 * math.pi * 148.0 * t) * 0.16 + math.sin(2.0 * math.pi * 296.0 * t) * 0.06
+            taps[start_idx + k] += tap_tone * env
 
+    taps_warm = lowpass_filter(taps, SAMPLE_RATE, 380.0)
+
+    samples = [0.0] * TOTAL_SAMPLES
     for idx in range(TOTAL_SAMPLES):
-        samples[idx] = stream[idx] * 0.45 + trickle[idx] * 0.38 + bamboo[idx]
+        t = idx / SAMPLE_RATE
+        swirl = 0.88 + 0.12 * math.sin(2.0 * math.pi * 0.2 * t)
+        samples[idx] = stream[idx] * 0.55 * swirl + bed[idx] * 0.40 + taps_warm[idx]
 
     return crossfade_loop(samples, NUM_SAMPLES, FADE_SAMPLES)
 
 
 # ----------------------------------------------------------------------
-# Track 5: TK-05 Campfire Embers
+# Track 5: TK-05 Campfire Embers (Warm Hearth Rumble & Soft Embers)
 # ----------------------------------------------------------------------
 def generate_campfire():
-    random.seed(1005)
-    samples = [0.0] * TOTAL_SAMPLES
+    # 1. Deep hearth warmth & thermal body
+    brown = generate_brown_noise_bed(TOTAL_SAMPLES, seed=1007, leak=0.997, gain=0.05)
+    hearth = lowpass_filter(brown, SAMPLE_RATE, 190.0)
+    hearth = highpass_filter(hearth, SAMPLE_RATE, 28.0)
 
-    # 1. Warm low rumble / hearth glow
-    white_noise = [random.gauss(0, 0.4) for _ in range(TOTAL_SAMPLES)]
-    rumble = lowpass_filter(white_noise, SAMPLE_RATE, 170.0)
-    rumble = lowpass_filter(rumble, SAMPLE_RATE, 210.0)
-
-    # 2. Gentle embers crackle (clamped, no harsh pops)
-    snaps = [0.0] * TOTAL_SAMPLES
-    prob = 22.0 / SAMPLE_RATE
+    # 2. Soft, low-amplitude embers (warm crackle without harsh pops)
+    rng = random.Random(1008)
+    embers = [0.0] * TOTAL_SAMPLES
+    prob = 14.0 / SAMPLE_RATE
     for idx in range(TOTAL_SAMPLES):
-        if random.random() < prob:
-            freq = random.uniform(950.0, 2400.0)
-            amp = random.uniform(0.15, 0.45)
-            snap_len = min(TOTAL_SAMPLES - idx, int(0.02 * SAMPLE_RATE))
-            for k in range(snap_len):
+        if rng.random() < prob:
+            amp = rng.uniform(0.04, 0.12)
+            c_len = min(TOTAL_SAMPLES - idx, int(0.018 * SAMPLE_RATE))
+            f = rng.uniform(360.0, 720.0)
+            for k in range(c_len):
                 t = k / SAMPLE_RATE
-                snaps[idx + k] += amp * math.exp(-180.0 * t) * math.sin(2.0 * math.pi * freq * t)
+                env = math.exp(-140.0 * t) * math.sin(math.pi * (k / c_len))
+                embers[idx + k] += amp * env * math.sin(2.0 * math.pi * f * t)
 
-    # 3. Soft high sizzle
-    sizzle_noise = [random.gauss(0, 0.18) for _ in range(TOTAL_SAMPLES)]
-    sizzle = bandpass_filter(sizzle_noise, SAMPLE_RATE, 2200.0, 4500.0)
+    embers_warm = lowpass_filter(embers, SAMPLE_RATE, 650.0)
 
+    samples = [0.0] * TOTAL_SAMPLES
     for idx in range(TOTAL_SAMPLES):
         t = idx / SAMPLE_RATE
-        flame_breath = 0.88 + 0.12 * math.sin(2.0 * math.pi * 0.3 * t)
-        samples[idx] = rumble[idx] * 0.75 * flame_breath + snaps[idx] * 0.45 + sizzle[idx] * 0.15
+        flame_breath = 0.90 + 0.10 * math.sin(2.0 * math.pi * 0.25 * t)
+        samples[idx] = hearth[idx] * 0.70 * flame_breath + embers_warm[idx] * 0.30
 
     return crossfade_loop(samples, NUM_SAMPLES, FADE_SAMPLES)
 
 
 # ----------------------------------------------------------------------
-# Track 6: TK-06 Nordic Pine Whispers
+# Track 6: TK-06 Nordic Pine Whispers (Silky Mountain Forest Wind)
 # ----------------------------------------------------------------------
 def generate_nordic_pines():
-    random.seed(1006)
+    # 1. Mountain breeze body (deep brown warmth)
+    brown = generate_brown_noise_bed(TOTAL_SAMPLES, seed=1009, leak=0.996, gain=0.045)
+    wind_body = lowpass_filter(brown, SAMPLE_RATE, 240.0)
+    wind_body = highpass_filter(wind_body, SAMPLE_RATE, 30.0)
+
+    # 2. Pine needle whisper (pink noise filtered warmly, no harsh treble)
+    pink = generate_pink_noise(TOTAL_SAMPLES, seed=1010)
+    needles = bandpass_filter(pink, SAMPLE_RATE, 220.0, 680.0)
+    needles = lowpass_filter(needles, SAMPLE_RATE, 550.0)
+
     samples = [0.0] * TOTAL_SAMPLES
-
-    white_noise = [random.gauss(0, 0.45) for _ in range(TOTAL_SAMPLES)]
-    wind_low = bandpass_filter(white_noise, SAMPLE_RATE, 160.0, 520.0)
-    wind_needles = bandpass_filter(white_noise, SAMPLE_RATE, 950.0, 2100.0)
-    wind_high = bandpass_filter(white_noise, SAMPLE_RATE, 2400.0, 3800.0)
-
     for idx in range(TOTAL_SAMPLES):
         t = idx / SAMPLE_RATE
-        # Harmonic wind swell synced to 16.0s cycle
-        gust1 = 0.60 + 0.40 * math.sin(2.0 * math.pi * (1.0 / 16.0) * t)
-        gust2 = 0.55 + 0.45 * math.sin(2.0 * math.pi * (2.0 / 16.0) * t + 0.8)
-        sheen = 0.70 + 0.30 * math.sin(2.0 * math.pi * (1.0 / 8.0) * t + 1.5)
-
-        samples[idx] = (
-            wind_low[idx] * 0.55 * gust1 +
-            wind_needles[idx] * 0.35 * gust2 +
-            wind_high[idx] * 0.12 * sheen
-        )
+        gust1 = 0.65 + 0.35 * math.sin(2.0 * math.pi * (1.0 / 16.0) * t)
+        gust2 = 0.60 + 0.40 * math.sin(2.0 * math.pi * (2.0 / 16.0) * t + 0.7)
+        samples[idx] = wind_body[idx] * 0.60 * gust1 + needles[idx] * 0.40 * gust2
 
     return crossfade_loop(samples, NUM_SAMPLES, FADE_SAMPLES)
 
 
 # ----------------------------------------------------------------------
-# Track 7: TK-07 Alpine Mountain Brook
+# Track 7: TK-07 Alpine Mountain Brook (Crystalline Smooth Murmur)
 # ----------------------------------------------------------------------
 def generate_alpine_brook():
-    random.seed(1007)
-    samples = [0.0] * TOTAL_SAMPLES
+    # 1. Continuous smooth mountain stream
+    pink = generate_pink_noise(TOTAL_SAMPLES, seed=1011)
+    stream = bandpass_filter(pink, SAMPLE_RATE, 150.0, 680.0)
+    stream = lowpass_filter(stream, SAMPLE_RATE, 580.0)
 
-    # Steady crystalline water flow
-    white_noise = [random.gauss(0, 0.4) for _ in range(TOTAL_SAMPLES)]
-    stream_mid = bandpass_filter(white_noise, SAMPLE_RATE, 280.0, 2600.0)
-    stream_high = bandpass_filter(white_noise, SAMPLE_RATE, 2600.0, 4800.0)
-    stream_sub = lowpass_filter(white_noise, SAMPLE_RATE, 180.0)
+    # 2. Deep stream floor
+    brown = generate_brown_noise_bed(TOTAL_SAMPLES, seed=1012, leak=0.997, gain=0.04)
+    floor = bandpass_filter(brown, SAMPLE_RATE, 40.0, 200.0)
 
-    # Bubbling liquid murmur
-    bubbles = [0.0] * TOTAL_SAMPLES
-    prob = 50.0 / SAMPLE_RATE
+    # 3. Soft liquid ripple eddies
+    rng = random.Random(1013)
+    ripples = [0.0] * TOTAL_SAMPLES
+    prob = 18.0 / SAMPLE_RATE
     for idx in range(TOTAL_SAMPLES):
-        if random.random() < prob:
-            freq = random.uniform(750.0, 2100.0)
-            amp = random.uniform(0.1, 0.25)
-            bub_len = min(TOTAL_SAMPLES - idx, int(0.025 * SAMPLE_RATE))
-            for k in range(bub_len):
+        if rng.random() < prob:
+            amp = rng.uniform(0.03, 0.08)
+            r_len = min(TOTAL_SAMPLES - idx, int(0.03 * SAMPLE_RATE))
+            f = rng.uniform(280.0, 480.0)
+            for k in range(r_len):
                 t = k / SAMPLE_RATE
-                bubbles[idx + k] += amp * math.exp(-90.0 * t) * math.sin(2.0 * math.pi * freq * t)
+                env = math.sin(math.pi * (k / r_len)) ** 2
+                ripples[idx + k] += amp * env * math.sin(2.0 * math.pi * f * t)
 
+    samples = [0.0] * TOTAL_SAMPLES
     for idx in range(TOTAL_SAMPLES):
-        samples[idx] = (
-            stream_mid[idx] * 0.50 +
-            stream_high[idx] * 0.22 +
-            stream_sub[idx] * 0.30 +
-            bubbles[idx] * 0.30
-        )
+        samples[idx] = stream[idx] * 0.60 + floor[idx] * 0.35 + ripples[idx] * 0.20
 
     return crossfade_loop(samples, NUM_SAMPLES, FADE_SAMPLES)
 
 
 # ----------------------------------------------------------------------
-# Track 8: TK-08 Warm Tape & Felt Piano
+# Track 8: TK-08 Warm Tape & Felt Piano (Subtle Analog Tape Bed & Pad)
 # ----------------------------------------------------------------------
 def generate_warm_tape():
-    random.seed(1008)
-    samples = [0.0] * TOTAL_SAMPLES
+    # 1. Warm analog tape bed
+    pink = generate_pink_noise(TOTAL_SAMPLES, seed=1014)
+    tape_bed = lowpass_filter(pink, SAMPLE_RATE, 340.0)
+    tape_bed = highpass_filter(tape_bed, SAMPLE_RATE, 35.0)
 
-    # Slow muted felt piano progression (4.0s per chord)
-    # Dm7 -> G7sus -> Cmaj7 -> Am7
+    # 2. Gentle sub-bass tape head presence (48 Hz warm bump)
+    # 3. Warm ambient harmonic pad (slow, very quiet, lowpassed at 280 Hz)
+    pad = [0.0] * TOTAL_SAMPLES
     chords = [
-        [146.83, 174.61, 220.00, 261.63],          # Dm7
-        [98.00, 174.61, 220.00, 261.63, 293.66],   # G7sus
-        [130.81, 164.81, 196.00, 246.94],          # Cmaj7
-        [110.00, 164.81, 196.00, 261.63],          # Am7
+        [146.83, 174.61, 220.00],  # Dm
+        [130.81, 164.81, 196.00],  # C
     ]
-    chord_duration = 4.0
-    piano = [0.0] * TOTAL_SAMPLES
-
+    chord_dur = 8.0
     for idx in range(TOTAL_SAMPLES):
         t = idx / SAMPLE_RATE
-        chord_idx = int(t / chord_duration) % len(chords)
-        t_chord = t % chord_duration
-        notes = chords[chord_idx]
+        c_idx = int(t / chord_dur) % len(chords)
+        t_chord = t % chord_dur
+        # Gentle swell envelope
+        env = math.sin(math.pi * (t_chord / chord_dur)) ** 2 * 0.06
+        tone = sum(math.sin(2.0 * math.pi * f * t) for f in chords[c_idx])
+        pad[idx] = tone * env
 
-        env = math.exp(-0.65 * t_chord) * (1.0 - math.exp(-25.0 * t_chord))
-        # Wow / flutter
-        flutter = 0.002 * math.sin(2.0 * math.pi * 0.5 * t)
+    pad_warm = lowpass_filter(pad, SAMPLE_RATE, 280.0)
 
-        chord_val = 0.0
-        for f in notes:
-            f_mod = f * (1.0 + flutter)
-            tone = (
-                math.sin(2.0 * math.pi * f_mod * t) * 0.70 +
-                math.sin(2.0 * math.pi * (2.0 * f_mod) * t) * 0.22 +
-                math.sin(2.0 * math.pi * (3.0 * f_mod) * t) * 0.08
-            )
-            chord_val += tone
-
-        chord_val /= len(notes)
-        piano[idx] = chord_val * env
-
-    # Muted felt piano roll-off
-    piano_muted = lowpass_filter(piano, SAMPLE_RATE, 1100.0)
-
-    # Analog tape saturation + hiss
-    hiss = [random.gauss(0, 0.03) for _ in range(TOTAL_SAMPLES)]
-    hiss_filtered = bandpass_filter(hiss, SAMPLE_RATE, 1000.0, 4500.0)
-
+    samples = [0.0] * TOTAL_SAMPLES
     for idx in range(TOTAL_SAMPLES):
-        raw_mix = piano_muted[idx] * 0.85 + hiss_filtered[idx] * 0.20
-        # Warm tanh analog saturation
-        samples[idx] = math.tanh(1.3 * raw_mix)
+        t = idx / SAMPLE_RATE
+        drift = 0.94 + 0.06 * math.sin(2.0 * math.pi * 0.2 * t)
+        samples[idx] = tape_bed[idx] * 0.70 * drift + pad_warm[idx] * 0.30
 
     return crossfade_loop(samples, NUM_SAMPLES, FADE_SAMPLES)
 
 
 # ----------------------------------------------------------------------
-# Track 9: TK-09 Zen Temple Bowl
+# Track 9: TK-09 Zen Temple Bowl (Deep Warm 108 Hz Singing Bowl)
 # ----------------------------------------------------------------------
 def generate_zen_bowl():
-    samples = [0.0] * TOTAL_SAMPLES
+    # Deep warm fundamental at 108 Hz (rich, calm sub-octave, zero high sibilance)
+    brown = generate_brown_noise_bed(TOTAL_SAMPLES, seed=1015, leak=0.997, gain=0.035)
+    bed = lowpass_filter(brown, SAMPLE_RATE, 160.0)
 
-    # Singing bowl fundamental at 216 Hz + harmonic overtones
-    # Two gentle strikes at t=0.5s and t=8.5s (8.0s decay cycle)
-    f0 = 216.0
-    strikes = [0.5, 8.5]
-
+    bowl = [0.0] * TOTAL_SAMPLES
+    f0 = 108.0
     for idx in range(TOTAL_SAMPLES):
         t = idx / SAMPLE_RATE
+        # Meditative 16-second breathing envelope
+        breath = math.sin(math.pi * (t / LOOP_DURATION)) ** 2
+        # Pure warm fundamental + gentle 2nd harmonic
+        tone = (math.sin(2.0 * math.pi * f0 * t) * 0.18 +
+                math.sin(2.0 * math.pi * (f0 * 2.0) * t) * 0.06)
+        bowl[idx] = tone * (0.4 + 0.6 * breath)
 
-        # Continuous sustained singing bowl hum (rim friction)
-        sustained = (
-            math.sin(2.0 * math.pi * f0 * t) * 0.25 +
-            math.sin(2.0 * math.pi * (f0 + 0.6) * t) * 0.15 +
-            math.sin(2.0 * math.pi * (f0 * 2.76) * t) * 0.10
-        )
+    bowl_warm = lowpass_filter(bowl, SAMPLE_RATE, 320.0)
 
-        strike_val = 0.0
-        for st in strikes:
-            if t >= st:
-                ts = t - st
-                env = math.exp(-0.35 * ts) * (1.0 - math.exp(-80.0 * ts))
-                # Acoustic beating between close modes
-                s_tone = (
-                    math.sin(2.0 * math.pi * f0 * ts) * 0.40 +
-                    math.sin(2.0 * math.pi * (f0 + 0.75) * ts) * 0.30 +
-                    math.sin(2.0 * math.pi * (f0 * 2.76) * ts) * 0.20 +
-                    math.sin(2.0 * math.pi * (f0 * 5.40) * ts) * 0.08 +
-                    math.sin(2.0 * math.pi * (f0 * 8.93) * ts) * 0.02
-                )
-                strike_val += s_tone * env
-
-        samples[idx] = sustained + strike_val
-
-    # Very subtle air presence
-    random.seed(1009)
-    air = [random.gauss(0, 0.02) for _ in range(TOTAL_SAMPLES)]
-    air_filtered = bandpass_filter(air, SAMPLE_RATE, 200.0, 1800.0)
+    samples = [0.0] * TOTAL_SAMPLES
     for idx in range(TOTAL_SAMPLES):
-        samples[idx] += air_filtered[idx]
+        samples[idx] = bed[idx] * 0.45 + bowl_warm[idx] * 0.55
 
     return crossfade_loop(samples, NUM_SAMPLES, FADE_SAMPLES)
 
 
 # ----------------------------------------------------------------------
-# Track 10: TK-10 Misty Morning Meadow
+# Track 10: TK-10 Misty Morning Meadow (Gentle Sunrise Dew Breeze)
 # ----------------------------------------------------------------------
 def generate_morning_meadow():
-    random.seed(1010)
+    # Warm, silky dawn air breeze (pink noise lowpassed warmly)
+    pink = generate_pink_noise(TOTAL_SAMPLES, seed=1016)
+    dawn_air = bandpass_filter(pink, SAMPLE_RATE, 90.0, 480.0)
+    dawn_air = lowpass_filter(dawn_air, SAMPLE_RATE, 420.0)
+
+    brown = generate_brown_noise_bed(TOTAL_SAMPLES, seed=1017, leak=0.996, gain=0.03)
+    earth = lowpass_filter(brown, SAMPLE_RATE, 150.0)
+
     samples = [0.0] * TOTAL_SAMPLES
-
-    # 1. Soft morning air tone
-    white_noise = [random.gauss(0, 0.25) for _ in range(TOTAL_SAMPLES)]
-    air_tone = bandpass_filter(white_noise, SAMPLE_RATE, 120.0, 1200.0)
-
-    # 2. Quiet fifth drone (C3 130.81 Hz + G3 196.00 Hz)
     for idx in range(TOTAL_SAMPLES):
         t = idx / SAMPLE_RATE
-        breath = 0.85 + 0.15 * math.sin(2.0 * math.pi * (1.0 / 16.0) * t)
-        drone = (
-            math.sin(2.0 * math.pi * 130.81 * t) * 0.05 +
-            math.sin(2.0 * math.pi * 196.00 * t) * 0.035
-        )
-        air_tone[idx] = air_tone[idx] * breath + drone
-
-    # 3. Delicate dew drop ticks at t=2.0s, 6.0s, 10.0s, 14.0s
-    dew_times = [2.0, 6.0, 10.0, 14.0]
-    dew_buffer = [0.0] * TOTAL_SAMPLES
-    for dt in dew_times:
-        start_idx = int(dt * SAMPLE_RATE)
-        dur = min(TOTAL_SAMPLES - start_idx, int(0.02 * SAMPLE_RATE))
-        for k in range(dur):
-            t = k / SAMPLE_RATE
-            drop = math.exp(-150.0 * t) * math.sin(2.0 * math.pi * 1850.0 * t) * 0.15
-            dew_buffer[start_idx + k] += drop
-
-    for idx in range(TOTAL_SAMPLES):
-        samples[idx] = air_tone[idx] * 0.75 + dew_buffer[idx]
+        swell = 0.90 + 0.10 * math.sin(2.0 * math.pi * (1.0 / 16.0) * t)
+        samples[idx] = (dawn_air[idx] * 0.65 + earth[idx] * 0.35) * swell
 
     return crossfade_loop(samples, NUM_SAMPLES, FADE_SAMPLES)
 
 
 # ----------------------------------------------------------------------
-# Track 11: TK-11 Pure Focus White Noise
+# Track 11: TK-11 Pure Focus Velvet Noise (Smooth 1/f Pink Noise Shelf)
 # ----------------------------------------------------------------------
 def generate_pure_white_noise():
-    random.seed(1011)
+    # True Velvet Pink Noise (1/f) - gentle, smooth, soothing focus shelf
+    pink = generate_pink_noise(TOTAL_SAMPLES, seed=1018)
+    # Gentle lowpass shelf at 680 Hz to eliminate harsh high-frequency sizzle completely
+    velvet = lowpass_filter(pink, SAMPLE_RATE, 680.0)
+    velvet = highpass_filter(velvet, SAMPLE_RATE, 35.0)
 
-    # Gaussian white noise with psychoacoustic band limiting
-    white_noise = [random.gauss(0, 0.35) for _ in range(TOTAL_SAMPLES)]
-    shaped = bandpass_filter(white_noise, SAMPLE_RATE, 55.0, 8500.0)
-
-    return crossfade_loop(shaped, NUM_SAMPLES, FADE_SAMPLES)
+    return crossfade_loop(velvet, NUM_SAMPLES, FADE_SAMPLES)
 
 
 # ----------------------------------------------------------------------
-# Track 12: TK-12 Timber Acoustic Chamber
+# Track 12: TK-12 Timber Acoustic Chamber (Warm Wooden Room Tone)
 # ----------------------------------------------------------------------
 def generate_timber_chamber():
-    random.seed(1012)
+    # Warm acoustic room tone with natural wood warmth (zero metallic comb filters)
+    brown = generate_brown_noise_bed(TOTAL_SAMPLES, seed=1019, leak=0.997, gain=0.045)
+    timber = bandpass_filter(brown, SAMPLE_RATE, 45.0, 260.0)
+    timber = lowpass_filter(timber, SAMPLE_RATE, 220.0)
+
+    pink = generate_pink_noise(TOTAL_SAMPLES, seed=1020)
+    wood_air = bandpass_filter(pink, SAMPLE_RATE, 110.0, 320.0)
+
     samples = [0.0] * TOTAL_SAMPLES
-
-    # Dry timber room tone with wooden resonance modes
-    white_noise = [random.gauss(0, 0.3) for _ in range(TOTAL_SAMPLES)]
-    room = bandpass_filter(white_noise, SAMPLE_RATE, 80.0, 850.0)
-
-    # Wood resonance peaks (95 Hz, 160 Hz, 280 Hz, 440 Hz, 680 Hz)
-    modes = [95.0, 160.0, 280.0, 440.0, 680.0]
-    weights = [0.04, 0.035, 0.025, 0.018, 0.01]
-
     for idx in range(TOTAL_SAMPLES):
         t = idx / SAMPLE_RATE
-        mode_val = sum(math.sin(2.0 * math.pi * m * t) * w for m, w in zip(modes, weights))
-        room[idx] += mode_val
-
-    # Multi-tap wood boundary reflection delay
-    delays = [int(0.015 * SAMPLE_RATE), int(0.028 * SAMPLE_RATE), int(0.045 * SAMPLE_RATE)]
-    decay_factors = [0.25, 0.18, 0.10]
-    refl = list(room)
-    for d, decay in zip(delays, decay_factors):
-        for idx in range(d, TOTAL_SAMPLES):
-            refl[idx] += room[idx - d] * decay
-
-    filtered_refl = lowpass_filter(refl, SAMPLE_RATE, 950.0)
-
-    for idx in range(TOTAL_SAMPLES):
-        t = idx / SAMPLE_RATE
-        breath = 0.92 + 0.08 * math.sin(2.0 * math.pi * 0.0625 * t)
-        samples[idx] = filtered_refl[idx] * 0.65 * breath
+        breathe = 0.92 + 0.08 * math.sin(2.0 * math.pi * (1.0 / 16.0) * t)
+        samples[idx] = (timber[idx] * 0.65 + wood_air[idx] * 0.35) * breathe
 
     return crossfade_loop(samples, NUM_SAMPLES, FADE_SAMPLES)
 
@@ -594,7 +490,7 @@ def main():
         ('vinyl_timber_chamber.wav', generate_timber_chamber),
     ]
 
-    print("=== Generating 12 Curated Vinyl Focus Soundscapes ===")
+    print("=== Generating 12 Calibrated Velvet Vinyl Focus Soundscapes ===")
     for filename, generator in tracks:
         filepath = os.path.join(assets_dir, filename)
         print(f"Synthesizing {filename}...")
