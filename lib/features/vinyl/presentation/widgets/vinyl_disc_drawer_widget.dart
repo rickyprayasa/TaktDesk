@@ -3,12 +3,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/theme/takt_colors.dart';
 import '../../../../app/theme/takt_typography.dart';
 import '../../../../app/theme/theme_controller.dart';
+import '../../../../core/audio/audio_service.dart';
+import '../../../../core/audio/sound_effect.dart';
+import '../../../../core/haptics/haptic_service.dart';
 import '../../../settings/presentation/settings_controller.dart';
 import '../../../settings/presentation/widgets/studio_pro_dialog.dart';
 import '../../domain/vinyl_track.dart';
 import '../vinyl_controller.dart';
 
-/// Industrial Slide-Out Disc Drawer attached to the bottom of the BRAUN TP-1 Turntable.
+/// Industrial Slide-Out Dual Disc Drawer attached to the bottom of the BRAUN TP-1 Turntable.
+///
+/// Features two vertically stacked modular chassis bays:
+/// - Drawer 01 (Nature presets, tracks 0..5)
+/// - Drawer 02 (Harmonics presets, tracks 6..11)
+///
+/// Each drawer maintains independent expansion state, smooth animated transitions,
+/// tactile foley feedback, and a dedicated 6-disc carousel.
 class VinylDiscDrawerWidget extends ConsumerStatefulWidget {
   const VinylDiscDrawerWidget({super.key});
 
@@ -17,32 +27,77 @@ class VinylDiscDrawerWidget extends ConsumerStatefulWidget {
 }
 
 class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
-  late final PageController _pageController;
-  int _currentPage = 0;
+  late final PageController _pageController1;
+  late final PageController _pageController2;
+  int _currentPage1 = 0;
+  int _currentPage2 = 0;
+  bool _isDrawer1Open = false;
+  bool _isDrawer2Open = false;
 
   @override
   void initState() {
     super.initState();
     final initialIndex = ref.read(vinylProvider).selectedTrackIndex;
-    _currentPage = initialIndex;
-    _pageController = PageController(
-      initialPage: initialIndex,
+    if (initialIndex < 6) {
+      _currentPage1 = initialIndex;
+      _currentPage2 = 0;
+    } else {
+      _currentPage1 = 0;
+      _currentPage2 = (initialIndex - 6).clamp(0, 5);
+    }
+
+    _pageController1 = PageController(
+      initialPage: _currentPage1,
+      viewportFraction: 0.86,
+    );
+    _pageController2 = PageController(
+      initialPage: _currentPage2,
       viewportFraction: 0.86,
     );
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _pageController1.dispose();
+    _pageController2.dispose();
     super.dispose();
   }
 
-  void _goToPage(int page) {
-    if (page < 0 || page >= VinylTrack.presets.length) return;
-    _pageController.animateToPage(
+  void _goToPage1(int page) {
+    if (page < 0 || page >= VinylTrack.drawer1Presets.length) return;
+    _pageController1.animateToPage(
       page,
       duration: const Duration(milliseconds: 240),
       curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _goToPage2(int page) {
+    if (page < 0 || page >= VinylTrack.drawer2Presets.length) return;
+    _pageController2.animateToPage(
+      page,
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _toggleDrawer(int drawerNumber) {
+    HapticService.selectionClick();
+    final bool nextOpen;
+    if (drawerNumber == 1) {
+      nextOpen = !_isDrawer1Open;
+      setState(() {
+        _isDrawer1Open = nextOpen;
+      });
+    } else {
+      nextOpen = !_isDrawer2Open;
+      setState(() {
+        _isDrawer2Open = nextOpen;
+      });
+    }
+
+    ref.read(audioServiceProvider).playFoley(
+      nextOpen ? SoundEffect.drawerSlide : SoundEffect.drawerLatch,
     );
   }
 
@@ -51,12 +106,86 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
     final vinylState = ref.watch(vinylProvider);
     final vinylController = ref.read(vinylProvider.notifier);
     final themeState = ref.watch(chassisThemeProvider);
-    final isOpen = vinylState.isDrawerOpen;
-    final totalTracks = VinylTrack.presets.length;
+    final isProSimulated =
+        ref.watch(deskPreferencesControllerProvider).isProSimulated;
+
+    return Column(
+      key: const ValueKey('vinyl_disc_drawer_container'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Drawer 01: Nature soundscapes (Tracks 0..5)
+        _buildDrawerChassis(
+          drawerNumber: 1,
+          title: '01',
+          category: 'NATURE',
+          isOpen: _isDrawer1Open,
+          tracks: VinylTrack.drawer1Presets,
+          pageController: _pageController1,
+          currentPage: _currentPage1,
+          onPrev:
+              _currentPage1 > 0 ? () => _goToPage1(_currentPage1 - 1) : null,
+          onNext: _currentPage1 < VinylTrack.drawer1Presets.length - 1
+              ? () => _goToPage1(_currentPage1 + 1)
+              : null,
+          onPageChanged: (idx) {
+            setState(() {
+              _currentPage1 = idx;
+            });
+          },
+          themeState: themeState,
+          vinylState: vinylState,
+          vinylController: vinylController,
+          isProSimulated: isProSimulated,
+        ),
+        const SizedBox(height: 6),
+        // Drawer 02: Harmonics soundscapes (Tracks 6..11)
+        _buildDrawerChassis(
+          drawerNumber: 2,
+          title: '02',
+          category: 'HARMONICS',
+          isOpen: _isDrawer2Open,
+          tracks: VinylTrack.drawer2Presets,
+          pageController: _pageController2,
+          currentPage: _currentPage2,
+          onPrev:
+              _currentPage2 > 0 ? () => _goToPage2(_currentPage2 - 1) : null,
+          onNext: _currentPage2 < VinylTrack.drawer2Presets.length - 1
+              ? () => _goToPage2(_currentPage2 + 1)
+              : null,
+          onPageChanged: (idx) {
+            setState(() {
+              _currentPage2 = idx;
+            });
+          },
+          themeState: themeState,
+          vinylState: vinylState,
+          vinylController: vinylController,
+          isProSimulated: isProSimulated,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDrawerChassis({
+    required int drawerNumber,
+    required String title,
+    required String category,
+    required bool isOpen,
+    required List<VinylTrack> tracks,
+    required PageController pageController,
+    required int currentPage,
+    required VoidCallback? onPrev,
+    required VoidCallback? onNext,
+    required ValueChanged<int> onPageChanged,
+    required dynamic themeState,
+    required dynamic vinylState,
+    required VinylController vinylController,
+    required bool isProSimulated,
+  }) {
+    final totalTracks = tracks.length;
 
     return Container(
-      key: const ValueKey('vinyl_disc_drawer_container'),
-      margin: const EdgeInsets.only(top: 8),
+      margin: EdgeInsets.only(top: drawerNumber == 1 ? 8 : 0),
       decoration: BoxDecoration(
         color: themeState.isDarkMode
             ? const Color(0xFF1B1E22)
@@ -82,12 +211,12 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
           // 1. Brushed Metal Handle Bar
           Semantics(
             button: true,
-            label: 'Toggle record crate drawer',
+            label: 'Toggle record crate drawer $drawerNumber',
             child: InkWell(
-              onTap: vinylController.toggleDrawer,
+              key: ValueKey('vinyl_drawer_${drawerNumber}_handle'),
+              onTap: () => _toggleDrawer(drawerNumber),
               borderRadius: BorderRadius.circular(6),
               child: Container(
-                key: const ValueKey('vinyl_drawer_handle_bar'),
                 height: 32,
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
@@ -101,26 +230,27 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                 child: Row(
                   children: [
                     _buildRivet(
-                      key: const ValueKey('vinyl_drawer_rivet_left'),
+                      key: ValueKey('vinyl_drawer_${drawerNumber}_rivet_left'),
                       rivetColor: themeState.rivetColor,
                     ),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Center(
                         child: Container(
-                          key: const ValueKey('vinyl_drawer_handle_plate'),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 6,
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
                             color: themeState.isDarkMode
-                                ? themeState.filamentColor.withValues(alpha: 0.15)
+                                ? themeState.filamentColor
+                                    .withValues(alpha: 0.15)
                                 : themeState.canvasColor,
                             borderRadius: BorderRadius.circular(3),
                             border: Border.all(
                               color: themeState.isDarkMode
-                                  ? themeState.filamentColor.withValues(alpha: 0.7)
+                                  ? themeState.filamentColor
+                                      .withValues(alpha: 0.7)
                                   : themeState.borderColor,
                               width: 0.8,
                             ),
@@ -128,7 +258,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
-                              '[ RECORD DRAWER // ${totalTracks.toString().padLeft(2, '0')} DISCS ${isOpen ? '▲' : '▾'} ]',
+                              '[ RECORD DRAWER $title // ${totalTracks.toString().padLeft(2, '0')} DISCS · $category ${isOpen ? '▲' : '▾'} ]',
                               style: TextStyle(
                                 fontFamily: 'monospace',
                                 fontSize: 8.5,
@@ -144,7 +274,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                     ),
                     const SizedBox(width: 4),
                     _buildRivet(
-                      key: const ValueKey('vinyl_drawer_rivet_right'),
+                      key: ValueKey('vinyl_drawer_${drawerNumber}_rivet_right'),
                       rivetColor: themeState.rivetColor,
                     ),
                   ],
@@ -159,7 +289,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
             curve: Curves.easeInOutCubic,
             child: isOpen
                 ? Container(
-                    key: const ValueKey('vinyl_drawer_interior_bay'),
+                    key: ValueKey('vinyl_drawer_${drawerNumber}_interior_bay'),
                     padding: const EdgeInsets.fromLTRB(6, 6, 6, 8),
                     decoration: BoxDecoration(
                       border: Border(
@@ -179,41 +309,40 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                         // Micro navigation strip with counter and arrow buttons
                         Padding(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
+                            horizontal: 2,
                             vertical: 2,
                           ),
                           child: Row(
                             children: [
                               Text(
-                                'ARCHIVE',
+                                'ARCHIVE $title',
                                 style: TaktTypography.controlLabel.copyWith(
-                                  fontSize: 8.0,
+                                  fontSize: 7.5,
                                   color: themeState.chassisMutedTextColor,
                                 ),
                               ),
                               const Spacer(),
                               Text(
-                                '[ ${(_currentPage + 1).toString().padLeft(2, '0')} / ${totalTracks.toString().padLeft(2, '0')} ]',
+                                '[ ${(currentPage + 1).toString().padLeft(2, '0')} / 06 ]',
                                 style: TextStyle(
                                   fontFamily: 'monospace',
-                                  fontSize: 9.5,
+                                  fontSize: 8.5,
                                   fontWeight: FontWeight.w700,
                                   color: themeState.chassisMutedTextColor,
                                 ),
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 2),
                               InkWell(
-                                key: const ValueKey('drawer_prev_disc'),
-                                onTap: _currentPage > 0
-                                    ? () => _goToPage(_currentPage - 1)
-                                    : null,
+                                key: ValueKey(
+                                    'drawer_${drawerNumber}_prev_disc'),
+                                onTap: onPrev,
                                 borderRadius: BorderRadius.circular(3),
                                 child: Padding(
-                                  padding: const EdgeInsets.all(2),
+                                  padding: const EdgeInsets.all(1),
                                   child: Icon(
                                     Icons.chevron_left,
-                                    size: 16,
-                                    color: _currentPage > 0
+                                    size: 15,
+                                    color: onPrev != null
                                         ? themeState.chassisTextColor
                                         : themeState.chassisMutedTextColor
                                             .withValues(alpha: 0.35),
@@ -221,17 +350,16 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                                 ),
                               ),
                               InkWell(
-                                key: const ValueKey('drawer_next_disc'),
-                                onTap: _currentPage < totalTracks - 1
-                                    ? () => _goToPage(_currentPage + 1)
-                                    : null,
+                                key: ValueKey(
+                                    'drawer_${drawerNumber}_next_disc'),
+                                onTap: onNext,
                                 borderRadius: BorderRadius.circular(3),
                                 child: Padding(
-                                  padding: const EdgeInsets.all(2),
+                                  padding: const EdgeInsets.all(1),
                                   child: Icon(
                                     Icons.chevron_right,
-                                    size: 16,
-                                    color: _currentPage < totalTracks - 1
+                                    size: 15,
+                                    color: onNext != null
                                         ? themeState.chassisTextColor
                                         : themeState.chassisMutedTextColor
                                             .withValues(alpha: 0.35),
@@ -247,25 +375,18 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                         SizedBox(
                           height: 140,
                           child: PageView.builder(
-                            controller: _pageController,
+                            controller: pageController,
                             itemCount: totalTracks,
-                            onPageChanged: (idx) {
-                              setState(() {
-                                _currentPage = idx;
-                              });
-                            },
+                            onPageChanged: onPageChanged,
                             itemBuilder: (context, index) {
-                              final track = VinylTrack.presets[index];
+                              final track = tracks[index];
                               final isSelected =
-                                  vinylState.selectedTrackIndex == index;
-                              final isProSimulated = ref
-                                  .watch(deskPreferencesControllerProvider)
-                                  .isProSimulated;
+                                  vinylState.selectedTrackIndex == track.index;
                               final isUnlocked =
                                   !track.isPremium || isProSimulated;
 
                               return _CompactRecordSleeveCard(
-                                key: ValueKey('record_sleeve_$index'),
+                                key: ValueKey('record_sleeve_${track.index}'),
                                 track: track,
                                 isSelected: isSelected,
                                 isUnlocked: isUnlocked,
@@ -391,7 +512,8 @@ class _CompactRecordSleeveCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
                 decoration: BoxDecoration(
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.08)

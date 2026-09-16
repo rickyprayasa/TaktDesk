@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/core/audio/audio_service.dart';
+import 'package:takt_desk/core/audio/sound_effect.dart';
 import 'package:takt_desk/features/settings/presentation/settings_controller.dart';
-import 'package:takt_desk/features/vinyl/domain/vinyl_track.dart';
 import 'package:takt_desk/features/vinyl/presentation/vinyl_controller.dart';
 import 'package:takt_desk/features/vinyl/presentation/widgets/vinyl_disc_drawer_widget.dart';
 
@@ -19,27 +19,37 @@ class FakeDeskPreferencesController extends DeskPreferencesController {
   }
 }
 
+class MockAudioService extends AudioService {
+  final List<SoundEffect> playedEffects = [];
+
+  MockAudioService() : super(isMock: true);
+
+  @override
+  void playFoley(SoundEffect effect) {
+    playedEffects.add(effect);
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   Widget buildTestApp({
     bool isProSimulated = false,
     int initialTrackIndex = 0,
-    bool initialDrawerOpen = false,
+    AudioService? audioService,
   }) {
     final prefsController =
         FakeDeskPreferencesController(isProSimulated: isProSimulated);
+    final mockAudio = audioService ?? MockAudioService();
 
     return ProviderScope(
       overrides: [
         deskPreferencesControllerProvider.overrideWith((ref) => prefsController),
+        audioServiceProvider.overrideWithValue(mockAudio),
         vinylProvider.overrideWith((ref) {
-          final controller = VinylController(AudioService(isMock: true));
+          final controller = VinylController(mockAudio);
           if (initialTrackIndex != 0) {
             controller.selectTrack(initialTrackIndex, isPro: isProSimulated);
-          }
-          if (initialDrawerOpen) {
-            controller.setDrawerOpen(true);
           }
           return controller;
         }),
@@ -48,8 +58,10 @@ void main() {
         home: Scaffold(
           body: Center(
             child: SizedBox(
-              width: 320,
-              child: VinylDiscDrawerWidget(),
+              width: 340,
+              child: SingleChildScrollView(
+                child: VinylDiscDrawerWidget(),
+              ),
             ),
           ),
         ),
@@ -57,160 +69,169 @@ void main() {
     );
   }
 
-  group('VinylDiscDrawerWidget', () {
-    testWidgets('Initial closed state displays handle bar with [ RECORD DRAWER // 12 DISCS ▾ ]',
-        (tester) async {
+  group('VinylDiscDrawerWidget - Dual Record Drawers', () {
+    testWidgets('renders dual record drawers (Drawer 01 & Drawer 02) in closed state', (tester) async {
       await tester.pumpWidget(buildTestApp());
       await tester.pumpAndSettle();
 
-      expect(find.text('[ RECORD DRAWER // 12 DISCS ▾ ]'), findsOneWidget);
-      expect(
-        find.byWidgetPredicate((w) =>
-            w is Semantics &&
-            w.properties.label == 'Toggle record crate drawer'),
-        findsOneWidget,
-      );
-      // Carousel interior bay should not be shown when closed
+      // Verify both drawer handle plates are rendered
+      expect(find.byKey(const ValueKey('vinyl_drawer_1_handle')), findsOneWidget);
+      expect(find.byKey(const ValueKey('vinyl_drawer_2_handle')), findsOneWidget);
+
+      expect(find.text('[ RECORD DRAWER 01 // 06 DISCS · NATURE ▾ ]'), findsOneWidget);
+      expect(find.text('[ RECORD DRAWER 02 // 06 DISCS · HARMONICS ▾ ]'), findsOneWidget);
+
+      // Carousels are closed initially
       expect(find.byType(PageView), findsNothing);
     });
 
-    testWidgets('Tapping handle opens drawer and displays carousel with 12 cards',
-        (tester) async {
-      await tester.pumpWidget(buildTestApp());
+    testWidgets('expanding Drawer 1 displays 6 sleeves and allows navigation', (tester) async {
+      final mockAudio = MockAudioService();
+      await tester.pumpWidget(buildTestApp(audioService: mockAudio));
       await tester.pumpAndSettle();
 
-      // Tap handle
-      await tester.tap(find.text('[ RECORD DRAWER // 12 DISCS ▾ ]'));
+      // Tap Drawer 1 handle
+      await tester.tap(find.byKey(const ValueKey('vinyl_drawer_1_handle')));
       await tester.pumpAndSettle();
 
-      // Drawer is open
-      expect(find.text('[ RECORD DRAWER // 12 DISCS ▲ ]'), findsOneWidget);
+      // Drawer 1 is open, Drawer 2 remains closed
+      expect(find.text('[ RECORD DRAWER 01 // 06 DISCS · NATURE ▲ ]'), findsOneWidget);
+      expect(find.text('[ RECORD DRAWER 02 // 06 DISCS · HARMONICS ▾ ]'), findsOneWidget);
+      expect(mockAudio.playedEffects, contains(SoundEffect.drawerSlide));
+
+      // PageView is visible with Drawer 1 items (0..5)
       expect(find.byType(PageView), findsOneWidget);
-      expect(find.text('[ 01 / 12 ]'), findsOneWidget);
-      expect(find.byKey(const ValueKey('drawer_prev_disc')), findsOneWidget);
-      expect(find.byKey(const ValueKey('drawer_next_disc')), findsOneWidget);
-
-      // First sleeve is visible
+      expect(find.text('[ 01 / 06 ]'), findsOneWidget);
       expect(find.byKey(const ValueKey('record_sleeve_0')), findsOneWidget);
       expect(find.text('TK-01'), findsOneWidget);
       expect(find.text('LO-FI RAIN'), findsOneWidget);
       expect(find.text('[ ON PLATTER ]'), findsOneWidget);
 
-      // Verify all 12 sleeves can be scrolled/navigated to
-      for (int i = 1; i < 12; i++) {
-        await tester.tap(find.byKey(const ValueKey('drawer_next_disc')));
-        await tester.pumpAndSettle();
-        expect(find.byKey(ValueKey('record_sleeve_$i')), findsOneWidget);
-        expect(find.text(VinylTrack.presets[i].catalogId), findsOneWidget);
-      }
+      // Navigate to next disc in Drawer 1
+      await tester.tap(find.byKey(const ValueKey('drawer_1_next_disc')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('[ 02 / 06 ]'), findsOneWidget);
+      expect(find.byKey(const ValueKey('record_sleeve_1')), findsOneWidget);
+      expect(find.text('TK-02'), findsOneWidget);
+      expect(find.text('DEEP BROWN NOISE'), findsOneWidget);
     });
 
-    testWidgets('Tapping [ LOAD TO PLATTER ] calls controller.selectTrack(index)',
-        (tester) async {
-      await tester.pumpWidget(buildTestApp(initialDrawerOpen: true));
+    testWidgets('expanding Drawer 2 displays 6 sleeves (6..11) independently', (tester) async {
+      final mockAudio = MockAudioService();
+      await tester.pumpWidget(buildTestApp(audioService: mockAudio));
       await tester.pumpAndSettle();
 
-      // Initially on track 0
-      expect(find.text('[ ON PLATTER ]'), findsOneWidget);
+      // Tap Drawer 2 handle
+      await tester.tap(find.byKey(const ValueKey('vinyl_drawer_2_handle')));
+      await tester.pumpAndSettle();
+
+      // Drawer 1 is closed, Drawer 2 is open
+      expect(find.text('[ RECORD DRAWER 01 // 06 DISCS · NATURE ▾ ]'), findsOneWidget);
+      expect(find.text('[ RECORD DRAWER 02 // 06 DISCS · HARMONICS ▲ ]'), findsOneWidget);
+      expect(mockAudio.playedEffects, contains(SoundEffect.drawerSlide));
+
+      // Drawer 2 items start with index 6
+      expect(find.byType(PageView), findsOneWidget);
+      expect(find.text('[ 01 / 06 ]'), findsOneWidget);
+      expect(find.byKey(const ValueKey('record_sleeve_6')), findsOneWidget);
+      expect(find.text('TK-07'), findsOneWidget);
+      expect(find.text('ALPINE MOUNTAIN BROOK'), findsOneWidget);
+    });
+
+    testWidgets('both drawers can be open simultaneously and closed independently', (tester) async {
+      final mockAudio = MockAudioService();
+      await tester.pumpWidget(buildTestApp(audioService: mockAudio));
+      await tester.pumpAndSettle();
+
+      // Open Drawer 1
+      await tester.tap(find.byKey(const ValueKey('vinyl_drawer_1_handle')));
+      await tester.pumpAndSettle();
+
+      // Open Drawer 2
+      await tester.tap(find.byKey(const ValueKey('vinyl_drawer_2_handle')));
+      await tester.pumpAndSettle();
+
+      // Both drawers are open
+      expect(find.text('[ RECORD DRAWER 01 // 06 DISCS · NATURE ▲ ]'), findsOneWidget);
+      expect(find.text('[ RECORD DRAWER 02 // 06 DISCS · HARMONICS ▲ ]'), findsOneWidget);
+      expect(find.byType(PageView), findsNWidgets(2));
+
+      // Close Drawer 1
+      await tester.tap(find.byKey(const ValueKey('vinyl_drawer_1_handle')));
+      await tester.pumpAndSettle();
+
+      // Drawer 1 closed, Drawer 2 remains open
+      expect(find.text('[ RECORD DRAWER 01 // 06 DISCS · NATURE ▾ ]'), findsOneWidget);
+      expect(find.text('[ RECORD DRAWER 02 // 06 DISCS · HARMONICS ▲ ]'), findsOneWidget);
+      expect(find.byType(PageView), findsOneWidget);
+      expect(mockAudio.playedEffects, contains(SoundEffect.drawerLatch));
+    });
+
+    testWidgets('loading track in Drawer 1 selects it onto the platter', (tester) async {
+      await tester.pumpWidget(buildTestApp());
+      await tester.pumpAndSettle();
+
+      // Open Drawer 1
+      await tester.tap(find.byKey(const ValueKey('vinyl_drawer_1_handle')));
+      await tester.pumpAndSettle();
 
       // Navigate to Track 1
-      await tester.tap(find.byKey(const ValueKey('drawer_next_disc')));
+      await tester.tap(find.byKey(const ValueKey('drawer_1_next_disc')));
       await tester.pumpAndSettle();
 
-      expect(find.text('[ 02 / 12 ]'), findsOneWidget);
-      expect(find.text('DEEP BROWN NOISE'), findsOneWidget);
       final loadButton = find.byKey(const ValueKey('load_track_button_1'));
       expect(loadButton, findsOneWidget);
-      expect(
-        find.descendant(of: loadButton, matching: find.text('[ LOAD TO PLATTER ]')),
-        findsOneWidget,
-      );
-
-      // Tap load to platter
       await tester.tap(loadButton);
       await tester.pumpAndSettle();
 
-      // Now Track 1 is active on platter
+      // Track 1 is now on platter
       expect(find.text('[ ON PLATTER ]'), findsOneWidget);
       expect(find.byKey(const ValueKey('load_track_button_1')), findsNothing);
     });
 
-    testWidgets('Tapping locked track opens showStudioProDialog when isPro == false',
-        (tester) async {
-      await tester.pumpWidget(buildTestApp(
-        initialDrawerOpen: true,
-        isProSimulated: false,
-      ));
+    testWidgets('Drawer 2 premium tracks trigger Studio Pro dialog when locked', (tester) async {
+      await tester.pumpWidget(buildTestApp(isProSimulated: false));
       await tester.pumpAndSettle();
 
-      // Navigate to Track 4 (Campfire Embers - premium)
-      for (int i = 0; i < 4; i++) {
-        await tester.tap(find.byKey(const ValueKey('drawer_next_disc')));
-        await tester.pumpAndSettle();
-      }
+      // Open Drawer 2
+      await tester.tap(find.byKey(const ValueKey('vinyl_drawer_2_handle')));
+      await tester.pumpAndSettle();
 
-      expect(find.text('[ 05 / 12 ]'), findsOneWidget);
-      expect(find.text('CAMPFIRE EMBERS'), findsOneWidget);
-      final lockedButton = find.byKey(const ValueKey('locked_track_button_4'));
+      // Track 6 is premium (Alpine Mountain Brook)
+      final lockedButton = find.byKey(const ValueKey('locked_track_button_6'));
       expect(lockedButton, findsOneWidget);
-      expect(
-        find.descendant(of: lockedButton, matching: find.text('[ STUDIO PRO 🔒 ]')),
-        findsOneWidget,
-      );
-
-      // Tap locked button
       await tester.tap(lockedButton);
       await tester.pumpAndSettle();
 
-      // Studio Pro dialog should appear
+      // Studio Pro dialog is shown
       expect(find.text('ZYKL STUDIO PRO'), findsOneWidget);
       expect(
         find.descendant(
           of: find.byType(AlertDialog),
-          matching: find.textContaining('CAMPFIRE EMBERS'),
+          matching: find.textContaining('ALPINE MOUNTAIN BROOK'),
         ),
         findsOneWidget,
       );
     });
 
-    testWidgets('When isPro == true, premium track displays [ LOAD TO PLATTER ]',
-        (tester) async {
-      await tester.pumpWidget(buildTestApp(
-        initialDrawerOpen: true,
-        isProSimulated: true,
-      ));
+    testWidgets('Drawer 2 premium tracks can be loaded when isProSimulated is true', (tester) async {
+      await tester.pumpWidget(buildTestApp(isProSimulated: true));
       await tester.pumpAndSettle();
 
-      // Navigate to Track 4
-      for (int i = 0; i < 4; i++) {
-        await tester.tap(find.byKey(const ValueKey('drawer_next_disc')));
-        await tester.pumpAndSettle();
-      }
+      // Open Drawer 2
+      await tester.tap(find.byKey(const ValueKey('vinyl_drawer_2_handle')));
+      await tester.pumpAndSettle();
 
-      expect(find.text('CAMPFIRE EMBERS'), findsOneWidget);
-      final loadButton = find.byKey(const ValueKey('load_track_button_4'));
+      // Track 6 should have load button
+      final loadButton = find.byKey(const ValueKey('load_track_button_6'));
       expect(loadButton, findsOneWidget);
-      expect(find.byKey(const ValueKey('locked_track_button_4')), findsNothing);
+      expect(find.byKey(const ValueKey('locked_track_button_6')), findsNothing);
 
-      // Tap load button
       await tester.tap(loadButton);
       await tester.pumpAndSettle();
 
       expect(find.text('[ ON PLATTER ]'), findsOneWidget);
-    });
-
-    testWidgets('Tapping handle while open closes the drawer', (tester) async {
-      await tester.pumpWidget(buildTestApp(initialDrawerOpen: true));
-      await tester.pumpAndSettle();
-
-      expect(find.text('[ RECORD DRAWER // 12 DISCS ▲ ]'), findsOneWidget);
-      expect(find.byType(PageView), findsOneWidget);
-
-      await tester.tap(find.text('[ RECORD DRAWER // 12 DISCS ▲ ]'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('[ RECORD DRAWER // 12 DISCS ▾ ]'), findsOneWidget);
-      expect(find.byType(PageView), findsNothing);
     });
   });
 }

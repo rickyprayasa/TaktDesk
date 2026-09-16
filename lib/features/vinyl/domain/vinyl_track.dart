@@ -26,8 +26,8 @@ class VinylTrack {
     return Color(int.parse('FF$hex', radix: 16));
   }
 
-  static List<VinylTrack> get drawer1Presets => presets.sublist(0, 6);
-  static List<VinylTrack> get drawer2Presets => presets.sublist(6, 12);
+  static final List<VinylTrack> drawer1Presets = presets.sublist(0, 6);
+  static final List<VinylTrack> drawer2Presets = presets.sublist(6, 12);
 
   static const List<VinylTrack> presets = [
     VinylTrack(

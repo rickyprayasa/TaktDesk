@@ -60,9 +60,10 @@ void main() {
     // Verify DropdownButton is no longer present
     expect(find.byType(DropdownButton<int>), findsNothing);
 
-    // Verify VinylDiscDrawerWidget is present
+    // Verify VinylDiscDrawerWidget is present with dual drawer handles
     expect(find.byType(VinylDiscDrawerWidget), findsOneWidget);
-    expect(find.text('[ RECORD DRAWER // 12 DISCS ▾ ]'), findsOneWidget);
+    expect(find.byKey(const ValueKey('vinyl_drawer_1_handle')), findsOneWidget);
+    expect(find.byKey(const ValueKey('vinyl_drawer_2_handle')), findsOneWidget);
 
     // Verify soundscape mixer is absent
     expect(find.byKey(const ValueKey('fader_rec_track')), findsNothing);
@@ -150,18 +151,18 @@ void main() {
 
     expect(find.text('LO-FI RAIN'), findsOneWidget);
 
-    // Tap drawer handle to expand
-    final handleFinder = find.text('[ RECORD DRAWER // 12 DISCS ▾ ]');
+    // Tap drawer 1 handle to expand
+    final handleFinder = find.byKey(const ValueKey('vinyl_drawer_1_handle'));
     expect(handleFinder, findsOneWidget);
     await tester.tap(handleFinder);
     await tester.pumpAndSettle();
 
-    // Verify drawer is expanded and carousel is displayed
-    expect(find.text('[ RECORD DRAWER // 12 DISCS ▲ ]'), findsOneWidget);
+    // Verify drawer 1 is expanded and carousel is displayed
+    expect(find.text('[ RECORD DRAWER 01 // 06 DISCS · NATURE ▲ ]'), findsOneWidget);
     expect(find.byType(PageView), findsOneWidget);
 
     // Navigate to Track 1 ("DEEP BROWN NOISE")
-    await tester.tap(find.byKey(const ValueKey('drawer_next_disc')));
+    await tester.tap(find.byKey(const ValueKey('drawer_1_next_disc')));
     await tester.pumpAndSettle();
 
     final loadButton = find.byKey(const ValueKey('load_track_button_1'));
