@@ -7,6 +7,7 @@ import '../../../core/audio/audio_service.dart';
 import '../../../core/audio/sound_effect.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/focus/focus_lock_controller.dart';
+import '../../../core/services/media_notification_service.dart';
 import '../../settings/presentation/settings_controller.dart';
 
 class ChronoDialController extends StateNotifier<TimerState> {
@@ -14,6 +15,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
   final AppDatabase? _database;
   final FocusLockController? _focusLockController;
   final DeskPreferencesController? _preferencesController;
+  final MediaNotificationService? _mediaNotificationService;
   DateTime? _sessionStartedAt;
 
   ChronoDialController([
@@ -21,6 +23,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
     this._database,
     this._focusLockController,
     this._preferencesController,
+    this._mediaNotificationService,
   ])  : super(const TimerState(
           targetMinutes: 25,
           remainingSeconds: 25 * 60.0,
@@ -43,6 +46,11 @@ class ChronoDialController extends StateNotifier<TimerState> {
     );
     HapticService.dialTick();
     _audioService?.playFoley(SoundEffect.dialClick);
+    _syncMediaTelemetry(
+      phase: PomodoroPhase.focus,
+      remainingSeconds: profile.focusMinutes * 60,
+      cycleCount: 1,
+    );
   }
 
   void enterCustomCalibration() {
@@ -257,6 +265,11 @@ class ChronoDialController extends StateNotifier<TimerState> {
       lastTickMinute: state.targetMinutes,
     );
     _sessionStartedAt = null;
+    _syncMediaTelemetry(
+      phase: state.phase,
+      remainingSeconds: (state.targetMinutes * 60.0).round(),
+      cycleCount: state.cycleCount,
+    );
   }
 
   void tick(double deltaSeconds) {
@@ -306,10 +319,20 @@ class ChronoDialController extends StateNotifier<TimerState> {
         lastTickMinute: nextMins,
         isRunning: false,
       );
+      _syncMediaTelemetry(
+        phase: nextPhase,
+        remainingSeconds: nextMins * 60,
+        cycleCount: nextCycle,
+      );
     } else {
       state = state.copyWith(
         remainingSeconds: nextRemaining,
         lastTickMinute: currentMinute,
+      );
+      _syncMediaTelemetry(
+        phase: state.phase,
+        remainingSeconds: nextRemaining.round(),
+        cycleCount: state.cycleCount,
       );
     }
   }
@@ -354,6 +377,11 @@ class ChronoDialController extends StateNotifier<TimerState> {
     );
     HapticService.dialTick();
     _audioService?.playFoley(SoundEffect.dialClick);
+    _syncMediaTelemetry(
+      phase: nextPhase,
+      remainingSeconds: mins * 60,
+      cycleCount: state.cycleCount,
+    );
   }
 
   void advancePhase() {
@@ -371,6 +399,21 @@ class ChronoDialController extends StateNotifier<TimerState> {
     );
     HapticService.dialTick();
     _audioService?.playFoley(SoundEffect.dialClick);
+    _syncMediaTelemetry(
+      phase: next.phase,
+      remainingSeconds: mins * 60,
+      cycleCount: next.cycleCount,
+    );
+  }
+
+  void _syncMediaTelemetry({PomodoroPhase? phase, int? remainingSeconds, int? cycleCount}) {
+    if (_mediaNotificationService?.isActive == true) {
+      _mediaNotificationService?.updateTimerTelemetry(
+        phase: (phase ?? state.phase).name,
+        remainingSeconds: remainingSeconds ?? state.remainingSeconds.round(),
+        cycleCount: cycleCount ?? state.cycleCount,
+      );
+    }
   }
 }
 
@@ -379,11 +422,13 @@ final chronoDialProvider = StateNotifierProvider<ChronoDialController, TimerStat
   final database = ref.watch(appDatabaseProvider);
   final focusLockController = ref.watch(focusLockProvider.notifier);
   final preferencesController = ref.watch(deskPreferencesControllerProvider.notifier);
+  final mediaService = ref.watch(mediaNotificationServiceProvider);
   return ChronoDialController(
     audioService,
     database,
     focusLockController,
     preferencesController,
+    mediaService,
   );
 });
 

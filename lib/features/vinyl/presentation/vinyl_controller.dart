@@ -3,6 +3,7 @@ import '../domain/vinyl_track.dart';
 import '../../../core/audio/audio_service.dart';
 import '../../../core/audio/sound_effect.dart';
 import '../../../core/haptics/haptic_service.dart';
+import '../../../core/services/media_notification_service.dart';
 
 class VinylState {
   final bool needleOnRecord;
@@ -53,14 +54,32 @@ class VinylState {
 
 class VinylController extends StateNotifier<VinylState> {
   final AudioService? _audioService;
+  final MediaNotificationService? _mediaNotificationService;
 
-  VinylController([this._audioService]) : super(const VinylState());
+  VinylController([this._audioService, this._mediaNotificationService])
+      : super(const VinylState());
 
   void dropNeedle() {
     state = state.copyWith(needleOnRecord: true, turntableSpeed: 1.0);
     HapticService.mechanicalPress();
     _audioService?.playFoley(SoundEffect.stylusDrop);
     _audioService?.startAmbient(trackIndex: state.selectedTrackIndex);
+    if (_mediaNotificationService?.isActive == true) {
+      _mediaNotificationService?.updatePlaybackState(
+        isPlaying: true,
+        trackIndex: state.selectedTrackIndex,
+        trackName: state.currentTrack.name,
+      );
+    } else {
+      _mediaNotificationService?.startNotification(
+        trackIndex: state.selectedTrackIndex,
+        trackName: state.currentTrack.name,
+        isPlaying: true,
+        phase: 'focus',
+        remainingSeconds: 1500,
+        cycleCount: 1,
+      );
+    }
   }
 
   void liftNeedle() {
@@ -68,6 +87,11 @@ class VinylController extends StateNotifier<VinylState> {
     HapticService.mechanicalPress();
     _audioService?.playFoley(SoundEffect.stylusStop);
     _audioService?.stopAmbient();
+    _mediaNotificationService?.updatePlaybackState(
+      isPlaying: false,
+      trackIndex: state.selectedTrackIndex,
+      trackName: state.currentTrack.name,
+    );
   }
 
   void toggleNeedle() {
@@ -77,6 +101,8 @@ class VinylController extends StateNotifier<VinylState> {
       dropNeedle();
     }
   }
+
+  void togglePlayback() => toggleNeedle();
 
   bool selectTrack(int index, {bool isPro = false}) {
     if (index < 0 || index >= VinylTrack.presets.length) {
@@ -92,7 +118,34 @@ class VinylController extends StateNotifier<VinylState> {
     if (state.needleOnRecord) {
       _audioService?.startAmbient(trackIndex: index);
     }
+    _mediaNotificationService?.updatePlaybackState(
+      isPlaying: state.needleOnRecord,
+      trackIndex: index,
+      trackName: track.name,
+    );
     return true;
+  }
+
+  bool selectNextTrack({bool isPro = false}) {
+    final count = VinylTrack.presets.length;
+    for (int i = 1; i <= count; i++) {
+      final next = (state.selectedTrackIndex + i) % count;
+      if (selectTrack(next, isPro: isPro)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool selectPreviousTrack({bool isPro = false}) {
+    final count = VinylTrack.presets.length;
+    for (int i = 1; i <= count; i++) {
+      final prev = (state.selectedTrackIndex - i + count) % count;
+      if (selectTrack(prev, isPro: isPro)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void revertIfProRevoked() {
@@ -123,7 +176,8 @@ class VinylController extends StateNotifier<VinylState> {
 
 final vinylProvider = StateNotifierProvider<VinylController, VinylState>((ref) {
   final audioService = ref.watch(audioServiceProvider);
-  return VinylController(audioService);
+  final mediaNotificationService = ref.watch(mediaNotificationServiceProvider);
+  return VinylController(audioService, mediaNotificationService);
 });
 
 final vinylControllerProvider = vinylProvider;

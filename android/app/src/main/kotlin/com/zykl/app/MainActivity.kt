@@ -308,6 +308,98 @@ class MainActivity : FlutterActivity() {
             }
         }
 
+        val mediaChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.zykl.app/media_notification")
+        MediaNotificationService.mediaControlListener = { action ->
+            runOnUiThread {
+                mediaChannel.invokeMethod("onMediaControlAction", mapOf("action" to action))
+            }
+        }
+        mediaChannel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "startMediaNotification" -> {
+                    try {
+                        val trackIndex = (call.argument<Number>("trackIndex"))?.toInt() ?: 0
+                        val trackName = call.argument<String>("trackName") ?: "LO-FI RAIN"
+                        val isPlaying = call.argument<Boolean>("isPlaying") ?: false
+                        val volume = (call.argument<Number>("volume"))?.toDouble() ?: 0.8
+                        val phase = call.argument<String>("phase") ?: "focus"
+                        val remainingSeconds = (call.argument<Number>("remainingSeconds"))?.toDouble() ?: 1500.0
+                        val cycleCount = (call.argument<Number>("cycleCount"))?.toInt() ?: 1
+
+                        val serviceIntent = Intent(this, MediaNotificationService::class.java).apply {
+                            action = MediaNotificationService.ACTION_START
+                            putExtra(MediaNotificationService.EXTRA_TRACK_INDEX, trackIndex)
+                            putExtra(MediaNotificationService.EXTRA_TRACK_NAME, trackName)
+                            putExtra(MediaNotificationService.EXTRA_IS_PLAYING, isPlaying)
+                            putExtra(MediaNotificationService.EXTRA_VOLUME, volume)
+                            putExtra(MediaNotificationService.EXTRA_PHASE, phase)
+                            putExtra(MediaNotificationService.EXTRA_REMAINING_SECONDS, remainingSeconds)
+                            putExtra(MediaNotificationService.EXTRA_CYCLE_COUNT, cycleCount)
+                        }
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            startForegroundService(serviceIntent)
+                        } else {
+                            startService(serviceIntent)
+                        }
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.success(false)
+                    }
+                }
+                "updatePlaybackState" -> {
+                    try {
+                        val isPlaying = call.argument<Boolean>("isPlaying") ?: false
+                        val trackIndex = (call.argument<Number>("trackIndex"))?.toInt() ?: 0
+                        val trackName = call.argument<String>("trackName") ?: "LO-FI RAIN"
+                        val volume = (call.argument<Number>("volume"))?.toDouble() ?: 0.8
+
+                        val serviceIntent = Intent(this, MediaNotificationService::class.java).apply {
+                            action = MediaNotificationService.ACTION_UPDATE_PLAYBACK
+                            putExtra(MediaNotificationService.EXTRA_IS_PLAYING, isPlaying)
+                            putExtra(MediaNotificationService.EXTRA_TRACK_INDEX, trackIndex)
+                            putExtra(MediaNotificationService.EXTRA_TRACK_NAME, trackName)
+                            putExtra(MediaNotificationService.EXTRA_VOLUME, volume)
+                        }
+                        startService(serviceIntent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.success(false)
+                    }
+                }
+                "updateTimerTelemetry" -> {
+                    try {
+                        val phase = call.argument<String>("phase") ?: "focus"
+                        val remainingSeconds = (call.argument<Number>("remainingSeconds"))?.toDouble() ?: 1500.0
+                        val cycleCount = (call.argument<Number>("cycleCount"))?.toInt() ?: 1
+
+                        val serviceIntent = Intent(this, MediaNotificationService::class.java).apply {
+                            action = MediaNotificationService.ACTION_UPDATE_TIMER
+                            putExtra(MediaNotificationService.EXTRA_PHASE, phase)
+                            putExtra(MediaNotificationService.EXTRA_REMAINING_SECONDS, remainingSeconds)
+                            putExtra(MediaNotificationService.EXTRA_CYCLE_COUNT, cycleCount)
+                        }
+                        startService(serviceIntent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.success(false)
+                    }
+                }
+                "stopMediaNotification" -> {
+                    try {
+                        val serviceIntent = Intent(this, MediaNotificationService::class.java).apply {
+                            action = MediaNotificationService.ACTION_STOP
+                        }
+                        startService(serviceIntent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.success(false)
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
+
         val widgetChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, WIDGET_CHANNEL)
         this.widgetChannel = widgetChannel
         widgetChannel.setMethodCallHandler { call, result ->
@@ -406,6 +498,7 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        MediaNotificationService.mediaControlListener = null
         safeRelease(soundscapePlayer)
         soundscapePlayer = null
         super.onDestroy()
