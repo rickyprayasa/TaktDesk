@@ -10,4 +10,5 @@ class DeskPreferences extends Table {
   TextColumn get selectedEdition => text().withDefault(const Constant('braunClassic'))();
   BoolColumn get isProSimulated => boolean().withDefault(const Constant(true))();
   TextColumn get alarmChimeId => text().withDefault(const Constant('braunBell'))();
+  BoolColumn get autoUnlockMonastic => boolean().withDefault(const Constant(false))();
 }

@@ -34,4 +34,22 @@ class FocusLockService {
       return false;
     }
   }
+
+  Future<bool> isNotificationPolicyAccessGranted() async {
+    try {
+      final res = await channel.invokeMethod<bool>('isNotificationPolicyAccessGranted');
+      return res ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> openNotificationPolicySettings() async {
+    try {
+      final res = await channel.invokeMethod<bool>('openNotificationPolicySettings');
+      return res ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
 }

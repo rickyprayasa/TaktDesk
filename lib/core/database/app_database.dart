@@ -25,7 +25,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -39,6 +39,9 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 5) {
             await m.addColumn(deskPreferences, deskPreferences.alarmChimeId);
+          }
+          if (from < 6) {
+            await m.addColumn(deskPreferences, deskPreferences.autoUnlockMonastic);
           }
         },
       );
@@ -162,6 +165,7 @@ class AppDatabase extends _$AppDatabase {
     String? selectedEdition,
     bool? isProSimulated,
     String? alarmChimeId,
+    bool? autoUnlockMonastic,
   }) {
     return transaction(() async {
       final existing = await (select(deskPreferences)..limit(1)).getSingleOrNull();
@@ -175,6 +179,8 @@ class AppDatabase extends _$AppDatabase {
         selectedEdition: selectedEdition != null ? Value(selectedEdition) : const Value.absent(),
         isProSimulated: isProSimulated != null ? Value(isProSimulated) : const Value.absent(),
         alarmChimeId: alarmChimeId != null ? Value(alarmChimeId) : const Value.absent(),
+        autoUnlockMonastic:
+            autoUnlockMonastic != null ? Value(autoUnlockMonastic) : const Value.absent(),
       );
 
       if (existing == null) {
@@ -194,6 +200,7 @@ class AppDatabase extends _$AppDatabase {
     String? selectedEdition,
     bool? isProSimulated,
     String? alarmChimeId,
+    bool? autoUnlockMonastic,
   }) =>
       updateDeskPreferences(
         soundVolume: soundVolume,
@@ -204,6 +211,7 @@ class AppDatabase extends _$AppDatabase {
         selectedEdition: selectedEdition,
         isProSimulated: isProSimulated,
         alarmChimeId: alarmChimeId,
+        autoUnlockMonastic: autoUnlockMonastic,
       );
 }
 

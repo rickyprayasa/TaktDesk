@@ -161,7 +161,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
         children: [
           // 1. Brushed Metal Handle Bar with Dual Modular Bay Buttons
           Container(
-            height: 34,
+            height: 36,
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(5),
@@ -191,7 +191,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 4,
-                          vertical: 2,
+                          vertical: 3,
                         ),
                         decoration: BoxDecoration(
                           color: (_isOpen && _activeDrawer == 1)
@@ -208,26 +208,26 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                             color: (_isOpen && _activeDrawer == 1)
                                 ? themeState.filamentColor
                                 : themeState.borderColor,
-                            width: (_isOpen && _activeDrawer == 1) ? 1.0 : 0.8,
+                            width: (_isOpen && _activeDrawer == 1) ? 1.2 : 0.8,
                           ),
                         ),
                         child: Center(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              '[ RECORD DRAWER 01 // 06 DISCS · NATURE ${_isOpen && _activeDrawer == 1 ? '▲' : '▾'} ]',
-                              style: TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 8.0,
-                                fontWeight: (_isOpen && _activeDrawer == 1)
-                                    ? FontWeight.w800
-                                    : FontWeight.w600,
-                                color: (_isOpen && _activeDrawer == 1)
-                                    ? (themeState.isDarkMode
-                                        ? themeState.filamentColor
-                                        : const Color(0xFFC86000))
-                                    : themeState.chassisTextColor,
-                              ),
+                          child: Text(
+                            '[ LACI 01 · NATURE ${_isOpen && _activeDrawer == 1 ? '▲' : '▾'} ]',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 9.5,
+                              fontWeight: (_isOpen && _activeDrawer == 1)
+                                  ? FontWeight.w800
+                                  : FontWeight.w700,
+                              letterSpacing: 0.5,
+                              color: (_isOpen && _activeDrawer == 1)
+                                  ? (themeState.isDarkMode
+                                      ? themeState.filamentColor
+                                      : const Color(0xFFC86000))
+                                  : themeState.chassisTextColor,
                             ),
                           ),
                         ),
@@ -237,7 +237,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                 ),
                 const SizedBox(width: 4),
 
-                // Dedicated Drawer 02 Handle Button ("tombol khusus untuk membukanya")
+                // Dedicated Drawer 02 Handle Button
                 Expanded(
                   child: Semantics(
                     button: true,
@@ -249,7 +249,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 4,
-                          vertical: 2,
+                          vertical: 3,
                         ),
                         decoration: BoxDecoration(
                           color: (_isOpen && _activeDrawer == 2)
@@ -266,26 +266,26 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                             color: (_isOpen && _activeDrawer == 2)
                                 ? themeState.filamentColor
                                 : themeState.borderColor,
-                            width: (_isOpen && _activeDrawer == 2) ? 1.0 : 0.8,
+                            width: (_isOpen && _activeDrawer == 2) ? 1.2 : 0.8,
                           ),
                         ),
                         child: Center(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              '[ RECORD DRAWER 02 // 06 DISCS · HARMONICS ${_isOpen && _activeDrawer == 2 ? '▲' : '▾'} ]',
-                              style: TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 8.0,
-                                fontWeight: (_isOpen && _activeDrawer == 2)
-                                    ? FontWeight.w800
-                                    : FontWeight.w600,
-                                color: (_isOpen && _activeDrawer == 2)
-                                    ? (themeState.isDarkMode
-                                        ? themeState.filamentColor
-                                        : const Color(0xFFC86000))
-                                    : themeState.chassisTextColor,
-                              ),
+                          child: Text(
+                            '[ LACI 02 · HARMONICS ${_isOpen && _activeDrawer == 2 ? '▲' : '▾'} ]',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 9.5,
+                              fontWeight: (_isOpen && _activeDrawer == 2)
+                                  ? FontWeight.w800
+                                  : FontWeight.w700,
+                              letterSpacing: 0.5,
+                              color: (_isOpen && _activeDrawer == 2)
+                                  ? (themeState.isDarkMode
+                                      ? themeState.filamentColor
+                                      : const Color(0xFFC86000))
+                                  : themeState.chassisTextColor,
                             ),
                           ),
                         ),
@@ -522,37 +522,37 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
     return InkWell(
       key: key,
       onTap: () => _switchDrawer(drawerNumber),
-      borderRadius: BorderRadius.circular(3),
+      borderRadius: BorderRadius.circular(4),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
         decoration: BoxDecoration(
           color: isActive
               ? (themeState.isDarkMode
-                  ? themeState.filamentColor.withValues(alpha: 0.20)
-                  : themeState.filamentColor.withValues(alpha: 0.15))
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(3),
+                  ? themeState.filamentColor.withValues(alpha: 0.22)
+                  : themeState.filamentColor.withValues(alpha: 0.16))
+              : (themeState.isDarkMode
+                  ? const Color(0xFF1E2126)
+                  : const Color(0xFFE8E4D9)),
+          borderRadius: BorderRadius.circular(4),
           border: Border.all(
             color: isActive
                 ? themeState.filamentColor
-                : themeState.borderColor.withValues(alpha: 0.6),
-            width: isActive ? 1.0 : 0.6,
+                : themeState.borderColor.withValues(alpha: 0.8),
+            width: isActive ? 1.2 : 0.8,
           ),
         ),
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 7.5,
-              fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
-              color: isActive
-                  ? (themeState.isDarkMode
-                      ? themeState.filamentColor
-                      : const Color(0xFFC86000))
-                  : themeState.chassisMutedTextColor,
-            ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'monospace',
+            fontSize: 9.0,
+            fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+            letterSpacing: 0.5,
+            color: isActive
+                ? (themeState.isDarkMode
+                    ? themeState.filamentColor
+                    : const Color(0xFFC86000))
+                : themeState.chassisTextColor,
           ),
         ),
       ),

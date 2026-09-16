@@ -44,7 +44,7 @@ void main() {
       mockAudioService = MockAudioService();
     });
 
-    test('automatically unlocks Monastic Focus and plays selected alarm chime when focus timer finishes', () async {
+    test('keeps Monastic Focus locked (screen awake, alarm playing) by default when autoUnlockMonastic is false', () async {
       final focusLockController = FocusLockController(
         service: mockFocusLockService,
         audioService: mockAudioService,
@@ -53,6 +53,46 @@ void main() {
       final preferencesController = DeskPreferencesController(null, mockAudioService);
       preferencesController.state = preferencesController.state.copyWith(
         alarmChimeId: 'zenGong',
+        autoUnlockMonastic: false,
+      );
+
+      final chronoDialController = ChronoDialController(
+        mockAudioService,
+        null,
+        focusLockController,
+        preferencesController,
+      );
+
+      // 1. Engage monastic focus lock
+      await focusLockController.engageLock();
+      expect(focusLockController.state.isLocked, isTrue);
+
+      // 2. Start Pomodoro focus session with 1 minute
+      chronoDialController.setTargetMinutes(1);
+      chronoDialController.start();
+      expect(chronoDialController.state.phase, equals(PomodoroPhase.focus));
+
+      // Tick down to 0
+      chronoDialController.tick(60.0);
+      await Future<void>.delayed(Duration.zero);
+
+      // 3. Verify monastic lock STAYS locked (does not drop to lockscreen)
+      expect(focusLockController.state.isLocked, isTrue);
+
+      // 4. Verify user-selected alarm chime (zenGong) was played
+      expect(mockAudioService.playedChimes, contains('zenGong'));
+    });
+
+    test('automatically unlocks Monastic Focus when autoUnlockMonastic is explicitly true', () async {
+      final focusLockController = FocusLockController(
+        service: mockFocusLockService,
+        audioService: mockAudioService,
+      );
+
+      final preferencesController = DeskPreferencesController(null, mockAudioService);
+      preferencesController.state = preferencesController.state.copyWith(
+        alarmChimeId: 'zenGong',
+        autoUnlockMonastic: true,
       );
 
       final chronoDialController = ChronoDialController(

@@ -59,6 +59,7 @@ class DeskPreferencesState {
   final String selectedEdition;
   final bool isProSimulated;
   final String alarmChimeId;
+  final bool autoUnlockMonastic;
 
   const DeskPreferencesState({
     this.soundVolume = 0.8,
@@ -68,6 +69,7 @@ class DeskPreferencesState {
     this.selectedEdition = 'braunClassic',
     this.isProSimulated = true,
     this.alarmChimeId = 'braunBell',
+    this.autoUnlockMonastic = false,
   });
 
   DeskPreferencesState copyWith({
@@ -78,6 +80,7 @@ class DeskPreferencesState {
     String? selectedEdition,
     bool? isProSimulated,
     String? alarmChimeId,
+    bool? autoUnlockMonastic,
   }) {
     return DeskPreferencesState(
       soundVolume: soundVolume ?? this.soundVolume,
@@ -87,6 +90,7 @@ class DeskPreferencesState {
       selectedEdition: selectedEdition ?? this.selectedEdition,
       isProSimulated: isProSimulated ?? this.isProSimulated,
       alarmChimeId: alarmChimeId ?? this.alarmChimeId,
+      autoUnlockMonastic: autoUnlockMonastic ?? this.autoUnlockMonastic,
     );
   }
 
@@ -101,7 +105,8 @@ class DeskPreferencesState {
           parallaxEnabled == other.parallaxEnabled &&
           selectedEdition == other.selectedEdition &&
           isProSimulated == other.isProSimulated &&
-          alarmChimeId == other.alarmChimeId;
+          alarmChimeId == other.alarmChimeId &&
+          autoUnlockMonastic == other.autoUnlockMonastic;
 
   @override
   int get hashCode =>
@@ -111,7 +116,8 @@ class DeskPreferencesState {
       parallaxEnabled.hashCode ^
       selectedEdition.hashCode ^
       isProSimulated.hashCode ^
-      alarmChimeId.hashCode;
+      alarmChimeId.hashCode ^
+      autoUnlockMonastic.hashCode;
 }
 
 class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
@@ -154,6 +160,7 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
         selectedEdition: effectiveEdition,
         isProSimulated: pref.isProSimulated,
         alarmChimeId: pref.alarmChimeId,
+        autoUnlockMonastic: pref.autoUnlockMonastic,
       );
       _audioService?.setVolume(pref.soundVolume);
       _audioService?.setFoleyEnabled(pref.foleyEnabled);
@@ -216,6 +223,11 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
   Future<void> setAlarmChime(String chimeId) async {
     state = state.copyWith(alarmChimeId: chimeId);
     await _database?.updatePreferences(alarmChimeId: chimeId);
+  }
+
+  Future<void> setAutoUnlockMonastic(bool value) async {
+    state = state.copyWith(autoUnlockMonastic: value);
+    await _database?.updatePreferences(autoUnlockMonastic: value);
   }
 
   Future<void> clearAllSessions() async {

@@ -22,6 +22,10 @@ void main() {
             return true;
           case 'isLockTaskPermitted':
             return true;
+          case 'isNotificationPolicyAccessGranted':
+            return true;
+          case 'openNotificationPolicySettings':
+            return true;
           default:
             return null;
         }
@@ -56,6 +60,20 @@ void main() {
       expect(result, isTrue);
       expect(log, hasLength(1));
       expect(log.first.method, 'isLockTaskPermitted');
+    });
+
+    test('isNotificationPolicyAccessGranted sends method call and returns true', () async {
+      final result = await service.isNotificationPolicyAccessGranted();
+      expect(result, isTrue);
+      expect(log, hasLength(1));
+      expect(log.first.method, 'isNotificationPolicyAccessGranted');
+    });
+
+    test('openNotificationPolicySettings sends method call and returns true', () async {
+      final result = await service.openNotificationPolicySettings();
+      expect(result, isTrue);
+      expect(log, hasLength(1));
+      expect(log.first.method, 'openNotificationPolicySettings');
     });
 
     test('handles missing channel gracefully with fallback', () async {

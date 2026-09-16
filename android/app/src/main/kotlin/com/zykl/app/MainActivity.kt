@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.view.WindowManager
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -102,14 +103,22 @@ class MainActivity : FlutterActivity() {
                         controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                         controller.hide(WindowInsetsCompat.Type.systemBars())
 
-                        // 3. Do Not Disturb (silence notifications if permitted)
+                        // 3. Do Not Disturb (silence all notifications & phone calls if permitted)
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             val notifManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                             if (notifManager != null && notifManager.isNotificationPolicyAccessGranted) {
                                 previousInterruptionFilter = notifManager.currentInterruptionFilter
-                                notifManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
+                                notifManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE)
                             }
                         }
+
+                        // 4. Native Android App Pinning (Lock Task Mode)
+                        try {
+                            startLockTask()
+                        } catch (e: Exception) {
+                            android.util.Log.w("MainActivity", "startLockTask failed: ${e.message}")
+                        }
+
                         result.success(true)
                     } catch (e: Exception) {
                         result.success(false)
@@ -117,11 +126,18 @@ class MainActivity : FlutterActivity() {
                 }
                 "disableFocusLock" -> {
                     try {
-                        // 1. Restore System Bars
+                        // 1. Native Android App Pinning (Stop Lock Task Mode)
+                        try {
+                            stopLockTask()
+                        } catch (e: Exception) {
+                            android.util.Log.w("MainActivity", "stopLockTask failed: ${e.message}")
+                        }
+
+                        // 2. Restore System Bars
                         val controller = WindowCompat.getInsetsController(window, window.decorView)
                         controller.show(WindowInsetsCompat.Type.systemBars())
 
-                        // 2. Restore Do Not Disturb
+                        // 3. Restore Do Not Disturb
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             val notifManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                             if (notifManager != null && notifManager.isNotificationPolicyAccessGranted) {
@@ -131,7 +147,7 @@ class MainActivity : FlutterActivity() {
                             }
                         }
 
-                        // 3. Keep screen awake for 15s so user can observe completed timer & hear alarm before timeout
+                        // 4. Keep screen awake for 15s so user can observe completed timer & hear alarm before timeout
                         screenWakeHandler.removeCallbacksAndMessages(null)
                         screenWakeHandler.postDelayed({
                             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -144,6 +160,29 @@ class MainActivity : FlutterActivity() {
                 }
                 "isLockTaskPermitted" -> {
                     result.success(true)
+                }
+                "isNotificationPolicyAccessGranted" -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        val notifManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                        result.success(notifManager?.isNotificationPolicyAccessGranted == true)
+                    } else {
+                        result.success(true)
+                    }
+                }
+                "openNotificationPolicySettings" -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        try {
+                            val intent = Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            startActivity(intent)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.success(false)
+                        }
+                    } else {
+                        result.success(false)
+                    }
                 }
                 "openUrl" -> {
                     val url = call.argument<String>("url")

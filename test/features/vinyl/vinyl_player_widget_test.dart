@@ -158,7 +158,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify drawer 1 is expanded and carousel is displayed
-    expect(find.text('[ RECORD DRAWER 01 // 06 DISCS · NATURE ▲ ]'), findsOneWidget);
+    expect(find.text('[ LACI 01 · NATURE ▲ ]'), findsOneWidget);
     expect(find.byType(PageView), findsOneWidget);
 
     // Navigate to Track 1 ("DEEP BROWN NOISE")

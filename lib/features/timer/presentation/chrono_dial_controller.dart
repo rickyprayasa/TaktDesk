@@ -303,7 +303,10 @@ class ChronoDialController extends StateNotifier<TimerState> {
       HapticService.mechanicalPress();
 
       if (state.phase == PomodoroPhase.focus && _focusLockController?.state.isLocked == true) {
-        _focusLockController?.completeUnlock();
+        final autoUnlock = _preferencesController?.state.autoUnlockMonastic ?? false;
+        if (autoUnlock) {
+          _focusLockController?.completeUnlock();
+        }
       }
 
       final next = _nextPhaseAndCycle();

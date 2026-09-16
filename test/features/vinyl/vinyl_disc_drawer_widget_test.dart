@@ -78,8 +78,8 @@ void main() {
       expect(find.byKey(const ValueKey('vinyl_drawer_1_handle')), findsOneWidget);
       expect(find.byKey(const ValueKey('vinyl_drawer_2_handle')), findsOneWidget);
 
-      expect(find.text('[ RECORD DRAWER 01 // 06 DISCS · NATURE ▾ ]'), findsOneWidget);
-      expect(find.text('[ RECORD DRAWER 02 // 06 DISCS · HARMONICS ▾ ]'), findsOneWidget);
+      expect(find.text('[ LACI 01 · NATURE ▾ ]'), findsOneWidget);
+      expect(find.text('[ LACI 02 · HARMONICS ▾ ]'), findsOneWidget);
 
       // Carousels are closed initially
       expect(find.byType(PageView), findsNothing);
@@ -95,8 +95,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Drawer 1 is open, Drawer 2 remains closed
-      expect(find.text('[ RECORD DRAWER 01 // 06 DISCS · NATURE ▲ ]'), findsOneWidget);
-      expect(find.text('[ RECORD DRAWER 02 // 06 DISCS · HARMONICS ▾ ]'), findsOneWidget);
+      expect(find.text('[ LACI 01 · NATURE ▲ ]'), findsOneWidget);
+      expect(find.text('[ LACI 02 · HARMONICS ▾ ]'), findsOneWidget);
       expect(mockAudio.playedEffects, contains(SoundEffect.drawerSlide));
 
       // PageView is visible with Drawer 1 items (0..5)
@@ -127,8 +127,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Drawer 1 is closed, Drawer 2 is open
-      expect(find.text('[ RECORD DRAWER 01 // 06 DISCS · NATURE ▾ ]'), findsOneWidget);
-      expect(find.text('[ RECORD DRAWER 02 // 06 DISCS · HARMONICS ▲ ]'), findsOneWidget);
+      expect(find.text('[ LACI 01 · NATURE ▾ ]'), findsOneWidget);
+      expect(find.text('[ LACI 02 · HARMONICS ▲ ]'), findsOneWidget);
       expect(mockAudio.playedEffects, contains(SoundEffect.drawerSlide));
 
       // Drawer 2 items start with index 6
@@ -149,8 +149,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Drawer 1 is open
-      expect(find.text('[ RECORD DRAWER 01 // 06 DISCS · NATURE ▲ ]'), findsOneWidget);
-      expect(find.text('[ RECORD DRAWER 02 // 06 DISCS · HARMONICS ▾ ]'), findsOneWidget);
+      expect(find.text('[ LACI 01 · NATURE ▲ ]'), findsOneWidget);
+      expect(find.text('[ LACI 02 · HARMONICS ▾ ]'), findsOneWidget);
       expect(find.byType(PageView), findsOneWidget);
       expect(find.byKey(const ValueKey('record_sleeve_0')), findsOneWidget);
 
@@ -158,8 +158,8 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('vinyl_drawer_2_handle')));
       await tester.pumpAndSettle();
 
-      expect(find.text('[ RECORD DRAWER 01 // 06 DISCS · NATURE ▾ ]'), findsOneWidget);
-      expect(find.text('[ RECORD DRAWER 02 // 06 DISCS · HARMONICS ▲ ]'), findsOneWidget);
+      expect(find.text('[ LACI 01 · NATURE ▾ ]'), findsOneWidget);
+      expect(find.text('[ LACI 02 · HARMONICS ▲ ]'), findsOneWidget);
       // Still exactly 1 PageView, never elongated
       expect(find.byType(PageView), findsOneWidget);
       expect(find.byKey(const ValueKey('record_sleeve_6')), findsOneWidget);
@@ -170,8 +170,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Both show closed indicator, no PageView
-      expect(find.text('[ RECORD DRAWER 01 // 06 DISCS · NATURE ▾ ]'), findsOneWidget);
-      expect(find.text('[ RECORD DRAWER 02 // 06 DISCS · HARMONICS ▾ ]'), findsOneWidget);
+      expect(find.text('[ LACI 01 · NATURE ▾ ]'), findsOneWidget);
+      expect(find.text('[ LACI 02 · HARMONICS ▾ ]'), findsOneWidget);
       expect(find.byType(PageView), findsNothing);
       expect(mockAudio.playedEffects, contains(SoundEffect.drawerLatch));
     });

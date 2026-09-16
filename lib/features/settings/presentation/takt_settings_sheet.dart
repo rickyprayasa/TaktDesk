@@ -6,6 +6,7 @@ import '../../../app/theme/theme_controller.dart';
 import '../../../app/theme/widgets/rsquare_hardware_plaque.dart';
 import '../../../core/audio/audio_service.dart';
 import '../../../core/audio/sound_effect.dart';
+import '../../../core/focus/focus_lock_service.dart';
 import '../../../core/haptics/haptic_service.dart';
 import '../../../core/services/url_service.dart';
 import '../../timer/domain/alarm_chime.dart';
@@ -277,6 +278,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                         ),
                         const SizedBox(height: 8),
                         _buildSystemClearanceCard(
+                          prefs: prefs,
                           isDark: isDark,
                           primaryTextColor: primaryTextColor,
                           secondaryTextColor: secondaryTextColor,
@@ -453,6 +455,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
             ),
             const SizedBox(height: 8),
             _buildSystemClearanceCard(
+              prefs: prefs,
               isDark: isDark,
               primaryTextColor: primaryTextColor,
               secondaryTextColor: secondaryTextColor,
@@ -684,6 +687,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
   }
 
   Widget _buildSystemClearanceCard({
+    required dynamic prefs,
     required bool isDark,
     required Color primaryTextColor,
     required Color secondaryTextColor,
@@ -742,6 +746,107 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
               fontSize: 9.5,
               color: secondaryTextColor,
               height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Divider(color: borderColor, height: 1, thickness: 0.6),
+          const SizedBox(height: 12),
+
+          // Auto-release toggle
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AUTO-RELEASE MONASTIC ON FINISH',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.0,
+                        color: primaryTextColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Automatically unpin app when timer reaches 00:00. Keep OFF to guarantee screen stays awake with alarm chime until manually released.',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 9.0,
+                        color: secondaryTextColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Switch(
+                key: const ValueKey('auto_release_monastic_switch'),
+                value: prefs.autoUnlockMonastic,
+                activeThumbColor: TaktColors.filamentAmber,
+                activeTrackColor:
+                    TaktColors.filamentAmber.withValues(alpha: 0.5),
+                inactiveThumbColor:
+                    isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
+                inactiveTrackColor:
+                    isDark ? TaktColors.slateLight : TaktColors.paperBorder,
+                onChanged: (val) {
+                  ref
+                      .read(deskPreferencesControllerProvider.notifier)
+                      .setAutoUnlockMonastic(val);
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Configure DND button
+          InkWell(
+            key: const ValueKey('dnd_settings_button'),
+            onTap: () async {
+              await ref
+                  .read(focusLockServiceProvider)
+                  .openNotificationPolicySettings();
+            },
+            borderRadius: BorderRadius.circular(4),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF1E2126)
+                    : const Color(0xFFE8E4D9),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: borderColor, width: 0.8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.do_not_disturb_on_outlined,
+                    size: 13,
+                    color: primaryTextColor,
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'CONFIGURE ANDROID DND ACCESS',
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 9.0,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                          color: primaryTextColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
