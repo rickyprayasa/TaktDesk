@@ -39,7 +39,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
     super.initState();
     final initialIndex = ref.read(vinylProvider).selectedTrackIndex;
     if (initialIndex < 6) {
-      _currentPage1 = initialIndex;
+      _currentPage1 = initialIndex.clamp(0, 5);
       _currentPage2 = 0;
     } else {
       _currentPage1 = 0;
@@ -64,6 +64,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
   }
 
   void _goToPage1(int page) {
+    if (!_pageController1.hasClients) return;
     if (page < 0 || page >= VinylTrack.drawer1Presets.length) return;
     _pageController1.animateToPage(
       page,
@@ -73,6 +74,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
   }
 
   void _goToPage2(int page) {
+    if (!_pageController2.hasClients) return;
     if (page < 0 || page >= VinylTrack.drawer2Presets.length) return;
     _pageController2.animateToPage(
       page,
@@ -177,8 +179,8 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
     required VoidCallback? onPrev,
     required VoidCallback? onNext,
     required ValueChanged<int> onPageChanged,
-    required dynamic themeState,
-    required dynamic vinylState,
+    required ChassisThemeState themeState,
+    required VinylState vinylState,
     required VinylController vinylController,
     required bool isProSimulated,
   }) {
@@ -375,6 +377,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                         SizedBox(
                           height: 140,
                           child: PageView.builder(
+                            key: PageStorageKey('vinyl_drawer_${drawerNumber}_pageview'),
                             controller: pageController,
                             itemCount: totalTracks,
                             onPageChanged: onPageChanged,
