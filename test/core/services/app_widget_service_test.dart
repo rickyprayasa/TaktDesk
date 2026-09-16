@@ -131,5 +131,34 @@ void main() {
     final instance = container.read(appWidgetServiceProvider);
     expect(instance, isA<AppWidgetService>());
   });
+
+  test('getInitialAction returns action from channel', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      AppWidgetService.channel,
+      (MethodCall call) async {
+        if (call.method == 'getInitialAction') {
+          return 'studio_pro';
+        }
+        return null;
+      },
+    );
+
+    final action = await service.getInitialAction();
+    expect(action, equals('studio_pro'));
+  });
+
+  test('getInitialAction handles exceptions gracefully and returns null', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      AppWidgetService.channel,
+      (MethodCall call) async {
+        throw PlatformException(code: 'ERROR', message: 'Failed');
+      },
+    );
+
+    final action = await service.getInitialAction();
+    expect(action, isNull);
+  });
 }
 

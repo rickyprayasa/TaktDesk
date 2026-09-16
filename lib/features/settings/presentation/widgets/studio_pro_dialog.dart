@@ -51,14 +51,17 @@ void showStudioProDialog(
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'ZYKL STUDIO PRO',
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.0,
-              color: primary,
+          Expanded(
+            child: Text(
+              'ZYKL STUDIO PRO',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.0,
+                color: primary,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           Row(
@@ -103,16 +106,20 @@ void showStudioProDialog(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'LIFETIME ARCHITECTURE',
-                    style: TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 8.5,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
-                      color: TaktColors.filamentAmber,
+                  const Expanded(
+                    child: Text(
+                      'LIFETIME ARCHITECTURE',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                        color: TaktColors.filamentAmber,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  const SizedBox(width: 4),
                   Text(
                     'ZERO SUBSCRIPTION',
                     style: TextStyle(
@@ -142,23 +149,26 @@ void showStudioProDialog(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'FOUNDER LAUNCH EDITION · 47% OFF',
-                        style: TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 8.0,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
-                          color: TaktColors.filamentAmber,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'FOUNDER LAUNCH EDITION · 47% OFF',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 8.0,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                            color: TaktColors.filamentAmber,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
                       const SizedBox(height: 2),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        runSpacing: 2,
                         children: [
                           Text(
                             'Rp 69.000',
@@ -169,7 +179,6 @@ void showStudioProDialog(
                               color: primary,
                             ),
                           ),
-                          const SizedBox(width: 8),
                           Text(
                             'Rp 129.000',
                             style: TextStyle(
@@ -180,7 +189,6 @@ void showStudioProDialog(
                               color: secondary,
                             ),
                           ),
-                          const SizedBox(width: 6),
                           Text(
                             '· \$9.99',
                             style: TextStyle(
@@ -194,7 +202,9 @@ void showStudioProDialog(
                       ),
                     ],
                   ),
-                  Container(
+                ),
+                const SizedBox(width: 8),
+                Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                     decoration: BoxDecoration(
                       color: TaktColors.filamentAmber,

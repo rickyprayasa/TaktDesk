@@ -10,6 +10,7 @@ import '../../../core/haptics/haptic_service.dart';
 import '../../../core/sensors/parallax_controller.dart';
 import '../../../core/services/app_widget_service.dart';
 import '../../settings/presentation/settings_controller.dart';
+import '../../settings/presentation/widgets/studio_pro_dialog.dart';
 import '../../tasks/presentation/receipt_runner_widget.dart';
 import '../../timer/presentation/chrono_dial_widget.dart';
 import '../../vinyl/presentation/vinyl_player_widget.dart';
@@ -38,6 +39,7 @@ class DeskCanvasScreen extends ConsumerStatefulWidget {
 class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
   StreamSubscription<GyroscopeEvent>? _gyroscopeSubscription;
   StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
+  StreamSubscription<String>? _widgetActionSubscription;
   int _selectedInstrumentIndex = 0; // 0: Dial, 1: Tasks, 2: Vinyl
   bool _sensorsPaused = false;
   bool _isLandscape = false;
@@ -52,6 +54,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
   void initState() {
     super.initState();
     _initSensors();
+    _initWidgetActions();
   }
 
   void _setSensorsActive(bool active) {
@@ -144,8 +147,27 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
     }
   }
 
+  void _initWidgetActions() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final widgetService = ref.read(appWidgetServiceProvider);
+      final initialAction = await widgetService.getInitialAction();
+      if (!mounted) return;
+      if (initialAction == 'studio_pro') {
+        showStudioProDialog(context, ref);
+      }
+      _widgetActionSubscription = widgetService.onWidgetAction.listen((action) {
+        if (!mounted) return;
+        if (action == 'studio_pro') {
+          showStudioProDialog(context, ref);
+        }
+      });
+    });
+  }
+
   @override
   void dispose() {
+    _widgetActionSubscription?.cancel();
     _gyroscopeSubscription?.cancel();
     _accelerometerSubscription?.cancel();
     super.dispose();

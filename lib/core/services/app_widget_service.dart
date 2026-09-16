@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../database/app_database.dart';
@@ -63,8 +64,41 @@ final appWidgetSyncProvider = Provider.autoDispose<void>((ref) {
 
 class AppWidgetService {
   static const MethodChannel channel = MethodChannel('com.takt.desk/app_widget');
+  static final StreamController<String> _actionController =
+      StreamController<String>.broadcast();
+  static bool _handlerInitialized = false;
 
   const AppWidgetService();
+
+  static void _ensureHandler() {
+    if (_handlerInitialized) return;
+    _handlerInitialized = true;
+    channel.setMethodCallHandler((call) async {
+      if (call.method == 'onWidgetAction') {
+        final args = call.arguments;
+        final action = args is Map ? args['action'] as String? : null;
+        if (action != null && action.isNotEmpty) {
+          _actionController.add(action);
+        }
+      }
+    });
+  }
+
+  Stream<String> get onWidgetAction {
+    _ensureHandler();
+    return _actionController.stream;
+  }
+
+  Future<String?> getInitialAction() async {
+    try {
+      final res = await channel.invokeMethod<String>('getInitialAction');
+      return res;
+    } on PlatformException catch (_) {
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
 
   Future<bool> updateWidgetData({
     required int cyclesCompleted,

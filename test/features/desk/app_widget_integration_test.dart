@@ -51,6 +51,9 @@ void main() {
         .setMockMethodCallHandler(
       AppWidgetService.channel,
       (MethodCall call) async {
+        if (call.method == 'getInitialAction') {
+          return null;
+        }
         channelCalls.add(call);
         return true;
       },
@@ -388,6 +391,43 @@ void main() {
       {'id': 10, 'title': 'Calibrate Chrono', 'is_completed': false},
       {'id': 11, 'title': 'Review Analog Dial', 'is_completed': true},
     ]));
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('DeskCanvasScreen opens Studio Pro dialog when getInitialAction returns studio_pro',
+      (tester) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      AppWidgetService.channel,
+      (MethodCall call) async {
+        if (call.method == 'getInitialAction') {
+          return 'studio_pro';
+        }
+        return true;
+      },
+    );
+
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: createOverrides(),
+        child: const MaterialApp(
+          home: DeskCanvasScreen(
+            gyroscopeStream: Stream.empty(),
+            accelerometerStream: Stream.empty(),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    // Verify Studio Pro dialog is opened
+    expect(find.textContaining('STUDIO PRO'), findsWidgets);
 
     await tester.pumpWidget(const SizedBox());
   });
