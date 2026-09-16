@@ -298,20 +298,22 @@ void main() {
 
       expect(find.textContaining('Weniger, aber besser — Less, but better.'), findsOneWidget);
       expect(find.textContaining('Dieter Rams'), findsOneWidget);
-      expect(find.textContaining('ZYKL v1.0.0 (Build 2026.09) · Developed by RSQUARE'), findsOneWidget);
-      expect(find.text('DEVELOPED BY RSQUARE'), findsWidgets);
+      expect(find.textContaining('ZYKL INSTRUMENT // v1.0.0'), findsOneWidget);
+      expect(find.text('CRAFTED BY RSQUARE'), findsOneWidget);
+      expect(find.byKey(const ValueKey('zykl_feedback_button')), findsOneWidget);
+      expect(find.text('CONTACT & SEND FEEDBACK'), findsOneWidget);
       expect(
         find.textContaining('100% Offline. Zero analytics. Zero telemetry. All session data remains exclusively on this device.'),
         findsOneWidget,
       );
     });
 
-    testWidgets('Braun creed section displays RSQUARE logo image asset', (tester) async {
+    testWidgets('Braun creed section displays ZYKL dial logo image asset', (tester) async {
       await tester.pumpWidget(buildSheet());
       await tester.pump();
 
       final logoFinder = find.byWidgetPredicate(
-        (w) => w is Image && w.image is AssetImage && (w.image as AssetImage).assetName == 'assets/images/rsquare_logo.png',
+        (w) => w is Image && w.image is AssetImage && (w.image as AssetImage).assetName == 'assets/images/zykl_icon.png',
       );
       expect(logoFinder, findsOneWidget);
     });

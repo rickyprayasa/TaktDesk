@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme/hardware_edition.dart';
 import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/theme_controller.dart';
-import '../../../app/theme/widgets/rsquare_hardware_plaque.dart';
+import '../../../app/theme/widgets/zykl_hardware_plaque.dart';
 import '../../../core/audio/audio_service.dart';
 import '../../../core/audio/sound_effect.dart';
 import '../../../core/focus/focus_lock_service.dart';
@@ -1067,24 +1067,25 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: RsquareHardwarePlaque(
-              size: 38,
+            child: ZyklHardwarePlaque(
+              size: 46,
               isDark: isDark,
             ),
           ),
           Text(
-            'ZYKL v1.0.0 (Build 2026.09) · Developed by RSQUARE',
+            'ZYKL INSTRUMENT // v1.0.0 (Build 2026.09)',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'monospace',
-              fontSize: 9.0,
-              fontWeight: FontWeight.w600,
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
               color: primaryTextColor,
             ),
           ),
           const SizedBox(height: 4),
           const Text(
-            'DEVELOPED BY RSQUARE',
+            'CRAFTED BY RSQUARE',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'monospace',
@@ -1150,6 +1151,51 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
               ),
             ),
           ),
+          const SizedBox(height: 8),
+          InkWell(
+            key: const ValueKey('zykl_feedback_button'),
+            onTap: () {
+              HapticService.selectionClick();
+              UrlService.openUrl('https://zykl.app/feedback');
+            },
+            borderRadius: BorderRadius.circular(4.0),
+            child: Ink(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF191B1F) : const Color(0xFFE5E1D6),
+                borderRadius: BorderRadius.circular(4.0),
+                border: Border.all(
+                  color: borderColor.withValues(alpha: 0.8),
+                  width: 0.8,
+                ),
+              ),
+              child: Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.chat_bubble_outline, size: 13, color: primaryTextColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        'CONTACT & SEND FEEDBACK',
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.0,
+                          color: primaryTextColor,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(Icons.arrow_outward, size: 12, color: secondaryTextColor),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
           const SizedBox(height: 10),
           OutlinedButton(
             style: OutlinedButton.styleFrom(
@@ -1168,8 +1214,12 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                 context: context,
                 applicationName: 'ZYKL by RSQUARE',
                 applicationVersion: 'v1.0.0 (Build 2026.09)',
+                applicationIcon: const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: ZyklHardwarePlaque(size: 48),
+                ),
                 applicationLegalese:
-                    'Weniger, aber besser — Dieter Rams · Developed by RSQUARE',
+                    'Weniger, aber besser — Dieter Rams · Crafted with precision by RSQUARE',
               );
             },
             child: const Text(
