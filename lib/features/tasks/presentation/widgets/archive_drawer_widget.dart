@@ -5,22 +5,117 @@ import '../receipt_runner_controller.dart';
 import '../../../../app/theme/takt_colors.dart';
 import '../../../../app/theme/takt_typography.dart';
 import '../../../../app/theme/theme_controller.dart';
+import '../../../../core/audio/audio_service.dart';
+import '../../../../core/audio/sound_effect.dart';
+import '../../../../core/haptics/haptic_service.dart';
 
-/// Industrial Slide-Out Brass Archive Drawer attached to the bottom of the Thermal Task Runner.
-class ArchiveDrawerWidget extends ConsumerWidget {
+/// Industrial Slide-Out Modular Brass Archive Drawer attached to the bottom of the Thermal Task Runner.
+class ArchiveDrawerWidget extends ConsumerStatefulWidget {
   const ArchiveDrawerWidget({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ArchiveDrawerWidget> createState() => _ArchiveDrawerWidgetState();
+}
+
+class _ArchiveDrawerWidgetState extends ConsumerState<ArchiveDrawerWidget> {
+  final Set<int> _openDrawers = <int>{};
+
+  @override
+  void initState() {
+    super.initState();
+    if (ref.read(receiptRunnerProvider).isArchiveOpen) {
+      _openDrawers.add(0);
+    }
+  }
+
+  void _toggleDrawer(int drawerIndex) {
+    HapticService.mechanicalPress();
+    final bool nextOpen = !_openDrawers.contains(drawerIndex);
+    setState(() {
+      if (nextOpen) {
+        _openDrawers.add(drawerIndex);
+      } else {
+        _openDrawers.remove(drawerIndex);
+      }
+    });
+    ref.read(audioServiceProvider).playFoley(
+      nextOpen ? SoundEffect.drawerSlide : SoundEffect.drawerLatch,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(receiptRunnerProvider);
     final controller = ref.read(receiptRunnerProvider.notifier);
     final themeState = ref.watch(chassisThemeProvider);
-    final isOpen = state.isArchiveOpen;
-    final count = state.archivedTasks.length;
+
+    ref.listen<bool>(
+      receiptRunnerProvider.select((s) => s.isArchiveOpen),
+      (prev, next) {
+        if (prev != next) {
+          setState(() {
+            if (next) {
+              _openDrawers.add(0);
+            } else {
+              _openDrawers.remove(0);
+            }
+          });
+        }
+      },
+    );
+
+    // Partition state.archivedTasks into chunks of 10 tasks
+    final chunks = <List<ReceiptTask>>[];
+    if (state.archivedTasks.isEmpty) {
+      chunks.add(const []);
+    } else {
+      for (int i = 0; i < state.archivedTasks.length; i += 10) {
+        chunks.add(
+          state.archivedTasks.sublist(
+            i,
+            (i + 10 > state.archivedTasks.length) ? state.archivedTasks.length : i + 10,
+          ),
+        );
+      }
+    }
+
+    _openDrawers.removeWhere((idx) => idx >= chunks.length);
+
+    return Column(
+      key: const ValueKey('archive_drawer_multi_container'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (int drawerIndex = 0; drawerIndex < chunks.length; drawerIndex++) ...[
+          if (drawerIndex > 0) const SizedBox(height: 6),
+          _buildDrawerChassis(
+            drawerIndex: drawerIndex,
+            chunk: chunks[drawerIndex],
+            isOpen: _openDrawers.contains(drawerIndex),
+            controller: controller,
+            themeState: themeState,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildDrawerChassis({
+    required int drawerIndex,
+    required List<ReceiptTask> chunk,
+    required bool isOpen,
+    required ReceiptRunnerController controller,
+    required ChassisThemeState themeState,
+  }) {
+    final drawerNum = (drawerIndex + 1).toString().padLeft(2, '0');
+    final taskCountText = '${chunk.length.toString().padLeft(2, '0')} TASKS';
+    final arrow = isOpen ? '▲' : '▾';
+    final handleText = '[ ARCHIVE // DRAWER $drawerNum · $taskCountText $arrow ]';
 
     return Container(
-      key: const ValueKey('archive_drawer_container'),
-      margin: const EdgeInsets.only(top: 8),
+      key: drawerIndex == 0
+          ? const ValueKey('archive_drawer_container')
+          : ValueKey('archive_drawer_container_$drawerIndex'),
+      margin: EdgeInsets.only(top: drawerIndex == 0 ? 8 : 0),
       decoration: BoxDecoration(
         color: themeState.isDarkMode ? const Color(0xFF1B1E22) : themeState.moduleChassisColor,
         borderRadius: BorderRadius.circular(6),
@@ -41,10 +136,13 @@ class ArchiveDrawerWidget extends ConsumerWidget {
         children: [
           // 1. Brushed Brass Handle Bar
           InkWell(
-            onTap: controller.toggleArchiveDrawer,
+            key: ValueKey('archive_drawer_handle_$drawerIndex'),
+            onTap: () => _toggleDrawer(drawerIndex),
             borderRadius: BorderRadius.circular(6),
             child: Container(
-              key: const ValueKey('archive_drawer_handle_bar'),
+              key: drawerIndex == 0
+                  ? const ValueKey('archive_drawer_handle_bar')
+                  : ValueKey('archive_drawer_handle_bar_$drawerIndex'),
               height: 32,
               padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
@@ -59,56 +157,56 @@ class ArchiveDrawerWidget extends ConsumerWidget {
                 children: [
                   // Left brass rivet
                   _buildBrassRivet(
-                    key: const ValueKey('archive_drawer_rivet_left'),
+                    key: drawerIndex == 0
+                        ? const ValueKey('archive_drawer_rivet_left')
+                        : ValueKey('archive_drawer_${drawerIndex}_rivet_left'),
                     rivetColor: themeState.rivetColor,
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 4),
                   // Center Brass Plate Handle
-                  Container(
-                    key: const ValueKey('archive_drawer_handle_plate'),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: themeState.isDarkMode
-                          ? themeState.filamentColor.withValues(alpha: 0.15)
-                          : themeState.canvasColor,
-                      borderRadius: BorderRadius.circular(3),
-                      border: Border.all(
-                        color: themeState.isDarkMode
-                            ? themeState.filamentColor.withValues(alpha: 0.7)
-                            : themeState.borderColor,
-                        width: 0.8,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                          size: 14,
+                  Expanded(
+                    child: Center(
+                      child: Container(
+                        key: drawerIndex == 0
+                            ? const ValueKey('archive_drawer_handle_plate')
+                            : ValueKey('archive_drawer_${drawerIndex}_handle_plate'),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                        decoration: BoxDecoration(
                           color: themeState.isDarkMode
-                              ? themeState.filamentColor
-                              : themeState.chassisTextColor,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'ARCHIVE // $count',
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 9.0,
-                            fontWeight: FontWeight.w700,
+                              ? themeState.filamentColor.withValues(alpha: 0.15)
+                              : themeState.canvasColor,
+                          borderRadius: BorderRadius.circular(3),
+                          border: Border.all(
                             color: themeState.isDarkMode
-                                ? themeState.filamentColor
-                                : themeState.chassisTextColor,
-                            letterSpacing: 1.0,
+                                ? themeState.filamentColor.withValues(alpha: 0.7)
+                                : themeState.borderColor,
+                            width: 0.8,
                           ),
                         ),
-                      ],
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            handleText,
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 9.0,
+                              fontWeight: FontWeight.w700,
+                              color: themeState.isDarkMode
+                                  ? themeState.filamentColor
+                                  : themeState.chassisTextColor,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 4),
                   // Right brass rivet
                   _buildBrassRivet(
-                    key: const ValueKey('archive_drawer_rivet_right'),
+                    key: drawerIndex == 0
+                        ? const ValueKey('archive_drawer_rivet_right')
+                        : ValueKey('archive_drawer_${drawerIndex}_rivet_right'),
                     rivetColor: themeState.rivetColor,
                   ),
                 ],
@@ -123,7 +221,7 @@ class ArchiveDrawerWidget extends ConsumerWidget {
                 ? Container(
                     constraints: const BoxConstraints(maxHeight: 180),
                     padding: const EdgeInsets.all(8),
-                    child: state.archivedTasks.isEmpty
+                    child: chunk.isEmpty
                         ? Container(
                             height: 52,
                             alignment: Alignment.center,
@@ -142,15 +240,15 @@ class ArchiveDrawerWidget extends ConsumerWidget {
                               Flexible(
                                 child: ListView.separated(
                                   shrinkWrap: true,
-                                  itemCount: state.archivedTasks.length,
+                                  itemCount: chunk.length,
                                   separatorBuilder: (_, __) => const SizedBox(height: 4),
                                   itemBuilder: (context, index) {
-                                    final task = state.archivedTasks[index];
+                                    final task = chunk[index];
                                     return _buildArchivedTaskItem(context, task, controller, themeState);
                                   },
                                 ),
                               ),
-                              if (state.archivedTasks.isNotEmpty) ...[
+                              if (chunk.isNotEmpty) ...[
                                 const SizedBox(height: 6),
                                 Align(
                                   alignment: Alignment.centerRight,
@@ -160,9 +258,9 @@ class ArchiveDrawerWidget extends ConsumerWidget {
                                       minimumSize: Size.zero,
                                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                     ),
-                                    onPressed: controller.clearArchive,
+                                    onPressed: () => controller.purgeTasks(chunk),
                                     child: Text(
-                                      'PURGE ARCHIVE',
+                                      'PURGE THIS BATCH',
                                       style: TextStyle(
                                         fontFamily: 'monospace',
                                         fontSize: 8.0,

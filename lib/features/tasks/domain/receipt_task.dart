@@ -7,20 +7,25 @@ class ReceiptTask {
   ReceiptTask({
     required this.id,
     required this.title,
-    this.isDone = false,
+    bool isDone = false,
+    bool? isCompleted,
     DateTime? createdAt,
-  }) : createdAt = createdAt ?? DateTime.now();
+  })  : isDone = isCompleted ?? isDone,
+        createdAt = createdAt ?? DateTime.now();
+
+  bool get isCompleted => isDone;
 
   ReceiptTask copyWith({
     String? id,
     String? title,
     bool? isDone,
+    bool? isCompleted,
     DateTime? createdAt,
   }) {
     return ReceiptTask(
       id: id ?? this.id,
       title: title ?? this.title,
-      isDone: isDone ?? this.isDone,
+      isDone: isCompleted ?? isDone ?? this.isDone,
       createdAt: createdAt ?? this.createdAt,
     );
   }

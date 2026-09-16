@@ -30,18 +30,18 @@ void main() {
     );
 
     // Initial closed state displays handle label
-    expect(find.text('ARCHIVE // 0'), findsOneWidget);
+    expect(find.textContaining('ARCHIVE // DRAWER 01 · 00 TASKS'), findsOneWidget);
     expect(find.text('DRAWER EMPTY'), findsNothing);
 
     // Tap handle to open drawer
-    await tester.tap(find.text('ARCHIVE // 0'));
+    await tester.tap(find.byKey(const ValueKey('archive_drawer_handle_0')));
     await tester.pumpAndSettle();
 
     // Drawer is now open and shows empty state
     expect(find.text('DRAWER EMPTY'), findsOneWidget);
 
     // Tap handle again to close drawer
-    await tester.tap(find.text('ARCHIVE // 0'));
+    await tester.tap(find.byKey(const ValueKey('archive_drawer_handle_0')));
     await tester.pumpAndSettle();
 
     expect(find.text('DRAWER EMPTY'), findsNothing);
@@ -85,17 +85,17 @@ void main() {
       ),
     );
 
-    // Handle should show count 1
-    expect(find.text('ARCHIVE // 1'), findsOneWidget);
+    // Handle should show count 01
+    expect(find.textContaining('ARCHIVE // DRAWER 01 · 01 TASKS'), findsOneWidget);
 
     // Open drawer
-    await tester.tap(find.text('ARCHIVE // 1'));
+    await tester.tap(find.byKey(const ValueKey('archive_drawer_handle_0')));
     await tester.pumpAndSettle();
 
     // Verify task title and reprint button appear
     expect(find.text('Deep Architecture Plan'), findsOneWidget);
     expect(find.text('REPRINT'), findsOneWidget);
-    expect(find.text('PURGE ARCHIVE'), findsOneWidget);
+    expect(find.text('PURGE THIS BATCH'), findsOneWidget);
 
     // Tap REPRINT button
     await tester.tap(find.text('REPRINT'));
@@ -105,8 +105,8 @@ void main() {
     expect(container.read(receiptRunnerProvider).tasks.length, 1);
     expect(container.read(receiptRunnerProvider).tasks.first.title, 'Deep Architecture Plan');
 
-    // Tap PURGE ARCHIVE
-    await tester.tap(find.text('PURGE ARCHIVE'));
+    // Tap PURGE THIS BATCH
+    await tester.tap(find.text('PURGE THIS BATCH'));
     await tester.pumpAndSettle();
 
     // Archive is now empty

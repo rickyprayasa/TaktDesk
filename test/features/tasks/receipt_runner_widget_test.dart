@@ -418,12 +418,10 @@ void main() {
       final handleBorder = handleDecoration.border as Border;
       expect(handleBorder.top.color, equals(themeLight.borderColor));
 
-      // Handle text and icon
-      final handleText = tester.widget<Text>(find.text('ARCHIVE // 1'));
+      // Handle text
+      final handleText = tester.widget<Text>(find.textContaining('ARCHIVE // DRAWER 01 · 01 TASKS'));
       expect(handleText.style?.color, equals(themeLight.chassisTextColor));
-
-      final handleIcon = tester.widget<Icon>(find.byIcon(Icons.keyboard_arrow_up));
-      expect(handleIcon.color, equals(themeLight.chassisTextColor));
+      expect(handleText.data, contains('▲'));
 
       // Archived task card
       final taskCardFinder = find.ancestor(
@@ -456,8 +454,8 @@ void main() {
       final deleteIcon = tester.widget<Icon>(find.byIcon(Icons.close));
       expect(deleteIcon.color, equals(themeLight.chassisMutedTextColor));
 
-      // Purge archive button text
-      final purgeText = tester.widget<Text>(find.text('PURGE ARCHIVE'));
+      // Purge batch button text
+      final purgeText = tester.widget<Text>(find.text('PURGE THIS BATCH'));
       expect(purgeText.style?.color, equals(const Color(0xFFB33A18)));
 
       // 2. Empty drawer test in Light Mode
@@ -488,11 +486,9 @@ void main() {
       final handleDarkBorder = handleDarkDecoration.border as Border;
       expect(handleDarkBorder.top.color, equals(themeDark.filamentColor.withValues(alpha: 0.7)));
 
-      final handleDarkText = tester.widget<Text>(find.text('ARCHIVE // 1'));
+      final handleDarkText = tester.widget<Text>(find.textContaining('ARCHIVE // DRAWER 01 · 01 TASKS'));
       expect(handleDarkText.style?.color, equals(themeDark.filamentColor));
-
-      final handleDarkIcon = tester.widget<Icon>(find.byIcon(Icons.keyboard_arrow_up));
-      expect(handleDarkIcon.color, equals(themeDark.filamentColor));
+      expect(handleDarkText.data, contains('▲'));
 
       // Archived task card in dark mode
       final taskCardDarkFinder = find.ancestor(
@@ -515,8 +511,8 @@ void main() {
       final reprintDarkText = tester.widget<Text>(find.text('REPRINT'));
       expect(reprintDarkText.style?.color, equals(const Color(0xFFD99B59)));
 
-      // Purge archive text in dark mode
-      final purgeDarkText = tester.widget<Text>(find.text('PURGE ARCHIVE'));
+      // Purge batch text in dark mode
+      final purgeDarkText = tester.widget<Text>(find.text('PURGE THIS BATCH'));
       expect(purgeDarkText.style?.color, equals(TaktColors.mutedOchre.withValues(alpha: 0.8)));
 
       await tester.pumpWidget(const SizedBox());

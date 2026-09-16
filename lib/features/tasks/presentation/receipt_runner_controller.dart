@@ -193,6 +193,25 @@ class ReceiptRunnerController extends StateNotifier<ReceiptRunnerState> {
     }
   }
 
+  @override
+  set state(ReceiptRunnerState value) => super.state = value;
+
+  Future<void> purgeTasks(List<ReceiptTask> tasksToPurge) async {
+    final idsToPurge = tasksToPurge.map((t) => t.id).toSet();
+    state = state.copyWith(
+      archivedTasks: state.archivedTasks.where((t) => !idsToPurge.contains(t.id)).toList(),
+    );
+    final db = _database;
+    if (db != null) {
+      for (final task in tasksToPurge) {
+        final intId = int.tryParse(task.id);
+        if (intId != null) {
+          await db.deleteTask(intId).catchError((_) {});
+        }
+      }
+    }
+  }
+
   Future<void> clearArchive() async {
     state = state.copyWith(archivedTasks: const []);
     final db = _database;
