@@ -43,3 +43,6 @@ migrate_working_dir/
 # Kotlin daemon / incremental build cache
 .kotlin/
 android/.kotlin/
+
+# User screenshots
+Screenshot/

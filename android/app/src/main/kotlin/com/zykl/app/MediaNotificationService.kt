@@ -526,7 +526,7 @@ class MediaNotificationService : Service() {
             5 -> "vinyl_nordic_pines.wav"
             6 -> "vinyl_alpine_brook.wav"
             7 -> "vinyl_warm_tape.wav"
-            8 -> "vinyl_zen_bowl.wav"
+            8 -> "vinyl_ocean_waves.wav"
             9 -> "vinyl_morning_meadow.wav"
             10 -> "vinyl_pure_white_noise.wav"
             11 -> "vinyl_timber_chamber.wav"

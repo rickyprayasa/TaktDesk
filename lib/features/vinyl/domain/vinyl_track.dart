@@ -121,12 +121,12 @@ class VinylTrack {
     VinylTrack(
       index: 8,
       catalogId: 'TK-09',
-      name: 'Zen Temple Bowl',
-      subtitle: 'Singing Bowl & Harmonics',
+      name: 'Pacific Ocean Waves',
+      subtitle: 'Tidal Surf & Foam',
       description:
-          'Singing bowl fundamental resonance with gentle, long decaying harmonics.',
-      labelColorHex: '#9B72AA',
-      assetPath: 'assets/audio/vinyl_zen_bowl.wav',
+          'Gentle ocean waves washing ashore, rhythmic tidal flow for serene study focus.',
+      labelColorHex: '#2E5B88',
+      assetPath: 'assets/audio/vinyl_ocean_waves.wav',
       isPremium: true,
     ),
     VinylTrack(

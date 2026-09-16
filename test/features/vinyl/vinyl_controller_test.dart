@@ -63,7 +63,7 @@ void main() {
       expect(VinylTrack.presets[5].labelColor.toARGB32(), equals(0xFF3B7A57));
       expect(VinylTrack.presets[6].labelColor.toARGB32(), equals(0xFF4A90E2));
       expect(VinylTrack.presets[7].labelColor.toARGB32(), equals(0xFFD97736));
-      expect(VinylTrack.presets[8].labelColor.toARGB32(), equals(0xFF9B72AA));
+      expect(VinylTrack.presets[8].labelColor.toARGB32(), equals(0xFF2E5B88));
       expect(VinylTrack.presets[9].labelColor.toARGB32(), equals(0xFF7E9F8E));
       expect(VinylTrack.presets[10].labelColor.toARGB32(), equals(0xFF707070));
       expect(VinylTrack.presets[11].labelColor.toARGB32(), equals(0xFF8C6747));

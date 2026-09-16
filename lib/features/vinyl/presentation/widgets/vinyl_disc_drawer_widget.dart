@@ -90,15 +90,17 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
     );
   }
 
-  void _toggleDrawer(int drawerNumber) {
+  void _toggleDrawer([int? drawerNumber]) {
     HapticService.selectionClick();
     if (!_isOpen) {
       setState(() {
-        _activeDrawer = drawerNumber;
+        if (drawerNumber != null) {
+          _activeDrawer = drawerNumber;
+        }
         _isOpen = true;
       });
       ref.read(audioServiceProvider).playFoley(SoundEffect.drawerSlide);
-    } else if (_activeDrawer == drawerNumber) {
+    } else if (drawerNumber == null || _activeDrawer == drawerNumber) {
       setState(() {
         _isOpen = false;
       });
@@ -139,7 +141,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
       margin: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
         color: themeState.isDarkMode
-            ? const Color(0xFF1B1E22)
+            ? const Color(0xFF1E2227)
             : themeState.moduleChassisColor,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
@@ -159,147 +161,61 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 1. Brushed Metal Handle Bar with Dual Modular Bay Buttons
-          Container(
-            height: 36,
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-            decoration: BoxDecoration(
+          // 1. Brushed Metal Handle Bar (Dieter Rams Single Unified Chassis Plate)
+          Semantics(
+            button: true,
+            label: 'Toggle record drawer',
+            child: InkWell(
+              key: const ValueKey('vinyl_drawer_1_handle'),
+              onTap: () => _toggleDrawer(),
               borderRadius: BorderRadius.circular(5),
-              gradient: LinearGradient(
-                colors: themeState.plateGradient,
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+              child: Container(
+                height: 34,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(5),
+                  gradient: LinearGradient(
+                    colors: themeState.plateGradient,
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    _buildRivet(
+                      key: const ValueKey('vinyl_drawer_rivet_left'),
+                      rivetColor: themeState.rivetColor,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Center(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            '[ RECORD DRAWER // 12 DISCS ${_isOpen ? '▲' : '▾'} ]',
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 9.5,
+                              fontWeight: _isOpen ? FontWeight.w800 : FontWeight.w700,
+                              letterSpacing: 1.0,
+                              color: _isOpen
+                                  ? (themeState.isDarkMode
+                                      ? themeState.filamentColor
+                                      : const Color(0xFFC86000))
+                                  : themeState.chassisTextColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    _buildRivet(
+                      key: const ValueKey('vinyl_drawer_rivet_right'),
+                      rivetColor: themeState.rivetColor,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                _buildRivet(
-                  key: const ValueKey('vinyl_drawer_rivet_left'),
-                  rivetColor: themeState.rivetColor,
-                ),
-                const SizedBox(width: 4),
-
-                // Drawer 01 Handle Button
-                Expanded(
-                  child: Semantics(
-                    button: true,
-                    label: 'Toggle record drawer 01 nature',
-                    child: InkWell(
-                      key: const ValueKey('vinyl_drawer_1_handle'),
-                      onTap: () => _toggleDrawer(1),
-                      borderRadius: BorderRadius.circular(3),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: (_isOpen && _activeDrawer == 1)
-                              ? (themeState.isDarkMode
-                                  ? themeState.filamentColor
-                                      .withValues(alpha: 0.22)
-                                  : themeState.filamentColor
-                                      .withValues(alpha: 0.15))
-                              : (themeState.isDarkMode
-                                  ? const Color(0xFF16181B)
-                                  : themeState.canvasColor),
-                          borderRadius: BorderRadius.circular(3),
-                          border: Border.all(
-                            color: (_isOpen && _activeDrawer == 1)
-                                ? themeState.filamentColor
-                                : themeState.borderColor,
-                            width: (_isOpen && _activeDrawer == 1) ? 1.2 : 0.8,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '[ LACI 01 · NATURE ${_isOpen && _activeDrawer == 1 ? '▲' : '▾'} ]',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 9.5,
-                              fontWeight: (_isOpen && _activeDrawer == 1)
-                                  ? FontWeight.w800
-                                  : FontWeight.w700,
-                              letterSpacing: 0.5,
-                              color: (_isOpen && _activeDrawer == 1)
-                                  ? (themeState.isDarkMode
-                                      ? themeState.filamentColor
-                                      : const Color(0xFFC86000))
-                                  : themeState.chassisTextColor,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 4),
-
-                // Dedicated Drawer 02 Handle Button
-                Expanded(
-                  child: Semantics(
-                    button: true,
-                    label: 'Toggle record drawer 02 harmonics',
-                    child: InkWell(
-                      key: const ValueKey('vinyl_drawer_2_handle'),
-                      onTap: () => _toggleDrawer(2),
-                      borderRadius: BorderRadius.circular(3),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: (_isOpen && _activeDrawer == 2)
-                              ? (themeState.isDarkMode
-                                  ? themeState.filamentColor
-                                      .withValues(alpha: 0.22)
-                                  : themeState.filamentColor
-                                      .withValues(alpha: 0.15))
-                              : (themeState.isDarkMode
-                                  ? const Color(0xFF16181B)
-                                  : themeState.canvasColor),
-                          borderRadius: BorderRadius.circular(3),
-                          border: Border.all(
-                            color: (_isOpen && _activeDrawer == 2)
-                                ? themeState.filamentColor
-                                : themeState.borderColor,
-                            width: (_isOpen && _activeDrawer == 2) ? 1.2 : 0.8,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '[ LACI 02 · HARMONICS ${_isOpen && _activeDrawer == 2 ? '▲' : '▾'} ]',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 9.5,
-                              fontWeight: (_isOpen && _activeDrawer == 2)
-                                  ? FontWeight.w800
-                                  : FontWeight.w700,
-                              letterSpacing: 0.5,
-                              color: (_isOpen && _activeDrawer == 2)
-                                  ? (themeState.isDarkMode
-                                      ? themeState.filamentColor
-                                      : const Color(0xFFC86000))
-                                  : themeState.chassisTextColor,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 4),
-
-                _buildRivet(
-                  key: const ValueKey('vinyl_drawer_rivet_right'),
-                  rivetColor: themeState.rivetColor,
-                ),
-              ],
             ),
           ),
 

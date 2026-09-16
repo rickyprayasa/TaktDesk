@@ -227,7 +227,7 @@ class MainActivity : FlutterActivity() {
                             5 -> "flutter_assets/assets/audio/vinyl_nordic_pines.wav"
                             6 -> "flutter_assets/assets/audio/vinyl_alpine_brook.wav"
                             7 -> "flutter_assets/assets/audio/vinyl_warm_tape.wav"
-                            8 -> "flutter_assets/assets/audio/vinyl_zen_bowl.wav"
+                            8 -> "flutter_assets/assets/audio/vinyl_ocean_waves.wav"
                             9 -> "flutter_assets/assets/audio/vinyl_morning_meadow.wav"
                             10 -> "flutter_assets/assets/audio/vinyl_pure_white_noise.wav"
                             11 -> "flutter_assets/assets/audio/vinyl_timber_chamber.wav"

@@ -55,7 +55,7 @@ def save_wav(filepath, samples, target_peak=0.75):
     print(f"  ✓ Saved {os.path.basename(filepath)} ({len(samples)} samples, {len(samples)/SAMPLE_RATE:.1f}s, {os.path.getsize(filepath)} bytes)")
 
 
-def process_real_recording(input_path, output_path, start_sec=5.0, target_peak=0.75):
+def process_real_recording(input_path, output_path, start_sec=5.0, target_peak=0.75, audio_filter=None):
     tmp_wav = f"/tmp/extract_{os.path.basename(output_path)}"
     extract_sec = str(LOOP_DURATION + FADE_DURATION)
 
@@ -64,11 +64,15 @@ def process_real_recording(input_path, output_path, start_sec=5.0, target_peak=0
         '-ss', str(start_sec),
         '-t', extract_sec,
         '-i', input_path,
+    ]
+    if audio_filter:
+        cmd.extend(['-af', audio_filter])
+    cmd.extend([
         '-ar', str(SAMPLE_RATE),
         '-ac', '1',
         '-c:a', 'pcm_s16le',
         tmp_wav
-    ]
+    ])
     subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
 
     with wave.open(tmp_wav, 'rb') as wf:
@@ -162,9 +166,10 @@ def main():
     print("Processing TK-05: Real Campfire Embers...")
     process_real_recording(os.path.join(CACHE_DIR, 'vinyl_campfire.raw'), os.path.join(ASSETS_DIR, 'vinyl_campfire.wav'), start_sec=8.0, target_peak=0.72)
 
-    # 6. TK-06: Nordic Pines (Real Swedish pine forest wind)
-    print("Processing TK-06: Real Nordic Pine Wind...")
-    process_real_recording(os.path.join(CACHE_DIR, 'vinyl_nordic_pines.raw'), os.path.join(ASSETS_DIR, 'vinyl_nordic_pines.wav'), start_sec=10.0, target_peak=0.72)
+    # 6. TK-06: Nordic Pines (Real gentle Swedish pine forest breeze & whispering trees)
+    print("Processing TK-06: Real Nordic Pine Whispers...")
+    pines_src = '/tmp/real_audio_raw/vinyl_nordic_pines.raw' if os.path.exists('/tmp/real_audio_raw/vinyl_nordic_pines.raw') else '/tmp/pine_forest_dobroide.wav'
+    process_real_recording(pines_src, os.path.join(ASSETS_DIR, 'vinyl_nordic_pines.wav'), start_sec=32.0, target_peak=0.72, audio_filter='lowpass=f=1800,highpass=f=60')
 
     # 7. TK-07: Alpine Mountain Brook (Real mountain snowmelt brook)
     print("Processing TK-07: Real Alpine Mountain Brook...")
@@ -174,9 +179,11 @@ def main():
     print("Processing TK-08: Real Acoustic Solo Piano...")
     process_real_recording(os.path.join(CACHE_DIR, 'vinyl_warm_tape.raw'), os.path.join(ASSETS_DIR, 'vinyl_warm_tape.wav'), start_sec=2.0, target_peak=0.72)
 
-    # 9. TK-09: Zen Temple Bowl (Real Tibetan singing bowl)
-    print("Processing TK-09: Real Zen Temple Singing Bowl...")
-    process_real_recording(os.path.join(CACHE_DIR, 'vinyl_zen_bowl.raw'), os.path.join(ASSETS_DIR, 'vinyl_zen_bowl.wav'), start_sec=1.0, target_peak=0.75)
+    # 9. TK-09: Pacific Ocean Waves (Real tidal beach waves - replaces droning zen bowl)
+    print("Processing TK-09: Real Pacific Ocean Waves...")
+    ocean_src = '/tmp/real_audio_raw/vinyl_ocean_waves.raw' if os.path.exists('/tmp/real_audio_raw/vinyl_ocean_waves.raw') else '/tmp/ocean_waves.ogg'
+    process_real_recording(ocean_src, os.path.join(ASSETS_DIR, 'vinyl_ocean_waves.wav'), start_sec=50.0, target_peak=0.72, audio_filter='lowpass=f=2400,highpass=f=40')
+    process_real_recording(ocean_src, os.path.join(ASSETS_DIR, 'vinyl_zen_bowl.wav'), start_sec=50.0, target_peak=0.72, audio_filter='lowpass=f=2400,highpass=f=40')
 
     # 10. TK-10: Misty Morning Meadow (Real morning forest birdsong & dawn breeze)
     print("Processing TK-10: Real Morning Meadow Birdsong & Breeze...")

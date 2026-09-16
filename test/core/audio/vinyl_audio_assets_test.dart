@@ -24,7 +24,7 @@ void main() {
       expect(titles.contains('nordic pine whispers'), isTrue);
       expect(titles.contains('alpine mountain brook'), isTrue);
       expect(titles.contains('warm tape & felt piano'), isTrue);
-      expect(titles.contains('zen temple bowl'), isTrue);
+      expect(titles.contains('pacific ocean waves'), isTrue);
       expect(titles.contains('misty morning meadow'), isTrue);
       expect(titles.contains('pure focus white noise'), isTrue);
       expect(titles.contains('timber acoustic chamber'), isTrue);
