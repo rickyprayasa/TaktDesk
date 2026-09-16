@@ -27,7 +27,7 @@ import androidx.media.app.NotificationCompat.MediaStyle
 
 class MediaNotificationService : Service() {
     companion object {
-        const val CHANNEL_ID = "zykl_media_channel"
+        const val CHANNEL_ID = "zykl_media_playback_channel"
         const val CHANNEL_PLAYBACK_ID = "zykl_media_playback_channel"
         const val NOTIFICATION_ID = 2001
 
@@ -63,6 +63,7 @@ class MediaNotificationService : Service() {
     private var currentTrackIndex: Int = 0
     private var currentTrackName: String = "LO-FI RAIN"
     private var isPlaying: Boolean = false
+    private var resumeOnFocusGain: Boolean = false
     private var currentVolume: Float = 0.8f
     private var currentPhase: String = "focus"
     private var currentRemainingSeconds: Double = 1500.0
@@ -72,6 +73,7 @@ class MediaNotificationService : Service() {
     private val audioFocusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
         when (focusChange) {
             AudioManager.AUDIOFOCUS_LOSS -> {
+                resumeOnFocusGain = false
                 if (isPlaying) {
                     isPlaying = false
                     handleMediaControl("pause")
@@ -82,6 +84,7 @@ class MediaNotificationService : Service() {
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
                 if (isPlaying) {
+                    resumeOnFocusGain = true
                     isPlaying = false
                     handleMediaControl("pause")
                     pauseAudio()
@@ -94,6 +97,14 @@ class MediaNotificationService : Service() {
             }
             AudioManager.AUDIOFOCUS_GAIN -> {
                 setAudioVolume(currentVolume)
+                if (resumeOnFocusGain) {
+                    resumeOnFocusGain = false
+                    isPlaying = true
+                    handleMediaControl("play")
+                    resumeAudio()
+                    updatePlaybackState()
+                    updateNotification()
+                }
             }
         }
     }
@@ -112,9 +123,12 @@ class MediaNotificationService : Service() {
             ACTION_START -> {
                 parseIntentExtras(intent)
                 if (isPlaying) {
-                    requestAudioFocus()
-                    if (isNativeAudioEnabled) {
-                        playAudioTrack(currentTrackIndex, currentVolume)
+                    if (requestAudioFocus()) {
+                        if (isNativeAudioEnabled) {
+                            playAudioTrack(currentTrackIndex, currentVolume)
+                        }
+                    } else {
+                        isPlaying = false
                     }
                 }
                 updatePlaybackState()
@@ -134,15 +148,19 @@ class MediaNotificationService : Service() {
                 val previousTrackIndex = currentTrackIndex
                 parseIntentExtras(intent)
                 if (isPlaying) {
-                    requestAudioFocus()
-                    if (isNativeAudioEnabled) {
-                        if (!wasPlaying || previousTrackIndex != currentTrackIndex) {
-                            playAudioTrack(currentTrackIndex, currentVolume)
-                        } else {
-                            resumeAudio()
+                    if (requestAudioFocus()) {
+                        if (isNativeAudioEnabled) {
+                            if (!wasPlaying || previousTrackIndex != currentTrackIndex) {
+                                playAudioTrack(currentTrackIndex, currentVolume)
+                            } else {
+                                resumeAudio()
+                            }
                         }
+                    } else {
+                        isPlaying = false
                     }
                 } else {
+                    resumeOnFocusGain = false
                     pauseAudio()
                 }
                 updatePlaybackState()
@@ -165,13 +183,17 @@ class MediaNotificationService : Service() {
             ACTION_PLAY_PAUSE -> {
                 if (isPlaying) {
                     isPlaying = false
+                    resumeOnFocusGain = false
                     handleMediaControl("pause")
                     pauseAudio()
                 } else {
-                    isPlaying = true
-                    handleMediaControl("play")
-                    requestAudioFocus()
-                    resumeAudio()
+                    if (requestAudioFocus()) {
+                        isPlaying = true
+                        handleMediaControl("play")
+                        resumeAudio()
+                    } else {
+                        isPlaying = false
+                    }
                 }
                 updatePlaybackState()
                 updateNotification()
@@ -230,16 +252,20 @@ class MediaNotificationService : Service() {
             )
             setCallback(object : MediaSessionCompat.Callback() {
                 override fun onPlay() {
-                    isPlaying = true
-                    handleMediaControl("play")
-                    requestAudioFocus()
-                    resumeAudio()
+                    if (requestAudioFocus()) {
+                        isPlaying = true
+                        handleMediaControl("play")
+                        resumeAudio()
+                    } else {
+                        isPlaying = false
+                    }
                     updatePlaybackState()
                     updateNotification()
                 }
 
                 override fun onPause() {
                     isPlaying = false
+                    resumeOnFocusGain = false
                     handleMediaControl("pause")
                     pauseAudio()
                     updatePlaybackState()
@@ -523,21 +549,21 @@ class MediaNotificationService : Service() {
             mediaPlayer = null
 
             val fileName = getAssetPath(index)
-            val afd = openAssetFd(fileName)
-            mediaPlayer = MediaPlayer().apply {
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .build()
-                )
-                setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
-                afd.close()
-                isLooping = true
-                val clamped = vol.coerceIn(0f, 1f)
-                setVolume(clamped, clamped)
-                prepare()
-                start()
+            openAssetFd(fileName).use { afd ->
+                mediaPlayer = MediaPlayer().apply {
+                    setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_MEDIA)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                            .build()
+                    )
+                    setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                    isLooping = true
+                    val clamped = vol.coerceIn(0f, 1f)
+                    setVolume(clamped, clamped)
+                    prepare()
+                    start()
+                }
             }
         } catch (_: Exception) {}
     }
@@ -583,6 +609,8 @@ class MediaNotificationService : Service() {
         abandonAudioFocus()
         releaseAudio()
         stopForeground(STOP_FOREGROUND_REMOVE)
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+        manager?.cancel(NOTIFICATION_ID)
         stopSelf()
     }
 
@@ -592,7 +620,7 @@ class MediaNotificationService : Service() {
 
             val mediaChannel = NotificationChannel(
                 CHANNEL_ID,
-                "ZYKL Monastic Vinyl & Timer",
+                "ZYKL Media & Focus Controller",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
                 description = "Background vinyl soundscape and Pomodoro telemetry controller"
@@ -601,29 +629,18 @@ class MediaNotificationService : Service() {
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             }
 
-            val playbackChannel = NotificationChannel(
-                CHANNEL_PLAYBACK_ID,
-                "ZYKL Media Playback",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Background audio playback and media session controls"
-                setSound(null, null)
-                enableVibration(false)
-                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-            }
-
             manager.createNotificationChannel(mediaChannel)
-            manager.createNotificationChannel(playbackChannel)
         }
     }
 
     override fun onDestroy() {
-        stopServiceAndNotification()
+        abandonAudioFocus()
+        releaseAudio()
+        stopForeground(STOP_FOREGROUND_REMOVE)
         try {
             mediaSession.isActive = false
             mediaSession.release()
         } catch (_: Exception) {}
-        vinylDiscBitmap?.recycle()
         vinylDiscBitmap = null
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
         manager?.cancel(NOTIFICATION_ID)
