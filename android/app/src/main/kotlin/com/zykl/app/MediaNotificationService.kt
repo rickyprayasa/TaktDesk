@@ -354,7 +354,7 @@ class MediaNotificationService : Service() {
             .setSubText("ZYKL MONASTIC VINYL")
             .setColor(0xFFFF9E00.toInt())
             .setContentIntent(contentPendingIntent)
-            .setOngoing(true)
+            .setOngoing(isPlaying)
             .setShowWhen(false)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
@@ -631,6 +631,11 @@ class MediaNotificationService : Service() {
 
             manager.createNotificationChannel(mediaChannel)
         }
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        stopServiceAndNotification()
+        super.onTaskRemoved(rootIntent)
     }
 
     override fun onDestroy() {

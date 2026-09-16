@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/receipt_task.dart';
@@ -77,7 +78,7 @@ class _ArchiveDrawerWidgetState extends ConsumerState<ArchiveDrawerWidget> {
         chunks.add(
           state.archivedTasks.sublist(
             i,
-            (i + 10 > state.archivedTasks.length) ? state.archivedTasks.length : i + 10,
+            math.min(i + 10, state.archivedTasks.length),
           ),
         );
       }
