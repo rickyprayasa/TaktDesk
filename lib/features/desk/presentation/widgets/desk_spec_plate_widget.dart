@@ -38,7 +38,7 @@ class DeskSpecPlateWidget extends ConsumerWidget {
     final primaryTextColor = isDarkPlate ? TaktColors.warmBone : TaktColors.chassisObsidian;
     final secondaryTextColor = isDarkPlate
         ? TaktColors.warmBone.withValues(alpha: 0.70)
-        : const Color(0xFF5A5D64);
+        : const Color(0xFF2D3139);
 
     final borderColor = isDark ? themeState.edition.darkBorder : themeState.edition.lightBorder;
     final rivetColor = isDark ? themeState.edition.rivetDark : themeState.edition.rivetLight;

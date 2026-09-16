@@ -200,10 +200,10 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
         lightDialColor = const Color(0xFFDDD9CE);
         break;
       case HardwareEditionType.midCenturyWalnut:
-        lightDialColor = const Color(0xFF73472A);
+        lightDialColor = const Color(0xFFEFEBE2);
         break;
       case HardwareEditionType.forgedCarbon:
-        lightDialColor = const Color(0xFF3A3D44);
+        lightDialColor = const Color(0xFFE5E8EC);
         break;
     }
 

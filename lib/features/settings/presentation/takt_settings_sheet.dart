@@ -54,7 +54,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
     final primaryTextColor =
         isDark ? TaktColors.warmBone : const Color(0xFF141618);
     final secondaryTextColor =
-        isDark ? const Color(0xFF9E9B93) : const Color(0xFF5A5D64);
+        isDark ? const Color(0xFF9E9B93) : const Color(0xFF2D3139);
 
     final orientation = MediaQuery.of(context).orientation;
     final size = MediaQuery.of(context).size;
@@ -1232,7 +1232,7 @@ class _AlarmAcousticsSection extends ConsumerWidget {
                             ? TaktColors.filamentAmber
                             : (isDark
                                 ? const Color(0xFF9E9B93)
-                                : const Color(0xFF5A5D64)),
+                                : const Color(0xFF2D3139)),
                         visualDensity: VisualDensity.compact,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(
@@ -2129,7 +2129,7 @@ class _EditionCard extends StatelessWidget {
         : (isDark ? edition.darkBorder : edition.lightBorder);
     final titleColor = isDark ? TaktColors.warmBone : const Color(0xFF141618);
     final subtitleColor =
-        isDark ? const Color(0xFF9E9B93) : const Color(0xFF5A5D64);
+        isDark ? const Color(0xFF9E9B93) : const Color(0xFF2D3139);
 
     return Material(
       color: Colors.transparent,
@@ -2213,7 +2213,7 @@ class _EditionCard extends StatelessWidget {
                                     ? TaktColors.filamentAmber
                                     : (isDark
                                         ? TaktColors.warmBone
-                                        : const Color(0xFF5A5D64)),
+                                        : const Color(0xFF2D3139)),
                                 width: 0.6,
                               ),
                             ),

@@ -298,7 +298,7 @@ void main() {
     }
   });
 
-  testWidgets('DeskSpecPlateWidget renders light text in light mode for dark-finish editions (Walnut and Carbon)', (tester) async {
+  testWidgets('DeskSpecPlateWidget renders dark obsidian text on light plates in light mode for Mid-Century Walnut', (tester) async {
     final themeNotifier = ThemeController(
       initial: const ChassisThemeState(
         isDarkMode: false,
@@ -329,7 +329,7 @@ void main() {
 
     final plateSurface = find.byKey(const ValueKey('desk_spec_plate_surface'));
     final titleText = tester.widget<Text>(find.descendant(of: plateSurface, matching: find.text('MID-CENTURY WALNUT')));
-    expect(titleText.style?.color, equals(TaktColors.warmBone));
+    expect(titleText.style?.color, equals(TaktColors.chassisObsidian));
   });
 
   testWidgets('DeskSpecPlateWidget opens DeskTelemetryDialog modal on plate tap and dismisses cleanly', (tester) async {

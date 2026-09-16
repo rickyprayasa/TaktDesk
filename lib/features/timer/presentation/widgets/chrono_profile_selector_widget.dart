@@ -60,7 +60,7 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
 
     final activeColor = timerState.isBreak ? TaktColors.patinaOlive : themeState.filamentColor;
     final inactiveLedColor = isDark ? const Color(0xFF22252A) : const Color(0xFFC0BCB2);
-    final textColor = isDark ? const Color(0xFF8A909A) : const Color(0xFF656A72);
+    final textColor = isDark ? const Color(0xFF8A909A) : const Color(0xFF374151);
 
     final isCustomStandby = !timerState.isRunning &&
         !timerState.setupStage.isActive &&
@@ -73,7 +73,7 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
             : (isCustomStandby ? 'PULL CROWN // SET' : 'STANDBY // READY'));
     final isCalibrating = timerState.setupStage.isActive;
     final plaqueColor = isCalibrating || timerState.isRunning || isCustomStandby
-        ? TaktColors.filamentAmber
+        ? (isDark ? TaktColors.filamentAmber : const Color(0xFFB45309))
         : textColor;
 
     Widget plaqueWidget = Container(
@@ -189,7 +189,13 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
                                 fontSize: 9.0,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.3,
-                                color: phaseLedColor,
+                                color: isDark
+                                    ? phaseLedColor
+                                    : (timerState.phase == PomodoroPhase.focus
+                                        ? const Color(0xFF9A3412)
+                                        : (timerState.phase == PomodoroPhase.shortBreak
+                                            ? const Color(0xFF2D5A27)
+                                            : const Color(0xFF991B1B))),
                               ),
                             ),
                           ],
@@ -217,7 +223,9 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
                             fontSize: 9.0,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.3,
-                            color: themeState.chassisTextColor.withValues(alpha: 0.70),
+                            color: isDark
+                                ? themeState.chassisTextColor.withValues(alpha: 0.70)
+                                : const Color(0xFF2B2E34),
                           ),
                         ),
                         const SizedBox(width: 4),
@@ -282,6 +290,7 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
                       segment: _segments[i],
                       isActive: timerState.profile.type == _segments[i].type,
                       isRunning: timerState.isRunning,
+                      isBreak: timerState.isBreak,
                       isDark: isDark,
                       activeColor: activeColor,
                       inactiveLedColor: inactiveLedColor,
@@ -314,6 +323,7 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
     required ({PomodoroProfileType type, String label, PomodoroProfile profile}) segment,
     required bool isActive,
     required bool isRunning,
+    required bool isBreak,
     required bool isDark,
     required Color activeColor,
     required Color inactiveLedColor,
@@ -321,7 +331,9 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
   }) {
     final textColor = isActive
         ? activeColor
-        : (isRunning ? themeTextColor.withValues(alpha: 0.35) : themeTextColor.withValues(alpha: 0.70));
+        : (isRunning
+            ? themeTextColor.withValues(alpha: 0.35)
+            : themeTextColor.withValues(alpha: 0.70));
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.5),
@@ -353,7 +365,11 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
                     color: isDark ? const Color(0xFF131518) : const Color(0xFFE2DDD1),
                     borderRadius: BorderRadius.circular(4.0),
                     border: Border.all(
-                      color: activeColor.withValues(alpha: isDark ? 0.35 : 0.45),
+                      color: isDark
+                          ? activeColor.withValues(alpha: 0.35)
+                          : (isBreak
+                              ? const Color(0xFF2D5A27).withValues(alpha: 0.55)
+                              : const Color(0xFFB45309).withValues(alpha: 0.55)),
                       width: 1.0,
                     ),
                     boxShadow: [
@@ -367,6 +383,10 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
                   )
                 : BoxDecoration(
                     borderRadius: BorderRadius.circular(4.0),
+                    border: Border.all(
+                      color: isDark ? Colors.transparent : const Color(0x18000000),
+                      width: 0.8,
+                    ),
                   ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -377,7 +397,11 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
                   height: 4.5,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: isActive ? activeColor : inactiveLedColor,
+                    color: isActive
+                        ? (isDark
+                            ? activeColor
+                            : (isBreak ? const Color(0xFF2D5A27) : const Color(0xFFB45309)))
+                        : inactiveLedColor,
                     boxShadow: isActive
                         ? [
                             BoxShadow(

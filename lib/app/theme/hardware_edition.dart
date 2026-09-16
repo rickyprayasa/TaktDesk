@@ -185,18 +185,18 @@ class HardwareEdition {
     yearLabel: 'MOD. 06 · 1958',
     isPremium: true,
     darkCanvas: Color(0xFF1C140E),
-    lightCanvas: Color(0xFF8D5B3A),
+    lightCanvas: Color(0xFFF2ECE3),
     darkModuleBg: Color(0xFF16100B),
-    lightModuleBg: Color(0xFF73472A),
+    lightModuleBg: Color(0xFFE5DFD4),
     darkBorder: Color(0xFF4A3525),
-    lightBorder: Color(0xFFB07C54),
+    lightBorder: Color(0xFFB89E88),
     needleColor: Color(0xFFF3C68F), // Champagne Gold
     filamentColor: Color(0xFFFF9233), // Warm Hearthfire Glow
     accentColor: Color(0xFF5E4028),
     plateGradientDark: [Color(0xFF2E2218), Color(0xFF221811), Color(0xFF18100A)],
-    plateGradientLight: [Color(0xFFA8734C), Color(0xFF8D5B3A), Color(0xFF6E4426)],
+    plateGradientLight: [Color(0xFFEDE8DF), Color(0xFFE3DCD1), Color(0xFFD6CEC1)],
     rivetDark: Color(0xFFC99A40), // Satin Brass Rivet
-    rivetLight: Color(0xFFE0B858),
+    rivetLight: Color(0xFFB58A38),
   );
 
   static const HardwareEdition forgedCarbon = HardwareEdition(
@@ -207,18 +207,18 @@ class HardwareEdition {
     yearLabel: 'MOD. 07 · 2024',
     isPremium: true,
     darkCanvas: Color(0xFF0F1012),
-    lightCanvas: Color(0xFF4A4D55),
+    lightCanvas: Color(0xFFEAECEF),
     darkModuleBg: Color(0xFF15161A),
-    lightModuleBg: Color(0xFF3A3D44),
+    lightModuleBg: Color(0xFFD8DCE3),
     darkBorder: Color(0xFF2D3039),
-    lightBorder: Color(0xFF636773),
+    lightBorder: Color(0xFF9AA0AC),
     needleColor: Color(0xFFFF3B00), // Electric Racing Amber
     filamentColor: Color(0xFFFFAA00), // Phosphor Neon Amber
     accentColor: Color(0xFF00B4D8),
     plateGradientDark: [Color(0xFF1E2025), Color(0xFF141518), Color(0xFF0B0C0E)],
-    plateGradientLight: [Color(0xFF6B707B), Color(0xFF535760), Color(0xFF3E4148)],
+    plateGradientLight: [Color(0xFFEFF2F6), Color(0xFFDFE3E8), Color(0xFFD0D5DC)],
     rivetDark: Color(0xFF3D424F), // Gunmetal Rivet
-    rivetLight: Color(0xFF8E939E),
+    rivetLight: Color(0xFF7A808C),
   );
 
   static const List<HardwareEdition> all = [

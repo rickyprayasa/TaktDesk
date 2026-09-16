@@ -178,10 +178,10 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: theme.isDarkMode ? TaktColors.basaltSlate : const Color(0xFFD2D6DC),
+        color: theme.isDarkMode ? TaktColors.basaltSlate : const Color(0xFFD8D5CC),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: theme.isDarkMode ? TaktColors.slateBorder : const Color(0xFFB0B5BC),
+          color: theme.isDarkMode ? TaktColors.slateBorder : const Color(0xFFB5B0A4),
           width: 0.8,
         ),
       ),
@@ -220,7 +220,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                   color: isSelected
                       ? (theme.isDarkMode ? TaktColors.filamentAmber : const Color(0xFF141517))
-                      : (theme.isDarkMode ? Colors.white54 : Colors.black45),
+                      : (theme.isDarkMode ? Colors.white54 : const Color(0xFF374151)),
                   letterSpacing: 1.0,
                 ),
               ),

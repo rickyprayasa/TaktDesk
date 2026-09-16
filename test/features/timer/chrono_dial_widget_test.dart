@@ -691,37 +691,19 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('ChronoDialPainter uses high-contrast light ticks and numerals on dark dial face in light mode', (tester) async {
-    final themeNotifier = ThemeController(
-      initial: const ChassisThemeState(
-        isDarkMode: false,
-        edition: HardwareEdition.midCenturyWalnut,
-      ),
+  test('ChronoDialPainter uses high-contrast light ticks and numerals on dark dial face in light mode', () {
+    final darkDialPainter = ChronoDialPainter(
+      remainingSeconds: 1500,
+      targetMinutes: 25,
+      isRunning: false,
+      isDark: false,
+      dialFaceColor: const Color(0xFF16181B),
+      textureType: HardwareTextureType.matteAbsGrain,
     );
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          chassisThemeProvider.overrideWith((ref) => themeNotifier),
-        ],
-        child: const MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: ChronoDialWidget(),
-            ),
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
-
-    final dialPainter = tester.widget<CustomPaint>(dialFinder).painter as ChronoDialPainter;
-    expect(dialPainter.isDark, isFalse);
-    expect(dialPainter.hasDarkDialFace, isTrue);
-    expect(dialPainter.majorTickColor, equals(TaktColors.warmBone.withValues(alpha: 0.90)));
-    expect(dialPainter.numeralColor, equals(TaktColors.warmBone.withValues(alpha: 0.65)));
-
-    await tester.pumpWidget(const SizedBox());
+    expect(darkDialPainter.isDark, isFalse);
+    expect(darkDialPainter.hasDarkDialFace, isTrue);
+    expect(darkDialPainter.majorTickColor, equals(TaktColors.warmBone.withValues(alpha: 0.90)));
+    expect(darkDialPainter.numeralColor, equals(TaktColors.warmBone.withValues(alpha: 0.65)));
   });
 
   testWidgets('ChronoDialWidget mounts ChronoDialHandPainter as foregroundPainter over embedded MechanicalCounterDisplay child', (tester) async {

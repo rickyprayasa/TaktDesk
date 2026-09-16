@@ -42,7 +42,7 @@ class FocusAnalyticsDialog extends ConsumerWidget {
     final panelBg = isDark ? const Color(0xFF16191D) : const Color(0xFFE2DFD6);
     final borderColor = isDark ? TaktColors.slateBorder : TaktColors.lightChassisBorder;
     final primaryTextColor = isDark ? TaktColors.warmBone : const Color(0xFF141618);
-    final secondaryTextColor = isDark ? const Color(0xFF9E9B93) : const Color(0xFF5A5D64);
+    final secondaryTextColor = isDark ? const Color(0xFF9E9B93) : const Color(0xFF2D3139);
 
     return Dialog(
       backgroundColor: bgColor,

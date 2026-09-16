@@ -120,12 +120,12 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: state.needleOnRecord
-                          ? themeState.filamentColor
-                          : const Color(0xFF2C3036),
+                          ? (themeState.isDarkMode ? themeState.filamentColor : const Color(0xFFB45309))
+                          : (themeState.isDarkMode ? const Color(0xFF2C3036) : const Color(0xFFB5B0A4)),
                       boxShadow: state.needleOnRecord
                           ? [
                               BoxShadow(
-                                color: themeState.filamentColor.withValues(alpha: 0.8),
+                                color: (themeState.isDarkMode ? themeState.filamentColor : const Color(0xFFB45309)).withValues(alpha: 0.8),
                                 blurRadius: 2.5,
                                 spreadRadius: 0.5,
                               ),
@@ -141,7 +141,7 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
                       fontSize: 8.5,
                       fontWeight: FontWeight.w600,
                       color: state.needleOnRecord
-                          ? themeState.filamentColor
+                          ? (themeState.isDarkMode ? themeState.filamentColor : const Color(0xFFB45309))
                           : themeState.chassisMutedTextColor,
                       letterSpacing: 0.5,
                     ),
@@ -194,7 +194,7 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
                   style: TaktTypography.controlLabel.copyWith(
                     fontSize: 10,
                     color: state.needleOnRecord
-                        ? themeState.filamentColor
+                        ? (themeState.isDarkMode ? themeState.filamentColor : const Color(0xFFB45309))
                         : themeState.chassisTextColor,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -206,7 +206,7 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
                 style: TaktTypography.controlLabel.copyWith(
                   fontSize: 9,
                   color: state.needleOnRecord
-                      ? themeState.filamentColor
+                      ? (themeState.isDarkMode ? themeState.filamentColor : const Color(0xFFB45309))
                       : themeState.chassisMutedTextColor,
                 ),
               ),
