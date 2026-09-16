@@ -235,4 +235,61 @@ void main() {
     );
     expect(container.read(vinylProvider).needleOnRecord, isFalse);
   });
+
+  test('stop media action triggers teardown (lifts needle and stops notification)', () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final service = container.read(mediaNotificationServiceProvider);
+    await service.startNotification(
+      trackIndex: 0,
+      trackName: 'Lo-fi Rain',
+      isPlaying: true,
+      phase: 'focus',
+      remainingSeconds: 1500,
+      cycleCount: 1,
+    );
+    container.read(vinylProvider.notifier).dropNeedle();
+
+    expect(container.read(vinylProvider).needleOnRecord, isTrue);
+    expect(service.isActive, isTrue);
+    log.clear();
+
+    final stopMessage = const StandardMethodCodec().encodeMethodCall(
+      const MethodCall('onMediaControlAction', {'action': 'stop'}),
+    );
+    await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .handlePlatformMessage(
+      'com.zykl.app/media_notification',
+      stopMessage,
+      (data) {},
+    );
+
+    expect(container.read(vinylProvider).needleOnRecord, isFalse);
+    expect(service.isActive, isFalse);
+    expect(log.any((call) => call.method == 'stopMediaNotification'), isTrue);
+  });
+
+  test('dispose safely closes action stream controller and detaches channel handler', () async {
+    final service = MediaNotificationService();
+    var listenerTriggered = false;
+    service.addListener((_) {
+      listenerTriggered = true;
+    });
+
+    service.dispose();
+
+    // After dispose, stream is closed and listeners cleared
+    final message = const StandardMethodCodec().encodeMethodCall(
+      const MethodCall('onMediaControlAction', {'action': 'play'}),
+    );
+    await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .handlePlatformMessage(
+      'com.zykl.app/media_notification',
+      message,
+      (data) {},
+    );
+
+    expect(listenerTriggered, isFalse);
+  });
 }

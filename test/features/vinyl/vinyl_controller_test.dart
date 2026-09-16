@@ -1,6 +1,8 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/core/audio/audio_service.dart';
 import 'package:takt_desk/core/audio/sound_effect.dart';
+import 'package:takt_desk/core/services/media_notification_service.dart';
 import 'package:takt_desk/features/vinyl/domain/vinyl_track.dart';
 import 'package:takt_desk/features/vinyl/presentation/vinyl_controller.dart';
 
@@ -214,6 +216,83 @@ void main() {
 
       controller.setDrawerOpen(false);
       expect(controller.state.isDrawerOpen, isFalse);
+    });
+  });
+
+  group('VinylController with MediaNotificationService', () {
+    late List<MethodCall> log;
+    late MediaNotificationService mediaService;
+
+    setUp(() {
+      log = [];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+        const MethodChannel('com.zykl.app/media_notification'),
+        (call) async {
+          log.add(call);
+          return true;
+        },
+      );
+      mediaService = MediaNotificationService();
+    });
+
+    tearDown(() {
+      mediaService.dispose();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+        const MethodChannel('com.zykl.app/media_notification'),
+        null,
+      );
+    });
+
+    test('selectTrack and liftNeedle do not update playback state when service is inactive', () {
+      final controller = VinylController(null, mediaService);
+      expect(mediaService.isActive, isFalse);
+
+      controller.selectTrack(1);
+      controller.liftNeedle();
+
+      expect(log.where((c) => c.method == 'updatePlaybackState'), isEmpty);
+    });
+
+    test('dropNeedle starts notification with cached telemetry when inactive', () {
+      mediaService.updateTimerTelemetry(
+        phase: 'shortBreak',
+        remainingSeconds: 240,
+        cycleCount: 3,
+      );
+      log.clear();
+
+      final controller = VinylController(null, mediaService);
+      controller.dropNeedle();
+
+      final startCalls =
+          log.where((c) => c.method == 'startMediaNotification').toList();
+      expect(startCalls.length, 1);
+      expect(startCalls.first.arguments['phase'], 'shortBreak');
+      expect(startCalls.first.arguments['remainingSeconds'], 240);
+      expect(startCalls.first.arguments['cycleCount'], 3);
+    });
+
+    test('selectTrack and liftNeedle invoke updatePlaybackState when service is active', () async {
+      await mediaService.startNotification(
+        trackIndex: 0,
+        trackName: 'Lo-fi Rain',
+        isPlaying: true,
+        phase: 'focus',
+        remainingSeconds: 1500,
+        cycleCount: 1,
+      );
+      expect(mediaService.isActive, isTrue);
+      log.clear();
+
+      final controller = VinylController(null, mediaService);
+      controller.selectTrack(1);
+      expect(log.any((c) => c.method == 'updatePlaybackState'), isTrue);
+
+      log.clear();
+      controller.liftNeedle();
+      expect(log.any((c) => c.method == 'updatePlaybackState'), isTrue);
     });
   });
 }

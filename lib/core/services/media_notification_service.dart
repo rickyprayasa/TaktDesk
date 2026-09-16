@@ -83,7 +83,9 @@ class MediaNotificationService {
       final args = call.arguments;
       final action = args is Map ? args['action'] as String? : null;
       if (action != null && action.isNotEmpty) {
-        _actionController.add(action);
+        if (!_actionController.isClosed) {
+          _actionController.add(action);
+        }
         for (final listener in List<void Function(String)>.from(_listeners)) {
           listener(action);
         }
@@ -199,6 +201,7 @@ class MediaNotificationService {
   }
 
   void dispose() {
+    channel.setMethodCallHandler(null);
     _listeners.clear();
     _actionController.close();
   }

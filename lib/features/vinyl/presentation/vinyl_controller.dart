@@ -71,13 +71,17 @@ class VinylController extends StateNotifier<VinylState> {
         trackName: state.currentTrack.name,
       );
     } else {
+      final phase = _mediaNotificationService?.lastPhase ?? 'focus';
+      final remainingSeconds =
+          _mediaNotificationService?.lastRemainingSeconds ?? 1500;
+      final cycleCount = _mediaNotificationService?.lastCycleCount ?? 1;
       _mediaNotificationService?.startNotification(
         trackIndex: state.selectedTrackIndex,
         trackName: state.currentTrack.name,
         isPlaying: true,
-        phase: 'focus',
-        remainingSeconds: 1500,
-        cycleCount: 1,
+        phase: phase,
+        remainingSeconds: remainingSeconds,
+        cycleCount: cycleCount,
       );
     }
   }
@@ -87,11 +91,13 @@ class VinylController extends StateNotifier<VinylState> {
     HapticService.mechanicalPress();
     _audioService?.playFoley(SoundEffect.stylusStop);
     _audioService?.stopAmbient();
-    _mediaNotificationService?.updatePlaybackState(
-      isPlaying: false,
-      trackIndex: state.selectedTrackIndex,
-      trackName: state.currentTrack.name,
-    );
+    if (_mediaNotificationService?.isActive == true) {
+      _mediaNotificationService?.updatePlaybackState(
+        isPlaying: false,
+        trackIndex: state.selectedTrackIndex,
+        trackName: state.currentTrack.name,
+      );
+    }
   }
 
   void toggleNeedle() {
@@ -118,11 +124,13 @@ class VinylController extends StateNotifier<VinylState> {
     if (state.needleOnRecord) {
       _audioService?.startAmbient(trackIndex: index);
     }
-    _mediaNotificationService?.updatePlaybackState(
-      isPlaying: state.needleOnRecord,
-      trackIndex: index,
-      trackName: track.name,
-    );
+    if (_mediaNotificationService?.isActive == true) {
+      _mediaNotificationService?.updatePlaybackState(
+        isPlaying: state.needleOnRecord,
+        trackIndex: index,
+        trackName: track.name,
+      );
+    }
     return true;
   }
 
