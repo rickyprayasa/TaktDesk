@@ -26,6 +26,9 @@ class VinylTrack {
     return Color(int.parse('FF$hex', radix: 16));
   }
 
+  static List<VinylTrack> get drawer1Presets => presets.sublist(0, 6);
+  static List<VinylTrack> get drawer2Presets => presets.sublist(6, 12);
+
   static const List<VinylTrack> presets = [
     VinylTrack(
       index: 0,
@@ -63,21 +66,21 @@ class VinylTrack {
     VinylTrack(
       index: 3,
       catalogId: 'TK-04',
-      name: 'Cafe Echo',
-      subtitle: 'Porcelain & Murmur',
+      name: 'Kyoto Bamboo Stream',
+      subtitle: 'Water & Moss Stone',
       description:
-          'Distant coffeehouse clinks and cozy muffled murmur of morning routines.',
-      labelColorHex: '#2E3238',
-      assetPath: 'assets/audio/vinyl_cafe.wav',
+          'Gentle trickling stream, soft hollow bamboo resonance, and moss stone ripples.',
+      labelColorHex: '#4A6B53',
+      assetPath: 'assets/audio/vinyl_kyoto_bamboo.wav',
       isPremium: false,
     ),
     VinylTrack(
       index: 4,
       catalogId: 'TK-05',
       name: 'Campfire Embers',
-      subtitle: 'Pine Wood & Spark',
+      subtitle: 'Pine Wood & Hearth',
       description:
-          'Warm pine log crackle and embers popping under a calm starlit night sky.',
+          'Low hearth glow and gentle pine embers crackle without loud pops.',
       labelColorHex: '#E05A2B',
       assetPath: 'assets/audio/vinyl_campfire.wav',
       isPremium: true,
@@ -85,34 +88,78 @@ class VinylTrack {
     VinylTrack(
       index: 5,
       catalogId: 'TK-06',
-      name: 'Forest Canopy',
-      subtitle: 'Mountain Pines & Wind',
+      name: 'Nordic Pine Whispers',
+      subtitle: 'High Altitude Breeze',
       description:
-          'Binaural pine breeze with rustling dry leaves and distant timber resonance.',
+          'Ultra-soft mountain pine breeze filtered through high-altitude timber.',
       labelColorHex: '#3B7A57',
-      assetPath: 'assets/audio/vinyl_forest.wav',
+      assetPath: 'assets/audio/vinyl_nordic_pines.wav',
       isPremium: true,
     ),
     VinylTrack(
       index: 6,
       catalogId: 'TK-07',
-      name: 'Cosmic Drift',
-      subtitle: 'Analog Synth Drone',
+      name: 'Alpine Mountain Brook',
+      subtitle: 'Crystalline Mountain Stream',
       description:
-          'Deep meditative modular synth harmonics and warm low-frequency planetary hum.',
-      labelColorHex: '#3A86FF',
-      assetPath: 'assets/audio/vinyl_cosmic.wav',
+          'Constant crystalline mountain stream providing soothing natural acoustic masking.',
+      labelColorHex: '#4A90E2',
+      assetPath: 'assets/audio/vinyl_alpine_brook.wav',
       isPremium: true,
     ),
     VinylTrack(
       index: 7,
       catalogId: 'TK-08',
-      name: 'Midnight Train',
-      subtitle: 'Rhythmic Steel Rail',
+      name: 'Warm Tape & Felt Piano',
+      subtitle: 'Analog Saturation & Chords',
       description:
-          'Steady rhythmic steel-wheel rail cadence and distant nocturne locomotive rumble.',
-      labelColorHex: '#6C757D',
-      assetPath: 'assets/audio/vinyl_train.wav',
+          'Analog tape saturation with a slow, muted felt piano chord progression.',
+      labelColorHex: '#D97736',
+      assetPath: 'assets/audio/vinyl_warm_tape.wav',
+      isPremium: true,
+    ),
+    VinylTrack(
+      index: 8,
+      catalogId: 'TK-09',
+      name: 'Zen Temple Bowl',
+      subtitle: 'Singing Bowl & Harmonics',
+      description:
+          'Singing bowl fundamental resonance with gentle, long decaying harmonics.',
+      labelColorHex: '#9B72AA',
+      assetPath: 'assets/audio/vinyl_zen_bowl.wav',
+      isPremium: true,
+    ),
+    VinylTrack(
+      index: 9,
+      catalogId: 'TK-10',
+      name: 'Misty Morning Meadow',
+      subtitle: 'Morning Air & Dew',
+      description:
+          'Distant morning atmospheric calm with subtle dew drop air blanket.',
+      labelColorHex: '#7E9F8E',
+      assetPath: 'assets/audio/vinyl_morning_meadow.wav',
+      isPremium: true,
+    ),
+    VinylTrack(
+      index: 10,
+      catalogId: 'TK-11',
+      name: 'Pure Focus White Noise',
+      subtitle: 'Linear Flat Spectrum',
+      description:
+          'Flat, calibrated linear noise blanket for deep reading and code concentration.',
+      labelColorHex: '#707070',
+      assetPath: 'assets/audio/vinyl_pure_white_noise.wav',
+      isPremium: true,
+    ),
+    VinylTrack(
+      index: 11,
+      catalogId: 'TK-12',
+      name: 'Timber Acoustic Chamber',
+      subtitle: 'Dry Wood Resonance',
+      description:
+          'Natural dry wood studio chamber resonance with minimal harmonic reflection.',
+      labelColorHex: '#8C6747',
+      assetPath: 'assets/audio/vinyl_timber_chamber.wav',
       isPremium: true,
     ),
   ];

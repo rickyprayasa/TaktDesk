@@ -62,7 +62,7 @@ void main() {
 
     // Verify VinylDiscDrawerWidget is present
     expect(find.byType(VinylDiscDrawerWidget), findsOneWidget);
-    expect(find.text('[ RECORD DRAWER // 08 DISCS ▾ ]'), findsOneWidget);
+    expect(find.text('[ RECORD DRAWER // 12 DISCS ▾ ]'), findsOneWidget);
 
     // Verify soundscape mixer is absent
     expect(find.byKey(const ValueKey('fader_rec_track')), findsNothing);
@@ -151,13 +151,13 @@ void main() {
     expect(find.text('LO-FI RAIN'), findsOneWidget);
 
     // Tap drawer handle to expand
-    final handleFinder = find.text('[ RECORD DRAWER // 08 DISCS ▾ ]');
+    final handleFinder = find.text('[ RECORD DRAWER // 12 DISCS ▾ ]');
     expect(handleFinder, findsOneWidget);
     await tester.tap(handleFinder);
     await tester.pumpAndSettle();
 
     // Verify drawer is expanded and carousel is displayed
-    expect(find.text('[ RECORD DRAWER // 08 DISCS ▲ ]'), findsOneWidget);
+    expect(find.text('[ RECORD DRAWER // 12 DISCS ▲ ]'), findsOneWidget);
     expect(find.byType(PageView), findsOneWidget);
 
     // Navigate to Track 1 ("DEEP BROWN NOISE")

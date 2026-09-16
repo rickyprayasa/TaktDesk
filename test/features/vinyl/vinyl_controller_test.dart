@@ -34,12 +34,12 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('VinylTrack domain', () {
-    test('presets contain exactly 8 analog soundscapes with correct tiers and metadata', () {
-      expect(VinylTrack.presets.length, equals(8));
+    test('presets contain exactly 12 analog soundscapes with correct tiers and metadata', () {
+      expect(VinylTrack.presets.length, equals(12));
       for (int i = 0; i < 4; i++) {
         expect(VinylTrack.presets[i].isPremium, isFalse, reason: 'Track $i should be Free');
       }
-      for (int i = 4; i < 8; i++) {
+      for (int i = 4; i < 12; i++) {
         expect(VinylTrack.presets[i].isPremium, isTrue, reason: 'Track $i should be Studio Pro');
       }
       for (final track in VinylTrack.presets) {
@@ -52,15 +52,19 @@ void main() {
       }
     });
 
-    test('labelColor parses hex code correctly for all 8 tracks', () {
+    test('labelColor parses hex code correctly for all 12 tracks', () {
       expect(VinylTrack.presets[0].labelColor.toARGB32(), equals(0xFFC85A32));
       expect(VinylTrack.presets[1].labelColor.toARGB32(), equals(0xFF4D5D4B));
       expect(VinylTrack.presets[2].labelColor.toARGB32(), equals(0xFFD99B59));
-      expect(VinylTrack.presets[3].labelColor.toARGB32(), equals(0xFF2E3238));
+      expect(VinylTrack.presets[3].labelColor.toARGB32(), equals(0xFF4A6B53));
       expect(VinylTrack.presets[4].labelColor.toARGB32(), equals(0xFFE05A2B));
       expect(VinylTrack.presets[5].labelColor.toARGB32(), equals(0xFF3B7A57));
-      expect(VinylTrack.presets[6].labelColor.toARGB32(), equals(0xFF3A86FF));
-      expect(VinylTrack.presets[7].labelColor.toARGB32(), equals(0xFF6C757D));
+      expect(VinylTrack.presets[6].labelColor.toARGB32(), equals(0xFF4A90E2));
+      expect(VinylTrack.presets[7].labelColor.toARGB32(), equals(0xFFD97736));
+      expect(VinylTrack.presets[8].labelColor.toARGB32(), equals(0xFF9B72AA));
+      expect(VinylTrack.presets[9].labelColor.toARGB32(), equals(0xFF7E9F8E));
+      expect(VinylTrack.presets[10].labelColor.toARGB32(), equals(0xFF707070));
+      expect(VinylTrack.presets[11].labelColor.toARGB32(), equals(0xFF8C6747));
     });
   });
 

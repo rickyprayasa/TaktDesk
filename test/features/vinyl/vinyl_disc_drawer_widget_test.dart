@@ -58,12 +58,12 @@ void main() {
   }
 
   group('VinylDiscDrawerWidget', () {
-    testWidgets('Initial closed state displays handle bar with [ RECORD DRAWER // 08 DISCS ▾ ]',
+    testWidgets('Initial closed state displays handle bar with [ RECORD DRAWER // 12 DISCS ▾ ]',
         (tester) async {
       await tester.pumpWidget(buildTestApp());
       await tester.pumpAndSettle();
 
-      expect(find.text('[ RECORD DRAWER // 08 DISCS ▾ ]'), findsOneWidget);
+      expect(find.text('[ RECORD DRAWER // 12 DISCS ▾ ]'), findsOneWidget);
       expect(
         find.byWidgetPredicate((w) =>
             w is Semantics &&
@@ -74,19 +74,19 @@ void main() {
       expect(find.byType(PageView), findsNothing);
     });
 
-    testWidgets('Tapping handle opens drawer and displays carousel with 8 cards',
+    testWidgets('Tapping handle opens drawer and displays carousel with 12 cards',
         (tester) async {
       await tester.pumpWidget(buildTestApp());
       await tester.pumpAndSettle();
 
       // Tap handle
-      await tester.tap(find.text('[ RECORD DRAWER // 08 DISCS ▾ ]'));
+      await tester.tap(find.text('[ RECORD DRAWER // 12 DISCS ▾ ]'));
       await tester.pumpAndSettle();
 
       // Drawer is open
-      expect(find.text('[ RECORD DRAWER // 08 DISCS ▲ ]'), findsOneWidget);
+      expect(find.text('[ RECORD DRAWER // 12 DISCS ▲ ]'), findsOneWidget);
       expect(find.byType(PageView), findsOneWidget);
-      expect(find.text('[ 01 / 08 ]'), findsOneWidget);
+      expect(find.text('[ 01 / 12 ]'), findsOneWidget);
       expect(find.byKey(const ValueKey('drawer_prev_disc')), findsOneWidget);
       expect(find.byKey(const ValueKey('drawer_next_disc')), findsOneWidget);
 
@@ -96,8 +96,8 @@ void main() {
       expect(find.text('LO-FI RAIN'), findsOneWidget);
       expect(find.text('[ ON PLATTER ]'), findsOneWidget);
 
-      // Verify all 8 sleeves can be scrolled/navigated to
-      for (int i = 1; i < 8; i++) {
+      // Verify all 12 sleeves can be scrolled/navigated to
+      for (int i = 1; i < 12; i++) {
         await tester.tap(find.byKey(const ValueKey('drawer_next_disc')));
         await tester.pumpAndSettle();
         expect(find.byKey(ValueKey('record_sleeve_$i')), findsOneWidget);
@@ -117,7 +117,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('drawer_next_disc')));
       await tester.pumpAndSettle();
 
-      expect(find.text('[ 02 / 08 ]'), findsOneWidget);
+      expect(find.text('[ 02 / 12 ]'), findsOneWidget);
       expect(find.text('DEEP BROWN NOISE'), findsOneWidget);
       final loadButton = find.byKey(const ValueKey('load_track_button_1'));
       expect(loadButton, findsOneWidget);
@@ -149,7 +149,7 @@ void main() {
         await tester.pumpAndSettle();
       }
 
-      expect(find.text('[ 05 / 08 ]'), findsOneWidget);
+      expect(find.text('[ 05 / 12 ]'), findsOneWidget);
       expect(find.text('CAMPFIRE EMBERS'), findsOneWidget);
       final lockedButton = find.byKey(const ValueKey('locked_track_button_4'));
       expect(lockedButton, findsOneWidget);
@@ -203,13 +203,13 @@ void main() {
       await tester.pumpWidget(buildTestApp(initialDrawerOpen: true));
       await tester.pumpAndSettle();
 
-      expect(find.text('[ RECORD DRAWER // 08 DISCS ▲ ]'), findsOneWidget);
+      expect(find.text('[ RECORD DRAWER // 12 DISCS ▲ ]'), findsOneWidget);
       expect(find.byType(PageView), findsOneWidget);
 
-      await tester.tap(find.text('[ RECORD DRAWER // 08 DISCS ▲ ]'));
+      await tester.tap(find.text('[ RECORD DRAWER // 12 DISCS ▲ ]'));
       await tester.pumpAndSettle();
 
-      expect(find.text('[ RECORD DRAWER // 08 DISCS ▾ ]'), findsOneWidget);
+      expect(find.text('[ RECORD DRAWER // 12 DISCS ▾ ]'), findsOneWidget);
       expect(find.byType(PageView), findsNothing);
     });
   });
