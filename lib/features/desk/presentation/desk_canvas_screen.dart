@@ -5,6 +5,8 @@ import 'package:sensors_plus/sensors_plus.dart';
 import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/takt_typography.dart';
 import '../../../app/theme/theme_controller.dart';
+import '../../../core/audio/audio_service.dart';
+import '../../../core/audio/sound_effect.dart';
 import '../../../core/focus/focus_lock_controller.dart';
 import '../../../core/haptics/haptic_service.dart';
 import '../../../core/sensors/parallax_controller.dart';
@@ -41,6 +43,8 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
   StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
   StreamSubscription<String>? _widgetActionSubscription;
   int _selectedInstrumentIndex = 0; // 0: Dial, 1: Tasks, 2: Vinyl
+  double _lastSlideDirection = 1.0;
+  double _dragDistance = 0.0;
   bool _sensorsPaused = false;
   bool _isLandscape = false;
 
@@ -173,6 +177,29 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
     super.dispose();
   }
 
+  void _selectInstrument(int index) {
+    if (_selectedInstrumentIndex == index) return;
+    ref.read(audioServiceProvider).play(SoundEffect.dialClick);
+    HapticService.selectionClick();
+    setState(() {
+      _lastSlideDirection = (index > _selectedInstrumentIndex) ? 1.0 : -1.0;
+      _selectedInstrumentIndex = index;
+    });
+  }
+
+  Widget _buildActiveInstrument(int index) {
+    switch (index) {
+      case 0:
+        return const Center(key: ValueKey('instrument_dial'), child: ChronoDialWidget());
+      case 1:
+        return const Center(key: ValueKey('instrument_tasks'), child: ReceiptRunnerWidget());
+      case 2:
+        return const Center(key: ValueKey('instrument_vinyl'), child: VinylPlayerWidget());
+      default:
+        return const Center(key: ValueKey('instrument_dial'), child: ChronoDialWidget());
+    }
+  }
+
   Widget _buildInstrumentSelector(ChassisThemeState theme) {
     const labels = ['DIAL', 'TASKS', 'VINYL'];
     return Container(
@@ -190,11 +217,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
         children: List.generate(labels.length, (index) {
           final isSelected = _selectedInstrumentIndex == index;
           return InkWell(
-            onTap: () {
-              setState(() {
-                _selectedInstrumentIndex = index;
-              });
-            },
+            onTap: () => _selectInstrument(index),
             borderRadius: BorderRadius.circular(16),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -293,121 +316,161 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                         constraints: const BoxConstraints(maxWidth: 440),
                         child: LayoutBuilder(
                           builder: (context, viewportConstraints) {
-                            return SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              minHeight: viewportConstraints.maxHeight,
-                              minWidth: viewportConstraints.maxWidth,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  // Top Section: Header + Segmented Instrument Navigation
-                                  Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                                    children: [
-                                      // Row 1: Header - Branding and Chassis Hardware Controls (Monastic + Theme Switch)
-                                      Padding(
-                                        padding: const EdgeInsets.only(bottom: 14.0),
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          crossAxisAlignment: CrossAxisAlignment.center,
+                            return GestureDetector(
+                              behavior: HitTestBehavior.translucent,
+                              onHorizontalDragStart: (_) {
+                                _dragDistance = 0.0;
+                              },
+                              onHorizontalDragUpdate: (details) {
+                                _dragDistance += details.delta.dx;
+                              },
+                              onHorizontalDragEnd: (details) {
+                                final vx = details.primaryVelocity ?? 0.0;
+                                if (vx < -220 || _dragDistance < -45) {
+                                  // Swipe Left -> Next Instrument
+                                  if (_selectedInstrumentIndex < 2) {
+                                    _selectInstrument(_selectedInstrumentIndex + 1);
+                                  }
+                                } else if (vx > 220 || _dragDistance > 45) {
+                                  // Swipe Right -> Previous Instrument
+                                  if (_selectedInstrumentIndex > 0) {
+                                    _selectInstrument(_selectedInstrumentIndex - 1);
+                                  }
+                                }
+                                _dragDistance = 0.0;
+                              },
+                              onHorizontalDragCancel: () {
+                                _dragDistance = 0.0;
+                              },
+                              child: SingleChildScrollView(
+                                physics: const BouncingScrollPhysics(),
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    minHeight: viewportConstraints.maxHeight,
+                                    minWidth: viewportConstraints.maxWidth,
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      children: [
+                                        // Top Section: Header + Segmented Instrument Navigation
+                                        Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.stretch,
                                           children: [
-                                            Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Container(
-                                                  width: 6,
-                                                  height: 6,
-                                                  margin: const EdgeInsets.only(right: 8),
-                                                  decoration: BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                    color: focusState.isLocked
-                                                        ? TaktColors.filamentAmber
-                                                        : TaktColors.patinaOlive,
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        color: (focusState.isLocked
-                                                                ? TaktColors.filamentAmber
-                                                                : TaktColors.patinaOlive)
-                                                            .withValues(alpha: 0.6),
-                                                        blurRadius: 4,
+                                            // Row 1: Header - Branding and Chassis Hardware Controls (Monastic + Theme Switch)
+                                            Padding(
+                                              padding: const EdgeInsets.only(bottom: 14.0),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                crossAxisAlignment: CrossAxisAlignment.center,
+                                                children: [
+                                                  Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Container(
+                                                        width: 6,
+                                                        height: 6,
+                                                        margin: const EdgeInsets.only(right: 8),
+                                                        decoration: BoxDecoration(
+                                                          shape: BoxShape.circle,
+                                                          color: focusState.isLocked
+                                                              ? TaktColors.filamentAmber
+                                                              : TaktColors.patinaOlive,
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                              color: (focusState.isLocked
+                                                                      ? TaktColors.filamentAmber
+                                                                      : TaktColors.patinaOlive)
+                                                                  .withValues(alpha: 0.6),
+                                                              blurRadius: 4,
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        'ZYKL',
+                                                        style: TaktTypography.controlLabel.copyWith(
+                                                          color: theme.hasDarkChassis
+                                                              ? TaktColors.warmBone.withValues(alpha: 0.85)
+                                                              : const Color(0xFF2C3038),
+                                                          letterSpacing: 2.0,
+                                                          fontSize: 12.0,
+                                                          fontWeight: FontWeight.w800,
+                                                        ),
                                                       ),
                                                     ],
                                                   ),
-                                                ),
-                                                Text(
-                                                  'ZYKL',
-                                                  style: TaktTypography.controlLabel.copyWith(
-                                                    color: theme.hasDarkChassis
-                                                        ? TaktColors.warmBone.withValues(alpha: 0.85)
-                                                        : const Color(0xFF2C3038),
-                                                    letterSpacing: 2.0,
-                                                    fontSize: 12.0,
-                                                    fontWeight: FontWeight.w800,
+                                                  const Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      SettingsRivetButton(),
+                                                      SizedBox(width: 8),
+                                                      ChassisThemeSwitch(),
+                                                    ],
                                                   ),
-                                                ),
-                                              ],
+                                                ],
+                                              ),
                                             ),
-                                            const Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                SettingsRivetButton(),
-                                                SizedBox(width: 8),
-                                                ChassisThemeSwitch(),
-                                              ],
+                                            // Row 2: Dedicated Segmented Instrument Navigation
+                                            Center(
+                                              child: _buildInstrumentSelector(theme),
                                             ),
                                           ],
                                         ),
-                                      ),
-                                      // Row 2: Dedicated Segmented Instrument Navigation
-                                      Center(
-                                        child: _buildInstrumentSelector(theme),
-                                      ),
-                                    ],
+                                        // Middle Section: Active Instrument Console (Vertically Centered in viewport)
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 24.0),
+                                          child: AnimatedSwitcher(
+                                            duration: const Duration(milliseconds: 260),
+                                            switchInCurve: Curves.easeOutCubic,
+                                            switchOutCurve: Curves.easeInCubic,
+                                            transitionBuilder: (child, animation) {
+                                              return FadeTransition(
+                                                opacity: animation,
+                                                child: SlideTransition(
+                                                  position: Tween<Offset>(
+                                                    begin: Offset(_lastSlideDirection * 0.08, 0.0),
+                                                    end: Offset.zero,
+                                                  ).animate(animation),
+                                                  child: child,
+                                                ),
+                                              );
+                                            },
+                                            child: _buildActiveInstrument(_selectedInstrumentIndex),
+                                          ),
+                                        ),
+                                        // Bottom Dock: Emergency Unlatch (pinned at bottom when locked) + Desk Spec Plate
+                                        const Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                                          children: [
+                                            EmergencyUnlatchWidget(),
+                                            Padding(
+                                              padding: EdgeInsets.only(top: 8.0),
+                                              child: DeskSpecPlateWidget(),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  // Middle Section: Active Instrument Console (Vertically Centered in viewport)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 24.0),
-                                    child: _selectedInstrumentIndex == 0
-                                        ? const Center(child: ChronoDialWidget())
-                                        : _selectedInstrumentIndex == 1
-                                            ? const Center(child: ReceiptRunnerWidget())
-                                            : const Center(child: VinylPlayerWidget()),
-                                  ),
-                                  // Bottom Dock: Emergency Unlatch (pinned at bottom when locked) + Desk Spec Plate
-                                  const Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                                    children: [
-                                      EmergencyUnlatchWidget(),
-                                      Padding(
-                                        padding: EdgeInsets.only(top: 8.0),
-                                        child: DeskSpecPlateWidget(),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                ),
                               ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                );
-              },
+                            );
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
           ),
         ),
       ),
-    ),
-  ),
-);
+    );
   }
 }

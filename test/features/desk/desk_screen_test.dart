@@ -398,5 +398,47 @@ void main() {
       expect(find.byType(DeskCanvasScreen), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
     });
+
+    testWidgets('DeskCanvasScreen switches hardware via horizontal swipe gestures (DIAL <-> TASKS <-> VINYL)', (tester) async {
+      tester.view.physicalSize = const Size(400, 700);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: deskTestOverrides(testDb),
+          child: const MaterialApp(
+            home: DeskCanvasScreen(),
+          ),
+        ),
+      );
+
+      // Initially on DIAL
+      expect(find.byType(ChronoDialWidget), findsOneWidget);
+      expect(find.byType(ReceiptRunnerWidget), findsNothing);
+      expect(find.byType(VinylPlayerWidget), findsNothing);
+
+      // Swipe Left -> TASKS
+      await tester.drag(find.byType(DeskCanvasScreen), const Offset(-300, 0));
+      await tester.pumpAndSettle();
+      expect(find.byType(ReceiptRunnerWidget), findsOneWidget);
+
+      // Swipe Left -> VINYL
+      await tester.drag(find.byType(DeskCanvasScreen), const Offset(-300, 0));
+      await tester.pumpAndSettle();
+      expect(find.byType(VinylPlayerWidget), findsOneWidget);
+
+      // Swipe Right -> TASKS
+      await tester.drag(find.byType(DeskCanvasScreen), const Offset(300, 0));
+      await tester.pumpAndSettle();
+      expect(find.byType(ReceiptRunnerWidget), findsOneWidget);
+
+      // Swipe Right -> DIAL
+      await tester.drag(find.byType(DeskCanvasScreen), const Offset(300, 0));
+      await tester.pumpAndSettle();
+      expect(find.byType(ChronoDialWidget), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+    });
   });
 }
