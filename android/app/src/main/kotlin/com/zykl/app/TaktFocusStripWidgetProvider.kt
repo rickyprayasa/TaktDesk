@@ -31,7 +31,6 @@ class TaktFocusStripWidgetProvider : AppWidgetProvider() {
             val prefs = context.getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
             val cycles = prefs.getInt(TaktAppWidgetProvider.KEY_CYCLES_COMPLETED, 0)
             val target = prefs.getInt(TaktAppWidgetProvider.KEY_CYCLES_TARGET, 4)
-            val minutes = prefs.getInt(TaktAppWidgetProvider.KEY_MINUTES_FOCUSED, 0)
             val status = prefs.getString(TaktAppWidgetProvider.KEY_STATUS, "STANDBY") ?: "STANDBY"
             val remainingSeconds = prefs.getInt(TaktAppWidgetProvider.KEY_REMAINING_SECONDS, 0)
 
@@ -51,8 +50,8 @@ class TaktFocusStripWidgetProvider : AppWidgetProvider() {
 
             // Action button text
             val actionText = when (status) {
-                "FOCUS" -> "[ FOCUSING ]"
-                "BREAK" -> "[ BREAK ]"
+                "FOCUS" -> "[ ⏸ PAUSE ]"
+                "BREAK" -> "[ ⏸ BREAK ]"
                 else -> "[ START ➔ ]"
             }
             views.setTextViewText(R.id.widget_action_btn, actionText)
@@ -65,20 +64,31 @@ class TaktFocusStripWidgetProvider : AppWidgetProvider() {
             views.setImageViewResource(R.id.led_3, if (cycles >= 3) activeLed else dimLed)
             views.setImageViewResource(R.id.led_4, if (cycles >= 4) activeLed else dimLed)
 
-            // Direct launch PendingIntent
+            // 1. Direct interactive action on [ START ➔ ] / [ ⏸ PAUSE ] button without opening app
+            val toggleTimerIntent = Intent(context, WidgetActionReceiver::class.java).apply {
+                action = WidgetActionReceiver.ACTION_TOGGLE_TIMER
+            }
+            val toggleTimerPendingIntent = PendingIntent.getBroadcast(
+                context,
+                201,
+                toggleTimerIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_action_btn, toggleTimerPendingIntent)
+
+            // 2. Tapping the widget body opens MainActivity
             val launchIntent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                         Intent.FLAG_ACTIVITY_CLEAR_TOP or
                         Intent.FLAG_ACTIVITY_SINGLE_TOP
             }
-            val pendingIntent = PendingIntent.getActivity(
+            val appPendingIntent = PendingIntent.getActivity(
                 context,
                 101,
                 launchIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
-            views.setOnClickPendingIntent(R.id.widget_action_btn, pendingIntent)
+            views.setOnClickPendingIntent(R.id.widget_root, appPendingIntent)
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }

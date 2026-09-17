@@ -1,32 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_chassis_bg"
-    android:gravity="center"
-    android:padding="8dp">
+    android:background="@android:color/transparent"
+    android:padding="0dp">
 
+    <!-- Pure Floating Circular Analog Dial Face (Zero Square Background) -->
     <ImageView
         android:id="@+id/widget_dial_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_gravity="center"
         android:scaleType="fitCenter"
         android:src="@drawable/widget_dial_standby_face"
         android:contentDescription="AW10 Analog Dial Face" />
 
+    <!-- Optional transparent top touch target over ZYKL brand to open app -->
+    <View
+        android:id="@+id/widget_launch_zone"
+        android:layout_width="72dp"
+        android:layout_height="44dp"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="16dp"
+        android:contentDescription="Open ZYKL App" />
+
+    <!-- Legacy text badge kept hidden so existing layout references don't break -->
     <TextView
         android:id="@+id/widget_time_badge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="4dp"
-        android:fontFamily="monospace"
-        android:letterSpacing="0.06"
-        android:text="STANDBY"
-        android:textColor="#F2EFE9"
-        android:textSize="10sp"
-        android:textStyle="bold" />
+        android:visibility="gone" />
 
-</RelativeLayout>
+</FrameLayout>

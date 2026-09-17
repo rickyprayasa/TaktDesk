@@ -42,28 +42,24 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
 
             val views = RemoteViews(context.packageName, R.layout.takt_appwidget_analog_dial_2x2)
 
-            // Draw procedural Bitmap (400x400 px)
-            // If not Pro, needle remains parked in standby alignment (0°)
-            val dialBitmap = renderAnalogDial(if (isPro) status else "STANDBY", remainingSeconds, targetMinutes)
+            // Draw crisp circular bitmap (320x320 px)
+            val dialBitmap = renderAnalogDial(if (isPro) status else "STANDBY", remainingSeconds, targetMinutes, isPro)
             views.setImageViewBitmap(R.id.widget_dial_image, dialBitmap)
 
-            val timeBadgeText = if (!isPro) {
-                "[ STUDIO PRO // UNLOCK ]"
-            } else if (status == "FOCUS" || status == "BREAK") {
-                val mins = remainingSeconds / 60
-                val secs = remainingSeconds % 60
-                String.format(java.util.Locale.ROOT, "%02d:%02d", mins, secs)
-            } else {
-                "STANDBY"
+            // 1. Direct interactive action: Tapping clock dial toggles timer in background
+            val toggleIntent = Intent(context, WidgetActionReceiver::class.java).apply {
+                action = WidgetActionReceiver.ACTION_TOGGLE_TIMER
             }
-            views.setTextViewText(R.id.widget_time_badge, timeBadgeText)
-            if (!isPro) {
-                views.setTextColor(R.id.widget_time_badge, Color.parseColor("#FF9E00"))
-            } else {
-                views.setTextColor(R.id.widget_time_badge, Color.parseColor("#F2EFE9"))
-            }
+            val togglePendingIntent = PendingIntent.getBroadcast(
+                context,
+                202,
+                toggleIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_dial_image, togglePendingIntent)
+            views.setOnClickPendingIntent(R.id.widget_root, togglePendingIntent)
 
-            // PendingIntent
+            // 2. Tapping top brand area opens MainActivity if user wants full app desk
             val launchIntent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                         Intent.FLAG_ACTIVITY_CLEAR_TOP or
@@ -72,24 +68,29 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
                     putExtra("open_feature", "studio_pro")
                 }
             }
-            val pendingIntent = PendingIntent.getActivity(
+            val launchPendingIntent = PendingIntent.getActivity(
                 context,
                 102,
                 launchIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
+            views.setOnClickPendingIntent(R.id.widget_launch_zone, launchPendingIntent)
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
 
         @JvmStatic
-        fun renderAnalogDial(status: String, remainingSeconds: Int, targetMinutes: Int): Bitmap {
-            val size = 240
+        fun renderAnalogDial(
+            status: String,
+            remainingSeconds: Int,
+            targetMinutes: Int,
+            isPro: Boolean = true
+        ): Bitmap {
+            val size = 320
             val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bitmap)
             val center = size / 2f
-            val radius = size * 0.46f
+            val radius = size * 0.48f
 
             // Paints
             val bezelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -99,7 +100,7 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
             val bezelStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = Color.parseColor("#2A2C30")
                 style = Paint.Style.STROKE
-                strokeWidth = 2f
+                strokeWidth = 2.5f
             }
             val facePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = Color.parseColor("#EDEAE2") // Braun warm bone
@@ -107,25 +108,33 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
             }
             val tickMajorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = Color.parseColor("#14171A")
-                strokeWidth = 2.2f
+                strokeWidth = 2.8f
                 style = Paint.Style.STROKE
                 strokeCap = Paint.Cap.ROUND
             }
             val tickMinorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = Color.parseColor("#8E8E93")
-                strokeWidth = 1f
+                strokeWidth = 1.2f
                 style = Paint.Style.STROKE
                 strokeCap = Paint.Cap.ROUND
             }
             val brandTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = Color.parseColor("#14171A")
+                textSize = 15f
+                typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+                textAlign = Paint.Align.CENTER
+                letterSpacing = 0.08f
+            }
+            val subTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = if (status == "FOCUS") Color.parseColor("#FF9E00") else Color.parseColor("#73716B")
                 textSize = 12f
                 typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
                 textAlign = Paint.Align.CENTER
+                letterSpacing = 0.06f
             }
             val needlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = Color.parseColor("#FF9E00") // Signature filament amber
-                strokeWidth = 3f
+                strokeWidth = 3.6f
                 style = Paint.Style.STROKE
                 strokeCap = Paint.Cap.ROUND
             }
@@ -138,15 +147,15 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
                 style = Paint.Style.FILL
             }
 
-            // Draw outer bezel ring
+            // 1. Draw outer bezel ring
             canvas.drawCircle(center, center, radius, bezelPaint)
             canvas.drawCircle(center, center, radius, bezelStrokePaint)
 
-            // Draw inner face
+            // 2. Draw inner face
             val innerRadius = radius * 0.88f
             canvas.drawCircle(center, center, innerRadius, facePaint)
 
-            // Draw 60 ticks
+            // 3. Draw 60 ticks
             for (i in 0 until 60) {
                 val angleDeg = i * 6.0
                 val angleRad = Math.toRadians(angleDeg)
@@ -156,22 +165,34 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
 
                 val startX = (center + (innerRadius - tickLength) * Math.sin(angleRad)).toFloat()
                 val startY = (center - (innerRadius - tickLength) * Math.cos(angleRad)).toFloat()
-                val endX = (center + (innerRadius - 3f) * Math.sin(angleRad)).toFloat()
-                val endY = (center - (innerRadius - 3f) * Math.cos(angleRad)).toFloat()
+                val endX = (center + (innerRadius - 4f) * Math.sin(angleRad)).toFloat()
+                val endY = (center - (innerRadius - 4f) * Math.cos(angleRad)).toFloat()
                 canvas.drawLine(startX, startY, endX, endY, p)
             }
 
-            // Brand text: ZYKL
+            // 4. Brand text: ZYKL
             canvas.drawText("ZYKL", center, center - innerRadius * 0.32f, brandTextPaint)
 
-            // Calculate needle angle
+            // 5. Lower face telemetry (Digital readout or status)
+            val subText = if (!isPro) {
+                "STUDIO PRO"
+            } else if (status == "FOCUS" || status == "BREAK") {
+                val mins = remainingSeconds / 60
+                val secs = remainingSeconds % 60
+                String.format(java.util.Locale.ROOT, "%02d:%02d", mins, secs)
+            } else {
+                "STANDBY"
+            }
+            canvas.drawText(subText, center, center + innerRadius * 0.40f, subTextPaint)
+
+            // 6. Calculate needle angle
             val totalSecs = targetMinutes * 60
             val elapsedSecs = (totalSecs - remainingSeconds).coerceIn(0, totalSecs)
             val needleProgress = if (totalSecs > 0) elapsedSecs.toFloat() / totalSecs.toFloat() else 0f
             val needleAngleDeg = if (status == "STANDBY") 0.0 else (needleProgress * 360.0)
             val needleAngleRad = Math.toRadians(needleAngleDeg)
 
-            // Draw Amber Needle
+            // 7. Draw Amber Needle
             val needleLength = innerRadius * 0.78f
             val needleEndX = (center + needleLength * Math.sin(needleAngleRad)).toFloat()
             val needleEndY = (center - needleLength * Math.cos(needleAngleRad)).toFloat()
@@ -181,9 +202,9 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
 
             canvas.drawLine(needleTailX, needleTailY, needleEndX, needleEndY, needlePaint)
 
-            // Center boss & amber pip
-            canvas.drawCircle(center, center, 6f, centerBossPaint)
-            canvas.drawCircle(center, center, 2.5f, centerPipPaint)
+            // 8. Center boss & amber pip
+            canvas.drawCircle(center, center, 8f, centerBossPaint)
+            canvas.drawCircle(center, center, 3.2f, centerPipPaint)
 
             return bitmap
         }

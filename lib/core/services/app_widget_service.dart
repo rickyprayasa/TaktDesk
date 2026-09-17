@@ -60,6 +60,19 @@ final appWidgetSyncProvider = Provider.autoDispose<void>((ref) {
     if (state.isRunning) return state.isBreak ? 'BREAK' : 'FOCUS';
     return 'STANDBY';
   }), (_, __) => sync());
+
+  // Listen for direct interactive widget actions from Android homescreen
+  final actionSub = widgetService.onWidgetAction.listen((action) {
+    if (action == 'toggleTimer') {
+      final chrono = ref.read(chronoDialControllerProvider);
+      if (chrono.isRunning) {
+        ref.read(chronoDialControllerProvider.notifier).pause();
+      } else {
+        ref.read(chronoDialControllerProvider.notifier).start();
+      }
+    }
+  });
+  ref.onDispose(actionSub.cancel);
 });
 
 class AppWidgetService {

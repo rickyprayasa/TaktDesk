@@ -105,7 +105,7 @@ class VinylTrack {
           'Constant crystalline mountain stream providing soothing natural acoustic masking.',
       labelColorHex: '#4A90E2',
       assetPath: 'assets/audio/vinyl_alpine_brook.wav',
-      isPremium: true,
+      isPremium: false,
     ),
     VinylTrack(
       index: 7,

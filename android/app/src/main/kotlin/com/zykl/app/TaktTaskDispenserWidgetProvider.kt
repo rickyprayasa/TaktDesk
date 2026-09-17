@@ -46,6 +46,20 @@ class TaktTaskDispenserWidgetProvider : AppWidgetProvider() {
             val checkIds = intArrayOf(R.id.task_check_1, R.id.task_check_2, R.id.task_check_3, R.id.task_check_4, R.id.task_check_5)
             val titleIds = intArrayOf(R.id.task_title_1, R.id.task_title_2, R.id.task_title_3, R.id.task_title_4, R.id.task_title_5)
 
+            // General open app intent
+            val launchIntent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra("open_feature", if (isPro) "tasks" else "studio_pro")
+            }
+            val openAppPendingIntent = PendingIntent.getActivity(
+                context,
+                103,
+                launchIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
             if (!isPro) {
                 views.setTextViewText(R.id.widget_quota_text, "STUDIO PRO")
                 views.setTextViewText(R.id.widget_footer_action, "[ ★ TAP TO UNLOCK PRO ↗ ]")
@@ -66,7 +80,11 @@ class TaktTaskDispenserWidgetProvider : AppWidgetProvider() {
                     val textColor = if (i == 0) Color.parseColor("#B45309") else Color.parseColor("#14171A")
                     views.setTextColor(checkIds[i], textColor)
                     views.setTextColor(titleIds[i], textColor)
+                    views.setOnClickPendingIntent(rowIds[i], openAppPendingIntent)
                 }
+
+                views.setOnClickPendingIntent(R.id.widget_root, openAppPendingIntent)
+                views.setOnClickPendingIntent(R.id.widget_footer_action, openAppPendingIntent)
             } else {
                 views.setTextViewText(R.id.widget_footer_action, "[ + OPEN ROTARY DISPENSER ↗ ]")
 
@@ -81,6 +99,7 @@ class TaktTaskDispenserWidgetProvider : AppWidgetProvider() {
                 for (i in 0 until 5) {
                     if (i < totalCount) {
                         val obj = jsonArray.optJSONObject(i)
+                        val taskId = obj?.optInt("id", -1) ?: -1
                         val title = obj?.optString("title", "") ?: ""
                         val isDone = obj?.optBoolean("is_completed", false) ?: false
 
@@ -102,12 +121,29 @@ class TaktTaskDispenserWidgetProvider : AppWidgetProvider() {
                         }
                         views.setTextViewText(titleIds[i], titleText)
                         views.setTextColor(titleIds[i], if (isDone) Color.parseColor("#8E8E93") else Color.parseColor("#14171A"))
+
+                        // Direct interactive checkbox / row toggle: does NOT open app
+                        val toggleTaskIntent = Intent(context, WidgetActionReceiver::class.java).apply {
+                            action = WidgetActionReceiver.ACTION_TOGGLE_TASK
+                            putExtra(WidgetActionReceiver.EXTRA_TASK_INDEX, i)
+                            putExtra(WidgetActionReceiver.EXTRA_TASK_ID, taskId)
+                        }
+                        val toggleTaskPendingIntent = PendingIntent.getBroadcast(
+                            context,
+                            300 + i,
+                            toggleTaskIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        )
+                        views.setOnClickPendingIntent(rowIds[i], toggleTaskPendingIntent)
+                        views.setOnClickPendingIntent(checkIds[i], toggleTaskPendingIntent)
+                        views.setOnClickPendingIntent(titleIds[i], toggleTaskPendingIntent)
                     } else if (totalCount == 0 && i == 0) {
                         views.setViewVisibility(rowIds[0], View.VISIBLE)
                         views.setTextViewText(checkIds[0], "[ ]")
                         views.setTextColor(checkIds[0], Color.parseColor("#73716B"))
                         views.setTextViewText(titleIds[0], "NO ACTIVE TASKS // TAP TO DISPENSE")
                         views.setTextColor(titleIds[0], Color.parseColor("#73716B"))
+                        views.setOnClickPendingIntent(rowIds[0], openAppPendingIntent)
                     } else {
                         views.setViewVisibility(rowIds[i], View.GONE)
                     }
@@ -115,25 +151,10 @@ class TaktTaskDispenserWidgetProvider : AppWidgetProvider() {
 
                 val quotaText = String.format(java.util.Locale.ROOT, "%d/%d DONE", completedCount, totalCount)
                 views.setTextViewText(R.id.widget_quota_text, quotaText)
-            }
 
-            // PendingIntent
-            val launchIntent = Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                        Intent.FLAG_ACTIVITY_SINGLE_TOP
-                if (!isPro) {
-                    putExtra("open_feature", "studio_pro")
-                }
+                // Footer action button opens the app to tasks dispenser
+                views.setOnClickPendingIntent(R.id.widget_footer_action, openAppPendingIntent)
             }
-            val pendingIntent = PendingIntent.getActivity(
-                context,
-                103,
-                launchIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
-            views.setOnClickPendingIntent(R.id.widget_footer_action, pendingIntent)
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }

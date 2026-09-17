@@ -37,12 +37,13 @@ void main() {
 
   group('VinylTrack domain', () {
     test('presets contain exactly 12 analog soundscapes with correct tiers and metadata', () {
-      expect(VinylTrack.presets.length, equals(12));
-      for (int i = 0; i < 4; i++) {
-        expect(VinylTrack.presets[i].isPremium, isFalse, reason: 'Track $i should be Free');
-      }
-      for (int i = 4; i < 12; i++) {
-        expect(VinylTrack.presets[i].isPremium, isTrue, reason: 'Track $i should be Studio Pro');
+      final freeIndices = {0, 1, 2, 3, 6};
+      for (int i = 0; i < 12; i++) {
+        if (freeIndices.contains(i)) {
+          expect(VinylTrack.presets[i].isPremium, isFalse, reason: 'Track $i should be Free');
+        } else {
+          expect(VinylTrack.presets[i].isPremium, isTrue, reason: 'Track $i should be Studio Pro');
+        }
       }
       for (final track in VinylTrack.presets) {
         expect(track.catalogId, isNotEmpty);

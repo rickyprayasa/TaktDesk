@@ -214,7 +214,7 @@ void main() {
       expect(find.byKey(const ValueKey('load_track_button_1')), findsNothing);
     });
 
-    testWidgets('Drawer 2 premium tracks trigger Studio Pro dialog when locked', (tester) async {
+    testWidgets('Drawer 2 provides free track 6 and premium track 7 triggers Studio Pro dialog when locked', (tester) async {
       await tester.pumpWidget(buildTestApp(isProSimulated: false));
       await tester.pumpAndSettle();
 
@@ -226,10 +226,17 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('vinyl_drawer_segment_2')));
       await tester.pumpAndSettle();
 
-      // Track 6 is premium (Alpine Mountain Brook)
-      final lockedButton = find.byKey(const ValueKey('locked_track_button_6'));
-      expect(lockedButton, findsOneWidget);
-      await tester.tap(lockedButton);
+      // Track 6 (Alpine Mountain Brook) is free for all users to taste Drawer 2
+      final loadButton6 = find.byKey(const ValueKey('load_track_button_6'));
+      expect(loadButton6, findsOneWidget);
+
+      // Navigate to Track 7 (Warm Tape & Felt Piano) which is premium locked
+      await tester.tap(find.byKey(const ValueKey('drawer_2_next_disc')));
+      await tester.pumpAndSettle();
+
+      final lockedButton7 = find.byKey(const ValueKey('locked_track_button_7'));
+      expect(lockedButton7, findsOneWidget);
+      await tester.tap(lockedButton7);
       await tester.pumpAndSettle();
 
       // Studio Pro dialog is shown
@@ -237,7 +244,7 @@ void main() {
       expect(
         find.descendant(
           of: find.byType(AlertDialog),
-          matching: find.textContaining('ALPINE MOUNTAIN BROOK'),
+          matching: find.textContaining('WARM TAPE & FELT PIANO'),
         ),
         findsOneWidget,
       );
@@ -255,12 +262,16 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('vinyl_drawer_segment_2')));
       await tester.pumpAndSettle();
 
-      // Track 6 should have load button
-      final loadButton = find.byKey(const ValueKey('load_track_button_6'));
-      expect(loadButton, findsOneWidget);
-      expect(find.byKey(const ValueKey('locked_track_button_6')), findsNothing);
+      // Navigate to Track 7
+      await tester.tap(find.byKey(const ValueKey('drawer_2_next_disc')));
+      await tester.pumpAndSettle();
 
-      await tester.tap(loadButton);
+      // Track 7 should have load button when Pro
+      final loadButton7 = find.byKey(const ValueKey('load_track_button_7'));
+      expect(loadButton7, findsOneWidget);
+      expect(find.byKey(const ValueKey('locked_track_button_7')), findsNothing);
+
+      await tester.tap(loadButton7);
       await tester.pumpAndSettle();
 
       expect(find.text('[ ON PLATTER ]'), findsOneWidget);

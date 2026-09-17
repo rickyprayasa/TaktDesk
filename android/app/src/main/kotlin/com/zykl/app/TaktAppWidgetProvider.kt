@@ -58,7 +58,13 @@ class TaktAppWidgetProvider : AppWidgetProvider() {
             // Update text telemetries
             views.setTextViewText(R.id.widget_cycles_text, "TODAY: $cycles / $target CYCLES")
             views.setTextViewText(R.id.widget_minutes_text, "$minutes MIN FOCUSED")
-            views.setTextViewText(R.id.widget_status_text, "STATUS: $status")
+            
+            val statusDisplay = when (status) {
+                "FOCUS" -> "STATUS: [ ⏸ PAUSE ]"
+                "BREAK" -> "STATUS: [ ⏸ BREAK ]"
+                else -> "STATUS: [ ▶ START ]"
+            }
+            views.setTextViewText(R.id.widget_status_text, statusDisplay)
 
             // Update 4 Micro-LED drawables
             val activeLed = R.drawable.ic_widget_led_amber
@@ -69,7 +75,19 @@ class TaktAppWidgetProvider : AppWidgetProvider() {
             views.setImageViewResource(R.id.led_3, if (cycles >= 3) activeLed else dimLed)
             views.setImageViewResource(R.id.led_4, if (cycles >= 4) activeLed else dimLed)
 
-            // Smart direct launch PendingIntent
+            // 1. Direct interactive action on STATUS button to toggle timer
+            val toggleTimerIntent = Intent(context, WidgetActionReceiver::class.java).apply {
+                action = WidgetActionReceiver.ACTION_TOGGLE_TIMER
+            }
+            val toggleTimerPendingIntent = PendingIntent.getBroadcast(
+                context,
+                203,
+                toggleTimerIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_status_text, toggleTimerPendingIntent)
+
+            // 2. Direct launch PendingIntent for full desk app
             val launchIntent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                         Intent.FLAG_ACTIVITY_CLEAR_TOP or

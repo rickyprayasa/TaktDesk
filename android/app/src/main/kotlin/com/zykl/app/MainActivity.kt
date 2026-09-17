@@ -23,6 +23,9 @@ class MainActivity : FlutterActivity() {
         @Volatile
         var lastAlarmTimestamp: Long = 0L
 
+        @Volatile
+        var activeInstance: MainActivity? = null
+
         fun shouldPlayAlarm(): Boolean {
             val now = System.currentTimeMillis()
             return if (now - lastAlarmTimestamp > 3500L) {
@@ -30,6 +33,16 @@ class MainActivity : FlutterActivity() {
                 true
             } else {
                 false
+            }
+        }
+
+        fun sendWidgetAction(action: String, data: Map<String, Any>? = null) {
+            activeInstance?.let { activity ->
+                activity.runOnUiThread {
+                    val args = mutableMapOf<String, Any>("action" to action)
+                    if (data != null) args.putAll(data)
+                    activity.widgetChannel?.invokeMethod("onWidgetAction", args)
+                }
             }
         }
     }
@@ -76,11 +89,13 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        activeInstance = this
         notifyAllWidgets()
     }
 
     override fun onResume() {
         super.onResume()
+        activeInstance = this
         notifyAllWidgets()
     }
 
@@ -561,6 +576,9 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        if (activeInstance == this) {
+            activeInstance = null
+        }
         screenWakeHandler.removeCallbacksAndMessages(null)
         MediaNotificationService.mediaControlListener = null
         safeRelease(soundscapePlayer)
