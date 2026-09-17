@@ -183,7 +183,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
     final parallax = ref.watch(parallaxProvider);
     final remainingMinutes = (state.remainingSeconds / 60).floor();
     final remainingSeconds = (state.remainingSeconds % 60).floor();
-    const dialDimensions = Size(240, 240);
+    const dialDimensions = Size(264, 264);
 
     final Color lightDialColor;
     switch (themeState.edition.type) {
@@ -300,7 +300,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                               ),
                               child: Center(
                                 child: Transform.translate(
-                                  offset: const Offset(0, 38),
+                                  offset: const Offset(0, 42),
                                   child: IgnorePointer(
                                     child: MechanicalCounterDisplay(
                                       minutes: state.setupStage == ChronoSetupStage.cycleCount

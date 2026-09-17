@@ -251,11 +251,10 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Flexible(
+                              Expanded(
                                 child: Row(
-                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Flexible(
+                                    Expanded(
                                       child: _buildDrawerSelectorPill(
                                         key: const ValueKey(
                                           'vinyl_drawer_segment_1',
@@ -267,7 +266,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                                       ),
                                     ),
                                     const SizedBox(width: 4),
-                                    Flexible(
+                                    Expanded(
                                       child: _buildDrawerSelectorPill(
                                         key: const ValueKey(
                                           'vinyl_drawer_segment_2',
@@ -281,7 +280,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 6),
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -440,7 +439,9 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
       onTap: () => _switchDrawer(drawerNumber),
       borderRadius: BorderRadius.circular(4),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+        height: 24,
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
         decoration: BoxDecoration(
           color: isActive
               ? (themeState.isDarkMode
@@ -457,18 +458,23 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
             width: isActive ? 1.2 : 0.8,
           ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'monospace',
-            fontSize: 9.0,
-            fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-            letterSpacing: 0.5,
-            color: isActive
-                ? (themeState.isDarkMode
-                    ? themeState.filamentColor
-                    : const Color(0xFFC86000))
-                : themeState.chassisTextColor,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            maxLines: 1,
+            softWrap: false,
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 8.5,
+              fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+              letterSpacing: 0.5,
+              color: isActive
+                  ? (themeState.isDarkMode
+                      ? themeState.filamentColor
+                      : const Color(0xFFC86000))
+                  : themeState.chassisTextColor,
+            ),
           ),
         ),
       ),
@@ -612,29 +618,37 @@ class _CompactRecordSleeveCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        track.name.toUpperCase(),
-                        style: TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: isSelected
-                              ? TaktColors.filamentAmber
-                              : chassisTextColor,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          track.name.toUpperCase(),
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: isSelected
+                                ? TaktColors.filamentAmber
+                                : chassisTextColor,
+                          ),
+                          maxLines: 1,
+                          softWrap: false,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        track.subtitle,
-                        style: TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 8,
-                          color: chassisMutedTextColor,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          track.subtitle,
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 8,
+                            color: chassisMutedTextColor,
+                          ),
+                          maxLines: 1,
+                          softWrap: false,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),

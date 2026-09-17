@@ -92,7 +92,7 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
     return MaterialChassisBox(
       key: const ValueKey('vinyl_player_deck_chassis'),
       rivetKeyPrefix: 'vinyl_rivet',
-      width: 280,
+      width: 340,
       borderRadius: BorderRadius.circular(10),
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -158,8 +158,8 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
             child: GestureDetector(
               onTap: () => controller.toggleNeedle(),
               child: SizedBox(
-                width: 240,
-                height: 140,
+                width: 280,
+                height: 155,
                 child: AnimatedBuilder(
                   animation: _armAnimation,
                   builder: (context, _) {

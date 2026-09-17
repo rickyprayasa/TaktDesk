@@ -120,7 +120,7 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
     }
 
     return Container(
-      width: 280,
+      width: 340,
       decoration: BoxDecoration(
         color: themeState.moduleChassisColor,
         borderRadius: BorderRadius.circular(6.0),

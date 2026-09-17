@@ -269,13 +269,13 @@ void main() {
     );
     await tester.pump();
 
-    // Verify plate container width does not exceed 280 (matching modular instrument chassis)
+    // Verify plate container width does not exceed 340 (matching modular instrument chassis)
     final plateContainerFinder = find.descendant(
       of: find.byType(DeskSpecPlateWidget),
       matching: find.byType(Container),
     ).first;
     final innerContainerBox = tester.renderObject(plateContainerFinder) as RenderBox;
-    expect(innerContainerBox.size.width, lessThanOrEqualTo(280.0));
+    expect(innerContainerBox.size.width, lessThanOrEqualTo(340.0));
 
     final plateSurface = find.byKey(const ValueKey('desk_spec_plate_surface'));
     // Verify all text elements are present

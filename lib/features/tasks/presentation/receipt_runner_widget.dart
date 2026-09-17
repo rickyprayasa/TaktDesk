@@ -21,7 +21,7 @@ class ReceiptRunnerWidget extends ConsumerWidget {
     return MaterialChassisBox(
       key: const ValueKey('receipt_dispenser_chassis'),
       rivetKeyPrefix: 'dispenser_rivet',
-      width: 280,
+      width: 340,
       borderRadius: BorderRadius.circular(10),
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
       child: Column(

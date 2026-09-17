@@ -232,7 +232,7 @@ class DeskSpecPlateWidget extends ConsumerWidget {
 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 280),
+        constraints: const BoxConstraints(maxWidth: 340),
         child: plateContainer,
       ),
     );

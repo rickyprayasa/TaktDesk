@@ -121,7 +121,7 @@ class _PhysicalInkStampState extends State<PhysicalInkStamp>
             ),
             const SizedBox(height: 1),
             Text(
-              'VERIFIED // TAKT',
+              'VERIFIED // ZYKL',
               style: TextStyle(
                 fontFamily: 'monospace',
                 color: TaktColors.patinaOlive.withValues(alpha: 0.8),
