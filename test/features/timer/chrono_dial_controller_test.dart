@@ -325,16 +325,13 @@ void main() {
         expect(ChronoSetupStage.none.telemetryLabel, equals('STANDBY // READY'));
 
         expect(ChronoSetupStage.focus.isActive, isTrue);
-        expect(ChronoSetupStage.focus.telemetryLabel, equals('SET 1/4 // FOCUS'));
+        expect(ChronoSetupStage.focus.telemetryLabel, equals('SET 1/3 // FOCUS'));
 
         expect(ChronoSetupStage.shortBreak.isActive, isTrue);
-        expect(ChronoSetupStage.shortBreak.telemetryLabel, equals('SET 2/4 // SHORT BRK'));
+        expect(ChronoSetupStage.shortBreak.telemetryLabel, equals('SET 2/3 // SHORT BRK'));
 
         expect(ChronoSetupStage.longBreak.isActive, isTrue);
-        expect(ChronoSetupStage.longBreak.telemetryLabel, equals('SET 3/4 // LONG BRK'));
-
-        expect(ChronoSetupStage.cycleCount.isActive, isTrue);
-        expect(ChronoSetupStage.cycleCount.telemetryLabel, equals('SET 4/4 // CYCLES'));
+        expect(ChronoSetupStage.longBreak.telemetryLabel, equals('SET 3/3 // LONG BRK'));
       });
 
       test(
@@ -385,25 +382,14 @@ void main() {
         expect(controller.state.targetMinutes, equals(22));
         expect(controller.state.customProfile.longBreakMinutes, equals(22));
 
-        // Stage 4: Cycle Count (2 - 8 cycles)
-        controller.advanceCalibrationStage();
-        expect(controller.state.setupStage, equals(ChronoSetupStage.cycleCount));
-        controller.setTargetMinutes(6);
-        expect(controller.state.targetMinutes, equals(6));
-        expect(controller.state.customProfile.longBreakInterval, equals(6));
-
-        // Clamp test on cycles: 1 -> 2, 10 -> 8
-        controller.setTargetMinutes(1);
-        expect(controller.state.targetMinutes, equals(2));
-        expect(controller.state.customProfile.longBreakInterval, equals(2));
-
-        controller.setTargetMinutes(10);
-        expect(controller.state.targetMinutes, equals(8));
-        expect(controller.state.customProfile.longBreakInterval, equals(8));
+        // Clamp test on long break: 60 -> 45
+        controller.setTargetMinutes(60);
+        expect(controller.state.targetMinutes, equals(45));
+        expect(controller.state.customProfile.longBreakMinutes, equals(45));
       });
 
       test(
-        'advanceCalibrationStage cycles through focus -> shortBreak -> longBreak -> cycleCount -> none and exits in standby',
+        'advanceCalibrationStage cycles through focus -> shortBreak -> longBreak -> none and exits in standby',
         () {
           final mockAudio = MockAudioService();
           final controller = ChronoDialController(mockAudio);
@@ -421,11 +407,7 @@ void main() {
           expect(controller.state.setupStage, equals(ChronoSetupStage.longBreak));
           controller.setTargetMinutes(25);
 
-          controller.advanceCalibrationStage();
-          expect(controller.state.setupStage, equals(ChronoSetupStage.cycleCount));
-          controller.setTargetMinutes(3);
-
-          // Advance past cycleCount -> exits setup to none
+          // Advance past longBreak -> exits setup to none
           mockAudio.playedEffects.clear();
           controller.advanceCalibrationStage();
 
@@ -442,10 +424,32 @@ void main() {
           expect(custom.focusMinutes, equals(35));
           expect(custom.shortBreakMinutes, equals(8));
           expect(custom.longBreakMinutes, equals(25));
-          expect(custom.longBreakInterval, equals(3));
           expect(controller.state.profile, equals(custom));
         },
       );
+
+      test('cycleLongBreakInterval increments cycle count and wraps from 8 to 2', () {
+        final mockAudio = MockAudioService();
+        final controller = ChronoDialController(mockAudio);
+        controller.setProfile(PomodoroProfile.classic); // default 4 cycles
+        expect(controller.state.profile.longBreakInterval, equals(4));
+
+        controller.cycleLongBreakInterval();
+        expect(controller.state.profile.longBreakInterval, equals(5));
+
+        controller.cycleLongBreakInterval();
+        expect(controller.state.profile.longBreakInterval, equals(6));
+
+        controller.cycleLongBreakInterval();
+        expect(controller.state.profile.longBreakInterval, equals(7));
+
+        controller.cycleLongBreakInterval();
+        expect(controller.state.profile.longBreakInterval, equals(8));
+
+        // Wraps to 2
+        controller.cycleLongBreakInterval();
+        expect(controller.state.profile.longBreakInterval, equals(2));
+      });
 
       test('cancelCalibration restores setupStage to none and resets targetMinutes', () {
         final mockAudio = MockAudioService();

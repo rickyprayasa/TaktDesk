@@ -108,18 +108,12 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
       var rawValue = (fraction * 60.0).round();
       if (rawValue == 0) rawValue = 60;
 
-      if (state.setupStage == ChronoSetupStage.cycleCount) {
-        final cycles = rawValue.clamp(2, 8);
-        _remainingSecondsNotifier.value = cycles * 60.0;
-        ref.read(chronoDialProvider.notifier).setTargetMinutes(cycles);
-      } else {
-        final maxMins = state.setupStage == ChronoSetupStage.focus
-            ? 90
-            : (state.setupStage == ChronoSetupStage.shortBreak ? 30 : 45);
-        final rawMinutes = rawValue.clamp(1, maxMins);
-        _remainingSecondsNotifier.value = rawMinutes * 60.0;
-        ref.read(chronoDialProvider.notifier).setTargetMinutes(rawMinutes);
-      }
+      final maxMins = state.setupStage == ChronoSetupStage.focus
+          ? 90
+          : (state.setupStage == ChronoSetupStage.shortBreak ? 30 : 45);
+      final rawMinutes = rawValue.clamp(1, maxMins);
+      _remainingSecondsNotifier.value = rawMinutes * 60.0;
+      ref.read(chronoDialProvider.notifier).setTargetMinutes(rawMinutes);
       return;
     }
 
@@ -303,12 +297,8 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                                   offset: const Offset(0, 40.0),
                                   child: IgnorePointer(
                                     child: MechanicalCounterDisplay(
-                                      minutes: state.setupStage == ChronoSetupStage.cycleCount
-                                          ? state.customProfile.longBreakInterval
-                                          : m,
-                                      seconds: state.setupStage == ChronoSetupStage.cycleCount
-                                          ? 0
-                                          : s,
+                                      minutes: m,
+                                      seconds: s,
                                       isDialInset: true,
                                     ),
                                   ),

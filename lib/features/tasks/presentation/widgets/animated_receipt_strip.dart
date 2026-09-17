@@ -175,9 +175,14 @@ class _AnimatedReceiptStripState extends State<AnimatedReceiptStrip>
                                 child: Text(
                                   widget.task.title,
                                   style: TaktTypography.receiptBody.copyWith(
+                                    color: widget.task.isDone
+                                        ? TaktColors.thermalCarbon.withValues(alpha: 0.60)
+                                        : TaktColors.thermalCarbon,
                                     decoration: widget.task.isDone
                                         ? TextDecoration.lineThrough
                                         : null,
+                                    decorationColor: TaktColors.thermalCarbon,
+                                    decorationThickness: 1.6,
                                   ),
                                 ),
                               ),

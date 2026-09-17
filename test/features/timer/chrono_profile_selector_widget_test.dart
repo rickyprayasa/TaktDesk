@@ -159,7 +159,7 @@ void main() {
     await tester.pump();
 
     expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.focus));
-    expect(find.text('SET 1/4 // FOCUS'), findsOneWidget);
+    expect(find.text('SET 1/3 // FOCUS'), findsOneWidget);
   });
 
   testWidgets('tapping CUSTOM button when already active invokes enterCustomCalibration()', (tester) async {
@@ -190,7 +190,7 @@ void main() {
     await tester.tap(find.text('CUSTOM'));
     await tester.pump();
     expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.focus));
-    expect(find.text('SET 1/4 // FOCUS'), findsOneWidget);
+    expect(find.text('SET 1/3 // FOCUS'), findsOneWidget);
   });
 
   testWidgets('telemetry status plaque displays setup stage labels and exits calibration on tap', (tester) async {
@@ -215,33 +215,55 @@ void main() {
     container.read(chronoDialProvider.notifier).enterCustomCalibration();
     await tester.pump();
 
-    expect(find.text('SET 1/4 // FOCUS'), findsOneWidget);
+    expect(find.text('SET 1/3 // FOCUS'), findsOneWidget);
 
     // Verify text color is filamentAmber
-    final textWidget = tester.widget<Text>(find.text('SET 1/4 // FOCUS'));
+    final textWidget = tester.widget<Text>(find.text('SET 1/3 // FOCUS'));
     expect(textWidget.style?.color, equals(TaktColors.filamentAmber));
 
     // Advance to short break
     container.read(chronoDialProvider.notifier).advanceCalibrationStage();
     await tester.pump();
-    expect(find.text('SET 2/4 // SHORT BRK'), findsOneWidget);
+    expect(find.text('SET 2/3 // SHORT BRK'), findsOneWidget);
 
     // Advance to long break
     container.read(chronoDialProvider.notifier).advanceCalibrationStage();
     await tester.pump();
-    expect(find.text('SET 3/4 // LONG BRK'), findsOneWidget);
-
-    // Advance to cycle count
-    container.read(chronoDialProvider.notifier).advanceCalibrationStage();
-    await tester.pump();
-    expect(find.text('SET 4/4 // CYCLES'), findsOneWidget);
+    expect(find.text('SET 3/3 // LONG BRK'), findsOneWidget);
 
     // Tap telemetry plaque to cancel/exit calibration
-    await tester.tap(find.text('SET 4/4 // CYCLES'));
+    await tester.tap(find.text('SET 3/3 // LONG BRK'));
     await tester.pump();
 
     expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.none));
     expect(find.text('PULL CROWN // SET'), findsOneWidget);
+  });
+
+  testWidgets('tapping cycle gauge increments cycle count target', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: ChronoProfileSelectorWidget(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('CYCLE 1/4'), findsOneWidget);
+
+    await tester.tap(find.text('CYCLE 1/4'));
+    await tester.pump();
+
+    expect(find.text('CYCLE 1/5'), findsOneWidget);
+    expect(container.read(chronoDialProvider).profile.longBreakInterval, equals(5));
   });
 
   testWidgets('telemetry status plaque displays PULL CROWN // SET when custom profile is idle in standby', (tester) async {

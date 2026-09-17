@@ -5,8 +5,7 @@ enum ChronoSetupStage {
   none,
   focus,
   shortBreak,
-  longBreak,
-  cycleCount;
+  longBreak;
 
   bool get isActive => this != ChronoSetupStage.none;
 
@@ -15,13 +14,11 @@ enum ChronoSetupStage {
       case ChronoSetupStage.none:
         return 'STANDBY // READY';
       case ChronoSetupStage.focus:
-        return 'SET 1/4 // FOCUS';
+        return 'SET 1/3 // FOCUS';
       case ChronoSetupStage.shortBreak:
-        return 'SET 2/4 // SHORT BRK';
+        return 'SET 2/3 // SHORT BRK';
       case ChronoSetupStage.longBreak:
-        return 'SET 3/4 // LONG BRK';
-      case ChronoSetupStage.cycleCount:
-        return 'SET 4/4 // CYCLES';
+        return 'SET 3/3 // LONG BRK';
     }
   }
 }

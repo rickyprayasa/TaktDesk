@@ -209,57 +209,69 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
                 plaqueWidget,
                 const SizedBox(width: 4),
                 // Right: 4-Cycle Pomodoro Gauge (Cycle Label + Tactile Micro-Pips)
+                // Direct tap allows cycling target cycles (2..8) when timer is idle
                 Flexible(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerRight,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'CYCLE ${timerState.cycleCount}/${timerState.profile.longBreakInterval}',
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 9.0,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.3,
-                            color: isDark
-                                ? themeState.chassisTextColor.withValues(alpha: 0.70)
-                                : const Color(0xFF2B2E34),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        for (int c = 1; c <= timerState.profile.longBreakInterval; c++) ...[
-                          Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 1.2),
-                            width: 5.0,
-                            height: 5.0,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: c < timerState.cycleCount
-                                  ? activeColor.withValues(alpha: 0.55)
-                                  : (c == timerState.cycleCount
-                                      ? activeColor
-                                      : inactiveLedColor),
-                              border: Border.all(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: timerState.isRunning
+                          ? null
+                          : () => ref.read(chronoDialProvider.notifier).cycleLongBreakInterval(),
+                      child: Tooltip(
+                        message: timerState.isRunning
+                            ? 'Cycle target locked while timer is running'
+                            : 'Cycle target: ${timerState.profile.longBreakInterval} (Tap to change 2-8)',
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'CYCLE ${timerState.cycleCount}/${timerState.profile.longBreakInterval}',
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 9.0,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.3,
                                 color: isDark
-                                    ? const Color(0xFF33373E)
-                                    : const Color(0xFFB5B0A4),
-                                width: 0.6,
+                                    ? themeState.chassisTextColor.withValues(alpha: 0.70)
+                                    : const Color(0xFF2B2E34),
                               ),
-                              boxShadow: c == timerState.cycleCount
-                                  ? [
-                                      BoxShadow(
-                                        color: activeColor.withValues(alpha: 0.65),
-                                        blurRadius: 3.5,
-                                        spreadRadius: 0.5,
-                                      ),
-                                    ]
-                                  : null,
                             ),
-                          ),
-                        ],
-                      ],
+                            const SizedBox(width: 4),
+                            for (int c = 1; c <= timerState.profile.longBreakInterval; c++) ...[
+                              Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 1.2),
+                                width: 5.0,
+                                height: 5.0,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: c < timerState.cycleCount
+                                      ? activeColor.withValues(alpha: 0.55)
+                                      : (c == timerState.cycleCount
+                                          ? activeColor
+                                          : inactiveLedColor),
+                                  border: Border.all(
+                                    color: isDark
+                                        ? const Color(0xFF33373E)
+                                        : const Color(0xFFB5B0A4),
+                                    width: 0.6,
+                                  ),
+                                  boxShadow: c == timerState.cycleCount
+                                      ? [
+                                          BoxShadow(
+                                            color: activeColor.withValues(alpha: 0.65),
+                                            blurRadius: 3.5,
+                                            spreadRadius: 0.5,
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),

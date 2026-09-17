@@ -344,6 +344,8 @@ class _ArchiveDrawerWidgetState extends ConsumerState<ArchiveDrawerWidget> {
                 fontSize: 10,
                 color: themeState.chassisTextColor.withValues(alpha: 0.75),
                 decoration: TextDecoration.lineThrough,
+                decorationColor: themeState.chassisTextColor.withValues(alpha: 0.75),
+                decorationThickness: 1.4,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

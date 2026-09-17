@@ -99,6 +99,7 @@ void main() {
       expect(find.text('[DONE]'), findsOneWidget);
       final textWidget = tester.widget<Text>(find.text('Log Telemetry'));
       expect(textWidget.style?.decoration, TextDecoration.lineThrough);
+      expect(textWidget.style?.decorationColor, TaktColors.thermalCarbon);
 
       // Double tap again to unstamp
       await tester.tap(find.text('Log Telemetry'));

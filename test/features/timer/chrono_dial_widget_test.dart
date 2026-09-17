@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'dart:ui';
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
@@ -878,14 +877,7 @@ void main() {
     expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.longBreak));
     expect(container.read(chronoDialProvider).isRunning, isFalse);
 
-    // Tap crown button again: advances to cycleCount
-    await tester.tap(find.byType(CrownPushButton));
-    await tester.pump();
-
-    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.cycleCount));
-    expect(container.read(chronoDialProvider).isRunning, isFalse);
-
-    // Tap crown button again: completes calibration, exits to none
+    // Tap crown button: completes calibration, exits to none
     await tester.tap(find.byType(CrownPushButton));
     await tester.pump();
 
@@ -896,7 +888,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('Rotary pan drag calibrates duration according to active setup stage bounds and displays cycles in counter', (tester) async {
+  testWidgets('Rotary pan drag calibrates duration according to active setup stage bounds', (tester) async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
@@ -965,38 +957,13 @@ void main() {
     expect(container.read(chronoDialProvider).customProfile.longBreakMinutes, equals(30));
     expectDisplay(tester, 30, 0);
 
-    // Advance to cycleCount (2..8 cycles)
+    // Advance past longBreak: completes calibration and returns to standby
     container.read(chronoDialProvider.notifier).advanceCalibrationStage();
     await tester.pump();
-    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.cycleCount));
-
-    // Counter display should show 04:00 (default interval 4)
-    expectDisplay(tester, 4, 0);
-
-    // Drag to 6-minute tick (angle 36 deg from 12 o'clock -> 6 cycles)
-    const angle6 = 6.0 / 60.0 * 2 * math.pi;
-    final offset6 = Offset(50 * math.sin(angle6), -50 * math.cos(angle6));
-    final move6 = Offset(25 * math.sin(angle6), -25 * math.cos(angle6));
-    gesture = await tester.startGesture(dialCenter + offset6);
-    await tester.pump();
-    await gesture.moveBy(move6);
-    await tester.pump();
-    await gesture.up();
-    await tester.pump();
-
-    expect(container.read(chronoDialProvider).customProfile.longBreakInterval, equals(6));
-    expectDisplay(tester, 6, 0);
-
-    // Drag past 8 to 9 o'clock position (45 min mark -> clamped to max 8 cycles)
-    gesture = await tester.startGesture(dialCenter + const Offset(-50, 0));
-    await tester.pump();
-    await gesture.moveBy(const Offset(-25, 0));
-    await tester.pump();
-    await gesture.up();
-    await tester.pump();
-
-    expect(container.read(chronoDialProvider).customProfile.longBreakInterval, equals(8));
-    expectDisplay(tester, 8, 0);
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.none));
+    expect(container.read(chronoDialProvider).profile.focusMinutes, equals(15));
+    expect(container.read(chronoDialProvider).profile.shortBreakMinutes, equals(30));
+    expect(container.read(chronoDialProvider).profile.longBreakMinutes, equals(30));
 
     // Clean up
     await tester.pumpWidget(const SizedBox());
@@ -1033,7 +1000,7 @@ void main() {
     // Verify calibration entered
     expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.focus));
     expect(container.read(chronoDialProvider).profile.type, equals(PomodoroProfileType.custom));
-    expect(find.text('SET 1/4 // FOCUS'), findsOneWidget);
+    expect(find.text('SET 1/3 // FOCUS'), findsOneWidget);
 
     // Verify CrownPushButton reflects isPulledOut == true
     crown = tester.widget<CrownPushButton>(find.byType(CrownPushButton));
@@ -1165,12 +1132,7 @@ void main() {
     await tester.pump();
     expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.longBreak));
 
-    // 6. Tap crown: advances to stage 4 (cycleCount)
-    await tester.tap(find.byType(CrownPushButton));
-    await tester.pump();
-    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.cycleCount));
-
-    // 7. Tap crown: completes calibration, exits to none
+    // 6. Tap crown: completes calibration, exits to none
     await tester.tap(find.byType(CrownPushButton));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));

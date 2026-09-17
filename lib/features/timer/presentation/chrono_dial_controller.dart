@@ -98,17 +98,6 @@ class ChronoDialController extends StateNotifier<TimerState> {
         _audioService?.playFoley(SoundEffect.dialClick);
         break;
       case ChronoSetupStage.longBreak:
-        final nextCycles = state.customProfile.longBreakInterval;
-        state = state.copyWith(
-          setupStage: ChronoSetupStage.cycleCount,
-          targetMinutes: nextCycles,
-          remainingSeconds: nextCycles * 60.0,
-          lastTickMinute: nextCycles,
-        );
-        HapticService.dialTick();
-        _audioService?.playFoley(SoundEffect.dialClick);
-        break;
-      case ChronoSetupStage.cycleCount:
         final focusMins = state.customProfile.focusMinutes;
         state = state.copyWith(
           setupStage: ChronoSetupStage.none,
@@ -160,10 +149,6 @@ class ChronoDialController extends StateNotifier<TimerState> {
         case ChronoSetupStage.longBreak:
           activeVal = minutes.clamp(1, 45);
           updated = state.customProfile.copyWith(longBreakMinutes: activeVal);
-          break;
-        case ChronoSetupStage.cycleCount:
-          activeVal = minutes.clamp(2, 8);
-          updated = state.customProfile.copyWith(longBreakInterval: activeVal);
           break;
         case ChronoSetupStage.none:
           activeVal = minutes.clamp(1, 90);
@@ -233,6 +218,15 @@ class ChronoDialController extends StateNotifier<TimerState> {
         customProfile: updatedCustom,
       );
     }
+  }
+
+  void cycleLongBreakInterval() {
+    if (state.isRunning) return;
+    final current = state.profile.longBreakInterval;
+    final next = current >= 8 ? 2 : current + 1;
+    updateCustomDurations(longBreakInterval: next, activate: true);
+    HapticService.selectionClick();
+    _audioService?.playFoley(SoundEffect.dialClick);
   }
 
   void start() {
