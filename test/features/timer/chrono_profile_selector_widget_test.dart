@@ -258,10 +258,22 @@ void main() {
     await tester.pump();
 
     expect(find.text('CYCLE 1/4'), findsOneWidget);
+    expect(find.byKey(const ValueKey('chrono_cycle_gauge_button')), findsOneWidget);
+    expect(find.byIcon(Icons.autorenew_rounded), findsOneWidget);
 
-    await tester.tap(find.text('CYCLE 1/4'));
+    await tester.tap(find.byKey(const ValueKey('chrono_cycle_gauge_button')));
     await tester.pump();
 
+    expect(find.text('CYCLE 1/5'), findsOneWidget);
+    expect(container.read(chronoDialProvider).profile.longBreakInterval, equals(5));
+
+    // Start timer: button displays lock icon and ignores tap
+    container.read(chronoDialProvider.notifier).start();
+    await tester.pump();
+    expect(find.byIcon(Icons.lock_outline_rounded), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('chrono_cycle_gauge_button')));
+    await tester.pump();
     expect(find.text('CYCLE 1/5'), findsOneWidget);
     expect(container.read(chronoDialProvider).profile.longBreakInterval, equals(5));
   });
