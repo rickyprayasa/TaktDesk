@@ -38,6 +38,7 @@ class ReceiptRunnerWidget extends ConsumerWidget {
                     showModalBottomSheet(
                       context: context,
                       isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
                       builder: (_) => TaskInputSheet(
                         onSubmitted: (val) => controller.addTask(val),
                       ),
