@@ -6,6 +6,7 @@ import '../../../app/theme/theme_controller.dart';
 import '../../../app/theme/widgets/zykl_hardware_plaque.dart';
 import '../../../core/audio/audio_service.dart';
 import '../../../core/audio/sound_effect.dart';
+import '../../../core/config/app_security_config.dart';
 import '../../../core/focus/focus_lock_service.dart';
 import '../../../core/haptics/haptic_service.dart';
 import '../../../core/services/url_service.dart';
@@ -2198,60 +2199,62 @@ class _HardwareEditionsSectionState
                   ],
                 ],
               ),
-              const SizedBox(height: 14),
-              Divider(height: 1, color: widget.borderColor),
-              const SizedBox(height: 12),
-              // SIMULATE STUDIO PRO CLEARANCE switch row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'SIMULATE STUDIO PRO CLEARANCE',
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1.0,
-                            color: widget.primaryTextColor,
+              if (AppSecurityConfig.showDeveloperTools) ...[
+                const SizedBox(height: 14),
+                Divider(height: 1, color: widget.borderColor),
+                const SizedBox(height: 12),
+                // SIMULATE STUDIO PRO CLEARANCE switch row (Developer/Internal Test only)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'SIMULATE STUDIO PRO CLEARANCE',
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 1.0,
+                              color: widget.primaryTextColor,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Developer preview override for all hardware finishes',
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 9.0,
-                            color: widget.secondaryTextColor,
+                          const SizedBox(height: 2),
+                          Text(
+                            'Developer preview override for all hardware finishes',
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 9.0,
+                              color: widget.secondaryTextColor,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Switch(
-                    key: const ValueKey('simulate_pro_switch'),
-                    value: widget.prefs.isProSimulated,
-                    activeThumbColor: TaktColors.filamentAmber,
-                    activeTrackColor:
-                        TaktColors.filamentAmber.withValues(alpha: 0.5),
-                    inactiveThumbColor: widget.isDark
-                        ? const Color(0xFF6B7280)
-                        : const Color(0xFF9CA3AF),
-                    inactiveTrackColor: widget.isDark
-                        ? TaktColors.slateLight
-                        : TaktColors.paperBorder,
-                    onChanged: (val) {
-                      ref
-                          .read(deskPreferencesControllerProvider.notifier)
-                          .setProSimulated(val);
-                    },
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 8),
+                    Switch(
+                      key: const ValueKey('simulate_pro_switch'),
+                      value: widget.prefs.isProSimulated,
+                      activeThumbColor: TaktColors.filamentAmber,
+                      activeTrackColor:
+                          TaktColors.filamentAmber.withValues(alpha: 0.5),
+                      inactiveThumbColor: widget.isDark
+                          ? const Color(0xFF6B7280)
+                          : const Color(0xFF9CA3AF),
+                      inactiveTrackColor: widget.isDark
+                          ? TaktColors.slateLight
+                          : TaktColors.paperBorder,
+                      onChanged: (val) {
+                        ref
+                            .read(deskPreferencesControllerProvider.notifier)
+                            .setProSimulated(val);
+                      },
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),

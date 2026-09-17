@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/config/app_security_config.dart';
 import 'hardware_edition.dart';
 
 class ChassisThemeState {
@@ -10,7 +11,7 @@ class ChassisThemeState {
   const ChassisThemeState({
     this.isDarkMode = true,
     this.edition = HardwareEdition.braunClassic,
-    this.isProUnlocked = true,
+    this.isProUnlocked = AppSecurityConfig.isProSimulationEnabled,
   });
 
   Color get canvasColor =>

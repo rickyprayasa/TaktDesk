@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme/hardware_edition.dart';
 import '../../../app/theme/theme_controller.dart';
 import '../../../core/audio/audio_service.dart';
+import '../../../core/config/app_security_config.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/haptics/haptic_service.dart';
 import '../../vinyl/presentation/vinyl_controller.dart';
@@ -67,7 +68,7 @@ class DeskPreferencesState {
     this.hapticsEnabled = true,
     this.parallaxEnabled = true,
     this.selectedEdition = 'braunClassic',
-    this.isProSimulated = true,
+    this.isProSimulated = AppSecurityConfig.isProSimulationEnabled,
     this.alarmChimeId = 'braunBell',
     this.autoUnlockMonastic = false,
   });
@@ -141,8 +142,11 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
     final pref = await (db.select(db.deskPreferences)..limit(1)).getSingleOrNull();
     if (!mounted) return;
     if (pref != null) {
-      _themeController?.setProUnlocked(pref.isProSimulated);
-      if (!pref.isProSimulated) {
+      final effectivePro = AppSecurityConfig.isProSimulationEnabled
+          ? pref.isProSimulated
+          : false;
+      _themeController?.setProUnlocked(effectivePro);
+      if (!effectivePro) {
         _vinylController?.revertIfProRevoked();
       }
       final applied = _themeController?.setHardwareEdition(
@@ -158,7 +162,7 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
         foleyEnabled: pref.foleyEnabled,
         hapticsEnabled: pref.hapticsEnabled,
         selectedEdition: effectiveEdition,
-        isProSimulated: pref.isProSimulated,
+        isProSimulated: effectivePro,
         alarmChimeId: pref.alarmChimeId,
         autoUnlockMonastic: pref.autoUnlockMonastic,
       );
