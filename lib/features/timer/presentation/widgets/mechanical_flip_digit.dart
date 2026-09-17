@@ -134,15 +134,19 @@ class MechanicalCounterDisplay extends StatelessWidget {
     final digitStyle = TextStyle(
       fontFamily: 'monospace',
       fontWeight: FontWeight.w700,
-      fontSize: isDialInset ? 11.5 : 14.0,
+      fontSize: isDialInset ? 11.0 : 14.0,
+      height: 1.0,
       letterSpacing: 0.4,
       color: TaktColors.warmBone,
     );
 
     return Container(
+      height: isDialInset ? 18.0 : null,
+      alignment: Alignment.center,
+      clipBehavior: Clip.antiAlias,
       padding: EdgeInsets.symmetric(
-        horizontal: isDialInset ? 3 : 6,
-        vertical: isDialInset ? 0.5 : 2,
+        horizontal: isDialInset ? 2 : 6,
+        vertical: isDialInset ? 0.0 : 2,
       ),
       decoration: isDialInset
           ? const BoxDecoration(color: Colors.transparent)
@@ -190,7 +194,8 @@ class MechanicalCounterDisplay extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'monospace',
                 fontWeight: FontWeight.w700,
-                fontSize: isDialInset ? 10.5 : 13.0,
+                fontSize: isDialInset ? 10.0 : 13.0,
+                height: 1.0,
                 color: TaktColors.filamentAmber,
               ),
             ),

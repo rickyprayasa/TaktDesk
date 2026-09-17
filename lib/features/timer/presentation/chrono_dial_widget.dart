@@ -300,7 +300,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                               ),
                               child: Center(
                                 child: Transform.translate(
-                                  offset: const Offset(0, 42),
+                                  offset: const Offset(0, 40.0),
                                   child: IgnorePointer(
                                     child: MechanicalCounterDisplay(
                                       minutes: state.setupStage == ChronoSetupStage.cycleCount

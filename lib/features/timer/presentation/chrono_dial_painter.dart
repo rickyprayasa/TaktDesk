@@ -214,11 +214,11 @@ class ChronoDialPainter extends CustomPainter {
 
     // 5b. Recessed Odometer Aperture Bezel Window Bed (6 o'clock position)
     final apertureRect = Rect.fromCenter(
-      center: Offset(center.dx, center.dy + 38),
-      width: 58.0,
-      height: 19.0,
+      center: Offset(center.dx, center.dy + 40.0),
+      width: 62.0,
+      height: 22.0,
     );
-    final apertureRRect = RRect.fromRectAndRadius(apertureRect, const Radius.circular(3.0));
+    final apertureRRect = RRect.fromRectAndRadius(apertureRect, const Radius.circular(3.5));
 
     final apertureBedPaint = Paint()..color = const Color(0xFF0C0E10);
     canvas.drawRRect(apertureRRect, apertureBedPaint);
