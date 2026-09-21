@@ -116,7 +116,7 @@ class VinylTrack {
           'Analog tape saturation with a slow, muted felt piano chord progression.',
       labelColorHex: '#D97736',
       assetPath: 'assets/audio/vinyl_warm_tape.wav',
-      isPremium: true,
+      isPremium: false,
     ),
     VinylTrack(
       index: 8,

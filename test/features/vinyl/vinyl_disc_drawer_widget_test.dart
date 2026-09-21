@@ -214,7 +214,7 @@ void main() {
       expect(find.byKey(const ValueKey('load_track_button_1')), findsNothing);
     });
 
-    testWidgets('Drawer 2 provides free track 6 and premium track 7 triggers Studio Pro dialog when locked', (tester) async {
+    testWidgets('Drawer 2 provides free tracks 6 and 7 (Harmonics), and premium track 8 triggers Studio Pro dialog', (tester) async {
       await tester.pumpWidget(buildTestApp(isProSimulated: false));
       await tester.pumpAndSettle();
 
@@ -226,17 +226,24 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('vinyl_drawer_segment_2')));
       await tester.pumpAndSettle();
 
-      // Track 6 (Alpine Mountain Brook) is free for all users to taste Drawer 2
+      // Track 6 (Alpine Mountain Brook) is free
       final loadButton6 = find.byKey(const ValueKey('load_track_button_6'));
       expect(loadButton6, findsOneWidget);
 
-      // Navigate to Track 7 (Warm Tape & Felt Piano) which is premium locked
+      // Navigate to Track 7 (Warm Tape & Felt Piano) which is also free (Harmonics)
       await tester.tap(find.byKey(const ValueKey('drawer_2_next_disc')));
       await tester.pumpAndSettle();
 
-      final lockedButton7 = find.byKey(const ValueKey('locked_track_button_7'));
-      expect(lockedButton7, findsOneWidget);
-      await tester.tap(lockedButton7);
+      final loadButton7 = find.byKey(const ValueKey('load_track_button_7'));
+      expect(loadButton7, findsOneWidget);
+
+      // Navigate to Track 8 (Pacific Ocean Waves) which is premium locked
+      await tester.tap(find.byKey(const ValueKey('drawer_2_next_disc')));
+      await tester.pumpAndSettle();
+
+      final lockedButton8 = find.byKey(const ValueKey('locked_track_button_8'));
+      expect(lockedButton8, findsOneWidget);
+      await tester.tap(lockedButton8);
       await tester.pumpAndSettle();
 
       // Studio Pro dialog is shown
@@ -244,7 +251,7 @@ void main() {
       expect(
         find.descendant(
           of: find.byType(AlertDialog),
-          matching: find.textContaining('WARM TAPE & FELT PIANO'),
+          matching: find.textContaining('PACIFIC OCEAN WAVES'),
         ),
         findsOneWidget,
       );
@@ -262,16 +269,18 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('vinyl_drawer_segment_2')));
       await tester.pumpAndSettle();
 
-      // Navigate to Track 7
+      // Navigate to Track 7, then Track 8
+      await tester.tap(find.byKey(const ValueKey('drawer_2_next_disc')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('drawer_2_next_disc')));
       await tester.pumpAndSettle();
 
-      // Track 7 should have load button when Pro
-      final loadButton7 = find.byKey(const ValueKey('load_track_button_7'));
-      expect(loadButton7, findsOneWidget);
-      expect(find.byKey(const ValueKey('locked_track_button_7')), findsNothing);
+      // Track 8 should have load button when Pro
+      final loadButton8 = find.byKey(const ValueKey('load_track_button_8'));
+      expect(loadButton8, findsOneWidget);
+      expect(find.byKey(const ValueKey('locked_track_button_8')), findsNothing);
 
-      await tester.tap(loadButton7);
+      await tester.tap(loadButton8);
       await tester.pumpAndSettle();
 
       expect(find.text('[ ON PLATTER ]'), findsOneWidget);

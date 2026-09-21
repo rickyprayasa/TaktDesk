@@ -37,7 +37,7 @@ void main() {
 
   group('VinylTrack domain', () {
     test('presets contain exactly 12 analog soundscapes with correct tiers and metadata', () {
-      final freeIndices = {0, 1, 2, 3, 6};
+      final freeIndices = {0, 1, 2, 3, 6, 7};
       for (int i = 0; i < 12; i++) {
         if (freeIndices.contains(i)) {
           expect(VinylTrack.presets[i].isPremium, isFalse, reason: 'Track $i should be Free');
