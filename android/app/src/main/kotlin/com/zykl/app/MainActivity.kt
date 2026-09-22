@@ -205,20 +205,110 @@ class MainActivity : FlutterActivity() {
                         try {
                             val uri = android.net.Uri.parse(url)
                             val scheme = uri.scheme?.lowercase()
-                            if (scheme == "http" || scheme == "https") {
+                            if (scheme == "http" || scheme == "https" || scheme == "mailto" || scheme == "market") {
                                 val intent = Intent(Intent.ACTION_VIEW, uri).apply {
                                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 }
                                 startActivity(intent)
                                 result.success(true)
                             } else {
-                                result.error("INVALID_SCHEME", "Only http/https allowed", null)
+                                result.error("INVALID_SCHEME", "Only http/https/mailto/market allowed", null)
                             }
                         } catch (e: Exception) {
                             result.error("URL_ERROR", e.localizedMessage, null)
                         }
                     } else {
                         result.error("INVALID_ARGS", "URL is null or empty", null)
+                    }
+                }
+                "getDeviceInfo" -> {
+                    try {
+                        val pInfo = packageManager.getPackageInfo(packageName, 0)
+                        val versionName = pInfo.versionName ?: "1.0.0"
+                        val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            pInfo.longVersionCode
+                        } else {
+                            @Suppress("DEPRECATION")
+                            pInfo.versionCode.toLong()
+                        }
+                        val info = mapOf(
+                            "manufacturer" to Build.MANUFACTURER,
+                            "model" to Build.MODEL,
+                            "device" to Build.DEVICE,
+                            "brand" to Build.BRAND,
+                            "osVersion" to Build.VERSION.RELEASE,
+                            "sdkInt" to Build.VERSION.SDK_INT,
+                            "versionName" to versionName,
+                            "versionCode" to versionCode
+                        )
+                        result.success(info)
+                    } catch (e: Exception) {
+                        result.success(mapOf(
+                            "manufacturer" to Build.MANUFACTURER,
+                            "model" to Build.MODEL,
+                            "device" to Build.DEVICE,
+                            "brand" to Build.BRAND,
+                            "osVersion" to Build.VERSION.RELEASE,
+                            "sdkInt" to Build.VERSION.SDK_INT,
+                            "versionName" to "1.0.0",
+                            "versionCode" to 104
+                        ))
+                    }
+                }
+                "sendFeedbackEmail" -> {
+                    try {
+                        val subject = call.argument<String>("subject") ?: "[ZYKL Feedback]"
+                        val body = call.argument<String>("body") ?: ""
+                        val to = "support@zykl.app"
+
+                        val uriText = "mailto:$to?subject=${android.net.Uri.encode(subject)}&body=${android.net.Uri.encode(body)}"
+                        val uri = android.net.Uri.parse(uriText)
+
+                        // Attempt 1: Try Gmail app specifically
+                        val gmailIntent = Intent(Intent.ACTION_SENDTO, uri).apply {
+                            setPackage("com.google.android.gm")
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+
+                        try {
+                            startActivity(gmailIntent)
+                            result.success(true)
+                        } catch (_: Exception) {
+                            // Attempt 2: System email chooser
+                            val mailIntent = Intent(Intent.ACTION_SENDTO, uri).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            val chooser = Intent.createChooser(mailIntent, "Kirim Feedback via").apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            startActivity(chooser)
+                            result.success(true)
+                        }
+                    } catch (e: Exception) {
+                        result.error("EMAIL_ERROR", e.localizedMessage, null)
+                    }
+                }
+                "openPlayStore" -> {
+                    try {
+                        val pkg = packageName
+                        val marketUri = android.net.Uri.parse("market://details?id=$pkg")
+                        val marketIntent = Intent(Intent.ACTION_VIEW, marketUri).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY)
+                        }
+                        startActivity(marketIntent)
+                        result.success(true)
+                    } catch (_: Exception) {
+                        try {
+                            val pkg = packageName
+                            val webUri = android.net.Uri.parse("https://play.google.com/store/apps/details?id=$pkg")
+                            val webIntent = Intent(Intent.ACTION_VIEW, webUri).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            startActivity(webIntent)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.error("PLAYSTORE_ERROR", e.localizedMessage, null)
+                        }
                     }
                 }
                 else -> result.notImplemented()

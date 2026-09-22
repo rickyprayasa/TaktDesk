@@ -15,6 +15,7 @@ import '../../timer/domain/pomodoro_profile.dart';
 import '../../timer/presentation/chrono_dial_controller.dart';
 import '../../analytics/presentation/widgets/focus_analytics_dialog.dart';
 import 'settings_controller.dart';
+import 'widgets/feedback_dialog.dart';
 import 'widgets/studio_pro_dialog.dart';
 
 /// The Industrial Service Hatch Modal Sheet (Settings, About & Legal).
@@ -1108,11 +1109,12 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
             ),
           ),
           const SizedBox(height: 14),
+          // Rate on Google Play Store Button
           InkWell(
-            key: const ValueKey('zykl_portal_button'),
+            key: const ValueKey('zykl_rate_playstore_button'),
             onTap: () {
               HapticService.selectionClick();
-              UrlService.openUrl('https://zykl.app');
+              UrlService.openPlayStore();
             },
             borderRadius: BorderRadius.circular(4.0),
             child: Ink(
@@ -1121,7 +1123,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                 color: isDark ? const Color(0xFF1E2125) : const Color(0xFFDDD9CE),
                 borderRadius: BorderRadius.circular(4.0),
                 border: Border.all(
-                  color: TaktColors.filamentAmber.withValues(alpha: 0.6),
+                  color: TaktColors.filamentAmber.withValues(alpha: 0.7),
                   width: 1.0,
                 ),
               ),
@@ -1132,10 +1134,10 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.language, size: 14, color: TaktColors.filamentAmber),
+                      Icon(Icons.star_rate_rounded, size: 16, color: TaktColors.filamentAmber),
                       SizedBox(width: 8),
                       Text(
-                        'ZYKL.APP // PORTAL & PRIVACY',
+                        'RATE ZYKL ON GOOGLE PLAY',
                         style: TextStyle(
                           fontFamily: 'monospace',
                           fontSize: 10.0,
@@ -1153,11 +1155,12 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
             ),
           ),
           const SizedBox(height: 8),
+          // Dispatch Feedback Dialog Button (Gmail direct with diagnostics)
           InkWell(
             key: const ValueKey('zykl_feedback_button'),
             onTap: () {
               HapticService.selectionClick();
-              UrlService.openUrl('https://zykl.app/feedback');
+              showFeedbackDispatchDialog(context, isDark: isDark);
             },
             borderRadius: BorderRadius.circular(4.0),
             child: Ink(
@@ -1177,10 +1180,10 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.chat_bubble_outline, size: 13, color: primaryTextColor),
+                      Icon(Icons.mark_email_unread_outlined, size: 14, color: primaryTextColor),
                       const SizedBox(width: 8),
                       Text(
-                        'CONTACT & SEND FEEDBACK',
+                        'DISPATCH FEEDBACK & BUG REPORT',
                         style: TextStyle(
                           fontFamily: 'monospace',
                           fontSize: 9.5,
@@ -1190,7 +1193,53 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      Icon(Icons.arrow_outward, size: 12, color: secondaryTextColor),
+                      Icon(Icons.arrow_forward, size: 12, color: secondaryTextColor),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Web Portal & Privacy
+          InkWell(
+            key: const ValueKey('zykl_portal_button'),
+            onTap: () {
+              HapticService.selectionClick();
+              UrlService.openUrl('https://zykl.app');
+            },
+            borderRadius: BorderRadius.circular(4.0),
+            child: Ink(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8.5),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF191B1F) : const Color(0xFFE5E1D6),
+                borderRadius: BorderRadius.circular(4.0),
+                border: Border.all(
+                  color: borderColor.withValues(alpha: 0.6),
+                  width: 0.8,
+                ),
+              ),
+              child: Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.language, size: 13, color: secondaryTextColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        'ZYKL.APP // PORTAL & PRIVACY',
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 9.0,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.0,
+                          color: secondaryTextColor,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(Icons.arrow_outward, size: 11, color: secondaryTextColor),
                     ],
                   ),
                 ),
