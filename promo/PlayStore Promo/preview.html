@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZYKL // Play Store Promo Comparison Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0C0D10;
+  --surface: #14161B;
+  --surface-border: #232730;
+  --amber: #FF9E00;
+  --brass: #C89B3C;
+  --text-primary: #F5F3EE;
+  --text-muted: #8E95A5;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  min-height: 100vh;
+  padding: 40px 24px 80px;
+}
+.header {
+  max-width: 1400px;
+  margin: 0 auto 36px;
+  border-bottom: 1px solid var(--surface-border);
+  padding-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.tag {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  color: var(--amber);
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+h1 {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.subtitle {
+  color: var(--text-muted);
+  font-size: 15px;
+  margin-top: 6px;
+  max-width: 680px;
+  line-height: 1.5;
+}
+.view-toggle {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+}
+.toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.toggle-btn.active {
+  background: var(--amber);
+  color: #121316;
+}
+.gallery-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 28px;
+}
+.slide-card {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: transform 0.2s, border-color 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+.slide-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--amber);
+}
+.slide-img-box {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  background: #000;
+  position: relative;
+  overflow: hidden;
+}
+.slide-img-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.slide-meta {
+  padding: 18px 20px;
+  border-top: 1px solid var(--surface-border);
+}
+.slide-badge {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--amber);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.slide-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+.slide-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.rationale-box {
+  margin-top: 10px;
+  background: rgba(255, 158, 0, 0.08);
+  border-left: 3px solid var(--amber);
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #E2E0D8;
+  line-height: 1.4;
+}
+.hidden {
+  display: none !important;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="tag">[ ZYKL // PLAY STORE MARKETING SUITE ]</div>
+    <h1>Screenshot Carousel Architecture</h1>
+    <p class="subtitle">Dynamic 3D device staging with diverse typographic rhythms inspired by Tiimo, Monveo, and Flow app store designs.</p>
+  </div>
+  <div class="view-toggle">
+    <button class="toggle-btn active" id="btn-d2" onclick="showDesign('d2')">DESAIN 2 (3D MOCKUP + VARIED LAYOUT)</button>
+    <button class="toggle-btn" id="btn-d1" onclick="showDesign('d1')">DESAIN 1 (FLAT 2D LEGACY)</button>
+  </div>
+</div>
+
+<div class="gallery-container">
+  <!-- DESAIN 2 (3D MOCKUP & VARIED LAYOUTS) -->
+  <div class="grid" id="grid-d2">
+    <!-- Slide 1 -->
+    <div class="slide-card">
+      <div class="slide-img-box">
+        <a href="./Desain 2/01_PlayStore_Hero_Intent_3D_9x16.jpg" target="_blank">
+          <img src="./Desain 2/01_PlayStore_Hero_Intent_3D_9x16.jpg" alt="Slide 1 Hero Intent">
+        </a>
+      </div>
+      <div class="slide-meta">
+        <div class="slide-badge">SLIDE 01 // HERO HOOK</div>
+        <div class="slide-title">Physical Intent For Deep Work</div>
+        <div class="slide-desc">Top typography hook with 5-star rating; smartphone on anodized desk stand at bottom.</div>
+        <div class="rationale-box"><strong>Rhythm:</strong> Headline AT TOP. Inspires immediate philosophical confidence without digital anxiety.</div>
+      </div>
+    </div>
+
+    <!-- Slide 2 -->
+    <div class="slide-card">
+      <div class="slide-img-box">
+        <a href="./Desain 2/02_PlayStore_Thermal_Dispenser_3D_9x16.jpg" target="_blank">
+          <img src="./Desain 2/02_PlayStore_Thermal_Dispenser_3D_9x16.jpg" alt="Slide 2 Thermal Dispenser">
+        </a>
+      </div>
+      <div class="slide-meta">
+        <div class="slide-badge">SLIDE 02 // THERMAL DISPENSER</div>
+        <div class="slide-title">Physical 5-Task Hard Cap</div>
+        <div class="slide-desc">Top 3D phone tilted downward showing printed receipts & [DONE] stamp; typography at bottom.</div>
+        <div class="rationale-box"><strong>Rhythm:</strong> Headline AT BOTTOM (like Flow & Tiimo). Creates strong dynamic visual inversion.</div>
+      </div>
+    </div>
+
+    <!-- Slide 3 -->
+    <div class="slide-card">
+      <div class="slide-img-box">
+        <a href="./Desain 2/03_PlayStore_Vinyl_Turntable_3D_9x16.jpg" target="_blank">
+          <img src="./Desain 2/03_PlayStore_Vinyl_Turntable_3D_9x16.jpg" alt="Slide 3 Vinyl Turntable">
+        </a>
+      </div>
+      <div class="slide-meta">
+        <div class="slide-badge">SLIDE 03 // MONASTIC TURNTABLE</div>
+        <div class="slide-title">33⅓ RPM Ambient Soundscapes</div>
+        <div class="slide-desc">Diagonal isometric 3D perspective with realistic surface reflection and ambient floor shadow.</div>
+        <div class="rationale-box"><strong>Rhythm:</strong> Isometric 3D depth (like Monveo Slide 5). Highlights physical Braun TP-1 turntable.</div>
+      </div>
+    </div>
+
+    <!-- Slide 4 -->
+    <div class="slide-card">
+      <div class="slide-img-box">
+        <a href="./Desain 2/04_PlayStore_Focus_Analytics_3D_9x16.jpg" target="_blank">
+          <img src="./Desain 2/04_PlayStore_Focus_Analytics_3D_9x16.jpg" alt="Slide 4 Focus Analytics">
+        </a>
+      </div>
+      <div class="slide-meta">
+        <div class="slide-badge">SLIDE 04 // FOCUS TELEMETRY</div>
+        <div class="slide-title">100% Offline Focus Analytics</div>
+        <div class="slide-desc">Upper tilted device showing analytics card; bottom telemetry trust badges [ZERO CLOUD] [100% PRIVATE].</div>
+        <div class="rationale-box"><strong>Rhythm:</strong> Headline AT BOTTOM (like Flow Slide 5). Communicates radical local privacy.</div>
+      </div>
+    </div>
+
+    <!-- Slide 5 -->
+    <div class="slide-card">
+      <div class="slide-img-box">
+        <a href="./Desain 2/05_PlayStore_Warm_Bone_Edition_3D_9x16.jpg" target="_blank">
+          <img src="./Desain 2/05_PlayStore_Warm_Bone_Edition_3D_9x16.jpg" alt="Slide 5 Warm Bone 1976">
+        </a>
+      </div>
+      <div class="slide-meta">
+        <div class="slide-badge">SLIDE 05 // MATERIALITY</div>
+        <div class="slide-title">Warm Bone 1976 Edition</div>
+        <div class="slide-desc">Warm gold/titanium 3D chassis showing the authentic Bauhaus off-white dial edition for daylight focus.</div>
+        <div class="rationale-box"><strong>Rhythm:</strong> Headline AT TOP. Highlights the dual physical aesthetic materiality of ZYKL.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DESAIN 1 (FLAT 2D LEGACY) -->
+  <div class="grid hidden" id="grid-d1">
+    <div class="slide-card">
+      <div class="slide-img-box">
+        <a href="./Desain 1/01_PlayStore_Chronometer_9x16.jpg" target="_blank">
+          <img src="./Desain 1/01_PlayStore_Chronometer_9x16.jpg" alt="Legacy Slide 1">
+        </a>
+      </div>
+      <div class="slide-meta">
+        <div class="slide-badge">DESAIN 1 // SLIDE 01</div>
+        <div class="slide-title">1.0 Hz Calibrated Escapement</div>
+        <div class="slide-desc">Flat 2D centered frame. All typography at top.</div>
+      </div>
+    </div>
+    <div class="slide-card">
+      <div class="slide-img-box">
+        <a href="./Desain 1/02_PlayStore_Thermal_Dispenser_9x16.jpg" target="_blank">
+          <img src="./Desain 1/02_PlayStore_Thermal_Dispenser_9x16.jpg" alt="Legacy Slide 2">
+        </a>
+      </div>
+      <div class="slide-meta">
+        <div class="slide-badge">DESAIN 1 // SLIDE 02</div>
+        <div class="slide-title">Physical 5-Task Hard Cap</div>
+        <div class="slide-desc">Flat 2D centered frame. All typography at top.</div>
+      </div>
+    </div>
+    <div class="slide-card">
+      <div class="slide-img-box">
+        <a href="./Desain 1/03_PlayStore_Vinyl_Turntable_9x16.jpg" target="_blank">
+          <img src="./Desain 1/03_PlayStore_Vinyl_Turntable_9x16.jpg" alt="Legacy Slide 3">
+        </a>
+      </div>
+      <div class="slide-meta">
+        <div class="slide-badge">DESAIN 1 // SLIDE 03</div>
+        <div class="slide-title">33⅓ RPM Analog Soundscapes</div>
+        <div class="slide-desc">Flat 2D centered frame. All typography at top.</div>
+      </div>
+    </div>
+    <div class="slide-card">
+      <div class="slide-img-box">
+        <a href="./Desain 1/04_PlayStore_Focus_Analytics_9x16.jpg" target="_blank">
+          <img src="./Desain 1/04_PlayStore_Focus_Analytics_9x16.jpg" alt="Legacy Slide 4">
+        </a>
+      </div>
+      <div class="slide-meta">
+        <div class="slide-badge">DESAIN 1 // SLIDE 04</div>
+        <div class="slide-title">100% Offline Session Telemetry</div>
+        <div class="slide-desc">Flat 2D centered frame. All typography at top.</div>
+      </div>
+    </div>
+    <div class="slide-card">
+      <div class="slide-img-box">
+        <a href="./Desain 1/05_PlayStore_Hardware_Editions_9x16.jpg" target="_blank">
+          <img src="./Desain 1/05_PlayStore_Hardware_Editions_9x16.jpg" alt="Legacy Slide 5">
+        </a>
+      </div>
+      <div class="slide-meta">
+        <div class="slide-badge">DESAIN 1 // SLIDE 05</div>
+        <div class="slide-title">Warm Bone 1976 Aesthetic</div>
+        <div class="slide-desc">Flat 2D centered frame. All typography at top.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showDesign(design) {
+  const g1 = document.getElementById('grid-d1');
+  const g2 = document.getElementById('grid-d2');
+  const b1 = document.getElementById('btn-d1');
+  const b2 = document.getElementById('btn-d2');
+  if (design === 'd2') {
+    g2.classList.remove('hidden');
+    g1.classList.add('hidden');
+    b2.classList.add('active');
+    b1.classList.remove('active');
+  } else {
+    g1.classList.remove('hidden');
+    g2.classList.add('hidden');
+    b1.classList.add('active');
+    b2.classList.remove('active');
+  }
+}
+</script>
+</body>
+</html>
