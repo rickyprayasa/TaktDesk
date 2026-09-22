@@ -37,10 +37,10 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('VinylTrack domain', () {
-    test('presets contain exactly 24 analog soundscapes with correct tiers and metadata', () {
-      final freeIndices = {0, 1, 2, 3, 6, 12, 13, 14, 15};
-      expect(VinylTrack.presets.length, equals(24));
-      for (int i = 0; i < 24; i++) {
+    test('presets contain exactly 12 analog soundscapes with correct tiers and metadata', () {
+      final freeIndices = {0, 1, 2, 3, 6, 7, 8, 9};
+      expect(VinylTrack.presets.length, equals(12));
+      for (int i = 0; i < 12; i++) {
         if (freeIndices.contains(i)) {
           expect(VinylTrack.presets[i].isPremium, isFalse, reason: 'Track $i should be Free');
         } else {
@@ -57,7 +57,7 @@ void main() {
       }
     });
 
-    test('labelColor parses hex code correctly for all 24 tracks', () {
+    test('labelColor parses hex code correctly for all 12 tracks', () {
       for (final track in VinylTrack.presets) {
         final expectedHex = int.parse('FF${track.labelColorHex.replaceFirst('#', '')}', radix: 16);
         expect(track.labelColor.toARGB32(), equals(expectedHex));

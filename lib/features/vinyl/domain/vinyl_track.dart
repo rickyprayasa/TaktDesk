@@ -26,12 +26,12 @@ class VinylTrack {
     return Color(int.parse('FF$hex', radix: 16));
   }
 
-  static final List<VinylTrack> drawer1Presets = presets.sublist(0, 12);
-  static final List<VinylTrack> drawer2Presets = presets.sublist(12, 24);
+  static final List<VinylTrack> drawer1Presets = presets.sublist(0, 6);
+  static final List<VinylTrack> drawer2Presets = presets.sublist(6, 12);
 
   static const List<VinylTrack> presets = [
     // -------------------------------------------------------------------------
-    // DRAWER 01: NATURE & ACOUSTIC SOUNDSCAPES (12 TRACKS: TK-01 .. TK-12)
+    // DRAWER 01: NATURE & ACOUSTIC SOUNDSCAPES (6 TRACKS: TK-01 .. TK-06)
     // -------------------------------------------------------------------------
     VinylTrack(
       index: 0,
@@ -99,79 +99,13 @@ class VinylTrack {
       assetPath: 'assets/audio/vinyl_nordic_pines.wav',
       isPremium: true,
     ),
+
+    // -------------------------------------------------------------------------
+    // DRAWER 02: PURE INSTRUMENTAL FOCUS MUSIC (6 TRACKS: TK-07 .. TK-12)
+    // -------------------------------------------------------------------------
     VinylTrack(
       index: 6,
       catalogId: 'TK-07',
-      name: 'Alpine Mountain Brook',
-      subtitle: 'Crystalline Mountain Stream',
-      description:
-          'Constant crystalline mountain stream providing soothing natural acoustic masking.',
-      labelColorHex: '#4A90E2',
-      assetPath: 'assets/audio/vinyl_alpine_brook.wav',
-      isPremium: false,
-    ),
-    VinylTrack(
-      index: 7,
-      catalogId: 'TK-08',
-      name: 'Pacific Ocean Waves',
-      subtitle: 'Tidal Surf & Foam',
-      description:
-          'Gentle ocean waves washing ashore, rhythmic tidal flow for serene study focus.',
-      labelColorHex: '#2E5B88',
-      assetPath: 'assets/audio/vinyl_ocean_waves.wav',
-      isPremium: true,
-    ),
-    VinylTrack(
-      index: 8,
-      catalogId: 'TK-09',
-      name: 'Misty Morning Meadow',
-      subtitle: 'Morning Air & Dew',
-      description:
-          'Distant morning atmospheric calm with subtle dew drop air blanket.',
-      labelColorHex: '#7E9F8E',
-      assetPath: 'assets/audio/vinyl_morning_meadow.wav',
-      isPremium: true,
-    ),
-    VinylTrack(
-      index: 9,
-      catalogId: 'TK-10',
-      name: 'Pure Focus Velvet Noise',
-      subtitle: 'Linear Flat Spectrum',
-      description:
-          'Flat, calibrated linear noise blanket for deep reading and code concentration.',
-      labelColorHex: '#707070',
-      assetPath: 'assets/audio/vinyl_pure_white_noise.wav',
-      isPremium: true,
-    ),
-    VinylTrack(
-      index: 10,
-      catalogId: 'TK-11',
-      name: 'Timber Acoustic Chamber',
-      subtitle: 'Dry Wood Resonance',
-      description:
-          'Natural dry wood studio chamber resonance with minimal harmonic reflection.',
-      labelColorHex: '#8C6747',
-      assetPath: 'assets/audio/vinyl_timber_chamber.wav',
-      isPremium: true,
-    ),
-    VinylTrack(
-      index: 11,
-      catalogId: 'TK-12',
-      name: 'Zen Temple Singing Bowl',
-      subtitle: '108 Hz Meditative Resonance',
-      description:
-          'Warm 108 Hz singing bowl fundamental tone with meditative breath cycle.',
-      labelColorHex: '#C89B3C',
-      assetPath: 'assets/audio/vinyl_zen_bowl.wav',
-      isPremium: true,
-    ),
-
-    // -------------------------------------------------------------------------
-    // DRAWER 02: PURE INSTRUMENTAL FOCUS MUSIC (12 TRACKS: TK-13 .. TK-24)
-    // -------------------------------------------------------------------------
-    VinylTrack(
-      index: 12,
-      catalogId: 'TK-13',
       name: 'Warm Tape & Felt Piano',
       subtitle: 'Analog Saturation & Chords',
       description:
@@ -181,8 +115,8 @@ class VinylTrack {
       isPremium: false,
     ),
     VinylTrack(
-      index: 13,
-      catalogId: 'TK-14',
+      index: 7,
+      catalogId: 'TK-08',
       name: 'Monastic Rhodes & Velvet',
       subtitle: 'Vintage Electric Piano E-Chords',
       description:
@@ -192,8 +126,8 @@ class VinylTrack {
       isPremium: false,
     ),
     VinylTrack(
-      index: 14,
-      catalogId: 'TK-15',
+      index: 8,
+      catalogId: 'TK-09',
       name: 'Tape Acoustic Guitar',
       subtitle: 'Muted Nylon Fingerpicking',
       description:
@@ -203,8 +137,8 @@ class VinylTrack {
       isPremium: false,
     ),
     VinylTrack(
-      index: 15,
-      catalogId: 'TK-16',
+      index: 9,
+      catalogId: 'TK-10',
       name: 'Cosmic Ambient Drift',
       subtitle: 'Analog Synthesizer & Silk Pad',
       description:
@@ -214,8 +148,8 @@ class VinylTrack {
       isPremium: false,
     ),
     VinylTrack(
-      index: 16,
-      catalogId: 'TK-17',
+      index: 10,
+      catalogId: 'TK-11',
       name: 'Midnight Solitude Piano',
       subtitle: 'Muted Upright in D Minor',
       description:
@@ -225,80 +159,14 @@ class VinylTrack {
       isPremium: true,
     ),
     VinylTrack(
-      index: 17,
-      catalogId: 'TK-18',
+      index: 11,
+      catalogId: 'TK-12',
       name: 'Modular Clockwork Arp',
       subtitle: 'Pentatonic Analog Pulse',
       description:
           'Hypnotic analog modular arpeggio gently ticking in 5-note pentatonic focus harmony.',
       labelColorHex: '#D4883A',
       assetPath: 'assets/audio/vinyl_modular_clockwork.wav',
-      isPremium: true,
-    ),
-    VinylTrack(
-      index: 18,
-      catalogId: 'TK-19',
-      name: 'Lo-fi Tape Jazz Guitar',
-      subtitle: 'Warm Hollowbody Chords',
-      description:
-          'Warm hollowbody electric guitar playing nostalgic slow lo-fi progression with subtle tube drive.',
-      labelColorHex: '#C27D38',
-      assetPath: 'assets/audio/vinyl_tape_guitar.wav',
-      isPremium: true,
-    ),
-    VinylTrack(
-      index: 19,
-      catalogId: 'TK-20',
-      name: 'Aether Chamber Strings',
-      subtitle: 'Muted Quartet Harmonics',
-      description:
-          'Gentle bowed cello and viola sustained harmonic chords blending into a serene focus bed.',
-      labelColorHex: '#6C5B7B',
-      assetPath: 'assets/audio/vinyl_chamber_strings.wav',
-      isPremium: true,
-    ),
-    VinylTrack(
-      index: 20,
-      catalogId: 'TK-21',
-      name: 'Vintage Wurlitzer 200A',
-      subtitle: 'Warm Reed Vibrato & Chords',
-      description:
-          'Electro-mechanical reed piano with iconic vibrato, warm saturation, and gentle focus voicing.',
-      labelColorHex: '#B86B35',
-      assetPath: 'assets/audio/vinyl_wurlitzer_reeds.wav',
-      isPremium: true,
-    ),
-    VinylTrack(
-      index: 21,
-      catalogId: 'TK-22',
-      name: 'Moog Deep Focus Bass',
-      subtitle: 'Monophonic Analog Sub Drone',
-      description:
-          'Soft, deep 32-foot analog synth harmonic drone with warm low-pass sweep for flow state.',
-      labelColorHex: '#3D5A5B',
-      assetPath: 'assets/audio/vinyl_moog_harmony.wav',
-      isPremium: true,
-    ),
-    VinylTrack(
-      index: 22,
-      catalogId: 'TK-23',
-      name: 'Kalimba & Crystal Chords',
-      subtitle: 'Tuned Steel Tines in Eb',
-      description:
-          'Gentle thumb piano ringing in serene pentatonic intervals with warm wooden resonance decay.',
-      labelColorHex: '#5E8271',
-      assetPath: 'assets/audio/vinyl_kalimba_crystal.wav',
-      isPremium: true,
-    ),
-    VinylTrack(
-      index: 23,
-      catalogId: 'TK-24',
-      name: 'Nocturne in F Minor',
-      subtitle: 'Calm Romantic Harmonics',
-      description:
-          'Slow, contemplative classical piano harmonics for late-night programming and deep concentration.',
-      labelColorHex: '#7D6652',
-      assetPath: 'assets/audio/vinyl_nocturne_harmonics.wav',
       isPremium: true,
     ),
   ];

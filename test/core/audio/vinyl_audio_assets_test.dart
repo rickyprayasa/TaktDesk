@@ -7,44 +7,31 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('VinylTrack Presets & Soundscape Assets', () {
-    test('contains exactly 24 calibrated presets divided into 2 drawers', () {
-      expect(VinylTrack.presets.length, 24);
-      expect(VinylTrack.drawer1Presets.length, 12);
-      expect(VinylTrack.drawer2Presets.length, 12);
+    test('contains exactly 12 calibrated presets divided into 2 drawers', () {
+      expect(VinylTrack.presets.length, 12);
+      expect(VinylTrack.drawer1Presets.length, 6);
+      expect(VinylTrack.drawer2Presets.length, 6);
 
-      // Verify no noisy tracks remain
-      final titles = VinylTrack.presets.map((t) => t.name.toLowerCase()).toList();
-      expect(titles.contains('cafe echo'), isFalse);
-      expect(titles.contains('forest canopy'), isFalse);
-      expect(titles.contains('cosmic drift'), isFalse);
-      expect(titles.contains('midnight train'), isFalse);
+      // Verify quiet nature tracks in drawer 1 (6 tracks)
+      final drawer1Titles = VinylTrack.drawer1Presets.map((t) => t.name.toLowerCase()).toList();
+      expect(drawer1Titles.contains('lo-fi rain'), isTrue);
+      expect(drawer1Titles.contains('deep brown noise'), isTrue);
+      expect(drawer1Titles.contains('library atmosphere'), isTrue);
+      expect(drawer1Titles.contains('kyoto bamboo stream'), isTrue);
+      expect(drawer1Titles.contains('campfire embers'), isTrue);
+      expect(drawer1Titles.contains('nordic pine whispers'), isTrue);
 
-      // Verify quiet nature tracks in drawer 1
-      expect(titles.contains('kyoto bamboo stream'), isTrue);
-      expect(titles.contains('nordic pine whispers'), isTrue);
-      expect(titles.contains('alpine mountain brook'), isTrue);
-      expect(titles.contains('pacific ocean waves'), isTrue);
-      expect(titles.contains('misty morning meadow'), isTrue);
-      expect(titles.contains('pure focus velvet noise'), isTrue);
-      expect(titles.contains('timber acoustic chamber'), isTrue);
-      expect(titles.contains('zen temple singing bowl'), isTrue);
-
-      // Verify pure instrumental tracks in drawer 2
-      expect(titles.contains('warm tape & felt piano'), isTrue);
-      expect(titles.contains('monastic rhodes & velvet'), isTrue);
-      expect(titles.contains('tape acoustic guitar'), isTrue);
-      expect(titles.contains('cosmic ambient drift'), isTrue);
-      expect(titles.contains('midnight solitude piano'), isTrue);
-      expect(titles.contains('modular clockwork arp'), isTrue);
-      expect(titles.contains('lo-fi tape jazz guitar'), isTrue);
-      expect(titles.contains('aether chamber strings'), isTrue);
-      expect(titles.contains('vintage wurlitzer 200a'), isTrue);
-      expect(titles.contains('moog deep focus bass'), isTrue);
-      expect(titles.contains('kalimba & crystal chords'), isTrue);
-      expect(titles.contains('nocturne in f minor'), isTrue);
+      // Verify pure instrumental tracks in drawer 2 (6 tracks)
+      final drawer2Titles = VinylTrack.drawer2Presets.map((t) => t.name.toLowerCase()).toList();
+      expect(drawer2Titles.contains('warm tape & felt piano'), isTrue);
+      expect(drawer2Titles.contains('monastic rhodes & velvet'), isTrue);
+      expect(drawer2Titles.contains('tape acoustic guitar'), isTrue);
+      expect(drawer2Titles.contains('cosmic ambient drift'), isTrue);
+      expect(drawer2Titles.contains('midnight solitude piano'), isTrue);
+      expect(drawer2Titles.contains('modular clockwork arp'), isTrue);
     });
 
-    test('all 24 asset files exist on disk with valid headers', () {
+    test('all 12 asset files exist on disk with valid headers', () {
       for (final track in VinylTrack.presets) {
         final file = File(track.assetPath);
         expect(file.existsSync(), isTrue, reason: 'Missing asset: ${track.assetPath}');
