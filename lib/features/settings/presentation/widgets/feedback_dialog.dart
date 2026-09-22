@@ -20,41 +20,41 @@ Future<void> showFeedbackDispatchDialog(
 
   const categories = [
     _FeedbackCategory(
-      title: 'LAPORAN BUG',
-      subtitle: 'Laporkan kendala visual, audio, atau malfungsi timer',
+      title: 'BUG REPORT',
+      subtitle: 'Report visual, acoustic, or timer malfunctions',
       icon: Icons.bug_report_outlined,
       iconColor: Color(0xFFEF4444),
       subjectPrefix: '[ZYKL Bug Report]',
-      bodyHint: 'Jelaskan kendala/bug yang Anda alami:\n'
-          '1. Apa yang terjadi:\n'
-          '2. Langkah-langkah untuk memicu kendala:\n'
-          '3. Ekspektasi tampilan/fungsi yang seharusnya:\n\n',
+      bodyHint: 'Please describe the malfunction encountered:\n'
+          '1. What happened:\n'
+          '2. Steps to reproduce:\n'
+          '3. Expected behavior:\n\n',
     ),
     _FeedbackCategory(
-      title: 'PERMINTAAN FITUR',
-      subtitle: 'Usulkan dial baru, mode fokus, atau hardware instrumen',
+      title: 'FEATURE REQUEST',
+      subtitle: 'Propose new dials, focus modes, or hardware instruments',
       icon: Icons.lightbulb_outline,
       iconColor: TaktColors.filamentAmber,
       subjectPrefix: '[ZYKL Feature Request]',
-      bodyHint: 'Jelaskan fitur atau instrumen yang ingin ditambahkan:\n'
-          '- Nama / Konsep Fitur:\n'
-          '- Mengapa fitur ini berguna bagi sesi fokus Anda:\n\n',
+      bodyHint: 'Describe the feature or instrument concept:\n'
+          '- Proposed Feature / Concept:\n'
+          '- How this enhances your focus workflow:\n\n',
     ),
     _FeedbackCategory(
-      title: 'SARAN & MASUKAN',
-      subtitle: 'Kritik, saran desain, atau pengalaman menggunakan ZYKL',
+      title: 'FEEDBACK & SUGGESTIONS',
+      subtitle: 'Design critique, ideas, or general experience notes',
       icon: Icons.rate_review_outlined,
       iconColor: Color(0xFF10B981),
       subjectPrefix: '[ZYKL Suggestion]',
-      bodyHint: 'Tuliskan saran, kritik, atau masukan untuk pengembangan ZYKL:\n\n',
+      bodyHint: 'Share your feedback, impressions, or suggestions for ZYKL:\n\n',
     ),
     _FeedbackCategory(
-      title: 'LAINNYA',
-      subtitle: 'Pertanyaan umum, kolaborasi, atau pesan lainnya',
+      title: 'OTHER INQUIRIES',
+      subtitle: 'General inquiries, collaboration, or custom dispatch',
       icon: Icons.help_outline,
       iconColor: Color(0xFF60A5FA),
       subjectPrefix: '[ZYKL Inquiry]',
-      bodyHint: 'Tuliskan pesan Anda kepada tim pengembang:\n\n',
+      bodyHint: 'Write your message to the engineering team:\n\n',
     ),
   ];
 
@@ -127,7 +127,7 @@ Future<void> showFeedbackDispatchDialog(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Pilih kategori transmisi di bawah untuk membuka Gmail dengan subject & telemetri otomatis:',
+                'Select a transmission category below to open your email client with pre-filled telemetry diagnostics:',
                 style: TextStyle(
                   fontFamily: 'monospace',
                   fontSize: 9.5,
@@ -206,7 +206,7 @@ Future<void> showFeedbackDispatchDialog(
               const SizedBox(height: 6),
               Center(
                 child: Text(
-                  'Transmisi terkirim ke support@zykl.app',
+                  'Transmission routes to support@zykl.app',
                   style: TextStyle(
                     fontFamily: 'monospace',
                     fontSize: 8.5,
@@ -222,7 +222,7 @@ Future<void> showFeedbackDispatchDialog(
         TextButton(
           onPressed: () => Navigator.of(dialogCtx).pop(),
           child: Text(
-            '[ TUTUP ]',
+            '[ DISMISS ]',
             style: TextStyle(
               fontFamily: 'monospace',
               fontSize: 10.5,
@@ -250,7 +250,7 @@ Future<void> _dispatchCategoryEmail(_FeedbackCategory cat) async {
   final subject = '${cat.subjectPrefix} - $model';
 
   final body = StringBuffer()
-    ..writeln('--- TULIS DETAIL LAPORAN ANDA DI SINI ---')
+    ..writeln('--- ENTER DISPATCH DETAILS BELOW ---')
     ..write(cat.bodyHint)
     ..writeln('--------------------------------------------')
     ..writeln('// SYSTEM DIAGNOSTICS TELEMETRY')

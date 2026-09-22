@@ -237,9 +237,9 @@ class _CrownPushButtonState extends State<CrownPushButton>
                   ),
                   boxShadow: const [
                     BoxShadow(
-                      color: Color(0x66000000),
-                      offset: Offset(0, 3),
-                      blurRadius: 4.0,
+                      color: Color(0x25000000),
+                      offset: Offset(0, 1.5),
+                      blurRadius: 2.0,
                     ),
                   ],
                 ),

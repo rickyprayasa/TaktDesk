@@ -237,22 +237,12 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                       boxShadow: [
                         BoxShadow(
                           color: themeState.isDarkMode
-                              ? Colors.black.withValues(alpha: 0.50)
-                              : const Color(0x22000000),
-                          blurRadius: 18,
+                              ? Colors.black.withValues(alpha: 0.16)
+                              : const Color(0x0D000000),
+                          blurRadius: 5.0,
                           offset: Offset(
-                            (-parallax.tiltX * 160.0).clamp(-14.0, 14.0),
-                            8.0 + (-parallax.tiltY * 160.0).clamp(-14.0, 14.0),
-                          ),
-                        ),
-                        BoxShadow(
-                          color: themeState.isDarkMode
-                              ? Colors.black.withValues(alpha: 0.25)
-                              : const Color(0x10000000),
-                          blurRadius: 6,
-                          offset: Offset(
-                            (-parallax.tiltX * 50.0).clamp(-5.0, 5.0),
-                            2.0 + (-parallax.tiltY * 50.0).clamp(-5.0, 5.0),
+                            (-parallax.tiltX * 30.0).clamp(-3.0, 3.0),
+                            2.0 + (-parallax.tiltY * 30.0).clamp(-3.0, 3.0),
                           ),
                         ),
                       ],

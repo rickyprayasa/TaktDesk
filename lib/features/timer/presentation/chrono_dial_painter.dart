@@ -111,11 +111,11 @@ class ChronoDialPainter extends CustomPainter {
     final outerRadius = math.min(size.width, size.height) / 2 - 8;
     final dialRadius = outerRadius - 14;
 
-    // 1. Physical Ambient Occlusion Shadow
+    // 1. Physical Ambient Occlusion Shadow (Subtle contact shadow)
     final ambientShadowPaint = Paint()
-      ..color = const Color(0x77000000)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12.0);
-    canvas.drawCircle(center + const Offset(0, 8), outerRadius, ambientShadowPaint);
+      ..color = isDark ? const Color(0x1F000000) : const Color(0x0A000000)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+    canvas.drawCircle(center + const Offset(0, 1.5), outerRadius, ambientShadowPaint);
 
     // 2. Multi-Tiered Metallic Bezel (Braun Style)
     // 2a. Outer Chamfer Ring
