@@ -56,10 +56,9 @@ final appWidgetSyncProvider = Provider.autoDispose<void>((ref) {
   ref.listen(todayFocusStatsProvider, (_, __) => sync(), fireImmediately: true);
   ref.listen(activeTasksStreamProvider, (_, __) => sync());
   ref.listen(deskPreferencesControllerProvider.select((s) => s.isProSimulated), (_, __) => sync());
-  ref.listen(chronoDialControllerProvider.select((state) {
-    if (state.isRunning) return state.isBreak ? 'BREAK' : 'FOCUS';
-    return 'STANDBY';
-  }), (_, __) => sync());
+  ref.listen(chronoDialControllerProvider.select((s) => s.isRunning), (_, __) => sync());
+  ref.listen(chronoDialControllerProvider.select((s) => s.targetMinutes), (_, __) => sync());
+  ref.listen(chronoDialControllerProvider.select((s) => s.isBreak), (_, __) => sync());
 
   // Listen for direct interactive widget actions from Android homescreen
   final actionSub = widgetService.onWidgetAction.listen((action) {

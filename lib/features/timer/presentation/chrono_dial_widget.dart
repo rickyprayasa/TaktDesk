@@ -184,23 +184,38 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
       case HardwareEditionType.braunClassic:
         lightDialColor = const Color(0xFFEAE6DC);
         break;
-      case HardwareEditionType.titaniumStealth:
-        lightDialColor = const Color(0xFFD3D8E0);
+      case HardwareEditionType.braunAtelierCream:
+        lightDialColor = const Color(0xFFDDD9CE);
         break;
       case HardwareEditionType.bauhausHeritage:
         lightDialColor = const Color(0xFFF0EDE4);
         break;
+      case HardwareEditionType.industrialMonoSteel:
+        lightDialColor = const Color(0xFFD4D7DB);
+        break;
+      case HardwareEditionType.titaniumStealth:
+        lightDialColor = const Color(0xFFD3D8E0);
+        break;
       case HardwareEditionType.rawBrassPatina:
         lightDialColor = const Color(0xFFE2DCB8);
-        break;
-      case HardwareEditionType.braunAtelierCream:
-        lightDialColor = const Color(0xFFDDD9CE);
         break;
       case HardwareEditionType.midCenturyWalnut:
         lightDialColor = const Color(0xFFEFEBE2);
         break;
       case HardwareEditionType.forgedCarbon:
         lightDialColor = const Color(0xFFE5E8EC);
+        break;
+      case HardwareEditionType.obsidianCeramic:
+        lightDialColor = const Color(0xFFE4E5E8);
+        break;
+      case HardwareEditionType.copperHearthAsh:
+        lightDialColor = const Color(0xFFE8E0D7);
+        break;
+      case HardwareEditionType.britishRacingGreen:
+        lightDialColor = const Color(0xFFDBE5DF);
+        break;
+      case HardwareEditionType.indigoAstronomical:
+        lightDialColor = const Color(0xFFD4DCEB);
         break;
     }
 

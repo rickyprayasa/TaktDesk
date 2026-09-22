@@ -13,11 +13,16 @@ enum HardwareTextureType {
 enum HardwareEditionType {
   braunClassic,
   braunAtelierCream,
-  titaniumStealth,
   bauhausHeritage,
+  industrialMonoSteel,
+  titaniumStealth,
   rawBrassPatina,
   midCenturyWalnut,
   forgedCarbon,
+  obsidianCeramic,
+  copperHearthAsh,
+  britishRacingGreen,
+  indigoAstronomical,
 }
 
 class HardwareEdition {
@@ -139,7 +144,7 @@ class HardwareEdition {
     title: 'BAUHAUS HERITAGE',
     subtitle: 'TUBULAR CHROME & PRIMARY',
     yearLabel: 'MOD. 03 · 1925',
-    isPremium: true,
+    isPremium: false,
     darkCanvas: Color(0xFF101114),
     lightCanvas: Color(0xFFDCDAD4),
     darkModuleBg: Color(0xFF1E2025),
@@ -221,14 +226,129 @@ class HardwareEdition {
     rivetLight: Color(0xFF7A808C),
   );
 
+  static const HardwareEdition industrialMonoSteel = HardwareEdition(
+    type: HardwareEditionType.industrialMonoSteel,
+    textureType: HardwareTextureType.matteAbsGrain,
+    title: 'INDUSTRIAL MONO STEEL',
+    subtitle: 'GALVANIZED STEEL & TUNGSTEN',
+    yearLabel: 'MOD. 08 · 1980',
+    isPremium: false,
+    darkCanvas: Color(0xFF141517),
+    lightCanvas: Color(0xFFD8DADC),
+    darkModuleBg: Color(0xFF1C1E22),
+    lightModuleBg: Color(0xFFC8CBD0),
+    darkBorder: Color(0xFF3E424A),
+    lightBorder: Color(0xFF9AA0AA),
+    needleColor: Color(0xFFE2E4E8), // Tungsten Silver
+    filamentColor: Color(0xFFB0B4BC), // Cool Halogen
+    accentColor: Color(0xFF5A6270),
+    plateGradientDark: [Color(0xFF25282E), Color(0xFF1B1D22), Color(0xFF131417)],
+    plateGradientLight: [Color(0xFFE6E8EA), Color(0xFFDCDFE2), Color(0xFFD0D3D8)],
+    rivetDark: Color(0xFF2A2D34),
+    rivetLight: Color(0xFF8A8E98),
+  );
+
+  static const HardwareEdition obsidianCeramic = HardwareEdition(
+    type: HardwareEditionType.obsidianCeramic,
+    textureType: HardwareTextureType.matteAbsGrain,
+    title: 'OBSIDIAN CERAMIC',
+    subtitle: 'MIRROR CERAMIC & AMBER',
+    yearLabel: 'MOD. 09 · 2025',
+    isPremium: true,
+    darkCanvas: Color(0xFF0A0A0C),
+    lightCanvas: Color(0xFFE8E9EC),
+    darkModuleBg: Color(0xFF101114),
+    lightModuleBg: Color(0xFFD4D6DC),
+    darkBorder: Color(0xFF22242B),
+    lightBorder: Color(0xFF9497A2),
+    needleColor: Color(0xFFFF9E00), // Intense Filament Amber
+    filamentColor: Color(0xFFFFB703), // Golden Glow
+    accentColor: Color(0xFFE65100),
+    plateGradientDark: [Color(0xFF181A1F), Color(0xFF101114), Color(0xFF08090A)],
+    plateGradientLight: [Color(0xFFF2F3F5), Color(0xFFE6E7EA), Color(0xFFDCDDE2)],
+    rivetDark: Color(0xFF181A20),
+    rivetLight: Color(0xFF747784),
+  );
+
+  static const HardwareEdition copperHearthAsh = HardwareEdition(
+    type: HardwareEditionType.copperHearthAsh,
+    textureType: HardwareTextureType.burnishedBrass,
+    title: 'COPPER HEARTH & ASH',
+    subtitle: 'BRUSHED ROSE COPPER',
+    yearLabel: 'MOD. 10 · 1968',
+    isPremium: true,
+    darkCanvas: Color(0xFF181311),
+    lightCanvas: Color(0xFFEFEAE5),
+    darkModuleBg: Color(0xFF221A17),
+    lightModuleBg: Color(0xFFDFD7D0),
+    darkBorder: Color(0xFF663B2A),
+    lightBorder: Color(0xFFB88B77),
+    needleColor: Color(0xFFD86D47), // Burnished Terracotta
+    filamentColor: Color(0xFFE88C60), // Hearth Ember Glow
+    accentColor: Color(0xFF9C4124),
+    plateGradientDark: [Color(0xFF2D201C), Color(0xFF201613), Color(0xFF160F0C)],
+    plateGradientLight: [Color(0xFFF6F2EE), Color(0xFFECE4DC), Color(0xFFDFD4C8)],
+    rivetDark: Color(0xFF8A4A32),
+    rivetLight: Color(0xFFA8634A),
+  );
+
+  static const HardwareEdition britishRacingGreen = HardwareEdition(
+    type: HardwareEditionType.britishRacingGreen,
+    textureType: HardwareTextureType.matteAbsGrain,
+    title: 'BRITISH RACING GREEN',
+    subtitle: 'VINTAGE SPRUCE & GOLD',
+    yearLabel: 'MOD. 11 · 1962',
+    isPremium: true,
+    darkCanvas: Color(0xFF0D1612),
+    lightCanvas: Color(0xFFE2EAE5),
+    darkModuleBg: Color(0xFF13201A),
+    lightModuleBg: Color(0xFFD0DDD6),
+    darkBorder: Color(0xFF2D483A),
+    lightBorder: Color(0xFF8CA899),
+    needleColor: Color(0xFFF4D06F), // Vintage Champagne Gold
+    filamentColor: Color(0xFFF3B61F), // Warm Sunlit Gold
+    accentColor: Color(0xFFC89B3C),
+    plateGradientDark: [Color(0xFF1A2A22), Color(0xFF121E18), Color(0xFF0A120E)],
+    plateGradientLight: [Color(0xFFEBF2EE), Color(0xFFDEE8E2), Color(0xFFCEDCD4)],
+    rivetDark: Color(0xFFC89B3C),
+    rivetLight: Color(0xFFA8812E),
+  );
+
+  static const HardwareEdition indigoAstronomical = HardwareEdition(
+    type: HardwareEditionType.indigoAstronomical,
+    textureType: HardwareTextureType.brushedTitanium,
+    title: 'INDIGO ASTRONOMICAL',
+    subtitle: 'DEEP SEA NAVY & CYAN',
+    yearLabel: 'MOD. 12 · 1974',
+    isPremium: true,
+    darkCanvas: Color(0xFF0C101A),
+    lightCanvas: Color(0xFFDCE2EE),
+    darkModuleBg: Color(0xFF121827),
+    lightModuleBg: Color(0xFFCAD3E5),
+    darkBorder: Color(0xFF2B3856),
+    lightBorder: Color(0xFF8696BD),
+    needleColor: Color(0xFF4CC9F0), // Stellar Cyan Needle
+    filamentColor: Color(0xFF4361EE), // Deep Horizon Glow
+    accentColor: Color(0xFF3F37C9),
+    plateGradientDark: [Color(0xFF182033), Color(0xFF101624), Color(0xFF0A0E17)],
+    plateGradientLight: [Color(0xFFE6EAF4), Color(0xFFD7DEEE), Color(0xFFC7D0E4)],
+    rivetDark: Color(0xFF1C253B),
+    rivetLight: Color(0xFF7081A8),
+  );
+
   static const List<HardwareEdition> all = [
     braunClassic,
     braunAtelierCream,
-    titaniumStealth,
     bauhausHeritage,
+    industrialMonoSteel,
+    titaniumStealth,
     rawBrassPatina,
     midCenturyWalnut,
     forgedCarbon,
+    obsidianCeramic,
+    copperHearthAsh,
+    britishRacingGreen,
+    indigoAstronomical,
   ];
 
   static HardwareEdition fromType(HardwareEditionType type) {
@@ -237,16 +357,26 @@ class HardwareEdition {
         return braunClassic;
       case HardwareEditionType.braunAtelierCream:
         return braunAtelierCream;
-      case HardwareEditionType.titaniumStealth:
-        return titaniumStealth;
       case HardwareEditionType.bauhausHeritage:
         return bauhausHeritage;
+      case HardwareEditionType.industrialMonoSteel:
+        return industrialMonoSteel;
+      case HardwareEditionType.titaniumStealth:
+        return titaniumStealth;
       case HardwareEditionType.rawBrassPatina:
         return rawBrassPatina;
       case HardwareEditionType.midCenturyWalnut:
         return midCenturyWalnut;
       case HardwareEditionType.forgedCarbon:
         return forgedCarbon;
+      case HardwareEditionType.obsidianCeramic:
+        return obsidianCeramic;
+      case HardwareEditionType.copperHearthAsh:
+        return copperHearthAsh;
+      case HardwareEditionType.britishRacingGreen:
+        return britishRacingGreen;
+      case HardwareEditionType.indigoAstronomical:
+        return indigoAstronomical;
     }
   }
 

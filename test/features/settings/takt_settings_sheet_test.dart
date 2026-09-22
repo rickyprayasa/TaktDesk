@@ -379,7 +379,7 @@ void main() {
       expect(find.textContaining('SERVICE HATCH'), findsOneWidget);
     });
 
-    testWidgets('TaktSettingsSheet renders Hardware Editions section with 7 swatches', (tester) async {
+    testWidgets('TaktSettingsSheet renders Hardware Editions section with 12 swatches', (tester) async {
       await tester.pumpWidget(buildSheet());
       await tester.pump();
 
@@ -394,11 +394,15 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('edition_next_button')));
       await tester.pumpAndSettle();
-      expect(find.text('TITANIUM STEALTH'), findsOneWidget);
+      expect(find.text('BAUHAUS HERITAGE'), findsOneWidget);
 
       await tester.tap(find.byKey(const ValueKey('edition_next_button')));
       await tester.pumpAndSettle();
-      expect(find.text('BAUHAUS HERITAGE'), findsOneWidget);
+      expect(find.text('INDUSTRIAL MONO STEEL'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('TITANIUM STEALTH'), findsOneWidget);
 
       await tester.tap(find.byKey(const ValueKey('edition_next_button')));
       await tester.pumpAndSettle();
@@ -412,6 +416,22 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('FORGED CARBON'), findsOneWidget);
 
+      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('OBSIDIAN CERAMIC'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('COPPER HEARTH & ASH'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('BRITISH RACING GREEN'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('INDIGO ASTRONOMICAL'), findsOneWidget);
+
       expect(find.textContaining('SIMULATE STUDIO PRO CLEARANCE'), findsOneWidget);
     });
 
@@ -419,11 +439,11 @@ void main() {
       await tester.pumpWidget(buildSheet());
       await tester.pump();
 
-      // Navigate past Atelier Cream to titanium stealth card in carousel
-      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
-      await tester.pumpAndSettle();
+      // Navigate past Atelier Cream, Bauhaus Heritage, Industrial Mono Steel to titanium stealth (index 4)
+      for (int i = 0; i < 4; i++) {
+        await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+        await tester.pumpAndSettle();
+      }
 
       final titaniumFinder = find.byKey(const ValueKey('edition_card_titaniumStealth'));
       expect(titaniumFinder, findsOneWidget);
@@ -466,11 +486,11 @@ void main() {
       await tester.tap(switchFinder);
       await tester.pumpAndSettle();
 
-      // Navigate past free Atelier Cream (page 1) to titanium stealth (page 2) in carousel
-      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('edition_next_button')));
-      await tester.pumpAndSettle();
+      // Navigate past free editions (Braun Classic 0, Atelier Cream 1, Bauhaus Heritage 2, Industrial Mono Steel 3) to titanium stealth (index 4)
+      for (int i = 0; i < 4; i++) {
+        await tester.tap(find.byKey(const ValueKey('edition_next_button')));
+        await tester.pumpAndSettle();
+      }
 
       expect(find.text('LOCKED // PREVIEW 👁'), findsWidgets);
 
@@ -555,8 +575,8 @@ void main() {
       await tester.tap(switchFinder);
       await tester.pumpAndSettle();
 
-      // Navigate from index 0 to index 5 (Mid-Century Walnut)
-      for (int i = 0; i < 5; i++) {
+      // Navigate from index 0 to index 6 (Mid-Century Walnut)
+      for (int i = 0; i < 6; i++) {
         await tester.tap(find.byKey(const ValueKey('edition_next_button')));
         await tester.pumpAndSettle();
       }
@@ -576,7 +596,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('ZYKL STUDIO PRO'), findsNothing);
 
-      // Advance to index 6 (Forged Carbon)
+      // Advance to index 7 (Forged Carbon)
       await tester.tap(find.byKey(const ValueKey('edition_next_button')));
       await tester.pumpAndSettle();
 
@@ -632,12 +652,12 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify counter badge and arrow buttons exist
-      expect(find.textContaining('01 / 07'), findsOneWidget);
+      expect(find.textContaining('01 / 12'), findsOneWidget);
       expect(find.byKey(const ValueKey('edition_prev_button')), findsOneWidget);
       expect(find.byKey(const ValueKey('edition_next_button')), findsOneWidget);
 
-      // Verify 7 indicator dots exist
-      for (int i = 0; i < 7; i++) {
+      // Verify 12 indicator dots exist
+      for (int i = 0; i < 12; i++) {
         expect(find.byKey(ValueKey('edition_dot_$i')), findsOneWidget);
       }
 
@@ -645,13 +665,13 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('edition_next_button')));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('02 / 07'), findsOneWidget);
+      expect(find.textContaining('02 / 12'), findsOneWidget);
 
       // Tap prev button to return to page 1
       await tester.tap(find.byKey(const ValueKey('edition_prev_button')));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('01 / 07'), findsOneWidget);
+      expect(find.textContaining('01 / 12'), findsOneWidget);
     });
 
     testWidgets('Pomodoro Interval Engine steppers tune custom durations without mutating active session', (tester) async {

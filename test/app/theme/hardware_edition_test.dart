@@ -5,32 +5,37 @@ import 'package:takt_desk/app/theme/theme_controller.dart';
 
 void main() {
   group('HardwareEdition Catalog', () {
-    test('catalog contains exactly 7 curated editions', () {
-      expect(HardwareEdition.all.length, equals(7));
+    test('catalog contains exactly 12 curated editions', () {
+      expect(HardwareEdition.all.length, equals(12));
     });
 
-    test('free editions are braunClassic and braunAtelierCream', () {
+    test('free editions are braunClassic, braunAtelierCream, bauhausHeritage, and industrialMonoSteel', () {
       final freeEditions = HardwareEdition.all.where((e) => !e.isPremium).toList();
-      expect(freeEditions.length, equals(2));
+      expect(freeEditions.length, equals(4));
       expect(freeEditions.map((e) => e.type), containsAll([
         HardwareEditionType.braunClassic,
         HardwareEditionType.braunAtelierCream,
+        HardwareEditionType.bauhausHeritage,
+        HardwareEditionType.industrialMonoSteel,
       ]));
     });
 
-    test('pro editions are titaniumStealth, bauhausHeritage, rawBrassPatina, midCenturyWalnut, and forgedCarbon', () {
+    test('pro editions are titaniumStealth, rawBrassPatina, midCenturyWalnut, forgedCarbon, obsidianCeramic, copperHearthAsh, britishRacingGreen, and indigoAstronomical', () {
       final proEditions = HardwareEdition.all.where((e) => e.isPremium).toList();
-      expect(proEditions.length, equals(5));
+      expect(proEditions.length, equals(8));
       expect(proEditions.map((e) => e.type), containsAll([
         HardwareEditionType.titaniumStealth,
-        HardwareEditionType.bauhausHeritage,
         HardwareEditionType.rawBrassPatina,
         HardwareEditionType.midCenturyWalnut,
         HardwareEditionType.forgedCarbon,
+        HardwareEditionType.obsidianCeramic,
+        HardwareEditionType.copperHearthAsh,
+        HardwareEditionType.britishRacingGreen,
+        HardwareEditionType.indigoAstronomical,
       ]));
     });
 
-    test('fromType resolves all 7 editions correctly with valid tokens', () {
+    test('fromType resolves all 12 editions correctly with valid tokens', () {
       for (final type in HardwareEditionType.values) {
         final edition = HardwareEdition.fromType(type);
         expect(edition.type, equals(type));
@@ -46,11 +51,16 @@ void main() {
     test('each edition assigns its corresponding HardwareTextureType', () {
       expect(HardwareEdition.braunClassic.textureType, equals(HardwareTextureType.matteAbsGrain));
       expect(HardwareEdition.braunAtelierCream.textureType, equals(HardwareTextureType.matteAbsGrain));
-      expect(HardwareEdition.titaniumStealth.textureType, equals(HardwareTextureType.brushedTitanium));
       expect(HardwareEdition.bauhausHeritage.textureType, equals(HardwareTextureType.tubularChrome));
+      expect(HardwareEdition.industrialMonoSteel.textureType, equals(HardwareTextureType.matteAbsGrain));
+      expect(HardwareEdition.titaniumStealth.textureType, equals(HardwareTextureType.brushedTitanium));
       expect(HardwareEdition.rawBrassPatina.textureType, equals(HardwareTextureType.burnishedBrass));
       expect(HardwareEdition.midCenturyWalnut.textureType, equals(HardwareTextureType.organicWalnut));
       expect(HardwareEdition.forgedCarbon.textureType, equals(HardwareTextureType.forgedCarbon));
+      expect(HardwareEdition.obsidianCeramic.textureType, equals(HardwareTextureType.matteAbsGrain));
+      expect(HardwareEdition.copperHearthAsh.textureType, equals(HardwareTextureType.burnishedBrass));
+      expect(HardwareEdition.britishRacingGreen.textureType, equals(HardwareTextureType.matteAbsGrain));
+      expect(HardwareEdition.indigoAstronomical.textureType, equals(HardwareTextureType.brushedTitanium));
     });
 
     test('module background has distinct contrast from canvas in both dark and light modes', () {

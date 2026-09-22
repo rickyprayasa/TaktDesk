@@ -41,9 +41,48 @@ class TimerForegroundService : Service() {
 
     private val handler = Handler(Looper.getMainLooper())
     private var completionRunnable: Runnable? = null
+    private var widgetTickRunnable: Runnable? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var bellPlayer: MediaPlayer? = null
     private var activeAlarmChimeId: String = "braunBell"
+
+    private fun startWidgetTick(targetEndTime: Long, targetMinutes: Int, phase: String) {
+        stopWidgetTick()
+        val status = if (phase == "shortBreak" || phase == "longBreak") "BREAK" else "FOCUS"
+        val tickRunnable = object : Runnable {
+            override fun run() {
+                val now = System.currentTimeMillis()
+                val remainingMillis = (targetEndTime - now).coerceAtLeast(0)
+                val remainingSecs = (remainingMillis / 1000).toInt()
+
+                val prefs = getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
+                prefs.edit()
+                    .putString(TaktAppWidgetProvider.KEY_STATUS, status)
+                    .putInt(TaktAppWidgetProvider.KEY_REMAINING_SECONDS, remainingSecs)
+                    .putInt(TaktAppWidgetProvider.KEY_TARGET_MINUTES, targetMinutes)
+                    .apply()
+
+                try {
+                    TaktAnalogDialWidgetProvider.updateAllWidgets(this@TimerForegroundService)
+                    TaktFocusStripWidgetProvider.updateAllWidgets(this@TimerForegroundService)
+                    TaktAppWidgetProvider.updateAllWidgets(this@TimerForegroundService)
+                } catch (_: Throwable) {}
+
+                if (remainingSecs > 0) {
+                    handler.postDelayed(this, 1000L)
+                }
+            }
+        }
+        widgetTickRunnable = tickRunnable
+        handler.post(tickRunnable)
+    }
+
+    private fun stopWidgetTick() {
+        widgetTickRunnable?.let {
+            handler.removeCallbacks(it)
+            widgetTickRunnable = null
+        }
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -134,9 +173,26 @@ class TimerForegroundService : Service() {
             completionRunnable = runnable
             handler.postDelayed(runnable, remainingMillis)
         }
+
+        // Start live 1-second widget ticker so analog dial needle and focus strip tick continuously
+        startWidgetTick(targetTime, targetMinutes, phase)
     }
 
     private fun onTimerFinished(phase: String) {
+        stopWidgetTick()
+        val prefs = getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
+        val targetMinutes = prefs.getInt(TaktAppWidgetProvider.KEY_TARGET_MINUTES, 25)
+        prefs.edit()
+            .putString(TaktAppWidgetProvider.KEY_STATUS, "STANDBY")
+            .putInt(TaktAppWidgetProvider.KEY_REMAINING_SECONDS, targetMinutes * 60)
+            .apply()
+
+        try {
+            TaktAnalogDialWidgetProvider.updateAllWidgets(this)
+            TaktFocusStripWidgetProvider.updateAllWidgets(this)
+            TaktAppWidgetProvider.updateAllWidgets(this)
+        } catch (_: Throwable) {}
+
         // 1. Acquire temporary 3.5-second wakelock to play bell sound
         acquireTransientWakeLock()
 
@@ -197,8 +253,22 @@ class TimerForegroundService : Service() {
 
     private fun stopCountdown() {
         cancelScheduledCompletion()
+        stopWidgetTick()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
+
+        val prefs = getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
+        val targetMinutes = prefs.getInt(TaktAppWidgetProvider.KEY_TARGET_MINUTES, 25)
+        prefs.edit()
+            .putString(TaktAppWidgetProvider.KEY_STATUS, "STANDBY")
+            .putInt(TaktAppWidgetProvider.KEY_REMAINING_SECONDS, targetMinutes * 60)
+            .apply()
+
+        try {
+            TaktAnalogDialWidgetProvider.updateAllWidgets(this)
+            TaktFocusStripWidgetProvider.updateAllWidgets(this)
+            TaktAppWidgetProvider.updateAllWidgets(this)
+        } catch (_: Throwable) {}
     }
 
     private fun cancelScheduledCompletion() {
@@ -321,6 +391,7 @@ class TimerForegroundService : Service() {
 
     override fun onDestroy() {
         cancelScheduledCompletion()
+        stopWidgetTick()
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
         manager?.cancel(NOTIFICATION_ID)
         bellPlayer?.release()

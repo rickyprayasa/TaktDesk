@@ -159,11 +159,19 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
       if (!mounted) return;
       if (initialAction == 'studio_pro') {
         showStudioProDialog(context, ref);
+      } else if (initialAction == 'tasks') {
+        _selectInstrument(1);
+      } else if (initialAction == 'dial') {
+        _selectInstrument(0);
       }
       _widgetActionSubscription = widgetService.onWidgetAction.listen((action) {
         if (!mounted) return;
         if (action == 'studio_pro') {
           showStudioProDialog(context, ref);
+        } else if (action == 'tasks') {
+          _selectInstrument(1);
+        } else if (action == 'dial') {
+          _selectInstrument(0);
         }
       });
     });

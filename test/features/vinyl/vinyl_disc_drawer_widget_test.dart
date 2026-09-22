@@ -76,7 +76,7 @@ void main() {
 
       // Verify single unified drawer handle plate is rendered
       expect(find.byKey(const ValueKey('vinyl_drawer_1_handle')), findsOneWidget);
-      expect(find.text('[ RECORD DRAWER // 12 DISCS ▾ ]'), findsOneWidget);
+      expect(find.text('[ RECORD DRAWER // 20 DISCS ▾ ]'), findsOneWidget);
 
       // Interior drawer tabs and carousel are closed initially
       expect(find.byKey(const ValueKey('vinyl_drawer_segment_1')), findsNothing);
@@ -84,7 +84,7 @@ void main() {
       expect(find.byType(PageView), findsNothing);
     });
 
-    testWidgets('expanding drawer displays interior drawer tabs, 6 sleeves, and allows navigation', (tester) async {
+    testWidgets('expanding drawer displays interior drawer tabs, 10 sleeves, and allows navigation', (tester) async {
       final mockAudio = MockAudioService();
       await tester.pumpWidget(buildTestApp(audioService: mockAudio));
       await tester.pumpAndSettle();
@@ -94,7 +94,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Exterior handle shows open indicator
-      expect(find.text('[ RECORD DRAWER // 12 DISCS ▲ ]'), findsOneWidget);
+      expect(find.text('[ RECORD DRAWER // 20 DISCS ▲ ]'), findsOneWidget);
       expect(mockAudio.playedEffects, contains(SoundEffect.drawerSlide));
 
       // Interior drawer tabs are now visible
@@ -103,9 +103,9 @@ void main() {
       expect(find.text('01 · NATURE'), findsOneWidget);
       expect(find.text('02 · HARMONICS'), findsOneWidget);
 
-      // PageView is visible with Drawer 1 items (0..5)
+      // PageView is visible with Drawer 1 items (0..9)
       expect(find.byType(PageView), findsOneWidget);
-      expect(find.text('[ 01 / 06 ]'), findsOneWidget);
+      expect(find.text('[ 01 / 10 ]'), findsOneWidget);
       expect(find.byKey(const ValueKey('record_sleeve_0')), findsOneWidget);
       expect(find.text('TK-01'), findsOneWidget);
       expect(find.text('LO-FI RAIN'), findsOneWidget);
@@ -115,13 +115,13 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('drawer_1_next_disc')));
       await tester.pumpAndSettle();
 
-      expect(find.text('[ 02 / 06 ]'), findsOneWidget);
+      expect(find.text('[ 02 / 10 ]'), findsOneWidget);
       expect(find.byKey(const ValueKey('record_sleeve_1')), findsOneWidget);
       expect(find.text('TK-02'), findsOneWidget);
       expect(find.text('DEEP BROWN NOISE'), findsOneWidget);
     });
 
-    testWidgets('switching to Drawer 2 displays 6 sleeves (6..11) in the same compact bay', (tester) async {
+    testWidgets('switching to Drawer 2 displays 10 sleeves (10..19) in the same compact bay', (tester) async {
       final mockAudio = MockAudioService();
       await tester.pumpWidget(buildTestApp(audioService: mockAudio));
       await tester.pumpAndSettle();
@@ -136,11 +136,11 @@ void main() {
 
       expect(mockAudio.playedEffects, contains(SoundEffect.switchClick));
 
-      // Drawer 2 items start with index 6 (Warm Tape & Felt Piano)
+      // Drawer 2 items start with index 10 (Warm Tape & Felt Piano)
       expect(find.byType(PageView), findsOneWidget);
-      expect(find.text('[ 01 / 06 ]'), findsOneWidget);
-      expect(find.byKey(const ValueKey('record_sleeve_6')), findsOneWidget);
-      expect(find.text('TK-07'), findsOneWidget);
+      expect(find.text('[ 01 / 10 ]'), findsOneWidget);
+      expect(find.byKey(const ValueKey('record_sleeve_10')), findsOneWidget);
+      expect(find.text('TK-11'), findsOneWidget);
       expect(find.text('WARM TAPE & FELT PIANO'), findsOneWidget);
     });
 
@@ -153,7 +153,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('vinyl_drawer_1_handle')));
       await tester.pumpAndSettle();
 
-      expect(find.text('[ RECORD DRAWER // 12 DISCS ▲ ]'), findsOneWidget);
+      expect(find.text('[ RECORD DRAWER // 20 DISCS ▲ ]'), findsOneWidget);
       expect(find.byType(PageView), findsOneWidget);
 
       // Close drawer by tapping handle again
@@ -161,7 +161,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Shows closed indicator, no PageView, no interior tabs
-      expect(find.text('[ RECORD DRAWER // 12 DISCS ▾ ]'), findsOneWidget);
+      expect(find.text('[ RECORD DRAWER // 20 DISCS ▾ ]'), findsOneWidget);
       expect(find.byType(PageView), findsNothing);
       expect(find.byKey(const ValueKey('vinyl_drawer_segment_1')), findsNothing);
       expect(mockAudio.playedEffects, contains(SoundEffect.drawerLatch));
@@ -182,7 +182,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('vinyl_drawer_segment_2')));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const ValueKey('record_sleeve_6')), findsOneWidget);
+      expect(find.byKey(const ValueKey('record_sleeve_10')), findsOneWidget);
       expect(mockAudio.playedEffects, contains(SoundEffect.switchClick));
 
       // Switch back to Drawer 1 using interior segment pill
@@ -214,7 +214,7 @@ void main() {
       expect(find.byKey(const ValueKey('load_track_button_1')), findsNothing);
     });
 
-    testWidgets('Drawer 2 provides free tracks 6 and 7 (Harmonics), and premium track 10 triggers Studio Pro dialog', (tester) async {
+    testWidgets('Drawer 2 provides free tracks 10 to 13 (Harmonics), and premium track 14 triggers Studio Pro dialog', (tester) async {
       await tester.pumpWidget(buildTestApp(isProSimulated: false));
       await tester.pumpAndSettle();
 
@@ -226,18 +226,18 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('vinyl_drawer_segment_2')));
       await tester.pumpAndSettle();
 
-      // Track 6 (Warm Tape & Felt Piano) is free
-      final loadButton6 = find.byKey(const ValueKey('load_track_button_6'));
-      expect(loadButton6, findsOneWidget);
+      // Track 10 (Warm Tape & Felt Piano) is free
+      final loadButton10 = find.byKey(const ValueKey('load_track_button_10'));
+      expect(loadButton10, findsOneWidget);
 
-      // Navigate to Track 7 (Monastic Rhodes & Velvet) which is also free (Harmonics)
+      // Navigate to Track 11 (Monastic Cello Solo) which is also free (Harmonics)
       await tester.tap(find.byKey(const ValueKey('drawer_2_next_disc')));
       await tester.pumpAndSettle();
 
-      final loadButton7 = find.byKey(const ValueKey('load_track_button_7'));
-      expect(loadButton7, findsOneWidget);
+      final loadButton11 = find.byKey(const ValueKey('load_track_button_11'));
+      expect(loadButton11, findsOneWidget);
 
-      // Navigate to Track 8, 9, then Track 10 (Midnight Solitude Piano) which is premium locked
+      // Navigate to Track 12, 13, then Track 14 (Midnight Solitude Piano) which is premium locked
       await tester.tap(find.byKey(const ValueKey('drawer_2_next_disc')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('drawer_2_next_disc')));
@@ -245,9 +245,9 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('drawer_2_next_disc')));
       await tester.pumpAndSettle();
 
-      final lockedButton10 = find.byKey(const ValueKey('locked_track_button_10'));
-      expect(lockedButton10, findsOneWidget);
-      await tester.tap(lockedButton10);
+      final lockedButton14 = find.byKey(const ValueKey('locked_track_button_14'));
+      expect(lockedButton14, findsOneWidget);
+      await tester.tap(lockedButton14);
       await tester.pumpAndSettle();
 
       // Studio Pro dialog is shown
@@ -273,7 +273,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('vinyl_drawer_segment_2')));
       await tester.pumpAndSettle();
 
-      // Navigate to Track 10 (4 steps: 6 -> 7 -> 8 -> 9 -> 10)
+      // Navigate to Track 14 (4 steps: 10 -> 11 -> 12 -> 13 -> 14)
       await tester.tap(find.byKey(const ValueKey('drawer_2_next_disc')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('drawer_2_next_disc')));
@@ -283,12 +283,12 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('drawer_2_next_disc')));
       await tester.pumpAndSettle();
 
-      // Track 10 should have load button when Pro
-      final loadButton10 = find.byKey(const ValueKey('load_track_button_10'));
-      expect(loadButton10, findsOneWidget);
-      expect(find.byKey(const ValueKey('locked_track_button_10')), findsNothing);
+      // Track 14 should have load button when Pro
+      final loadButton14 = find.byKey(const ValueKey('load_track_button_14'));
+      expect(loadButton14, findsOneWidget);
+      expect(find.byKey(const ValueKey('locked_track_button_14')), findsNothing);
 
-      await tester.tap(loadButton10);
+      await tester.tap(loadButton14);
       await tester.pumpAndSettle();
 
       expect(find.text('[ ON PLATTER ]'), findsOneWidget);

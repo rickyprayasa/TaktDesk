@@ -67,14 +67,12 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
             views.setOnClickPendingIntent(R.id.widget_dial_image, togglePendingIntent)
             views.setOnClickPendingIntent(R.id.widget_status_text, togglePendingIntent)
 
-            // 2. Tapping top header / root opens MainActivity
+            // 2. Tapping top header / root opens MainActivity to Chronometer dial
             val launchIntent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                         Intent.FLAG_ACTIVITY_CLEAR_TOP or
                         Intent.FLAG_ACTIVITY_SINGLE_TOP
-                if (!isPro) {
-                    putExtra("open_feature", "studio_pro")
-                }
+                putExtra("open_feature", "dial")
             }
             val launchPendingIntent = PendingIntent.getActivity(
                 context,

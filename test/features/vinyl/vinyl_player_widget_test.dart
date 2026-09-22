@@ -64,7 +64,7 @@ void main() {
     // Verify VinylDiscDrawerWidget is present with single unified drawer handle
     expect(find.byType(VinylDiscDrawerWidget), findsOneWidget);
     expect(find.byKey(const ValueKey('vinyl_drawer_1_handle')), findsOneWidget);
-    expect(find.text('[ RECORD DRAWER // 12 DISCS ▾ ]'), findsOneWidget);
+    expect(find.text('[ RECORD DRAWER // 20 DISCS ▾ ]'), findsOneWidget);
 
     // Verify soundscape mixer is absent
     expect(find.byKey(const ValueKey('fader_rec_track')), findsNothing);
@@ -159,7 +159,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify drawer is expanded and carousel is displayed
-    expect(find.text('[ RECORD DRAWER // 12 DISCS ▲ ]'), findsOneWidget);
+    expect(find.text('[ RECORD DRAWER // 20 DISCS ▲ ]'), findsOneWidget);
     expect(find.text('01 · NATURE'), findsOneWidget);
     expect(find.text('02 · HARMONICS'), findsOneWidget);
     expect(find.byType(PageView), findsOneWidget);
