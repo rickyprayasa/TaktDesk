@@ -110,11 +110,11 @@ def process_instrumental_track(input_path, output_filename, start_sec=2.0, targe
 
 
 def main():
-    print("=== Processing 100% Authentic Studio Acoustic Instrumental Recordings ===")
+    print("=== Processing Drawer 2: 10 Authentic Studio Acoustic Instrumental Recordings ===")
     print(f"Target format: {LOOP_DURATION}s @ {SAMPLE_RATE} Hz 16-bit mono linear PCM (equal-power loop)")
 
-    # TK-07: Warm Tape & Felt Piano (Real felt piano recording on reel-to-reel tape)
-    print("\nProcessing TK-07: Warm Tape & Felt Piano (Authentic Analog Tape Piano)...")
+    # 1. TK-11: Warm Tape & Felt Piano (Real felt piano recording on reel-to-reel tape)
+    print("\nProcessing TK-11: Warm Tape & Felt Piano (Authentic Analog Tape Piano)...")
     process_instrumental_track(
         os.path.join(CACHE_DIR, 'vinyl_warm_tape.raw'),
         'vinyl_warm_tape.wav',
@@ -122,8 +122,8 @@ def main():
         target_peak=0.72
     )
 
-    # TK-08: Monastic Bach Cello (John Michel - J.S. Bach Cello Suite No. 1 in G major: Prelude)
-    print("\nProcessing TK-08: Monastic Bach Cello (Authentic Acoustic Solo Cello)...")
+    # 2. TK-12: Monastic Bach Cello (John Michel - J.S. Bach Cello Suite No. 1 in G major: Prelude)
+    print("\nProcessing TK-12: Monastic Bach Cello (Authentic Acoustic Solo Cello)...")
     process_instrumental_track(
         os.path.join(CACHE_DIR, 'vinyl_bach_cello.raw'),
         'vinyl_rhodes_velvet.wav',
@@ -131,8 +131,8 @@ def main():
         target_peak=0.75
     )
 
-    # TK-09: Tape Acoustic Guitar (Carlo Alberto Boni - Francisco Tárrega: Recuerdos de la Alhambra)
-    print("\nProcessing TK-09: Tape Acoustic Guitar (Authentic Nylon Classical Guitar)...")
+    # 3. TK-13: Tape Acoustic Guitar (Carlo Alberto Boni - Francisco Tárrega: Recuerdos de la Alhambra)
+    print("\nProcessing TK-13: Tape Acoustic Guitar (Authentic Nylon Classical Guitar)...")
     process_instrumental_track(
         os.path.join(CACHE_DIR, 'vinyl_classical_guitar.raw'),
         'vinyl_acoustic_guitar.wav',
@@ -140,8 +140,8 @@ def main():
         target_peak=0.72
     )
 
-    # TK-10: Debussy Clair de Lune (Concert Grand Piano Solo)
-    print("\nProcessing TK-10: Debussy Clair de Lune (Authentic Concert Grand Piano)...")
+    # 4. TK-14: Debussy Clair de Lune (Concert Grand Piano Solo)
+    print("\nProcessing TK-14: Debussy Clair de Lune (Authentic Concert Grand Piano)...")
     process_instrumental_track(
         os.path.join(CACHE_DIR, 'vinyl_debussy_clair.raw'),
         'vinyl_ambient_drift.wav',
@@ -149,8 +149,8 @@ def main():
         target_peak=0.82
     )
 
-    # TK-11: Midnight Solitude Piano (Erik Satie - Gnossienne No. 1 Upright Solo)
-    print("\nProcessing TK-11: Midnight Solitude Piano (Authentic Muted Upright Piano)...")
+    # 5. TK-15: Midnight Solitude Piano (Erik Satie - Gnossienne No. 1 Upright Solo)
+    print("\nProcessing TK-15: Midnight Solitude Piano (Authentic Muted Upright Piano)...")
     process_instrumental_track(
         os.path.join(CACHE_DIR, 'vinyl_satie_gnossienne.raw'),
         'vinyl_felt_piano_solo.wav',
@@ -158,8 +158,8 @@ def main():
         target_peak=0.75
     )
 
-    # TK-12: Zen Bronze Singing Bowl (Authentic Tibetan Singing Bowl Harmonics)
-    print("\nProcessing TK-12: Zen Bronze Singing Bowl (Authentic Tibetan Bowl & Bell Harmonics)...")
+    # 6. TK-16: Zen Bronze Singing Bowl (Authentic Tibetan Singing Bowl Harmonics)
+    print("\nProcessing TK-16: Zen Bronze Singing Bowl (Authentic Tibetan Bowl & Bell Harmonics)...")
     process_instrumental_track(
         os.path.join(CACHE_DIR, 'vinyl_tibetan_bowl.raw'),
         'vinyl_modular_clockwork.wav',
@@ -167,7 +167,43 @@ def main():
         target_peak=0.68
     )
 
-    print("\n✓ All 6 authentic studio acoustic instrumental tracks processed successfully!")
+    # 7. TK-17: Goldberg Variations Aria (Kimiko Ishizaka - J.S. Bach on Bösendorfer Imperial Grand)
+    print("\nProcessing TK-17: Goldberg Variations Aria (Authentic Bösendorfer Imperial Concert Grand)...")
+    process_instrumental_track(
+        os.path.join(CACHE_DIR, 'vinyl_goldberg_aria.raw'),
+        'vinyl_goldberg_aria.wav',
+        start_sec=1.0,
+        target_peak=0.78
+    )
+
+    # 8. TK-18: Chopin Nocturne Op. 9 No. 2 (Frank Levy on Steinway Concert Grand)
+    print("\nProcessing TK-18: Chopin Nocturne in Eb Major (Authentic Steinway Concert Grand)...")
+    process_instrumental_track(
+        os.path.join(CACHE_DIR, 'vinyl_chopin_nocturne.raw'),
+        'vinyl_chopin_nocturne.wav',
+        start_sec=2.0,
+        target_peak=0.75
+    )
+
+    # 9. TK-19: Spanish Romance Classical Guitar (Authentic Spanish Nylon Classical Guitar)
+    print("\nProcessing TK-19: Spanish Romance (Authentic Spanish Nylon Classical Guitar)...")
+    process_instrumental_track(
+        os.path.join(CACHE_DIR, 'vinyl_spanish_romance.raw'),
+        'vinyl_spanish_romance.wav',
+        start_sec=1.5,
+        target_peak=0.74
+    )
+
+    # 10. TK-20: Chamber String Quartet Adagio (Musopen String Quartet - Beethoven Op. 18 No. 6 Adagio)
+    print("\nProcessing TK-20: Chamber String Quartet Adagio (Authentic Acoustic String Quartet)...")
+    process_instrumental_track(
+        os.path.join(CACHE_DIR, 'vinyl_chamber_quartet.raw'),
+        'vinyl_chamber_quartet.wav',
+        start_sec=4.0,
+        target_peak=0.76
+    )
+
+    print("\n✓ All 10 Drawer 2 authentic studio acoustic instrumental tracks processed successfully!")
 
 
 if __name__ == '__main__':
