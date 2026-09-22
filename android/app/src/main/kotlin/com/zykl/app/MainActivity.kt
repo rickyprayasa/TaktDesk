@@ -322,28 +322,50 @@ class MainActivity : FlutterActivity() {
                     try {
                         val trackIndex = call.argument<Number>("trackIndex")?.toInt() ?: 0
                         masterVolume = (call.argument<Number>("volume")?.toDouble() ?: 0.8).toFloat()
+                        val rawAssetPath = call.argument<String>("assetPath")
 
-                        val assetPath = when (trackIndex) {
-                            0 -> "flutter_assets/assets/audio/vinyl_lofi_rain.wav"
-                            1 -> "flutter_assets/assets/audio/vinyl_brown_noise.wav"
-                            2 -> "flutter_assets/assets/audio/vinyl_library.wav"
-                            3 -> "flutter_assets/assets/audio/vinyl_kyoto_bamboo.wav"
-                            4 -> "flutter_assets/assets/audio/vinyl_campfire.wav"
-                            5 -> "flutter_assets/assets/audio/vinyl_nordic_pines.wav"
-                            6 -> "flutter_assets/assets/audio/vinyl_alpine_brook.wav"
-                            7 -> "flutter_assets/assets/audio/vinyl_warm_tape.wav"
-                            8 -> "flutter_assets/assets/audio/vinyl_ocean_waves.wav"
-                            9 -> "flutter_assets/assets/audio/vinyl_morning_meadow.wav"
-                            10 -> "flutter_assets/assets/audio/vinyl_pure_white_noise.wav"
-                            11 -> "flutter_assets/assets/audio/vinyl_timber_chamber.wav"
-                            else -> "flutter_assets/assets/audio/vinyl_lofi_rain.wav"
+                        val assetPath = if (!rawAssetPath.isNullOrEmpty()) {
+                            "flutter_assets/$rawAssetPath"
+                        } else {
+                            when (trackIndex) {
+                                0 -> "flutter_assets/assets/audio/vinyl_lofi_rain.wav"
+                                1 -> "flutter_assets/assets/audio/vinyl_brown_noise.wav"
+                                2 -> "flutter_assets/assets/audio/vinyl_library.wav"
+                                3 -> "flutter_assets/assets/audio/vinyl_kyoto_bamboo.wav"
+                                4 -> "flutter_assets/assets/audio/vinyl_campfire.wav"
+                                5 -> "flutter_assets/assets/audio/vinyl_nordic_pines.wav"
+                                6 -> "flutter_assets/assets/audio/vinyl_alpine_brook.wav"
+                                7 -> "flutter_assets/assets/audio/vinyl_ocean_waves.wav"
+                                8 -> "flutter_assets/assets/audio/vinyl_morning_meadow.wav"
+                                9 -> "flutter_assets/assets/audio/vinyl_pure_white_noise.wav"
+                                10 -> "flutter_assets/assets/audio/vinyl_timber_chamber.wav"
+                                11 -> "flutter_assets/assets/audio/vinyl_zen_bowl.wav"
+                                12 -> "flutter_assets/assets/audio/vinyl_warm_tape.wav"
+                                13 -> "flutter_assets/assets/audio/vinyl_rhodes_velvet.wav"
+                                14 -> "flutter_assets/assets/audio/vinyl_acoustic_guitar.wav"
+                                15 -> "flutter_assets/assets/audio/vinyl_ambient_drift.wav"
+                                16 -> "flutter_assets/assets/audio/vinyl_felt_piano_solo.wav"
+                                17 -> "flutter_assets/assets/audio/vinyl_modular_clockwork.wav"
+                                18 -> "flutter_assets/assets/audio/vinyl_tape_guitar.wav"
+                                19 -> "flutter_assets/assets/audio/vinyl_chamber_strings.wav"
+                                20 -> "flutter_assets/assets/audio/vinyl_wurlitzer_reeds.wav"
+                                21 -> "flutter_assets/assets/audio/vinyl_moog_harmony.wav"
+                                22 -> "flutter_assets/assets/audio/vinyl_kalimba_crystal.wav"
+                                23 -> "flutter_assets/assets/audio/vinyl_nocturne_harmonics.wav"
+                                else -> "flutter_assets/assets/audio/vinyl_lofi_rain.wav"
+                            }
                         }
 
                         // Primary Soundscape Player
                         safeStopAndReset(soundscapePlayer)
                         val pPlayer = soundscapePlayer ?: MediaPlayer().also { soundscapePlayer = it }
-                        context.assets.openFd(assetPath).use { fd ->
-                            pPlayer.setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
+                        val fd = try {
+                            context.assets.openFd(assetPath)
+                        } catch (_: Exception) {
+                            context.assets.openFd(assetPath.removePrefix("flutter_assets/"))
+                        }
+                        fd.use {
+                            pPlayer.setDataSource(it.fileDescriptor, it.startOffset, it.length)
                             pPlayer.isLooping = true
                             pPlayer.prepare()
                         }

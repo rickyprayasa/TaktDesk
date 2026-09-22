@@ -13,8 +13,8 @@ import '../vinyl_controller.dart';
 /// Industrial Slide-Out Unified Disc Drawer attached to the bottom of the BRAUN TP-1 Turntable.
 ///
 /// Features a single compact chassis bay with integrated dual-drawer switching:
-/// - Drawer 01 (Nature presets, tracks 0..5)
-/// - Drawer 02 (Harmonics presets, tracks 6..11)
+/// - Drawer 01 (Nature presets, tracks 0..11)
+/// - Drawer 02 (Harmonics presets, tracks 12..23)
 ///
 /// Ensures the UI never elongates downwards: when Drawer 02 is opened, Drawer 01
 /// is closed/swapped in the exact same 140dp bay slot.
@@ -192,7 +192,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            '[ RECORD DRAWER // 12 DISCS ${_isOpen ? '▲' : '▾'} ]',
+                            '[ RECORD DRAWER // ${VinylTrack.presets.length} DISCS ${_isOpen ? '▲' : '▾'} ]',
                             style: TextStyle(
                               fontFamily: 'monospace',
                               fontSize: 9.5,
@@ -285,7 +285,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    '[ ${(currentPage + 1).toString().padLeft(2, '0')} / 06 ]',
+                                    '[ ${(currentPage + 1).toString().padLeft(2, '0')} / ${currentTracks.length.toString().padLeft(2, '0')} ]',
                                     style: TextStyle(
                                       fontFamily: 'monospace',
                                       fontSize: 8.5,
@@ -343,7 +343,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                                         color: ((_activeDrawer == 1
                                                     ? _currentPage1
                                                     : _currentPage2) <
-                                                5)
+                                                currentTracks.length - 1)
                                             ? themeState.chassisTextColor
                                             : themeState.chassisMutedTextColor
                                                 .withValues(alpha: 0.35),

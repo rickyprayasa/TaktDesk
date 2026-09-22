@@ -260,7 +260,6 @@ Future<void> _dispatchCategoryEmail(_FeedbackCategory cat) async {
     ..writeln('Device: $manufacturer $model ($brand)')
     ..writeln('Android OS: Android $osVersion (API $sdkInt)')
     ..writeln('Timestamp: ${DateTime.now().toLocal().toString()}')
-    ..writeln('Developer: RSQUARE')
     ..writeln('--------------------------------------------');
 
   await UrlService.sendFeedbackEmail(

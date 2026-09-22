@@ -19,6 +19,7 @@ class MockAudioService extends AudioService {
   @override
   void startAmbient({
     required int trackIndex,
+    String? assetPath,
     double? primaryVolume,
     double? crackleVolume,
     double? binauralVolume,
@@ -36,9 +37,10 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('VinylTrack domain', () {
-    test('presets contain exactly 12 analog soundscapes with correct tiers and metadata', () {
-      final freeIndices = {0, 1, 2, 3, 6, 7};
-      for (int i = 0; i < 12; i++) {
+    test('presets contain exactly 24 analog soundscapes with correct tiers and metadata', () {
+      final freeIndices = {0, 1, 2, 3, 6, 12, 13, 14, 15};
+      expect(VinylTrack.presets.length, equals(24));
+      for (int i = 0; i < 24; i++) {
         if (freeIndices.contains(i)) {
           expect(VinylTrack.presets[i].isPremium, isFalse, reason: 'Track $i should be Free');
         } else {
@@ -55,19 +57,11 @@ void main() {
       }
     });
 
-    test('labelColor parses hex code correctly for all 12 tracks', () {
-      expect(VinylTrack.presets[0].labelColor.toARGB32(), equals(0xFFC85A32));
-      expect(VinylTrack.presets[1].labelColor.toARGB32(), equals(0xFF4D5D4B));
-      expect(VinylTrack.presets[2].labelColor.toARGB32(), equals(0xFFD99B59));
-      expect(VinylTrack.presets[3].labelColor.toARGB32(), equals(0xFF4A6B53));
-      expect(VinylTrack.presets[4].labelColor.toARGB32(), equals(0xFFE05A2B));
-      expect(VinylTrack.presets[5].labelColor.toARGB32(), equals(0xFF3B7A57));
-      expect(VinylTrack.presets[6].labelColor.toARGB32(), equals(0xFF4A90E2));
-      expect(VinylTrack.presets[7].labelColor.toARGB32(), equals(0xFFD97736));
-      expect(VinylTrack.presets[8].labelColor.toARGB32(), equals(0xFF2E5B88));
-      expect(VinylTrack.presets[9].labelColor.toARGB32(), equals(0xFF7E9F8E));
-      expect(VinylTrack.presets[10].labelColor.toARGB32(), equals(0xFF707070));
-      expect(VinylTrack.presets[11].labelColor.toARGB32(), equals(0xFF8C6747));
+    test('labelColor parses hex code correctly for all 24 tracks', () {
+      for (final track in VinylTrack.presets) {
+        final expectedHex = int.parse('FF${track.labelColorHex.replaceFirst('#', '')}', radix: 16);
+        expect(track.labelColor.toARGB32(), equals(expectedHex));
+      }
     });
   });
 

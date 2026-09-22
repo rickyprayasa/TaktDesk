@@ -256,8 +256,9 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
 
   /// Wraps non-hardware empty areas (header & dock) with horizontal swipe gesture
   /// to switch between instruments without intercepting rotary dials or receipt gestures.
-  Widget _buildSwipeZone({required Widget child}) {
+  Widget _buildSwipeZone({Key? key, required Widget child}) {
     return GestureDetector(
+      key: key,
       behavior: HitTestBehavior.opaque,
       onHorizontalDragStart: (_) {
         _dragDistance = 0.0;
@@ -364,6 +365,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                                     children: [
                                       // Top Section: Header + Segmented Instrument Navigation (Swipe Enabled on Empty Header/Tabs)
                                       _buildSwipeZone(
+                                        key: const ValueKey('desk_header_swipe_zone'),
                                         child: Column(
                                           mainAxisSize: MainAxisSize.min,
                                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -453,6 +455,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                                       ),
                                       // Bottom Dock: Emergency Unlatch (pinned at bottom when locked) + Desk Spec Plate (Swipe Enabled)
                                       _buildSwipeZone(
+                                        key: const ValueKey('desk_dock_swipe_zone'),
                                         child: const Column(
                                           mainAxisSize: MainAxisSize.min,
                                           crossAxisAlignment: CrossAxisAlignment.stretch,

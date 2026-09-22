@@ -63,7 +63,10 @@ class VinylController extends StateNotifier<VinylState> {
     state = state.copyWith(needleOnRecord: true, turntableSpeed: 1.0);
     HapticService.mechanicalPress();
     _audioService?.playFoley(SoundEffect.stylusDrop);
-    _audioService?.startAmbient(trackIndex: state.selectedTrackIndex);
+    _audioService?.startAmbient(
+      trackIndex: state.selectedTrackIndex,
+      assetPath: state.currentTrack.assetPath,
+    );
     if (_mediaNotificationService?.isActive == true) {
       _mediaNotificationService?.updatePlaybackState(
         isPlaying: true,
@@ -122,7 +125,7 @@ class VinylController extends StateNotifier<VinylState> {
     HapticService.dialTick();
     _audioService?.playFoley(SoundEffect.discLoad);
     if (state.needleOnRecord) {
-      _audioService?.startAmbient(trackIndex: index);
+      _audioService?.startAmbient(trackIndex: index, assetPath: track.assetPath);
     }
     if (_mediaNotificationService?.isActive == true) {
       _mediaNotificationService?.updatePlaybackState(

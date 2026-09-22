@@ -418,23 +418,23 @@ void main() {
       expect(find.byType(ReceiptRunnerWidget), findsNothing);
       expect(find.byType(VinylPlayerWidget), findsNothing);
 
-      // Swipe Left -> TASKS
-      await tester.drag(find.byType(DeskCanvasScreen), const Offset(-300, 0));
+      // Swipe Left on header -> TASKS
+      await tester.drag(find.byKey(const ValueKey('desk_header_swipe_zone')), const Offset(-300, 0));
       await tester.pumpAndSettle();
       expect(find.byType(ReceiptRunnerWidget), findsOneWidget);
 
-      // Swipe Left -> VINYL
-      await tester.drag(find.byType(DeskCanvasScreen), const Offset(-300, 0));
+      // Swipe Left on header -> VINYL
+      await tester.drag(find.byKey(const ValueKey('desk_header_swipe_zone')), const Offset(-300, 0));
       await tester.pumpAndSettle();
       expect(find.byType(VinylPlayerWidget), findsOneWidget);
 
-      // Swipe Right -> TASKS
-      await tester.drag(find.byType(DeskCanvasScreen), const Offset(300, 0));
+      // Swipe Right on dock -> TASKS
+      await tester.drag(find.byKey(const ValueKey('desk_dock_swipe_zone')), const Offset(300, 0));
       await tester.pumpAndSettle();
       expect(find.byType(ReceiptRunnerWidget), findsOneWidget);
 
-      // Swipe Right -> DIAL
-      await tester.drag(find.byType(DeskCanvasScreen), const Offset(300, 0));
+      // Swipe Right on dock -> DIAL
+      await tester.drag(find.byKey(const ValueKey('desk_dock_swipe_zone')), const Offset(300, 0));
       await tester.pumpAndSettle();
       expect(find.byType(ChronoDialWidget), findsOneWidget);
 

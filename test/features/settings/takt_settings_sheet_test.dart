@@ -300,8 +300,10 @@ void main() {
       expect(find.textContaining('Dieter Rams'), findsOneWidget);
       expect(find.textContaining('ZYKL INSTRUMENT // v1.0.0'), findsOneWidget);
       expect(find.text('CRAFTED BY RSQUARE'), findsOneWidget);
+      expect(find.byKey(const ValueKey('zykl_rate_playstore_button')), findsOneWidget);
+      expect(find.text('RATE ZYKL ON GOOGLE PLAY'), findsOneWidget);
       expect(find.byKey(const ValueKey('zykl_feedback_button')), findsOneWidget);
-      expect(find.text('CONTACT & SEND FEEDBACK'), findsOneWidget);
+      expect(find.text('DISPATCH FEEDBACK & BUG REPORT'), findsOneWidget);
       expect(
         find.textContaining('100% Offline. Zero analytics. Zero telemetry. All session data remains exclusively on this device.'),
         findsOneWidget,

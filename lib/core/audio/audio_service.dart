@@ -58,14 +58,21 @@ class AudioService {
     }
   }
 
-  void startAmbient({required int trackIndex}) {
+  void startAmbient({
+    required int trackIndex,
+    String? assetPath,
+    double? primaryVolume,
+    double? crackleVolume,
+    double? binauralVolume,
+  }) {
     if (!_initialized) return;
     _activeTrackIndex = trackIndex;
     _isAmbientPlaying = true;
     if (!isMock) {
       channel.invokeMethod('startAmbient', {
         'trackIndex': trackIndex,
-        'volume': _volume,
+        'volume': primaryVolume ?? _volume,
+        if (assetPath != null) 'assetPath': assetPath,
       }).catchError((_) {});
     }
   }
