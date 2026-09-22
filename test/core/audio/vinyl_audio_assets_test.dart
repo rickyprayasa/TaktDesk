@@ -24,11 +24,11 @@ void main() {
       // Verify pure instrumental tracks in drawer 2 (6 tracks)
       final drawer2Titles = VinylTrack.drawer2Presets.map((t) => t.name.toLowerCase()).toList();
       expect(drawer2Titles.contains('warm tape & felt piano'), isTrue);
-      expect(drawer2Titles.contains('monastic rhodes & velvet'), isTrue);
+      expect(drawer2Titles.contains('monastic cello solo'), isTrue);
       expect(drawer2Titles.contains('tape acoustic guitar'), isTrue);
-      expect(drawer2Titles.contains('cosmic ambient drift'), isTrue);
+      expect(drawer2Titles.contains('debussy clair de lune'), isTrue);
       expect(drawer2Titles.contains('midnight solitude piano'), isTrue);
-      expect(drawer2Titles.contains('modular clockwork arp'), isTrue);
+      expect(drawer2Titles.contains('zen bronze singing bowl'), isTrue);
     });
 
     test('all 12 asset files exist on disk with valid headers', () {

@@ -107,9 +107,9 @@ class VinylTrack {
       index: 6,
       catalogId: 'TK-07',
       name: 'Warm Tape & Felt Piano',
-      subtitle: 'Analog Saturation & Chords',
+      subtitle: 'Analog Tape Saturation',
       description:
-          'Analog tape saturation with a slow, muted felt piano chord progression.',
+          'Authentic acoustic felt piano recorded through warm reel-to-reel analog tape saturation.',
       labelColorHex: '#D97736',
       assetPath: 'assets/audio/vinyl_warm_tape.wav',
       isPremium: false,
@@ -117,10 +117,10 @@ class VinylTrack {
     VinylTrack(
       index: 7,
       catalogId: 'TK-08',
-      name: 'Monastic Rhodes & Velvet',
-      subtitle: 'Vintage Electric Piano E-Chords',
+      name: 'Monastic Cello Solo',
+      subtitle: 'J.S. Bach · Suite in G Major',
       description:
-          'Warm Fender Rhodes 9th chords with gentle tremolo and tape saturation for deep focus.',
+          'Rich acoustic cello prelude recorded in resonant hall solitude by master cellist John Michel.',
       labelColorHex: '#8B5E3C',
       assetPath: 'assets/audio/vinyl_rhodes_velvet.wav',
       isPremium: false,
@@ -129,9 +129,9 @@ class VinylTrack {
       index: 8,
       catalogId: 'TK-09',
       name: 'Tape Acoustic Guitar',
-      subtitle: 'Muted Nylon Fingerpicking',
+      subtitle: 'Tárrega · Recuerdos de la Alhambra',
       description:
-          'Intimate nylon guitar arpeggios with gentle tape flutter and resonant wooden body warmth.',
+          'Intimate nylon classical guitar arpeggios with natural wooden body warmth and delicate tape flutter.',
       labelColorHex: '#A86D3B',
       assetPath: 'assets/audio/vinyl_acoustic_guitar.wav',
       isPremium: false,
@@ -139,10 +139,10 @@ class VinylTrack {
     VinylTrack(
       index: 9,
       catalogId: 'TK-10',
-      name: 'Cosmic Ambient Drift',
-      subtitle: 'Analog Synthesizer & Silk Pad',
+      name: 'Debussy Clair de Lune',
+      subtitle: 'Impressionist Concert Grand',
       description:
-          'Eno-inspired warm polyphonic analog synthesizer pads drifting across slow meditative cadences.',
+          'Lyrical, spacious French impressionist acoustic grand piano performance for deep contemplative focus.',
       labelColorHex: '#4A6984',
       assetPath: 'assets/audio/vinyl_ambient_drift.wav',
       isPremium: false,
@@ -151,9 +151,9 @@ class VinylTrack {
       index: 10,
       catalogId: 'TK-11',
       name: 'Midnight Solitude Piano',
-      subtitle: 'Muted Upright in D Minor',
+      subtitle: 'Erik Satie · Gnossienne No. 1',
       description:
-          'Delicate felt upright piano hammers striking muted strings with soft sustain pedal resonance.',
+          'Hypnotic acoustic upright piano hammers striking muted strings with slow, introspective minimalist cadences.',
       labelColorHex: '#5C5E62',
       assetPath: 'assets/audio/vinyl_felt_piano_solo.wav',
       isPremium: true,
@@ -161,10 +161,10 @@ class VinylTrack {
     VinylTrack(
       index: 11,
       catalogId: 'TK-12',
-      name: 'Modular Clockwork Arp',
-      subtitle: 'Pentatonic Analog Pulse',
+      name: 'Zen Bronze Singing Bowl',
+      subtitle: 'Tibetan Bowls & Bell Harmonics',
       description:
-          'Hypnotic analog modular arpeggio gently ticking in 5-note pentatonic focus harmony.',
+          'Resonant authentic Tibetan singing bowl vibrations and pure acoustic bronze temple bell harmonics.',
       labelColorHex: '#D4883A',
       assetPath: 'assets/audio/vinyl_modular_clockwork.wav',
       isPremium: true,
