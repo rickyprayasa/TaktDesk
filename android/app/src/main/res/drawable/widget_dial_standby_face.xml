@@ -10,12 +10,12 @@
         android:fillColor="#1C1E22"
         android:strokeColor="#2A2C30"
         android:strokeWidth="2"
-        android:pathData="M60,8A52,52 0 1,0 60,112A52,52 0 1,0 60,8Z" />
+        android:pathData="M 60,8 a 52,52 0 1,0 0,104 a 52,52 0 1,0 0,-104 Z" />
 
     <!-- Inner Face (Braun Warm Bone) -->
     <path
         android:fillColor="#EDEAE2"
-        android:pathData="M60,15A45,45 0 1,0 60,105A45,45 0 1,0 60,15Z" />
+        android:pathData="M 60,15 a 45,45 0 1,0 0,90 a 45,45 0 1,0 0,-90 Z" />
 
     <!-- 12 Major Hour/Minute Ticks -->
     <!-- 12 o'clock -->
@@ -101,9 +101,9 @@
     <!-- Center Boss & Amber Pip -->
     <path
         android:fillColor="#14171A"
-        android:pathData="M60,56A4,4 0 1,0 60,64A4,4 0 1,0 60,56Z" />
+        android:pathData="M 60,56 a 4,4 0 1,0 0,8 a 4,4 0 1,0 0,-8 Z" />
     <path
         android:fillColor="#FF9E00"
-        android:pathData="M60,58.5A1.5,1.5 0 1,0 60,61.5A1.5,1.5 0 1,0 60,58.5Z" />
+        android:pathData="M 60,58.5 a 1.5,1.5 0 1,0 0,3 a 1.5,1.5 0 1,0 0,-3 Z" />
 
 </vector>

@@ -254,6 +254,39 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
     );
   }
 
+  /// Wraps non-hardware empty areas (header & dock) with horizontal swipe gesture
+  /// to switch between instruments without intercepting rotary dials or receipt gestures.
+  Widget _buildSwipeZone({required Widget child}) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onHorizontalDragStart: (_) {
+        _dragDistance = 0.0;
+      },
+      onHorizontalDragUpdate: (details) {
+        _dragDistance += details.delta.dx;
+      },
+      onHorizontalDragEnd: (details) {
+        final vx = details.primaryVelocity ?? 0.0;
+        if (vx < -220 || _dragDistance < -45) {
+          // Swipe Left -> Next Instrument
+          if (_selectedInstrumentIndex < 2) {
+            _selectInstrument(_selectedInstrumentIndex + 1);
+          }
+        } else if (vx > 220 || _dragDistance > 45) {
+          // Swipe Right -> Previous Instrument
+          if (_selectedInstrumentIndex > 0) {
+            _selectInstrument(_selectedInstrumentIndex - 1);
+          }
+        }
+        _dragDistance = 0.0;
+      },
+      onHorizontalDragCancel: () {
+        _dragDistance = 0.0;
+      },
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = ref.watch(chassisThemeProvider);
@@ -316,47 +349,22 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                         constraints: const BoxConstraints(maxWidth: 440),
                         child: LayoutBuilder(
                           builder: (context, viewportConstraints) {
-                            return GestureDetector(
-                              behavior: HitTestBehavior.translucent,
-                              onHorizontalDragStart: (_) {
-                                _dragDistance = 0.0;
-                              },
-                              onHorizontalDragUpdate: (details) {
-                                _dragDistance += details.delta.dx;
-                              },
-                              onHorizontalDragEnd: (details) {
-                                final vx = details.primaryVelocity ?? 0.0;
-                                if (vx < -220 || _dragDistance < -45) {
-                                  // Swipe Left -> Next Instrument
-                                  if (_selectedInstrumentIndex < 2) {
-                                    _selectInstrument(_selectedInstrumentIndex + 1);
-                                  }
-                                } else if (vx > 220 || _dragDistance > 45) {
-                                  // Swipe Right -> Previous Instrument
-                                  if (_selectedInstrumentIndex > 0) {
-                                    _selectInstrument(_selectedInstrumentIndex - 1);
-                                  }
-                                }
-                                _dragDistance = 0.0;
-                              },
-                              onHorizontalDragCancel: () {
-                                _dragDistance = 0.0;
-                              },
-                              child: SingleChildScrollView(
-                                physics: const BouncingScrollPhysics(),
-                                child: ConstrainedBox(
-                                  constraints: BoxConstraints(
-                                    minHeight: viewportConstraints.maxHeight,
-                                    minWidth: viewportConstraints.maxWidth,
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                                      children: [
-                                        // Top Section: Header + Segmented Instrument Navigation
-                                        Column(
+                            return SingleChildScrollView(
+                              physics: const BouncingScrollPhysics(),
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: viewportConstraints.maxHeight,
+                                  minWidth: viewportConstraints.maxWidth,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      // Top Section: Header + Segmented Instrument Navigation (Swipe Enabled on Empty Header/Tabs)
+                                      _buildSwipeZone(
+                                        child: Column(
                                           mainAxisSize: MainAxisSize.min,
                                           crossAxisAlignment: CrossAxisAlignment.stretch,
                                           children: [
@@ -420,30 +428,32 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                                             ),
                                           ],
                                         ),
-                                        // Middle Section: Active Instrument Console (Vertically Centered in viewport)
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 24.0),
-                                          child: AnimatedSwitcher(
-                                            duration: const Duration(milliseconds: 260),
-                                            switchInCurve: Curves.easeOutCubic,
-                                            switchOutCurve: Curves.easeInCubic,
-                                            transitionBuilder: (child, animation) {
-                                              return FadeTransition(
-                                                opacity: animation,
-                                                child: SlideTransition(
-                                                  position: Tween<Offset>(
-                                                    begin: Offset(_lastSlideDirection * 0.08, 0.0),
-                                                    end: Offset.zero,
-                                                  ).animate(animation),
-                                                  child: child,
-                                                ),
-                                              );
-                                            },
-                                            child: _buildActiveInstrument(_selectedInstrumentIndex),
-                                          ),
+                                      ),
+                                      // Middle Section: Active Instrument Console (Direct Hardware UI - NO Swipe Interception)
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 24.0),
+                                        child: AnimatedSwitcher(
+                                          duration: const Duration(milliseconds: 260),
+                                          switchInCurve: Curves.easeOutCubic,
+                                          switchOutCurve: Curves.easeInCubic,
+                                          transitionBuilder: (child, animation) {
+                                            return FadeTransition(
+                                              opacity: animation,
+                                              child: SlideTransition(
+                                                position: Tween<Offset>(
+                                                  begin: Offset(_lastSlideDirection * 0.08, 0.0),
+                                                  end: Offset.zero,
+                                                ).animate(animation),
+                                                child: child,
+                                              ),
+                                            );
+                                          },
+                                          child: _buildActiveInstrument(_selectedInstrumentIndex),
                                         ),
-                                        // Bottom Dock: Emergency Unlatch (pinned at bottom when locked) + Desk Spec Plate
-                                        const Column(
+                                      ),
+                                      // Bottom Dock: Emergency Unlatch (pinned at bottom when locked) + Desk Spec Plate (Swipe Enabled)
+                                      _buildSwipeZone(
+                                        child: const Column(
                                           mainAxisSize: MainAxisSize.min,
                                           crossAxisAlignment: CrossAxisAlignment.stretch,
                                           children: [
@@ -454,8 +464,8 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                                             ),
                                           ],
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),

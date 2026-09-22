@@ -43,10 +43,18 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.takt_appwidget_analog_dial_2x2)
 
             // Draw crisp circular bitmap (320x320 px)
-            val dialBitmap = renderAnalogDial(if (isPro) status else "STANDBY", remainingSeconds, targetMinutes, isPro)
+            val dialBitmap = renderAnalogDial(status, remainingSeconds, targetMinutes, isPro)
             views.setImageViewBitmap(R.id.widget_dial_image, dialBitmap)
 
-            // 1. Direct interactive action: Tapping clock dial toggles timer in background
+            // Update bottom status telemetry
+            val statusDisplay = when (status) {
+                "FOCUS" -> "STATUS: [ ⏸ PAUSE ]"
+                "BREAK" -> "STATUS: [ ⏸ BREAK ]"
+                else -> "STATUS: [ ▶ START ]"
+            }
+            views.setTextViewText(R.id.widget_status_text, statusDisplay)
+
+            // 1. Direct interactive action: Tapping clock dial or status button toggles timer in background
             val toggleIntent = Intent(context, WidgetActionReceiver::class.java).apply {
                 action = WidgetActionReceiver.ACTION_TOGGLE_TIMER
             }
@@ -57,9 +65,9 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             views.setOnClickPendingIntent(R.id.widget_dial_image, togglePendingIntent)
-            views.setOnClickPendingIntent(R.id.widget_root, togglePendingIntent)
+            views.setOnClickPendingIntent(R.id.widget_status_text, togglePendingIntent)
 
-            // 2. Tapping top brand area opens MainActivity if user wants full app desk
+            // 2. Tapping top header / root opens MainActivity
             val launchIntent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                         Intent.FLAG_ACTIVITY_CLEAR_TOP or
@@ -75,6 +83,7 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             views.setOnClickPendingIntent(R.id.widget_launch_zone, launchPendingIntent)
+            views.setOnClickPendingIntent(R.id.widget_root, launchPendingIntent)
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
@@ -174,9 +183,7 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
             canvas.drawText("ZYKL", center, center - innerRadius * 0.32f, brandTextPaint)
 
             // 5. Lower face telemetry (Digital readout or status)
-            val subText = if (!isPro) {
-                "STUDIO PRO"
-            } else if (status == "FOCUS" || status == "BREAK") {
+            val subText = if (status == "FOCUS" || status == "BREAK") {
                 val mins = remainingSeconds / 60
                 val secs = remainingSeconds % 60
                 String.format(java.util.Locale.ROOT, "%02d:%02d", mins, secs)
