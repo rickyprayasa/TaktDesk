@@ -1,0 +1,1292 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZYKL // 1:1 Social Motion Studio · Opening Promo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <script src="vendor/gsap.min.js"></script>
+  <script src="vendor/mp4-muxer.js"></script>
+  <style>
+    :root {
+      --bg-dark: #0A0B0E;
+      --surface-dark: #12141A;
+      --surface-elevated: #1A1D26;
+      --border-steel: #262B37;
+      --border-bright: #3D4455;
+      --amber: #FF9E00;
+      --amber-glow: rgba(255, 158, 0, 0.28);
+      --brass: #C89B3C;
+      --bone: #F5F3ED;
+      --text-muted: #8E95A5;
+      --text-dim: #545B6B;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-dark);
+      color: var(--bone);
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    /* TOP TELEMETRY BAR */
+    .telemetry-bar {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-steel);
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+    .brand-tag {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--bone);
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .status-pip {
+      width: 8px;
+      height: 8px;
+      background: var(--amber);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--amber);
+      animation: pulse-pip 2s infinite ease-in-out;
+    }
+    @keyframes pulse-pip {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.85); }
+    }
+    .telemetry-meta {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .badge {
+      background: var(--surface-dark);
+      border: 1px solid var(--border-steel);
+      padding: 4px 10px;
+      border-radius: 4px;
+      color: var(--amber);
+      font-weight: 700;
+    }
+
+    /* STUDIO WORKSPACE WRAPPER */
+    .studio-workspace {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 20px 40px;
+      gap: 20px;
+    }
+
+    /* VIEWPORT STAGE CONTAINER (Responsive scale to fit) */
+    .stage-wrapper {
+      position: relative;
+      width: 640px;
+      height: 640px;
+      max-width: 90vw;
+      max-height: 68vh;
+      aspect-ratio: 1 / 1;
+      border: 2px solid var(--border-steel);
+      border-radius: 12px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      background: #000;
+      overflow: hidden;
+    }
+
+    /* THE EXACT 1080x1080 CANVAS STAGE */
+    #motion-stage {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1080px;
+      height: 1080px;
+      background: #0E1014;
+      transform-origin: top left;
+      overflow: hidden;
+    }
+
+    /* BACKGROUND TECHNICAL GRID */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+    .bg-vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(20, 24, 32, 0.2) 0%, rgba(10, 11, 14, 0.95) 100%);
+      pointer-events: none;
+    }
+
+    /* CORNER BRACKETS & HARDWARE ACCENTS */
+    .corner-bracket {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--border-bright);
+      pointer-events: none;
+      z-index: 50;
+    }
+    .cb-tl { top: 32px; left: 32px; border-right: none; border-bottom: none; }
+    .cb-tr { top: 32px; right: 32px; border-left: none; border-bottom: none; }
+    .cb-bl { bottom: 32px; left: 32px; border-right: none; border-top: none; }
+    .cb-br { bottom: 32px; right: 32px; border-left: none; border-top: none; }
+
+    .crosshair {
+      position: absolute;
+      font-family: 'Space Mono', monospace;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.18);
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    /* MASTER OVERLAYS & TELEMETRY */
+    .stage-header {
+      position: absolute;
+      top: 48px;
+      left: 56px;
+      right: 56px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Space Mono', monospace;
+      font-size: 14px;
+      letter-spacing: 0.14em;
+      color: var(--amber);
+      z-index: 60;
+    }
+    .stage-footer {
+      position: absolute;
+      bottom: 48px;
+      left: 56px;
+      right: 56px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      z-index: 60;
+    }
+
+    /* SCENE LAYERS */
+    .scene-layer {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    /* ==============================================================
+       SCENE 1: THE MONASTIC COLD OPEN
+       ============================================================== */
+    #scene-01 {
+      padding: 80px;
+      text-align: center;
+    }
+    .cold-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Space Mono', monospace;
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: var(--amber);
+      background: rgba(255, 158, 0, 0.08);
+      border: 1px solid rgba(255, 158, 0, 0.35);
+      padding: 8px 20px;
+      border-radius: 4px;
+      margin-bottom: 32px;
+    }
+    .cold-title {
+      font-size: 110px;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      line-height: 0.92;
+      color: var(--bone);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .cold-subtitle {
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-muted);
+      line-height: 1.25;
+      max-width: 820px;
+      margin-bottom: 36px;
+    }
+    .cold-subtitle span {
+      color: var(--bone);
+    }
+    .cold-colophon {
+      font-family: 'Space Mono', monospace;
+      font-size: 15px;
+      color: var(--text-dim);
+      letter-spacing: 0.12em;
+    }
+
+    /* ==============================================================
+       DEVICE MOCKUP (TITANIUM CHASSIS CONTAINER)
+       ============================================================== */
+    .device-mockup {
+      position: absolute;
+      width: 440px;
+      height: 940px;
+      background: #000;
+      border-radius: 54px;
+      border: 4px solid #333842;
+      box-shadow: 
+        0 0 0 2px #1E222A,
+        0 40px 100px rgba(0, 0, 0, 0.9),
+        0 15px 40px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+      transform-origin: center center;
+      z-index: 20;
+    }
+    /* DYNAMIC ISLAND CUTOUT */
+    .dynamic-island {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 28px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 30;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+    /* SCREEN VIDEO CONTAINER */
+    .screen-viewport {
+      position: absolute;
+      inset: 0;
+      background: #000;
+      overflow: hidden;
+      border-radius: 50px;
+    }
+    .screen-viewport video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+    }
+
+    /* HARDWARE SECTION HEADERS (FOR SCENES 2, 3, 4) */
+    .unit-meta-card {
+      position: absolute;
+      top: 110px;
+      left: 70px;
+      right: 70px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      z-index: 40;
+    }
+    .unit-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Space Mono', monospace;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--amber);
+      background: rgba(255, 158, 0, 0.12);
+      border: 1px solid rgba(255, 158, 0, 0.4);
+      padding: 6px 16px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+    .unit-headline {
+      font-size: 52px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      color: var(--bone);
+      margin-bottom: 8px;
+    }
+    .unit-sub {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: -0.01em;
+    }
+
+    /* SIDE CALLOUT BADGES */
+    .side-callouts {
+      position: absolute;
+      right: 70px;
+      bottom: 160px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      z-index: 40;
+    }
+    .callout-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(18, 20, 26, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-bright);
+      padding: 14px 20px;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .callout-icon {
+      width: 10px;
+      height: 10px;
+      background: var(--amber);
+      border-radius: 2px;
+    }
+    .callout-text {
+      font-family: 'Space Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--bone);
+      letter-spacing: 0.05em;
+    }
+
+    /* WET-INK STAMP OVERLAY FOR SCENE 3 */
+    .stamp-done {
+      position: absolute;
+      top: 520px;
+      left: 140px;
+      border: 4px solid #38D39F;
+      color: #38D39F;
+      font-family: 'Space Mono', monospace;
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 0.2em;
+      padding: 8px 24px;
+      border-radius: 8px;
+      transform: rotate(-14deg);
+      box-shadow: 0 0 25px rgba(56, 211, 159, 0.35);
+      z-index: 45;
+      opacity: 0;
+    }
+
+    /* SOUND LEVEL METER FOR SCENE 4 */
+    .vu-meter-rack {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 38px;
+      margin-top: 10px;
+    }
+    .vu-bar {
+      width: 8px;
+      background: var(--amber);
+      border-radius: 2px;
+      height: 10px;
+      transition: height 0.08s ease;
+    }
+
+    /* ==============================================================
+       SCENE 5: CLIMAX & INSTALLATION TERMINAL
+       ============================================================== */
+    #scene-05 {
+      padding: 60px;
+      text-align: center;
+    }
+    .end-logo {
+      font-size: 96px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      color: var(--bone);
+      margin-bottom: 12px;
+    }
+    .end-manifesto {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--amber);
+      margin-bottom: 40px;
+      letter-spacing: -0.02em;
+    }
+    .cta-plaque {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      background: #141720;
+      border: 2px solid var(--border-bright);
+      border-radius: 16px;
+      padding: 32px 56px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+      margin-bottom: 40px;
+      position: relative;
+    }
+    .plaque-rivet {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: var(--brass);
+      border-radius: 50%;
+      box-shadow: inset 0 0 2px #000;
+    }
+    .pr-tl { top: 12px; left: 12px; }
+    .pr-tr { top: 12px; right: 12px; }
+    .pr-bl { bottom: 12px; left: 12px; }
+    .pr-br { bottom: 12px; right: 12px; }
+
+    .playstore-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 18px;
+      background: var(--bone);
+      color: #0E1014;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      padding: 16px 36px;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(255, 255, 255, 0.15);
+      margin-bottom: 16px;
+    }
+    .playstore-button svg {
+      width: 28px;
+      height: 28px;
+    }
+    .cta-specs {
+      font-family: 'Space Mono', monospace;
+      font-size: 14px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+    }
+    .end-quote {
+      font-family: 'Space Mono', monospace;
+      font-size: 16px;
+      font-style: italic;
+      color: var(--text-dim);
+    }
+
+    /* ==============================================================
+       STUDIO CONTROLS DOCK (BOTTOM TRANSPORT)
+       ============================================================== */
+    .controls-dock {
+      width: 100%;
+      max-width: 800px;
+      background: var(--surface-dark);
+      border: 1px solid var(--border-steel);
+      border-radius: 12px;
+      padding: 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    }
+    .scrubber-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+    }
+    .scrubber-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 6px;
+      background: var(--border-steel);
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+    .scrubber-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--amber);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--amber);
+    }
+    .timecode-display {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--bone);
+      min-width: 140px;
+      text-align: right;
+    }
+    .transport-buttons {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .transport-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-steel);
+      color: var(--bone);
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn:hover {
+      border-color: var(--border-bright);
+      background: #232733;
+    }
+    .btn.primary {
+      background: var(--amber);
+      color: #0E1014;
+      border-color: var(--amber);
+    }
+    .btn.primary:hover {
+      background: #ffaa1a;
+      box-shadow: 0 0 16px var(--amber-glow);
+    }
+
+    /* RENDER / EXPORT MODAL */
+    .export-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .export-dialog {
+      background: var(--surface-dark);
+      border: 1px solid var(--border-bright);
+      border-radius: 14px;
+      padding: 32px;
+      width: 480px;
+      max-width: 90vw;
+      text-align: center;
+      box-shadow: 0 30px 90px rgba(0,0,0,0.9);
+    }
+    .export-progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--border-steel);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 20px 0 12px;
+    }
+    .export-progress-fill {
+      width: 0%;
+      height: 100%;
+      background: var(--amber);
+      transition: width 0.1s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP TELEMETRY BAR -->
+  <header class="telemetry-bar">
+    <div class="brand-tag">
+      <span class="status-pip"></span>
+      <span>ZYKL // 1:1 SOCIAL MOTION STUDIO</span>
+    </div>
+    <div class="telemetry-meta">
+      <span>MOD. 01 // REV. 104</span>
+      <span class="badge">1080 × 1080 · 60 FPS</span>
+      <span>DIETER RAMS INDUSTRIAL MODERNISM</span>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="studio-workspace">
+
+    <!-- SCALED PREVIEW STAGE WRAPPER -->
+    <div class="stage-wrapper" id="stage-wrapper">
+      <div id="motion-stage">
+        
+        <!-- HARDWARE GRID & VIGNETTE -->
+        <div class="bg-grid"></div>
+        <div class="bg-vignette"></div>
+
+        <!-- CORNER BRACKETS -->
+        <div class="corner-bracket cb-tl"></div>
+        <div class="corner-bracket cb-tr"></div>
+        <div class="corner-bracket cb-bl"></div>
+        <div class="corner-bracket cb-br"></div>
+
+        <!-- TECHNICAL CROSSHAIRS -->
+        <div class="crosshair" style="top: 36px; left: 50%; transform: translateX(-50%);">+ 00.540 +</div>
+        <div class="crosshair" style="bottom: 36px; left: 50%; transform: translateX(-50%);">+ 00.540 +</div>
+        <div class="crosshair" style="left: 36px; top: 50%; transform: translateY(-50%);">+</div>
+        <div class="crosshair" style="right: 36px; top: 50%; transform: translateY(-50%);">+</div>
+
+        <!-- HEADER TELEMETRY (DYNAMIC) -->
+        <div class="stage-header">
+          <span id="st-badge-left">MOD. 01 // SYSTEM OPENING</span>
+          <span id="st-badge-right">CALIBRATED HOROLOGY</span>
+        </div>
+
+        <!-- FOOTER TELEMETRY (DYNAMIC) -->
+        <div class="stage-footer">
+          <span id="st-foot-left">SQLITE OFFLINE · 22.05kHz DSP</span>
+          <span id="st-foot-right">ZERO TRACKERS</span>
+        </div>
+
+        <!-- =======================================================
+             SCENE 1: COLD OPEN & PHILOSOPHY (0.0s – 3.8s)
+             ======================================================= -->
+        <div class="scene-layer" id="scene-01">
+          <div class="cold-badge" id="c1-badge">
+            <span class="status-pip"></span>
+            <span>SYSTEM DISPATCH · ANDROID 14+</span>
+          </div>
+          <h1 class="cold-title" id="c1-title">ZYKL.</h1>
+          <p class="cold-subtitle" id="c1-sub">
+            <span>TIME IS PHYSICAL.</span><br>
+            DISTRACTION IS OPTIONAL.
+          </p>
+          <div class="cold-colophon" id="c1-colo">
+            A MONASTIC HOROLOGY & TASK INSTRUMENT
+          </div>
+        </div>
+
+        <!-- =======================================================
+             SCENE 2: UNIT 01 // ANALOG CHRONOMETER (3.8s – 8.2s)
+             ======================================================= -->
+        <div class="scene-layer" id="scene-02">
+          <div class="unit-meta-card" id="u1-card">
+            <div class="unit-pill">UNIT 01 // ANALOG CHRONOMETER</div>
+            <h2 class="unit-headline">1.0 Hz Calibrated Escapement.</h2>
+            <p class="unit-sub">Pure mechanical horology. Zero gamification.</p>
+          </div>
+          
+          <div class="device-mockup" id="dev-chrono">
+            <div class="dynamic-island"></div>
+            <div class="screen-viewport">
+              <video id="vid-chrono" muted playsinline preload="auto">
+                <source src="videos/Pomodoro.mp4" type="video/mp4">
+              </video>
+            </div>
+          </div>
+
+          <div class="side-callouts" id="u1-callouts">
+            <div class="callout-badge">
+              <div class="callout-icon"></div>
+              <div class="callout-text">3-STAGE ESCAPEMENT</div>
+            </div>
+            <div class="callout-badge">
+              <div class="callout-icon"></div>
+              <div class="callout-text">MONASTIC LOCKDOWN</div>
+            </div>
+            <div class="callout-badge">
+              <div class="callout-icon"></div>
+              <div class="callout-text">ANALOG TICKING</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =======================================================
+             SCENE 3: UNIT 02 // THERMAL TASK DISPENSER (8.2s – 12.6s)
+             ======================================================= -->
+        <div class="scene-layer" id="scene-03">
+          <div class="unit-meta-card" id="u2-card">
+            <div class="unit-pill">UNIT 02 // THERMAL DISPENSER</div>
+            <h2 class="unit-headline">Physical 5-Task Hard Cap.</h2>
+            <p class="unit-sub">Serrated paper tear physics. Stop backlog overwhelm.</p>
+          </div>
+
+          <div class="device-mockup" id="dev-dispenser">
+            <div class="dynamic-island"></div>
+            <div class="screen-viewport">
+              <video id="vid-dispenser" muted playsinline preload="auto">
+                <source src="videos/Dispenser.mp4" type="video/mp4">
+              </video>
+            </div>
+          </div>
+
+          <div class="stamp-done" id="u2-stamp">[DONE]</div>
+
+          <div class="side-callouts" id="u2-callouts">
+            <div class="callout-badge">
+              <div class="callout-icon"></div>
+              <div class="callout-text">5-TASK PHYSICAL LIMIT</div>
+            </div>
+            <div class="callout-badge">
+              <div class="callout-icon"></div>
+              <div class="callout-text">SERRATED TEAR CUTTER</div>
+            </div>
+            <div class="callout-badge">
+              <div class="callout-icon"></div>
+              <div class="callout-text">WET INK STAMP</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =======================================================
+             SCENE 4: UNIT 03 // MONASTIC TURNTABLE (12.6s – 17.0s)
+             ======================================================= -->
+        <div class="scene-layer" id="scene-04">
+          <div class="unit-meta-card" id="u3-card">
+            <div class="unit-pill">UNIT 03 // MONASTIC TURNTABLE</div>
+            <h2 class="unit-headline">33⅓ RPM Mono DSP Engine.</h2>
+            <p class="unit-sub">Braun TP-1 minimal player. 12 bespoke soundscapes.</p>
+          </div>
+
+          <div class="device-mockup" id="dev-vinyl">
+            <div class="dynamic-island"></div>
+            <div class="screen-viewport">
+              <video id="vid-vinyl" muted playsinline preload="auto">
+                <source src="videos/Vinyl.mp4" type="video/mp4">
+              </video>
+            </div>
+          </div>
+
+          <div class="side-callouts" id="u3-callouts">
+            <div class="callout-badge">
+              <div class="callout-icon"></div>
+              <div class="callout-text">12 BESPOKE SOUNDSCAPES</div>
+            </div>
+            <div class="callout-badge">
+              <div class="callout-icon"></div>
+              <div class="callout-text">WARM TAPE SATURATION</div>
+            </div>
+            <div class="callout-badge" style="flex-direction: column; align-items: flex-start;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="callout-icon"></div>
+                <div class="callout-text">ANALOG VU METER</div>
+              </div>
+              <div class="vu-meter-rack" id="vu-rack">
+                <div class="vu-bar"></div><div class="vu-bar"></div><div class="vu-bar"></div>
+                <div class="vu-bar"></div><div class="vu-bar"></div><div class="vu-bar"></div>
+                <div class="vu-bar"></div><div class="vu-bar"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =======================================================
+             SCENE 5: CLIMAX & INSTALLATION TERMINAL (17.0s – 20.0s)
+             ======================================================= -->
+        <div class="scene-layer" id="scene-05">
+          <h1 class="end-logo" id="c5-logo">Z Y K L</h1>
+          <p class="end-manifesto" id="c5-manifesto">Quiet Time. Physical Intent.</p>
+
+          <div class="cta-plaque" id="c5-plaque">
+            <div class="plaque-rivet pr-tl"></div>
+            <div class="plaque-rivet pr-tr"></div>
+            <div class="plaque-rivet pr-bl"></div>
+            <div class="plaque-rivet pr-br"></div>
+
+            <div class="playstore-button">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3.609 1.814L13.793 12 3.61 22.186A2.298 2.298 0 0 1 3 20.57V3.43c0-.62.222-1.196.609-1.616zm11.605 11.606l2.42 2.42-12.7 7.228 10.28-9.648zm0-2.84L4.934 2.732l12.7 7.228-2.42 2.42zm1.42 1.42l3.414 1.944a1.7 1.7 0 0 1 0 2.972l-3.414 1.944-2.128-2.128 2.128-2.128z"/>
+              </svg>
+              <span>GET IT ON GOOGLE PLAY</span>
+            </div>
+            <div class="cta-specs">
+              100% OFFLINE SQLITE · ZERO TRACKERS · ANDROID 10 – 15
+            </div>
+          </div>
+
+          <div class="end-quote" id="c5-quote">
+            "Weniger, aber besser" — Dieter Rams, 1976
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TRANSPORT CONTROL DOCK -->
+    <div class="controls-dock">
+      <div class="scrubber-row">
+        <input type="range" class="scrubber-slider" id="timeline-scrubber" min="0" max="20" step="0.01" value="0">
+        <div class="timecode-display" id="timecode">00:00.00 / 00:20.00</div>
+      </div>
+      <div class="transport-buttons">
+        <div class="transport-group">
+          <button class="btn primary" id="btn-play">
+            <span id="play-icon">▶</span>
+            <span id="play-label">PLAY</span>
+          </button>
+          <button class="btn" id="btn-restart">↺ RESTART</button>
+          <button class="btn" id="btn-mute">🔊 SOUND ON</button>
+        </div>
+        <div class="transport-group">
+          <button class="btn" id="btn-speed">1.0X</button>
+          <button class="btn primary" id="btn-export">
+            <span>⚡ EXPORT 1080p MP4</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- EXPORT PROGRESS MODAL -->
+  <div class="export-overlay" id="export-overlay">
+    <div class="export-dialog">
+      <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">RENDERING HIGH-RES MP4</h3>
+      <p style="font-size: 13px; color: var(--text-muted); font-family: 'Space Mono', monospace;">
+        WebCodecs 1080×1080 @ 60 FPS (Zero dropped frames)
+      </p>
+      <div class="export-progress-bar">
+        <div class="export-progress-fill" id="export-fill"></div>
+      </div>
+      <div style="font-family: 'Space Mono', monospace; font-size: 13px; color: var(--amber);" id="export-status">
+        Encoding Frame 0 / 1200 (0%)...
+      </div>
+    </div>
+  </div>
+
+  <!-- AUDIO ENGINE ELEMENTS -->
+  <audio id="snd-switch" src="audio/foley_switch_click.wav" preload="auto"></audio>
+  <audio id="snd-tear" src="audio/foley_paper_tear.wav" preload="auto"></audio>
+  <audio id="snd-crackle" src="audio/vinyl_surface_crackle.wav" preload="auto" loop></audio>
+  <audio id="snd-tape" src="audio/vinyl_warm_tape.wav" preload="auto"></audio>
+
+  <script>
+    // RESPONSIVE STAGE RESIZER
+    function resizeStage() {
+      const wrapper = document.getElementById('stage-wrapper');
+      const stage = document.getElementById('motion-stage');
+      const scale = wrapper.clientWidth / 1080;
+      stage.style.transform = `scale(${scale})`;
+    }
+    window.addEventListener('resize', resizeStage);
+    resizeStage();
+
+    // VIDEO ELEMENTS
+    const vidChrono = document.getElementById('vid-chrono');
+    const vidDispenser = document.getElementById('vid-dispenser');
+    const vidVinyl = document.getElementById('vid-vinyl');
+
+    // AUDIO ELEMENTS
+    const sndSwitch = document.getElementById('snd-switch');
+    const sndTear = document.getElementById('snd-tear');
+    const sndCrackle = document.getElementById('snd-crackle');
+    const sndTape = document.getElementById('snd-tape');
+
+    let isMuted = false;
+    function playAudio(snd) {
+      if (isMuted || !snd) return;
+      try {
+        snd.currentTime = 0;
+        snd.play().catch(() => {});
+      } catch(e) {}
+    }
+
+    // VU METER ANIMATOR
+    const vuBars = document.querySelectorAll('.vu-bar');
+    function updateVU(active) {
+      vuBars.forEach((bar, i) => {
+        if (!active) {
+          bar.style.height = '6px';
+        } else {
+          const rand = Math.sin(Date.now() * 0.015 + i * 1.5) * 14 + 18;
+          bar.style.height = `${Math.max(6, Math.min(36, rand))}px`;
+        }
+      });
+    }
+
+    // MASTER GSAP TIMELINE (Exact 20.0 Seconds at 60 FPS)
+    const DURATION = 20.0;
+    const tl = gsap.timeline({
+      paused: true,
+      onUpdate: onTimelineUpdate,
+      onComplete: () => {
+        setPlaying(false);
+      }
+    });
+
+    // ==============================================================
+    // SCENE 1: COLD OPEN (0.0s – 3.8s)
+    // ==============================================================
+    tl.set('#scene-01', { autoAlpha: 1, display: 'flex' }, 0)
+      .fromTo('#c1-badge', { y: -30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }, 0.2)
+      .fromTo('#c1-title', { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.8, ease: 'back.out(1.4)' }, 0.4)
+      .add(() => playAudio(sndSwitch), 0.4)
+      .fromTo('#c1-sub', { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: 'power3.out' }, 0.8)
+      .fromTo('#c1-colo', { opacity: 0 }, { opacity: 1, duration: 0.6 }, 1.3)
+      // Camera zoom punch transition
+      .to('#scene-01', { scale: 1.15, opacity: 0, duration: 0.6, ease: 'power2.in' }, 3.2)
+      .set('#scene-01', { display: 'none' }, 3.8);
+
+    // ==============================================================
+    // SCENE 2: UNIT 01 // ANALOG CHRONOMETER (3.8s – 8.2s)
+    // ==============================================================
+    tl.set('#scene-02', { autoAlpha: 1, display: 'flex' }, 3.8)
+      .set('#st-badge-left', { textContent: 'UNIT 01 // ANALOG CHRONOMETER' }, 3.8)
+      .set('#st-badge-right', { textContent: '1.0 Hz ESCAPEMENT' }, 3.8)
+      .fromTo('#u1-card', { x: -80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.7, ease: 'power3.out' }, 3.9)
+      .fromTo('#dev-chrono', 
+        { y: 360, x: -120, rotateZ: -6, rotateY: 14, scale: 0.82, opacity: 0 },
+        { y: 190, x: -140, rotateZ: 0, rotateY: 8, scale: 0.85, opacity: 1, duration: 0.9, ease: 'power3.out' }, 
+        3.9
+      )
+      .fromTo('#u1-callouts .callout-badge', 
+        { x: 60, opacity: 0 }, 
+        { x: 0, opacity: 1, stagger: 0.16, duration: 0.6, ease: 'power2.out' }, 
+        4.4
+      )
+      // Subtle float camera drift
+      .to('#dev-chrono', { y: 175, rotateY: 4, duration: 3.5, ease: 'none' }, 4.7)
+      // Exit wipe
+      .to('#scene-02', { x: -120, opacity: 0, duration: 0.55, ease: 'power3.in' }, 7.65)
+      .set('#scene-02', { display: 'none' }, 8.2);
+
+    // ==============================================================
+    // SCENE 3: UNIT 02 // THERMAL TASK DISPENSER (8.2s – 12.6s)
+    // ==============================================================
+    tl.set('#scene-03', { autoAlpha: 1, display: 'flex' }, 8.2)
+      .set('#st-badge-left', { textContent: 'UNIT 02 // THERMAL DISPENSER' }, 8.2)
+      .set('#st-badge-right', { textContent: 'PHYSICAL 5-TASK LIMIT' }, 8.2)
+      .fromTo('#u2-card', { x: -80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.7, ease: 'power3.out' }, 8.3)
+      .fromTo('#dev-dispenser',
+        { y: 360, x: -140, rotateZ: 4, scale: 0.82, opacity: 0 },
+        { y: 190, x: -140, rotateZ: 0, scale: 0.85, opacity: 1, duration: 0.85, ease: 'power3.out' },
+        8.3
+      )
+      .fromTo('#u2-callouts .callout-badge',
+        { x: 60, opacity: 0 },
+        { x: 0, opacity: 1, stagger: 0.16, duration: 0.6, ease: 'power2.out' },
+        8.8
+      )
+      // Slam wet ink stamp
+      .fromTo('#u2-stamp',
+        { scale: 2.2, opacity: 0, rotate: -25 },
+        { scale: 1, opacity: 1, rotate: -14, duration: 0.35, ease: 'back.out(2)' },
+        10.2
+      )
+      .add(() => playAudio(sndTear), 10.2)
+      // Micro screen shake on stamp
+      .to('#dev-dispenser', { y: 194, duration: 0.06, yoyo: true, repeat: 2 }, 10.2)
+      // Exit wipe
+      .to('#scene-03', { x: -120, opacity: 0, duration: 0.55, ease: 'power3.in' }, 12.05)
+      .set('#scene-03', { display: 'none' }, 12.6);
+
+    // ==============================================================
+    // SCENE 4: UNIT 03 // MONASTIC TURNTABLE (12.6s – 17.0s)
+    // ==============================================================
+    tl.set('#scene-04', { autoAlpha: 1, display: 'flex' }, 12.6)
+      .set('#st-badge-left', { textContent: 'UNIT 03 // MONASTIC TURNTABLE' }, 12.6)
+      .set('#st-badge-right', { textContent: '33⅓ RPM MONO DSP' }, 12.6)
+      .fromTo('#u3-card', { x: -80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.7, ease: 'power3.out' }, 12.7)
+      .fromTo('#dev-vinyl',
+        { y: 360, x: -140, scale: 0.82, opacity: 0 },
+        { y: 190, x: -140, scale: 0.85, opacity: 1, duration: 0.85, ease: 'power3.out' },
+        12.7
+      )
+      .add(() => playAudio(sndTape), 13.0)
+      .fromTo('#u3-callouts .callout-badge',
+        { x: 60, opacity: 0 },
+        { x: 0, opacity: 1, stagger: 0.16, duration: 0.6, ease: 'power2.out' },
+        13.2
+      )
+      // Subtle float camera drift
+      .to('#dev-vinyl', { y: 178, duration: 3.5, ease: 'none' }, 13.5)
+      // Exit wipe
+      .to('#scene-04', { scale: 0.9, opacity: 0, duration: 0.55, ease: 'power3.in' }, 16.45)
+      .set('#scene-04', { display: 'none' }, 17.0);
+
+    // ==============================================================
+    // SCENE 5: CLIMAX & PLAY STORE TERMINAL (17.0s – 20.0s)
+    // ==============================================================
+    tl.set('#scene-05', { autoAlpha: 1, display: 'flex' }, 17.0)
+      .set('#st-badge-left', { textContent: 'INSTALLATION TERMINAL' }, 17.0)
+      .set('#st-badge-right', { textContent: 'MOD. 01 // REV. 104' }, 17.0)
+      .fromTo('#c5-logo', { scale: 0.75, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.7, ease: 'back.out(1.5)' }, 17.1)
+      .add(() => playAudio(sndSwitch), 17.1)
+      .fromTo('#c5-manifesto', { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'power2.out' }, 17.5)
+      .fromTo('#c5-plaque', { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: 'power3.out' }, 17.9)
+      .fromTo('#c5-quote', { opacity: 0 }, { opacity: 1, duration: 0.6 }, 18.5);
+
+    // SYNCHRONIZE VIDEO PLAYHEAD WITH GSAP TIMELINE
+    function onTimelineUpdate() {
+      const cur = tl.time();
+      
+      // Update scrubber UI
+      document.getElementById('timeline-scrubber').value = cur;
+      const mm = String(Math.floor(cur / 60)).padStart(2, '0');
+      const ss = String(Math.floor(cur % 60)).padStart(2, '0');
+      const ms = String(Math.floor((cur % 1) * 100)).padStart(2, '0');
+      document.getElementById('timecode').textContent = `${mm}:${ss}.${ms} / 00:20.00`;
+
+      // Scene 2 Video sync (Pomodoro running at ~14.0s - 18.4s)
+      if (cur >= 3.8 && cur < 8.2) {
+        const offset = 14.0 + (cur - 3.8);
+        if (Math.abs(vidChrono.currentTime - offset) > 0.2) vidChrono.currentTime = offset;
+        if (vidChrono.paused && tl.isActive()) vidChrono.play().catch(() => {});
+      } else {
+        if (!vidChrono.paused) vidChrono.pause();
+      }
+
+      // Scene 3 Video sync (Dispenser receipt at ~22.0s - 26.4s)
+      if (cur >= 8.2 && cur < 12.6) {
+        const offset = 22.0 + (cur - 8.2);
+        if (Math.abs(vidDispenser.currentTime - offset) > 0.2) vidDispenser.currentTime = offset;
+        if (vidDispenser.paused && tl.isActive()) vidDispenser.play().catch(() => {});
+      } else {
+        if (!vidDispenser.paused) vidDispenser.pause();
+      }
+
+      // Scene 4 Video sync (Vinyl at ~17.5s - 21.9s)
+      if (cur >= 12.6 && cur < 17.0) {
+        const offset = 17.5 + (cur - 12.6);
+        if (Math.abs(vidVinyl.currentTime - offset) > 0.2) vidVinyl.currentTime = offset;
+        if (vidVinyl.paused && tl.isActive()) vidVinyl.play().catch(() => {});
+        updateVU(true);
+      } else {
+        if (!vidVinyl.paused) vidVinyl.pause();
+        updateVU(false);
+      }
+    }
+
+    // PLAY / PAUSE CONTROLLER
+    let isPlaying = false;
+    function setPlaying(playing) {
+      isPlaying = playing;
+      if (isPlaying) {
+        if (tl.time() >= DURATION) tl.restart();
+        tl.play();
+        document.getElementById('play-icon').textContent = '❚❚';
+        document.getElementById('play-label').textContent = 'PAUSE';
+      } else {
+        tl.pause();
+        document.getElementById('play-icon').textContent = '▶';
+        document.getElementById('play-label').textContent = 'PLAY';
+        vidChrono.pause();
+        vidDispenser.pause();
+        vidVinyl.pause();
+      }
+    }
+
+    document.getElementById('btn-play').addEventListener('click', () => setPlaying(!isPlaying));
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      tl.restart();
+      setPlaying(true);
+    });
+
+    // KEYBOARD SHORTCUTS
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        setPlaying(!isPlaying);
+      } else if (e.code === 'KeyR') {
+        tl.restart();
+        setPlaying(true);
+      } else if (e.code === 'ArrowRight') {
+        tl.seek(Math.min(DURATION, tl.time() + 1 / 30));
+      } else if (e.code === 'ArrowLeft') {
+        tl.seek(Math.max(0, tl.time() - 1 / 30));
+      }
+    });
+
+    // TIMELINE SCRUBBER
+    const scrubber = document.getElementById('timeline-scrubber');
+    scrubber.addEventListener('input', (e) => {
+      const target = parseFloat(e.target.value);
+      tl.seek(target);
+      if (isPlaying) setPlaying(false);
+    });
+
+    // MUTE TOGGLE
+    const btnMute = document.getElementById('btn-mute');
+    btnMute.addEventListener('click', () => {
+      isMuted = !isMuted;
+      btnMute.textContent = isMuted ? '🔇 SOUND OFF' : '🔊 SOUND ON';
+      if (isMuted) {
+        sndTape.pause();
+        sndCrackle.pause();
+      }
+    });
+
+    // SPEED SELECTOR
+    const speeds = [1.0, 1.5, 2.0, 0.5];
+    let speedIdx = 0;
+    const btnSpeed = document.getElementById('btn-speed');
+    btnSpeed.addEventListener('click', () => {
+      speedIdx = (speedIdx + 1) % speeds.length;
+      const spd = speeds[speedIdx];
+      tl.timeScale(spd);
+      btnSpeed.textContent = `${spd.toFixed(1)}X`;
+    });
+
+    // ==============================================================
+    // HIGH-RES FRAME-BY-FRAME MP4 EXPORT PIPELINE (WEBCODECS)
+    // ==============================================================
+    const btnExport = document.getElementById('btn-export');
+    const overlay = document.getElementById('export-overlay');
+    const fill = document.getElementById('export-fill');
+    const statusText = document.getElementById('export-status');
+
+    btnExport.addEventListener('click', async () => {
+      setPlaying(false);
+      overlay.style.display = 'flex';
+      fill.style.width = '0%';
+      statusText.textContent = 'Initializing WebCodecs 1080p MP4 Encoder...';
+
+      const FPS = 60;
+      const totalFrames = Math.round(DURATION * FPS);
+      const width = 1080;
+      const height = 1080;
+
+      try {
+        // Offscreen recording canvas
+        const exportCanvas = document.createElement('canvas');
+        exportCanvas.width = width;
+        exportCanvas.height = height;
+        const ctx = exportCanvas.getContext('2d');
+
+        // Check if WebCodecs is supported
+        if (typeof VideoEncoder !== 'undefined' && typeof Mp4Muxer !== 'undefined') {
+          const muxer = new Mp4Muxer.Muxer({
+            target: new Mp4Muxer.ArrayBufferTarget(),
+            fastStart: 'in-memory',
+            firstTimestampBehavior: 'offset',
+            video: { codec: 'avc', width, height }
+          });
+
+          let encoderError = null;
+          const encoder = new VideoEncoder({
+            output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
+            error: (err) => { encoderError = err; }
+          });
+
+          encoder.configure({
+            codec: 'avc1.640033', // High Profile Level 5.1
+            width,
+            height,
+            bitrate: 22e6,
+            framerate: FPS,
+            latencyMode: 'quality',
+            avc: { format: 'avc' }
+          });
+
+          const stageElement = document.getElementById('motion-stage');
+
+          // Render loop frame by frame
+          for (let frameIdx = 0; frameIdx < totalFrames; frameIdx++) {
+            if (encoderError) throw encoderError;
+            const targetTime = frameIdx / FPS;
+            tl.seek(targetTime);
+
+            // Wait a tick for videos to update
+            await new Promise(r => setTimeout(r, 12));
+
+            // Draw stage to canvas
+            ctx.fillStyle = '#0E1014';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw current active scene element
+            if (targetTime >= 3.8 && targetTime < 8.2 && vidChrono.readyState >= 2) {
+              ctx.save();
+              ctx.translate(width / 2, height / 2);
+              ctx.drawImage(vidChrono, -220, -180, 440, 940);
+              ctx.restore();
+            } else if (targetTime >= 8.2 && targetTime < 12.6 && vidDispenser.readyState >= 2) {
+              ctx.save();
+              ctx.translate(width / 2, height / 2);
+              ctx.drawImage(vidDispenser, -220, -180, 440, 940);
+              ctx.restore();
+            } else if (targetTime >= 12.6 && targetTime < 17.0 && vidVinyl.readyState >= 2) {
+              ctx.save();
+              ctx.translate(width / 2, height / 2);
+              ctx.drawImage(vidVinyl, -220, -180, 440, 940);
+              ctx.restore();
+            }
+
+            // Fallback render frame
+            const vFrame = new VideoFrame(exportCanvas, {
+              timestamp: Math.round(targetTime * 1e6)
+            });
+            encoder.encode(vFrame, { keyFrame: frameIdx % FPS === 0 });
+            vFrame.close();
+
+            const pct = Math.round((frameIdx / totalFrames) * 100);
+            fill.style.width = `${pct}%`;
+            statusText.textContent = `Encoding Frame ${frameIdx} / ${totalFrames} (${pct}%)...`;
+          }
+
+          await encoder.flush();
+          muxer.finalize();
+
+          const blob = new Blob([muxer.target.buffer], { type: 'video/mp4' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'ZYKL_Social_Opening_Promo_1x1.mp4';
+          a.click();
+          URL.revokeObjectURL(url);
+
+          statusText.textContent = '✓ Export Complete! Download initiated.';
+          setTimeout(() => { overlay.style.display = 'none'; }, 1500);
+
+        } else {
+          // Fallback via MediaRecorder
+          statusText.textContent = 'WebCodecs not supported. Using MediaRecorder fallback...';
+          const stream = exportCanvas.captureStream(60);
+          const recorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 20e6 });
+          const chunks = [];
+          recorder.ondataavailable = e => chunks.push(e.data);
+          recorder.onstop = () => {
+            const blob = new Blob(chunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ZYKL_Social_Opening_Promo_1x1.webm';
+            a.click();
+            overlay.style.display = 'none';
+          };
+          recorder.start();
+          tl.restart();
+          setPlaying(true);
+          setTimeout(() => {
+            recorder.stop();
+            setPlaying(false);
+          }, DURATION * 1000 + 500);
+        }
+      } catch (err) {
+        console.error(err);
+        statusText.textContent = 'Export error: ' + err.message;
+        setTimeout(() => { overlay.style.display = 'none'; }, 3000);
+      }
+    });
+
+    // Auto seek to frame 0 on start
+    tl.seek(0);
+  </script>
+</body>
+</html>
