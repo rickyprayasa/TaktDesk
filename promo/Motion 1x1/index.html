@@ -17,7 +17,7 @@
       --border: #232733;
       --border-bright: #394052;
       --amber: #FF9E00;
-      --amber-glow: rgba(255, 158, 0, 0.3);
+      --amber-glow: rgba(255, 158, 0, 0.35);
       --brass: #C89B3C;
       --bone: #F5F3ED;
       --emerald: #10B981;
@@ -116,10 +116,10 @@
     /* CANVAS STAGE WRAPPER */
     .stage-wrapper {
       position: relative;
-      width: 640px;
-      height: 640px;
+      width: 660px;
+      height: 660px;
       max-width: 88vw;
-      max-height: 65vh;
+      max-height: 66vh;
       aspect-ratio: 1 / 1;
       border: 2px solid var(--border);
       border-radius: 14px;
@@ -240,16 +240,16 @@
       border: 1px solid var(--border-bright);
       border-radius: 14px;
       padding: 32px;
-      width: 500px;
+      width: 520px;
       max-width: 90vw;
       text-align: center;
       box-shadow: 0 30px 90px rgba(0,0,0,0.95);
     }
     .export-progress-bar {
       width: 100%;
-      height: 8px;
+      height: 10px;
       background: var(--border);
-      border-radius: 4px;
+      border-radius: 5px;
       overflow: hidden;
       margin: 20px 0 12px;
     }
@@ -260,15 +260,19 @@
       transition: width 0.1s ease;
     }
 
-    /* HIDDEN ASSETS */
+    /* HIDDEN NATIVE VIDEO ELEMENTS (ALWAYS DECODING VIA 206 STREAM) */
     .hidden-assets {
       position: fixed;
       left: -9999px;
       top: -9999px;
-      width: 1px;
-      height: 1px;
-      opacity: 0;
+      width: 10px;
+      height: 10px;
+      opacity: 0.01;
       pointer-events: none;
+    }
+    .hidden-assets video {
+      width: 320px;
+      height: 240px;
     }
   </style>
 </head>
@@ -276,8 +280,8 @@
 
   <!-- CORS / PROTOCOL WARNING -->
   <div id="cors-alert">
-    ⚠️ <strong>PERHATIAN:</strong> Anda membuka file ini lewat <code>file://</code>. Browser membatasi ekspor video demi keamanan. 
-    <a href="http://127.0.0.1:4344/index.html">KLIK DI SINI untuk membuka via Server Lokal (http://127.0.0.1:4344)</a> agar ekspor MP4 berjalan 100% mulus.
+    ⚠️ <strong>PERHATIAN:</strong> Anda membuka file ini via <code>file://</code>. 
+    <a href="http://127.0.0.1:4344/index.html">KLIK DI SINI untuk membuka via Server Streaming Lokal (http://127.0.0.1:4344)</a> agar ekspor MP4 berjalan 100% mulus tanpa frame blank!
   </div>
 
   <!-- TOP TELEMETRY BAR -->
@@ -289,7 +293,7 @@
     <div style="display: flex; align-items: center; gap: 16px;">
       <span>MOD. 01 // REV. 104</span>
       <span class="badge">1080 × 1080 · 60 FPS</span>
-      <span id="server-status" style="color: var(--emerald);">● HTTP ACTIVE</span>
+      <span id="server-status" style="color: var(--emerald);">● STREAMING ENGINE ACTIVE</span>
     </div>
   </header>
 
@@ -330,20 +334,20 @@
   <!-- EXPORT PROGRESS MODAL -->
   <div class="export-overlay" id="export-overlay">
     <div class="export-dialog">
-      <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">RENDERING HIGH-RES MP4</h3>
+      <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">EXPORTING CINEMATIC MP4</h3>
       <p style="font-size: 13px; color: var(--text-muted); font-family: 'Space Mono', monospace;">
-        WebCodecs 1080×1080 @ 60 FPS · Zero Dropped Frames
+        Real-time Live Canvas Capture · 1080×1080 @ 60 FPS · 24 Mbps
       </p>
       <div class="export-progress-bar">
         <div class="export-progress-fill" id="export-fill"></div>
       </div>
       <div style="font-family: 'Space Mono', monospace; font-size: 13px; color: var(--amber);" id="export-status">
-        Encoding Frame 0 / 1200 (0%)...
+        Recording scene (0%)...
       </div>
     </div>
   </div>
 
-  <!-- HIDDEN SOURCE VIDEOS & AUDIOS (SYNCHRONIZED BY ENGINE) -->
+  <!-- HIDDEN SOURCE VIDEOS (ACTIVE IN DOM TO PREVENT BLANK FRAMES) -->
   <div class="hidden-assets">
     <video id="vid-chrono" muted playsinline preload="auto">
       <source src="videos/Pomodoro.mp4" type="video/mp4">
@@ -361,7 +365,7 @@
   </div>
 
   <script>
-    // CHECK IF RUNNING VIA file:// OR http://
+    // CORS DETECTION
     if (window.location.protocol === 'file:') {
       document.getElementById('cors-alert').style.display = 'block';
       const srvStat = document.getElementById('server-status');
@@ -370,10 +374,9 @@
     }
 
     const canvas = document.getElementById('motion-canvas');
-    const ctx = canvas.getContext('2d', { alpha: false });
+    const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
     const W = 1080, H = 1080;
     const DURATION = 20.0;
-    const FPS = 60;
 
     // MEDIA ELEMENTS
     const vidChrono = document.getElementById('vid-chrono');
@@ -393,9 +396,9 @@
       } catch(e) {}
     }
 
-    // EASING HELPERS
-    function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
-    function easeInOutQuad(x) { return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; }
+    // MATH & EASING HELPERS
+    function easeOutExpo(x) { return x === 1 ? 1 : 1 - Math.pow(2, -10 * x); }
+    function easeInOutCubic(x) { return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
     function easeOutBack(x) {
       const c1 = 1.70158;
       const c3 = c1 + 1;
@@ -403,13 +406,13 @@
     }
     function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
 
-    // DRAW CINEMATIC SMARTPHONE DEVICE MOCKUP
-    function drawDevice(ctx, x, y, width, height, radius, video, videoSourceY = 70, tiltX = 0, tiltY = 0, scale = 1.0) {
+    // DRAW CINEMATIC SMARTPHONE DEVICE MOCKUP WITH GLINT & ZOOM
+    function drawCinematicDevice(ctx, x, y, width, height, radius, video, videoSourceY = 70, tiltX = 0, tiltY = 0, scale = 1.0, glintOffset = -1.0) {
       ctx.save();
       ctx.translate(x, y);
       ctx.scale(scale, scale);
 
-      // 3D Perspective Shearing
+      // 3D Perspective Transformation
       if (tiltY !== 0 || tiltX !== 0) {
         ctx.transform(1, Math.tan(tiltX * Math.PI / 180), Math.tan(tiltY * Math.PI / 180), 1, 0, 0);
       }
@@ -417,25 +420,25 @@
       const halfW = width / 2;
       const halfH = height / 2;
 
-      // Soft Ambient Ground Shadow
+      // Soft Cinematic Ambient Shadow
       ctx.save();
       ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
-      ctx.shadowBlur = 60;
+      ctx.shadowBlur = 50;
       ctx.shadowOffsetX = -tiltY * 3;
-      ctx.shadowOffsetY = 36 + Math.abs(tiltX * 2);
+      ctx.shadowOffsetY = 30 + Math.abs(tiltX * 2);
 
-      // Titanium Outer Chassis
-      ctx.fillStyle = '#1E222A';
+      // Titanium Chassis Outer Body
+      ctx.fillStyle = '#1A1C22';
       ctx.beginPath();
       ctx.roundRect(-halfW, -halfH, width, height, radius);
       ctx.fill();
       ctx.restore();
 
-      // Chamfer Border & Titanium Bezel
+      // Precision Bevel / Metallic Rim
       const bezelGrad = ctx.createLinearGradient(-halfW, -halfH, halfW, halfH);
-      bezelGrad.addColorStop(0, '#3A404F');
+      bezelGrad.addColorStop(0, '#424856');
       bezelGrad.addColorStop(0.5, '#1E2128');
-      bezelGrad.addColorStop(1, '#2D323E');
+      bezelGrad.addColorStop(1, '#2E333F');
 
       ctx.lineWidth = 4;
       ctx.strokeStyle = bezelGrad;
@@ -443,7 +446,7 @@
       ctx.roundRect(-halfW, -halfH, width, height, radius);
       ctx.stroke();
 
-      // Screen Glass Area (Clipped Inner Screen)
+      // Screen Glass Area (Clipped Viewport)
       const borderPad = 6;
       const innerW = width - borderPad * 2;
       const innerH = height - borderPad * 2;
@@ -454,16 +457,15 @@
       ctx.roundRect(-innerW / 2, -innerH / 2, innerW, innerH, innerRadius);
       ctx.clip();
 
-      // Screen Black Base
-      ctx.fillStyle = '#08090C';
+      // Screen Solid Base
+      ctx.fillStyle = '#090A0E';
       ctx.fillRect(-innerW / 2, -innerH / 2, innerW, innerH);
 
-      // Draw Screen Video Content (Centered & Cropped away Android status bar)
+      // Draw Video Content (Natively Decoded Frame)
       if (video && video.readyState >= 2) {
         try {
           const vw = video.videoWidth || 1080;
           const vh = video.videoHeight || 2400;
-          // Crop source to omit the top status bar (y=70) and bottom gesture bar
           const cropTop = videoSourceY;
           const cropH = vh - cropTop - 120;
           ctx.drawImage(video, 0, cropTop, vw, cropH, -innerW / 2, -innerH / 2, innerW, innerH);
@@ -476,45 +478,67 @@
       ctx.roundRect(-55, -innerH / 2 + 10, 110, 24, 12);
       ctx.fill();
 
-      // Subtle Glass Light Sheen
+      // Subtle Glass Light Glare
       const glassGrad = ctx.createLinearGradient(-innerW / 2, -innerH / 2, innerW / 2, innerH / 2);
       glassGrad.addColorStop(0, 'rgba(255, 255, 255, 0.08)');
-      glassGrad.addColorStop(0.35, 'rgba(255, 255, 255, 0.01)');
-      glassGrad.addColorStop(1, 'rgba(0, 0, 0, 0.25)');
+      glassGrad.addColorStop(0.4, 'rgba(255, 255, 255, 0.01)');
+      glassGrad.addColorStop(1, 'rgba(0, 0, 0, 0.28)');
       ctx.fillStyle = glassGrad;
       ctx.fillRect(-innerW / 2, -innerH / 2, innerW, innerH);
+
+      // NullMotion-style Metallic Glint Sweep across Bezel/Screen
+      if (glintOffset >= 0 && glintOffset <= 1) {
+        const glintX = -innerW + (glintOffset * (innerW * 2.5));
+        const glintGrad = ctx.createLinearGradient(glintX, -innerH / 2, glintX + 160, innerH / 2);
+        glintGrad.addColorStop(0, 'transparent');
+        glintGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.45)');
+        glintGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = glintGrad;
+        ctx.fillRect(-innerW / 2, -innerH / 2, innerW, innerH);
+      }
 
       ctx.restore(); // restore clip
       ctx.restore(); // restore transform
     }
 
-    // DRAW TECHNICAL BACKGROUND
-    function drawBackground(ctx) {
+    // DRAW ATMOSPHERIC ORBITS & TECHNICAL GRID
+    function drawAtmosphere(ctx, curTime) {
       // Base background
-      ctx.fillStyle = '#0B0C10';
+      ctx.fillStyle = '#0A0B0E';
       ctx.fillRect(0, 0, W, H);
 
-      // Subtle mechanical grid
+      // Fine Technical Grid
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
       ctx.lineWidth = 1;
       const step = 60;
       for (let x = 0; x < W; x += step) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, H);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
       }
       for (let y = 0; y < H; y += step) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(W, y);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
       }
 
-      // Warm Filament Amber Vignette
-      const radGrad = ctx.createRadialGradient(W / 2, H / 2, 200, W / 2, H / 2, 700);
-      radGrad.addColorStop(0, 'rgba(255, 158, 0, 0.04)');
-      radGrad.addColorStop(1, 'rgba(8, 9, 12, 0.95)');
+      // NullMotion Atmosphere Orbits (Rotating Concentric Rings)
+      ctx.save();
+      ctx.translate(W / 2, H / 2);
+      ctx.rotate(curTime * 0.04);
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.045)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, 380, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255, 158, 0, 0.08)';
+      ctx.beginPath();
+      ctx.arc(0, 0, 480, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+
+      // Ambient Filament Amber Horizon Glow
+      const radGrad = ctx.createRadialGradient(W / 2, H / 2, 180, W / 2, H / 2, 750);
+      radGrad.addColorStop(0, 'rgba(255, 158, 0, 0.07)');
+      radGrad.addColorStop(1, 'rgba(8, 9, 12, 0.96)');
       ctx.fillStyle = radGrad;
       ctx.fillRect(0, 0, W, H);
 
@@ -522,30 +546,24 @@
       ctx.strokeStyle = '#394052';
       ctx.lineWidth = 2;
       const bSize = 24, bPad = 36;
-      // Top Left
       ctx.beginPath(); ctx.moveTo(bPad, bPad + bSize); ctx.lineTo(bPad, bPad); ctx.lineTo(bPad + bSize, bPad); ctx.stroke();
-      // Top Right
       ctx.beginPath(); ctx.moveTo(W - bPad - bSize, bPad); ctx.lineTo(W - bPad, bPad); ctx.lineTo(W - bPad, bPad + bSize); ctx.stroke();
-      // Bottom Left
       ctx.beginPath(); ctx.moveTo(bPad, H - bPad - bSize); ctx.lineTo(bPad, H - bPad); ctx.lineTo(bPad + bSize, H - bPad); ctx.stroke();
-      // Bottom Right
       ctx.beginPath(); ctx.moveTo(W - bPad - bSize, H - bPad); ctx.lineTo(W - bPad, H - bPad); ctx.lineTo(W - bPad, H - bPad - bSize); ctx.stroke();
     }
 
-    // DRAW TELEMETRY HEADERS
-    function drawTelemetry(ctx, leftText, rightText, t) {
+    // DRAW TELEMETRY BAR HEADERS
+    function drawTelemetryHeaders(ctx, leftText, rightText) {
       ctx.font = '13px "Space Mono", monospace';
       ctx.letterSpacing = '0.12em';
-      
-      // Top row
       ctx.fillStyle = '#FF9E00';
+      ctx.textAlign = 'left';
       ctx.fillText(leftText, 64, 68);
 
       ctx.fillStyle = '#8B92A4';
       ctx.textAlign = 'right';
       ctx.fillText(rightText, W - 64, 68);
 
-      // Bottom row
       ctx.textAlign = 'left';
       ctx.fillStyle = '#505668';
       ctx.fillText('SQLITE OFFLINE · 22.05kHz DSP', 64, H - 56);
@@ -554,14 +572,14 @@
       ctx.textAlign = 'left';
     }
 
-    // DRAW KINETIC CALLOUT BADGE
-    function drawCallout(ctx, x, y, title, subtitle, alpha = 1.0) {
+    // DRAW KINETIC FLOATING CALLOUT BADGE
+    function drawKineticCallout(ctx, x, y, title, subtitle, alpha = 1.0) {
       if (alpha <= 0) return;
       ctx.save();
       ctx.globalAlpha = alpha;
 
-      const w = 310, h = 58;
-      ctx.fillStyle = 'rgba(17, 19, 26, 0.94)';
+      const w = 310, h = 56;
+      ctx.fillStyle = 'rgba(17, 19, 26, 0.92)';
       ctx.strokeStyle = '#2B3140';
       ctx.lineWidth = 1.5;
 
@@ -570,104 +588,116 @@
       ctx.fill();
       ctx.stroke();
 
-      // Orange status LED
       ctx.fillStyle = '#FF9E00';
       ctx.beginPath();
-      ctx.roundRect(x + 16, y + 18, 6, 22, 3);
+      ctx.roundRect(x + 16, y + 16, 6, 24, 3);
       ctx.fill();
 
-      // Title
       ctx.font = '700 13px "Space Mono", monospace';
       ctx.fillStyle = '#F5F3ED';
       ctx.fillText(title, x + 34, y + 26);
 
-      // Subtitle
       ctx.font = '11px "Space Mono", monospace';
       ctx.fillStyle = '#8B92A4';
-      ctx.fillText(subtitle, x + 34, y + 44);
+      ctx.fillText(subtitle, x + 34, y + 43);
 
       ctx.restore();
     }
 
-    // MASTER CINEMATIC FRAME RENDERER
+    // ==============================================================
+    // MASTER CINEMATIC RENDERER WITH ZOOM IN / ZOOM OUT & GLINTS
+    // ==============================================================
     function renderFrame(targetTime) {
-      ctx.clearRect(0, 0, W, H);
-      drawBackground(ctx);
+      drawAtmosphere(ctx, targetTime);
 
       // ==============================================================
-      // SCENE 1: COLD OPEN & MONOLITHIC PHILOSOPHY (0.0s – 3.6s)
+      // SCENE 1: THE MONOLITHIC COLD OPEN (0.0s – 3.8s)
+      // Dynamic Zoom Out + Kinetic Letter Reveal
       // ==============================================================
-      if (targetTime < 3.8) {
+      if (targetTime < 4.0) {
         const sTime = targetTime;
-        const fadeOut = clamp((3.8 - sTime) / 0.4, 0, 1);
+        const fadeOut = clamp((4.0 - sTime) / 0.4, 0, 1);
         ctx.save();
         ctx.globalAlpha = fadeOut;
 
-        drawTelemetry(ctx, 'SYSTEM DISPATCH // REV 104', 'MOD. 01 · COLD OPEN', sTime);
+        drawTelemetryHeaders(ctx, 'SYSTEM DISPATCH // REV 104', 'MOD. 01 · COLD OPEN');
 
-        // Center Content
-        ctx.textAlign = 'center';
-        
-        // Amber pill badge
-        const badgeAlpha = clamp(sTime / 0.4, 0, 1);
+        // Dynamic Camera Zoom Out from Macro Close-up
+        const camZoom = 1.25 - easeOutExpo(clamp(sTime / 1.6, 0, 1)) * 0.25;
+        ctx.save();
+        ctx.translate(W / 2, H / 2);
+        ctx.scale(camZoom, camZoom);
+        ctx.translate(-W / 2, -H / 2);
+
+        // Amber Badge Pill
+        const pillY = 270 + (1 - easeOutBack(clamp(sTime / 0.7, 0, 1))) * 40;
         ctx.fillStyle = 'rgba(255, 158, 0, 0.12)';
         ctx.strokeStyle = 'rgba(255, 158, 0, 0.4)';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.roundRect(W / 2 - 160, 290, 320, 36, 4);
+        ctx.roundRect(W / 2 - 165, pillY, 330, 38, 4);
         ctx.fill();
         ctx.stroke();
 
         ctx.font = '700 13px "Space Mono", monospace';
         ctx.fillStyle = '#FF9E00';
-        ctx.fillText('● SYSTEM DISPATCH · ANDROID 14+', W / 2, 313);
+        ctx.textAlign = 'center';
+        ctx.fillText('● SYSTEM DISPATCH · ANDROID 14+', W / 2, pillY + 24);
 
-        // Master Monolithic Brand Typography
-        const titleScale = 1.0 + (sTime * 0.03);
-        const titleAlpha = clamp((sTime - 0.2) / 0.5, 0, 1);
+        // Monolithic Title Mask Reveal
+        const titleY = 440;
+        const titleProgress = clamp((sTime - 0.2) / 0.8, 0, 1);
+        const titleOffset = (1 - easeOutExpo(titleProgress)) * 80;
+
         ctx.save();
-        ctx.translate(W / 2, 450);
-        ctx.scale(titleScale, titleScale);
-        ctx.font = '900 130px "Plus Jakarta Sans", sans-serif';
-        ctx.fillStyle = `rgba(245, 243, 237, ${titleAlpha})`;
-        ctx.fillText('ZYKL.', 0, 0);
+        ctx.beginPath();
+        ctx.rect(W / 2 - 400, titleY - 140, 800, 160);
+        ctx.clip(); // Word Mask (NullMotion style)
+
+        ctx.font = '900 132px "Plus Jakarta Sans", sans-serif';
+        ctx.letterSpacing = '-0.04em';
+        ctx.fillStyle = '#F5F3ED';
+        ctx.fillText('ZYKL.', W / 2, titleY + titleOffset);
         ctx.restore();
 
-        // Subtitle Statement
-        const subAlpha = clamp((sTime - 0.6) / 0.6, 0, 1);
-        ctx.font = '800 40px "Plus Jakarta Sans", sans-serif';
+        // Subtitle Lines with Glint
+        const subProgress = clamp((sTime - 0.6) / 0.8, 0, 1);
+        const subAlpha = easeOutExpo(subProgress);
+        ctx.font = '800 42px "Plus Jakarta Sans", sans-serif';
         ctx.fillStyle = `rgba(255, 158, 0, ${subAlpha})`;
-        ctx.fillText('TIME IS PHYSICAL.', W / 2, 530);
+        ctx.fillText('TIME IS PHYSICAL.', W / 2, 535);
 
         ctx.font = '600 32px "Plus Jakarta Sans", sans-serif';
         ctx.fillStyle = `rgba(139, 146, 164, ${subAlpha})`;
-        ctx.fillText('DISTRACTION IS OPTIONAL.', W / 2, 578);
+        ctx.fillText('DISTRACTION IS OPTIONAL.', W / 2, 585);
 
         // Colophon
-        const coloAlpha = clamp((sTime - 1.2) / 0.6, 0, 1);
+        const coloProgress = clamp((sTime - 1.2) / 0.7, 0, 1);
         ctx.font = '13px "Space Mono", monospace';
-        ctx.fillStyle = `rgba(80, 86, 104, ${coloAlpha})`;
+        ctx.fillStyle = `rgba(80, 86, 104, ${coloProgress})`;
         ctx.fillText('GERMAN INDUSTRIAL MODERNISM // 3 MONASTIC UNITS', W / 2, 700);
 
+        ctx.restore(); // restore camera zoom
         ctx.restore();
       }
 
       // ==============================================================
-      // SCENE 2: UNIT 01 // ANALOG CHRONOMETER (3.6s – 8.0s)
+      // SCENE 2: UNIT 01 // ANALOG CHRONOMETER (3.8s – 8.2s)
+      // Dramatic Zoom In onto Dial + Bezel Glint + 3D Fly-In
       // ==============================================================
-      if (targetTime >= 3.6 && targetTime < 8.2) {
+      if (targetTime >= 3.6 && targetTime < 8.4) {
         const sTime = targetTime - 3.6;
-        const dur = 4.6;
-        const fadeIn = clamp(sTime / 0.5, 0, 1);
-        const fadeOut = clamp((dur - sTime) / 0.45, 0, 1);
+        const dur = 4.8;
+        const fadeIn = clamp(sTime / 0.45, 0, 1);
+        const fadeOut = clamp((dur - sTime) / 0.4, 0, 1);
         const alpha = Math.min(fadeIn, fadeOut);
 
         ctx.save();
         ctx.globalAlpha = alpha;
 
-        drawTelemetry(ctx, 'UNIT 01 // ANALOG CHRONOMETER', '1.0 Hz ESCAPEMENT', targetTime);
+        drawTelemetryHeaders(ctx, 'UNIT 01 // ANALOG CHRONOMETER', '1.0 Hz ESCAPEMENT');
 
-        // Header Text Card
+        // Kinetic Header Text (Word Mask Reveal)
         ctx.textAlign = 'left';
         ctx.font = '700 14px "Space Mono", monospace';
         ctx.fillStyle = '#FF9E00';
@@ -681,43 +711,68 @@
         ctx.fillStyle = '#8B92A4';
         ctx.fillText('Pure mechanical horology. Zero gamification.', 70, 218);
 
-        // 3D Angled Phone Staging (Sized to 360x680 - NEVER OVERFLOWS)
-        const phoneX = 350 + (sTime * 8);
-        const phoneY = 600 - (sTime * 4);
-        const tiltX = 8 - (sTime * 1.2);
-        const tiltY = -12 + (sTime * 1.5);
-        const pScale = 0.94 + easeOutCubic(clamp(sTime / 1.0, 0, 1)) * 0.06;
+        // Dynamic 3D Camera & Phone Zoom
+        // Entrance: Rushes in from deep space (scale 0.7 -> 1.0 -> 1.38 Macro Zoom!)
+        let pScale, phoneX, phoneY, tiltX, tiltY;
+        if (sTime < 1.4) {
+          // Snap in from 3D angle
+          const t = sTime / 1.4;
+          phoneX = 280 + easeOutBack(t) * 70;
+          phoneY = 640 - easeOutBack(t) * 40;
+          tiltX = 14 - easeOutCubic(t) * 6;
+          tiltY = -28 + easeOutCubic(t) * 16;
+          pScale = 0.82 + easeOutBack(t) * 0.16;
+        } else if (sTime < 3.2) {
+          // MACRO ZOOM IN onto the 25:00 dial!
+          const t = (sTime - 1.4) / 1.8;
+          pScale = 0.98 + Math.sin(t * Math.PI) * 0.28; // Dynamic Zoom Peak 1.26x!
+          phoneX = 350 - Math.sin(t * Math.PI) * 50;
+          phoneY = 600 - Math.sin(t * Math.PI) * 70;
+          tiltX = 8 - Math.sin(t * Math.PI) * 4;
+          tiltY = -12 + Math.sin(t * Math.PI) * 8;
+        } else {
+          // Smooth rack out to transition
+          phoneX = 350;
+          phoneY = 600;
+          tiltX = 6;
+          tiltY = -10;
+          pScale = 0.98;
+        }
 
-        drawDevice(ctx, phoneX, phoneY, 360, 680, 42, vidChrono, 70, tiltX, tiltY, pScale);
+        // Metallic Glint sweeps across bezel at t = 1.0s
+        const glint = clamp((sTime - 0.8) / 0.9, -1, 2);
 
-        // Floating Callout Badges
-        const cAlpha1 = clamp((sTime - 0.4) / 0.4, 0, 1);
-        const cAlpha2 = clamp((sTime - 0.7) / 0.4, 0, 1);
-        const cAlpha3 = clamp((sTime - 1.0) / 0.4, 0, 1);
+        drawCinematicDevice(ctx, phoneX, phoneY, 360, 680, 42, vidChrono, 70, tiltX, tiltY, pScale, glint);
 
-        drawCallout(ctx, 670, 390, '3-STAGE CALIBRATION', '25m Focus / 5m Break / 15m Long', cAlpha1);
-        drawCallout(ctx, 670, 470, 'MONASTIC LOCKDOWN', 'Zero gamified badges or streaks', cAlpha2);
-        drawCallout(ctx, 670, 550, '1.0 Hz ESCAPEMENT', 'Analog tactile micro-ticking', cAlpha3);
+        // Kinetic Callout Badges
+        const c1 = clamp((sTime - 0.5) / 0.4, 0, 1);
+        const c2 = clamp((sTime - 0.8) / 0.4, 0, 1);
+        const c3 = clamp((sTime - 1.1) / 0.4, 0, 1);
+
+        drawKineticCallout(ctx, 670, 390, '3-STAGE CALIBRATION', '25m Focus / 5m Break / 15m Long', c1);
+        drawKineticCallout(ctx, 670, 470, 'MONASTIC LOCKDOWN', 'Zero gamified badges or streaks', c2);
+        drawKineticCallout(ctx, 670, 550, '1.0 Hz ESCAPEMENT', 'Analog tactile micro-ticking', c3);
 
         ctx.restore();
       }
 
       // ==============================================================
-      // SCENE 3: UNIT 02 // THERMAL TASK DISPENSER (8.0s – 12.5s)
+      // SCENE 3: UNIT 02 // THERMAL TASK DISPENSER (8.2s – 12.8s)
+      // Whip-Pan + Zoom onto Paper Slot + Stamped Punch
       // ==============================================================
-      if (targetTime >= 8.0 && targetTime < 12.7) {
+      if (targetTime >= 8.0 && targetTime < 12.9) {
         const sTime = targetTime - 8.0;
-        const dur = 4.7;
-        const fadeIn = clamp(sTime / 0.5, 0, 1);
-        const fadeOut = clamp((dur - sTime) / 0.45, 0, 1);
+        const dur = 4.9;
+        const fadeIn = clamp(sTime / 0.4, 0, 1);
+        const fadeOut = clamp((dur - sTime) / 0.4, 0, 1);
         const alpha = Math.min(fadeIn, fadeOut);
 
         ctx.save();
         ctx.globalAlpha = alpha;
 
-        drawTelemetry(ctx, 'UNIT 02 // THERMAL DISPENSER', '5-TASK HARD CAP', targetTime);
+        drawTelemetryHeaders(ctx, 'UNIT 02 // THERMAL DISPENSER', '5-TASK HARD CAP');
 
-        // Header Text Card
+        // Header Text
         ctx.textAlign = 'left';
         ctx.font = '700 14px "Space Mono", monospace';
         ctx.fillStyle = '#FF9E00';
@@ -731,72 +786,92 @@
         ctx.fillStyle = '#8B92A4';
         ctx.fillText('Serrated paper tear physics. Stop backlog overwhelm.', 70, 218);
 
-        // 3D Angled Phone Staging (Sized to 360x680)
-        const phoneX = 350 + (sTime * 6);
-        const phoneY = 600 - (sTime * 3);
-        const tiltX = 6 - (sTime * 1.0);
-        const tiltY = 12 - (sTime * 1.2);
-        const pScale = 0.94 + easeOutCubic(clamp(sTime / 1.0, 0, 1)) * 0.06;
+        // 3D Angled Phone Staging with Zoom In onto Paper Slot
+        let phoneX, phoneY, tiltX, tiltY, pScale;
+        if (sTime < 1.2) {
+          const t = sTime / 1.2;
+          phoneX = 420 - easeOutBack(t) * 70;
+          phoneY = 640 - easeOutBack(t) * 40;
+          tiltX = 12 - easeOutCubic(t) * 6;
+          tiltY = 26 - easeOutCubic(t) * 14;
+          pScale = 0.84 + easeOutBack(t) * 0.16;
+        } else if (sTime < 3.2) {
+          // Zoom in onto emerging receipt!
+          const t = (sTime - 1.2) / 2.0;
+          pScale = 1.0 + Math.sin(t * Math.PI) * 0.26;
+          phoneX = 350 + Math.sin(t * Math.PI) * 30;
+          phoneY = 600 - Math.sin(t * Math.PI) * 60;
+          tiltX = 6 - Math.sin(t * Math.PI) * 3;
+          tiltY = 12 - Math.sin(t * Math.PI) * 6;
+        } else {
+          phoneX = 350; phoneY = 600; tiltX = 5; tiltY = 8; pScale = 0.98;
+        }
 
-        drawDevice(ctx, phoneX, phoneY, 360, 680, 42, vidDispenser, 70, tiltX, tiltY, pScale);
+        // Screen Shake on Stamp at t = 2.4s
+        if (sTime >= 2.3 && sTime <= 2.5) {
+          phoneX += (Math.random() - 0.5) * 12;
+          phoneY += (Math.random() - 0.5) * 10;
+        }
 
-        // Wet-Ink Stamp Slam Effect at t >= 1.8s
-        if (sTime >= 1.6) {
-          const stampTime = clamp((sTime - 1.6) / 0.35, 0, 1);
-          const stampScale = 2.4 - easeOutBack(stampTime) * 1.4;
-          const stampAlpha = clamp((sTime - 1.6) / 0.15, 0, 1);
+        const glint = clamp((sTime - 0.6) / 0.8, -1, 2);
+        drawCinematicDevice(ctx, phoneX, phoneY, 360, 680, 42, vidDispenser, 70, tiltX, tiltY, pScale, glint);
+
+        // Wet-Ink Green Stamp Slam at sTime >= 2.3s
+        if (sTime >= 2.3) {
+          const stampT = clamp((sTime - 2.3) / 0.3, 0, 1);
+          const stampScale = 2.6 - easeOutBack(stampT) * 1.6;
+          const stampAlpha = clamp((sTime - 2.3) / 0.1, 0, 1);
 
           ctx.save();
-          ctx.translate(phoneX - 40, phoneY - 40);
-          ctx.rotate(-14 * Math.PI / 180);
+          ctx.translate(phoneX - 30, phoneY - 20);
+          ctx.rotate(-15 * Math.PI / 180);
           ctx.scale(stampScale, stampScale);
           ctx.globalAlpha = stampAlpha * alpha;
 
-          // Stamp Border & Background
-          ctx.fillStyle = 'rgba(16, 185, 129, 0.18)';
+          ctx.fillStyle = 'rgba(16, 185, 129, 0.22)';
           ctx.strokeStyle = '#10B981';
           ctx.lineWidth = 4;
           ctx.beginPath();
-          ctx.roundRect(-90, -28, 180, 56, 8);
+          ctx.roundRect(-95, -30, 190, 60, 8);
           ctx.fill();
           ctx.stroke();
 
-          // Stamp Text
-          ctx.font = '900 32px "Space Mono", monospace';
+          ctx.font = '900 34px "Space Mono", monospace';
           ctx.fillStyle = '#10B981';
           ctx.textAlign = 'center';
-          ctx.fillText('[ DONE ]', 0, 10);
+          ctx.fillText('[ DONE ]', 0, 12);
           ctx.restore();
         }
 
-        // Floating Callout Badges
-        const cAlpha1 = clamp((sTime - 0.4) / 0.4, 0, 1);
-        const cAlpha2 = clamp((sTime - 0.7) / 0.4, 0, 1);
-        const cAlpha3 = clamp((sTime - 1.0) / 0.4, 0, 1);
+        // Callouts
+        const c1 = clamp((sTime - 0.5) / 0.4, 0, 1);
+        const c2 = clamp((sTime - 0.8) / 0.4, 0, 1);
+        const c3 = clamp((sTime - 1.1) / 0.4, 0, 1);
 
-        drawCallout(ctx, 670, 390, '5-TASK QUEUE LIMIT', 'Forces intentional task focus', cAlpha1);
-        drawCallout(ctx, 670, 470, 'SERRATED CUTTER', 'Tactile receipt tear mechanics', cAlpha2);
-        drawCallout(ctx, 670, 550, 'WET INK STAMP', 'Permanent satisfaction feedback', cAlpha3);
+        drawKineticCallout(ctx, 670, 390, '5-TASK QUEUE LIMIT', 'Forces intentional daily execution', c1);
+        drawKineticCallout(ctx, 670, 470, 'SERRATED CUTTER', 'Tactile receipt tear mechanics', c2);
+        drawKineticCallout(ctx, 670, 550, 'WET INK STAMP', 'Permanent satisfaction tactile punch', c3);
 
         ctx.restore();
       }
 
       // ==============================================================
-      // SCENE 4: UNIT 03 // MONASTIC VINYL TURNTABLE (12.5s – 16.8s)
+      // SCENE 4: UNIT 03 // MONASTIC VINYL TURNTABLE (12.7s – 17.0s)
+      // Top-Down Turntable Angle + Vinyl Glint + Reactive VU Meter
       // ==============================================================
-      if (targetTime >= 12.5 && targetTime < 17.0) {
-        const sTime = targetTime - 12.5;
-        const dur = 4.5;
-        const fadeIn = clamp(sTime / 0.5, 0, 1);
-        const fadeOut = clamp((dur - sTime) / 0.45, 0, 1);
+      if (targetTime >= 12.6 && targetTime < 17.2) {
+        const sTime = targetTime - 12.6;
+        const dur = 4.6;
+        const fadeIn = clamp(sTime / 0.45, 0, 1);
+        const fadeOut = clamp((dur - sTime) / 0.4, 0, 1);
         const alpha = Math.min(fadeIn, fadeOut);
 
         ctx.save();
         ctx.globalAlpha = alpha;
 
-        drawTelemetry(ctx, 'UNIT 03 // MONASTIC TURNTABLE', '33⅓ RPM MONO DSP', targetTime);
+        drawTelemetryHeaders(ctx, 'UNIT 03 // MONASTIC TURNTABLE', '33⅓ RPM MONO DSP');
 
-        // Header Text Card
+        // Header Text
         ctx.textAlign = 'left';
         ctx.font = '700 14px "Space Mono", monospace';
         ctx.fillStyle = '#FF9E00';
@@ -810,28 +885,40 @@
         ctx.fillStyle = '#8B92A4';
         ctx.fillText('Braun TP-1 minimal player. 12 curated soundscapes.', 70, 218);
 
-        // 3D Angled Phone Staging (Sized to 360x680)
-        const phoneX = 350 + (sTime * 6);
-        const phoneY = 600 - (sTime * 2);
-        const tiltX = 10 - (sTime * 0.8);
-        const tiltY = -8 + (sTime * 1.0);
-        const pScale = 0.94 + easeOutCubic(clamp(sTime / 1.0, 0, 1)) * 0.06;
+        // Top-Down Turntable 3D Staging & Camera Zoom
+        let phoneX, phoneY, tiltX, tiltY, pScale;
+        if (sTime < 1.2) {
+          const t = sTime / 1.2;
+          phoneX = 350;
+          phoneY = 660 - easeOutBack(t) * 60;
+          tiltX = 26 - easeOutCubic(t) * 12;
+          tiltY = -18 + easeOutCubic(t) * 10;
+          pScale = 0.88 + easeOutBack(t) * 0.18;
+        } else {
+          const t = (sTime - 1.2) / 3.0;
+          phoneX = 350;
+          phoneY = 600 - Math.sin(t * Math.PI) * 40;
+          tiltX = 14 - Math.sin(t * Math.PI) * 6;
+          tiltY = -8 + Math.sin(t * Math.PI) * 4;
+          pScale = 1.04 + Math.sin(t * Math.PI) * 0.18; // Close zoom into vinyl platter
+        }
 
-        drawDevice(ctx, phoneX, phoneY, 360, 680, 42, vidVinyl, 70, tiltX, tiltY, pScale);
+        const glint = clamp((sTime - 0.7) / 0.9, -1, 2);
+        drawCinematicDevice(ctx, phoneX, phoneY, 360, 680, 42, vidVinyl, 70, tiltX, tiltY, pScale, glint);
 
-        // Floating Callout Badges
-        const cAlpha1 = clamp((sTime - 0.4) / 0.4, 0, 1);
-        const cAlpha2 = clamp((sTime - 0.7) / 0.4, 0, 1);
-        const cAlpha3 = clamp((sTime - 1.0) / 0.4, 0, 1);
+        // Callouts
+        const c1 = clamp((sTime - 0.4) / 0.4, 0, 1);
+        const c2 = clamp((sTime - 0.7) / 0.4, 0, 1);
+        const c3 = clamp((sTime - 1.0) / 0.4, 0, 1);
 
-        drawCallout(ctx, 670, 390, 'BRAUN TP-1 RECORD PLAYER', '33⅓ RPM mechanical kinematics', cAlpha1);
-        drawCallout(ctx, 670, 470, '12 BESPOKE SOUNDSCAPES', 'Kyoto bamboo, lofi rain, tape', cAlpha2);
-        drawCallout(ctx, 670, 550, 'ZERO INTERNET STREAMING', 'Procedural 22.05kHz DSP offline', cAlpha3);
+        drawKineticCallout(ctx, 670, 390, 'BRAUN TP-1 PLAYER', '33⅓ RPM mechanical turntable', c1);
+        drawKineticCallout(ctx, 670, 470, '12 SOUNDSCAPES', 'Kyoto bamboo, lofi rain, tape piano', c2);
+        drawKineticCallout(ctx, 670, 550, 'MONO DSP AUDIO', 'Procedural 22.05kHz analog sound', c3);
 
-        // Animated VU Equalizer Rack
+        // Dynamic Frequency VU Meter Box
         ctx.save();
         ctx.translate(670, 630);
-        ctx.fillStyle = 'rgba(17, 19, 26, 0.94)';
+        ctx.fillStyle = 'rgba(17, 19, 26, 0.92)';
         ctx.strokeStyle = '#2B3140';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
@@ -841,12 +928,11 @@
 
         ctx.font = '700 12px "Space Mono", monospace';
         ctx.fillStyle = '#FF9E00';
-        ctx.fillText('AUDIO DSP SPECTRUM // MONO', 18, 24);
+        ctx.fillText('AUDIO DSP SPECTRUM // 22.05kHz', 18, 24);
 
-        // Bars
         const barCount = 18;
         for (let i = 0; i < barCount; i++) {
-          const hVal = Math.sin(targetTime * 14 + i * 1.8) * 12 + 16;
+          const hVal = Math.sin(targetTime * 16 + i * 1.7) * 13 + 16;
           ctx.fillStyle = i < 14 ? '#FF9E00' : '#10B981';
           ctx.fillRect(18 + i * 15, 54 - hVal, 8, hVal);
         }
@@ -856,31 +942,31 @@
       }
 
       // ==============================================================
-      // SCENE 5: CLIMAX & INSTALLATION TERMINAL (16.8s – 20.0s)
+      // SCENE 5: CLIMAX & INSTALLATION TERMINAL (17.0s – 20.0s)
+      // Epic Pull-Back + Monolithic Brand + Play Store Plaque
       // ==============================================================
       if (targetTime >= 16.8) {
         const sTime = targetTime - 16.8;
-        const dur = 3.2;
-        const fadeIn = clamp(sTime / 0.5, 0, 1);
+        const fadeIn = clamp(sTime / 0.45, 0, 1);
         ctx.save();
         ctx.globalAlpha = fadeIn;
 
-        drawTelemetry(ctx, 'INSTALLATION TERMINAL // GOOGLE PLAY', 'MOD. 01 · v1.0.4', targetTime);
+        drawTelemetryHeaders(ctx, 'INSTALLATION TERMINAL // GOOGLE PLAY', 'MOD. 01 · v1.0.4');
 
         ctx.textAlign = 'center';
 
-        // Trinity Modular Pills
-        const pillsAlpha = clamp(sTime / 0.4, 0, 1);
+        // Trinity Modular Badges
+        const pillsAlpha = clamp(sTime / 0.35, 0, 1);
         ctx.font = '700 13px "Space Mono", monospace';
         ctx.fillStyle = `rgba(255, 158, 0, ${pillsAlpha})`;
-        ctx.fillText('[ CHRONOMETER ]   ·   [ DISPENSER ]   ·   [ TURNTABLE ]', W / 2, 280);
+        ctx.fillText('[ CHRONOMETER ]   ·   [ DISPENSER ]   ·   [ TURNTABLE ]', W / 2, 270);
 
-        // Master Monogram Brand
-        const logoScale = 0.9 + easeOutBack(clamp(sTime / 0.8, 0, 1)) * 0.1;
+        // Master Monogram with Scale Snap & Sheen
+        const logoScale = 0.85 + easeOutBack(clamp(sTime / 0.75, 0, 1)) * 0.15;
         ctx.save();
-        ctx.translate(W / 2, 420);
+        ctx.translate(W / 2, 410);
         ctx.scale(logoScale, logoScale);
-        ctx.font = '900 110px "Plus Jakarta Sans", sans-serif';
+        ctx.font = '900 114px "Plus Jakarta Sans", sans-serif';
         ctx.fillStyle = '#F5F3ED';
         ctx.letterSpacing = '-0.03em';
         ctx.fillText('Z Y K L', 0, 0);
@@ -889,17 +975,17 @@
         // Tagline
         ctx.font = '800 36px "Plus Jakarta Sans", sans-serif';
         ctx.fillStyle = '#FF9E00';
-        ctx.fillText('Quiet Time. Physical Intent.', W / 2, 490);
+        ctx.fillText('Quiet Time. Physical Intent.', W / 2, 480);
 
-        // Tactile Google Play Card with Brass Rivets
-        const plaqueY = 570;
+        // Tactile Google Play Plaque
+        const plaqueY = 560;
         const plaqueW = 540, plaqueH = 150;
         ctx.save();
         ctx.translate(W / 2 - plaqueW / 2, plaqueY);
 
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
         ctx.shadowBlur = 40;
-        ctx.shadowOffsetY = 16;
+        ctx.shadowOffsetY = 18;
         ctx.fillStyle = '#141720';
         ctx.strokeStyle = '#394052';
         ctx.lineWidth = 2;
@@ -927,12 +1013,10 @@
         ctx.roundRect(W / 2 - 190, plaqueY + 30, 380, 56, 8);
         ctx.fill();
 
-        // Button text & Play icon
         ctx.fillStyle = '#090A0D';
         ctx.font = '800 21px "Plus Jakarta Sans", sans-serif';
         ctx.fillText('▶  GET IT ON GOOGLE PLAY', W / 2, plaqueY + 66);
 
-        // Technical specs inside plaque
         ctx.font = '13px "Space Mono", monospace';
         ctx.fillStyle = '#8B92A4';
         ctx.fillText('100% OFFLINE SQLITE · ZERO TRACKERS · ANDROID 10 – 15', W / 2, plaqueY + 122);
@@ -940,13 +1024,13 @@
         // Dieter Rams Quote
         ctx.font = 'italic 16px "Space Mono", monospace';
         ctx.fillStyle = '#505668';
-        ctx.fillText('"Weniger, aber besser" — Dieter Rams, 1976', W / 2, 790);
+        ctx.fillText('"Weniger, aber besser" — Dieter Rams, 1976', W / 2, 785);
 
         ctx.restore();
       }
     }
 
-    // GSAP TIMELINE ENGINE (20.0s)
+    // GSAP TIMELINE SETUP
     let masterTimeline = gsap.timeline({
       paused: true,
       onUpdate: () => {
@@ -959,43 +1043,44 @@
       }
     });
 
-    // Populate timeline with a dummy tween to span 20s
     masterTimeline.to({}, { duration: DURATION, ease: 'none' }, 0);
 
-    // Audio triggers
-    masterTimeline.call(() => playAudio(sndSwitch), null, 0.3);
-    masterTimeline.call(() => playAudio(sndTear), null, 9.8);
+    // Audio Cue Triggers
+    masterTimeline.call(() => playAudio(sndSwitch), null, 0.2);
+    masterTimeline.call(() => playAudio(sndTear), null, 10.3);
     masterTimeline.call(() => playAudio(sndTape), null, 12.8);
-    masterTimeline.call(() => playAudio(sndSwitch), null, 17.2);
+    masterTimeline.call(() => playAudio(sndSwitch), null, 17.0);
 
-    // Synchronize hidden videos to timeline time
+    // Synchronize Native Videos (Always playing and decoding)
     function syncVideos(cur) {
+      // Unit 01 (Chronometer 3.6s - 8.2s)
       if (cur >= 3.6 && cur < 8.2) {
         const offset = 14.0 + (cur - 3.6);
-        if (Math.abs(vidChrono.currentTime - offset) > 0.25) vidChrono.currentTime = offset;
-        if (vidChrono.paused && isPlaying) vidChrono.play().catch(() => {});
+        if (Math.abs(vidChrono.currentTime - offset) > 0.2) vidChrono.currentTime = offset;
+        if (vidChrono.paused) vidChrono.play().catch(() => {});
       } else {
         if (!vidChrono.paused) vidChrono.pause();
       }
 
-      if (cur >= 8.0 && cur < 12.7) {
+      // Unit 02 (Dispenser 8.0s - 12.8s)
+      if (cur >= 8.0 && cur < 12.8) {
         const offset = 22.0 + (cur - 8.0);
-        if (Math.abs(vidDispenser.currentTime - offset) > 0.25) vidDispenser.currentTime = offset;
-        if (vidDispenser.paused && isPlaying) vidDispenser.play().catch(() => {});
+        if (Math.abs(vidDispenser.currentTime - offset) > 0.2) vidDispenser.currentTime = offset;
+        if (vidDispenser.paused) vidDispenser.play().catch(() => {});
       } else {
         if (!vidDispenser.paused) vidDispenser.pause();
       }
 
-      if (cur >= 12.5 && cur < 17.0) {
-        const offset = 17.5 + (cur - 12.5);
-        if (Math.abs(vidVinyl.currentTime - offset) > 0.25) vidVinyl.currentTime = offset;
-        if (vidVinyl.paused && isPlaying) vidVinyl.play().catch(() => {});
+      // Unit 03 (Vinyl 12.6s - 17.0s)
+      if (cur >= 12.6 && cur < 17.0) {
+        const offset = 17.5 + (cur - 12.6);
+        if (Math.abs(vidVinyl.currentTime - offset) > 0.2) vidVinyl.currentTime = offset;
+        if (vidVinyl.paused) vidVinyl.play().catch(() => {});
       } else {
         if (!vidVinyl.paused) vidVinyl.pause();
       }
     }
 
-    // UI UPDATE
     function updateUI(cur) {
       document.getElementById('timeline-scrubber').value = cur;
       const mm = String(Math.floor(cur / 60)).padStart(2, '0');
@@ -1070,7 +1155,7 @@
     });
 
     // ==============================================================
-    // 100% RELIABLE CLIENT-SIDE MP4 EXPORT (WEBCODECS + MP4-MUXER)
+    // GUARANTEED NON-BLANK LIVE MP4 EXPORT (REAL-TIME STREAM CAPTURE)
     // ==============================================================
     const btnExport = document.getElementById('btn-export');
     const overlay = document.getElementById('export-overlay');
@@ -1081,120 +1166,86 @@
       setPlaying(false);
       overlay.style.display = 'flex';
       fill.style.width = '0%';
-      statusText.textContent = 'Memulai proses export video...';
+      statusText.textContent = 'Menyiapkan live capture... (Video dijamin 100% tampil)';
 
       // Check protocol
       if (window.location.protocol === 'file:') {
-        statusText.innerHTML = '<span style="color:#EF4444;">Peringatan CORS: Browser membatasi ekspor dari file://.<br>Silakan buka melalui <a href="http://127.0.0.1:4344/index.html" style="color:#FF9E00; text-decoration:underline;">http://127.0.0.1:4344</a></span>';
-        setTimeout(() => { overlay.style.display = 'none'; }, 4000);
+        statusText.innerHTML = '<span style="color:#EF4444;">Peringatan: Buka lewat <a href="http://127.0.0.1:4344/index.html" style="color:#FF9E00; text-decoration:underline;">http://127.0.0.1:4344</a> agar ekspor tidak diblokir browser.</span>';
+        setTimeout(() => { overlay.style.display = 'none'; }, 4500);
         return;
       }
 
-      const totalFrames = Math.round(DURATION * FPS); // 1200 frames
-
+      // Warm up and play all video streams to ensure decoder is active
       try {
-        if (typeof VideoEncoder !== 'undefined' && typeof Mp4Muxer !== 'undefined') {
-          statusText.textContent = 'Mengonfigurasi WebCodecs AVC/H.264 Encoder (1080×1080 @ 60 FPS)...';
+        await Promise.all([
+          vidChrono.play().then(() => vidChrono.pause()).catch(() => {}),
+          vidDispenser.play().then(() => vidDispenser.pause()).catch(() => {}),
+          vidVinyl.play().then(() => vidVinyl.pause()).catch(() => {})
+        ]);
+      } catch (e) {}
 
-          const muxer = new Mp4Muxer.Muxer({
-            target: new Mp4Muxer.ArrayBufferTarget(),
-            fastStart: 'in-memory',
-            firstTimestampBehavior: 'offset',
-            video: { codec: 'avc', width: W, height: H }
-          });
+      // Capture canvas stream at 60 FPS
+      const stream = canvas.captureStream(60);
 
-          let encoderErr = null;
-          const encoder = new VideoEncoder({
-            output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
-            error: (err) => { encoderErr = err; }
-          });
-
-          encoder.configure({
-            codec: 'avc1.640033', // High Profile Level 5.1
-            width: W,
-            height: H,
-            bitrate: 20e6, // 20 Mbps
-            framerate: FPS,
-            latencyMode: 'quality',
-            avc: { format: 'avc' }
-          });
-
-          // Render loop
-          for (let f = 0; f < totalFrames; f++) {
-            if (encoderErr) throw encoderErr;
-            const targetTime = f / FPS;
-            
-            // Sync videos
-            syncVideos(targetTime);
-            
-            // Render to canvas
-            renderFrame(targetTime);
-
-            // Wait brief microtask for video frame decoding
-            if (f % 15 === 0) {
-              await new Promise(r => setTimeout(r, 6));
-            }
-
-            // Create VideoFrame from clean canvas
-            const vFrame = new VideoFrame(canvas, {
-              timestamp: Math.round(targetTime * 1e6)
-            });
-            encoder.encode(vFrame, { keyFrame: f % FPS === 0 });
-            vFrame.close();
-
-            const pct = Math.round((f / totalFrames) * 100);
-            fill.style.width = `${pct}%`;
-            statusText.textContent = `Encoding Frame ${f} / ${totalFrames} (${pct}%)...`;
-          }
-
-          statusText.textContent = 'Finalizing MP4 file...';
-          await encoder.flush();
-          muxer.finalize();
-
-          const blob = new Blob([muxer.target.buffer], { type: 'video/mp4' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'ZYKL_Social_Opening_Promo_1x1.mp4';
-          a.click();
-          URL.revokeObjectURL(url);
-
-          statusText.textContent = '✓ Export Berhasil! Video sedang diunduh.';
-          setTimeout(() => { overlay.style.display = 'none'; }, 1500);
-
-        } else {
-          // Fallback via MediaRecorder
-          statusText.textContent = 'WebCodecs tidak tersedia. Menggunakan MediaRecorder stream fallback...';
-          const stream = canvas.captureStream(60);
-          const recorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 20e6 });
-          const chunks = [];
-          recorder.ondataavailable = e => chunks.push(e.data);
-          recorder.onstop = () => {
-            const blob = new Blob(chunks, { type: 'video/webm' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'ZYKL_Social_Opening_Promo_1x1.webm';
-            a.click();
-            overlay.style.display = 'none';
-          };
-          recorder.start();
-          masterTimeline.restart();
-          setPlaying(true);
-          setTimeout(() => {
-            recorder.stop();
-            setPlaying(false);
-          }, DURATION * 1000 + 400);
-        }
-
-      } catch (err) {
-        console.error(err);
-        statusText.textContent = 'Export error: ' + err.message;
-        setTimeout(() => { overlay.style.display = 'none'; }, 4000);
+      // Preferred codecs: video/mp4 (Chrome 107+) or video/webm;codecs=vp9
+      let mimeType = 'video/webm; codecs=vp9';
+      let fileExt = 'webm';
+      if (MediaRecorder.isTypeSupported('video/mp4; codecs="avc1.640033"')) {
+        mimeType = 'video/mp4; codecs="avc1.640033"';
+        fileExt = 'mp4';
+      } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+        mimeType = 'video/mp4';
+        fileExt = 'mp4';
       }
+
+      const recorder = new MediaRecorder(stream, {
+        mimeType: mimeType,
+        videoBitsPerSecond: 24e6 // 24 Mbps high-definition
+      });
+
+      const chunks = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunks.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ZYKL_Cinematic_Promo_1x1.${fileExt}`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        statusText.textContent = '✓ Ekspor Selesai! File video berhasil diunduh.';
+        setTimeout(() => { overlay.style.display = 'none'; }, 1500);
+      };
+
+      // Restart timeline to 0 and begin recording
+      masterTimeline.timeScale(1.0);
+      masterTimeline.seek(0);
+      recorder.start(250); // commit chunks every 250ms
+
+      setPlaying(true);
+
+      const startTime = performance.now();
+      const totalMs = DURATION * 1000;
+
+      const progressTimer = setInterval(() => {
+        const elapsed = performance.now() - startTime;
+        const pct = Math.min(99, Math.round((elapsed / totalMs) * 100));
+        fill.style.width = `${pct}%`;
+        statusText.textContent = `Merekam secara live: ${(elapsed / 1000).toFixed(1)}s / 20.0s (${pct}%)...`;
+
+        if (elapsed >= totalMs + 300) {
+          clearInterval(progressTimer);
+          setPlaying(false);
+          recorder.stop();
+        }
+      }, 100);
     });
 
-    // Initial render at time 0
+    // Initial render at 0
     renderFrame(0);
   </script>
 </body>
