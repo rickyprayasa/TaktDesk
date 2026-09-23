@@ -560,10 +560,10 @@ h1 {
     </div>
 
     <div class="copy-tabs">
-      <button class="copy-tab active" onclick="switchCopyTab('ig_id')">📸 Instagram (Indonesia)</button>
+      <button class="copy-tab active" onclick="switchCopyTab('ig_story')">📸 Instagram (Storytelling Santai)</button>
+      <button class="copy-tab" onclick="switchCopyTab('ig_short')">📸 Instagram (Singkat & Estetik)</button>
       <button class="copy-tab" onclick="switchCopyTab('ig_en')">📸 Instagram (English)</button>
-      <button class="copy-tab" onclick="switchCopyTab('threads_id')">🧵 Threads (ID Thread)</button>
-      <button class="copy-tab" onclick="switchCopyTab('threads_en')">🧵 Threads (EN Thread)</button>
+      <button class="copy-tab" onclick="switchCopyTab('threads_id')">🧵 Threads (Santai ID)</button>
       <button class="copy-tab" onclick="switchCopyTab('fb_id')">📘 Facebook / LinkedIn (ID)</button>
     </div>
 
@@ -777,123 +777,59 @@ function scrollToId(id) {
 
 /* CAPTION PREVIEWS */
 const copyTemplates = {
-  ig_id: `Swipe ➔ untuk melihat cara kami mendesain ulang Pomodoro timer seperti instrumen fisik era Braun Dieter Rams 1970-an.
+  ig_story: `Kebanyakan aplikasi timer sekarang rasanya terlalu ramai. Niatnya mau fokus kerja, tapi malah disuguhin pop-up langganan, iklan, atau grafik warna-warni yang bikin capek mata.
 
-Berapa kali kamu membuka aplikasi timer produktivitas, tapi malah berakhir terdistraksi oleh push notifikasi, pop-up langganan berbayar, atau fitur rumit yang sebenarnya tidak kamu butuhkan?
+Karena itu ZYKL dibikin sesederhana mungkin—terinspirasi dari estetika hardware klasik era Dieter Rams (Braun 1970-an). 
 
-ZYKL dirancang dengan prinsip "Weniger, aber besser" (Less, but better) — kembali ke esensi fokus yang tenang dan terarah:
+Nggak ada akun, nggak ada biaya langganan bulanan, dan semua data cuma tersimpan di HP kamu (100% offline). Isinya cuma dial analog dengan detak ritmis yang tenang, antrean kerja yang dibatasi maksimal 5 tugas biar nggak gampang overwhelm, dan pemutar vinyl buat nemenin deep work.
 
-Slide 2: [ UNIT 01 // ANALOG CHRONOMETER ]
-Dial analog mekanis 1.0 Hz calibrated escapement. Ticking ritmis yang menenangkan detak jantung, membantu kamu masuk ke deep work state tanpa distraksi digital.
+Sudah rilis di Google Play Store untuk Android (10 – 15). Buat yang lagi pengen suasana meja kerja lebih tenang dan minim distraksi, link download ada di bio ya.
 
-Slide 3: [ UNIT 02 // THERMAL TASK DISPENSER ]
-Membatasi fokus harianmu maksimal 5 tugas. Menggunakan fisika kertas struk termal yang sobek saat selesai, dan stempel fisik [DONE]. Selesai ya selesai, tidak ada endless scroll.
+#ZYKL #MonasticFocus #DieterRams #ProductivityApp #DeepWork #AndroidApp #Minimalism #PomodoroTimer`,
 
-Slide 4: [ UNIT 03 // MONASTIC VINYL TURNTABLE ]
-Pemutar piringan hitam 33⅓ RPM Braun TP-1 dengan 12 soundscape akustik binaural offline (Lo-Fi Rain, Kyoto Bamboo, Warm Tape).
+  ig_short: `Alat bantu fokus yang dibikin kayak instrumen fisik era 70-an.
 
-Slide 5: [ DUAL MATERIALITY ]
-Tersedia dalam balutan Obsidian Black matte untuk mode gelap malam hari, dan Warm Bone 1976 untuk mode terang siang hari.
+• Dial analog mekanis (tanpa angka digital kedap-kedip)
+• Maksimal 5 tugas sehari (biar nggak multitasking berlebihan)
+• 12 ambient soundscapes offline
+• Tanpa akun, tanpa langganan bulanan, tanpa pelacak data
 
-Slide 6: [ RADICAL PRIVACY ]
-100% Offline SQLite. Tidak ada server cloud yang melacak jam kerjamu, nol iklan, dan tanpa registrasi akun.
+Tersedia di Play Store untuk Android. Link download ada di bio.
 
-Slide 7: [ INSTALLATION TERMINAL ]
-Tersedia sekarang di Google Play Store untuk perangkat Android 10 – 15.
+#ZYKL #Productivity #MinimalistDesk #DeepWork #AndroidDev #DieterRams #IndustrialDesign`,
 
-Cari "ZYKL" di Google Play atau klik tautan di bio kami untuk mengunduh.
+  ig_en: `Most focus apps today feel like mini casinos trying to keep you engaged, instead of actually letting you work.
 
-#ZYKL #MonasticFocus #DieterRams #ProductivityApp #Minimalism #DeepWork #AndroidApp #BraunDesign #IndustrialDesign #PomodoroTimer`,
+We built ZYKL for the opposite: a quiet Pomodoro instrument inspired by 1970s Dieter Rams industrial design.
 
-  ig_en: `Swipe ➔ to explore a Pomodoro instrument built like physical 1970s Braun hardware.
+No accounts. No subscriptions. No cloud servers tracking your hours. Just a steady analog dial, a hard limit of 5 tasks so you don't overwhelm your day, and offline vinyl soundscapes.
 
-How many focus apps have interrupted the very focus they promised with intrusive push notifications, $9.99/mo subscription paywalls, and cartoon animations?
+Now available on Google Play for Android. Link in bio.
 
-ZYKL was conceived under Dieter Rams' iconic tenet: "Weniger, aber besser" (Less, but better) — restoring tactile, monastic intent to your desk:
+#ZYKL #DieterRams #IndustrialDesign #DeepWork #Pomodoro #MinimalistApp #AndroidDev`,
 
-Slide 2: [ UNIT 01 // ANALOG CHRONOMETER ]
-1.0 Hz calibrated mechanical escapement dial. A steady, physical cadence calibrated to lower your heart rate into uninterrupted deep work.
+  threads_id: `Bikin Pomodoro timer tapi bentuknya instrumen fisik retro.
 
-Slide 3: [ UNIT 02 // THERMAL TASK DISPENSER ]
-A physical 5-task hard cap. Printed receipt physics, serrated paper tear, and a physical wet-ink [DONE] stamp. When the roll is done, your workday is done.
+Nggak ada login, nggak ada cloud, nggak ada langganan bulanan. Cuma dial analog yang detaknya pelan, kertas kerja dibatasi maksimal 5 task, dan pemutar vinyl buat nemenin deep work.
 
-Slide 4: [ UNIT 03 // MONASTIC VINYL TURNTABLE ]
-A Braun TP-1 inspired 33⅓ RPM player spinning 12 curated offline acoustic soundscapes (Lo-Fi Rain, Kyoto Bamboo, Warm Tape).
+Udah live di Play Store. Coba cek ZYKL di Android.`,
 
-Slide 5: [ DUAL MATERIALITY ]
-Finished in Dark Obsidian for nocturnal focus, and 1976 Warm Bone with raw brass rivets for daylight clarity.
+  fb_id: `Berapa banyak aplikasi produktivitas yang justru bikin kita cemas karena to-do list yang kepanjangan dan notifikasi berisik?
 
-Slide 6: [ RADICAL PRIVACY ]
-100% Local SQLite. Zero cloud servers telemetry, zero ad trackers, zero required logins. Your focus telemetry stays strictly in your pocket.
+ZYKL dirancang dengan pendekatan berbeda: "Weniger, aber besser" (Lebih sedikit, tapi lebih baik). Terinspirasi dari hardware analog era Dieter Rams, aplikasi ini mengembalikan esensi fokus yang tenang ke meja kerja:
 
-Slide 7: [ ACQUIRE ON GOOGLE PLAY ]
-Available now on Google Play Store for Android 10 – 15.
+• Dial analog mekanis dengan detak ritmis yang stabil
+• Antrean fisik dibatasi maksimal 5 tugas (tanpa endless list)
+• Pemutar piringan hitam 33⅓ RPM berisi 12 soundscape offline
+• 100% Offline SQLite: tanpa akun, tanpa cloud, bebas biaya langganan
 
-Search "ZYKL" on Google Play or hit the link in bio to equip your workspace.
+Sudah tersedia secara resmi di Google Play Store untuk perangkat Android 10 – 15.
 
-#ZYKL #DieterRams #IndustrialDesign #DeepWork #Pomodoro #MinimalistApp #AndroidDev #UIUX #HardwareDesign #FocusTimer`,
-
-  threads_id: `1/7 Kami bosan dengan aplikasi produktivitas yang justru bikin cemas dengan chart warna-warni, pop-up langganan bulanan, dan notifikasi berisik.
-
-Maka kami membangun ZYKL — instrumen fokus monastik yang terinspirasi dari estetika industri Jerman Dieter Rams (Braun 1976).
-
-2/7 [UNIT 01: ANALOG CHRONOMETER]
-Bukan sekadar angka digital yang berkedip. ZYKL menggunakan dial mekanis 1.0 Hz calibrated escapement dengan jarum Filament Amber. Detak jarumnya yang stabil membawa otak langsung masuk ke zona deep work.
-
-3/7 [UNIT 02: THERMAL TASK DISPENSER]
-Kamu tidak bisa mengerjakan 50 hal sekaligus. Kami batasi antrean fisik maksimal 5 tugas di atas gulungan kertas termal. Setiap tugas selesai, kamu robek dengan fisika serrated teeth dan stempel [DONE].
-
-4/7 [UNIT 03: MONASTIC VINYL TURNTABLE]
-Ditemani pemutar piringan hitam 33⅓ RPM terinspirasi Braun TP-1. 12 audio soundscape offline (derau hujan lofi, bambu Kyoto, pita tape analog hangat) yang berputar halus tanpa internet.
-
-5/7 [DUAL MATERIALITY]
-Didesain untuk dua ritme kerja: Obsidian Black untuk mode hening malam hari, dan Warm Bone 1976 dengan aksen kuningan untuk kejernihan siang hari.
-
-6/7 [RADICAL PRIVACY]
-100% Offline SQLite database di perangkatmu. Nol cloud, nol tracker, nol iklan. Data fokusmu adalah milikmu sepenuhnya.
-
-7/7 ZYKL sudah tersedia di Google Play Store (Android 10 – 15).
-Cari "ZYKL" di Google Play atau kunjungi zykl.app untuk mencoba live 3D web demokan instrumennya.`,
-
-  threads_en: `1/7 Productivity apps today are noisy, dopamine-chasing casino games disguised as timers. We wanted a monastic instrument instead.
-
-Here is ZYKL: a Pomodoro chronometer built with the industrial design soul of 1970s Braun & Dieter Rams.
-
-2/7 [UNIT 01: ANALOG CHRONOMETER]
-A 1.0 Hz calibrated escapement dial. No flashing digits. Just a steady, rhythmic mechanical pulse in Filament Amber that drops your cognitive load into deep focus.
-
-3/7 [UNIT 02: THERMAL TASK DISPENSER]
-Endless to-do lists cause paralysis. ZYKL physically limits you to 5 tasks per batch. Tear off completed receipts with physical paper physics and stamp them [DONE].
-
-4/7 [UNIT 03: VINYL TURNTABLE]
-A 33⅓ RPM Braun TP-1 record player with 12 procedural, offline soundscapes (Lo-Fi Rain, Kyoto Bamboo, Warm Tape). No Spotify login, zero streaming latency.
-
-5/7 [DUAL MATERIALITY]
-Precision-calibrated in Obsidian Black for nocturnal sessions, and 1976 Warm Bone with raw brass rivets for daylight work.
-
-6/7 [RADICAL PRIVACY]
-100% Local SQLite. No accounts. No servers. No analytics tracking. Your work hours belong to you alone.
-
-7/7 Available now on Google Play Store for Android 10 – 15. Search "ZYKL" or visit zykl.app to audition the interactive 3D WebGL instrument.`,
-
-  fb_id: `Memperkenalkan ZYKL: Instrumen Produktivitas Monastik untuk Profesional & Pecinta Desain Industri.
-
-Apakah Anda merasa aplikasi produktivitas modern terlalu banyak distraksi? Pop-up langganan berbayar, notifikasi bertubi-tubi, dan grafis kartun yang tidak relevan justru mengaburkan esensi bekerja dengan fokus.
-
-ZYKL dibangun dengan filosofi modernisme Jerman 1970-an (Dieter Rams / Braun Atelier). Menghadirkan kembali keheningan dan intensi fisik ke meja kerja Anda:
-
-• Unit 01 // Analog Chronometer: Dial analog mekanis 1.0 Hz calibrated escapement untuk memandu sesi Pomodoro dengan tenang.
-• Unit 02 // Thermal Task Dispenser: Hard cap fisik maksimal 5 tugas di kertas struk termal dengan stempel [DONE].
-• Unit 03 // Monastic Vinyl Turntable: Pemutar piringan hitam 33⅓ RPM berisi 12 soundscape relaksasi offline tanpa perlu koneksi internet.
-• Arsitektur 100% Lokal: Database SQLite offline di ponsel Anda. Bebas langganan, tanpa pembuatan akun, dan tanpa pelacakan data privasi.
-
-Aplikasi telah tersedia secara resmi di Google Play Store untuk seluruh perangkat Android 10 – 15.
-
-📲 Unduh sekarang di Google Play Store: https://play.google.com/store/apps/details?id=com.zykl.app
-🌐 Informasi lengkap & web demo 3D: https://zykl.app`
+Unduh di Google Play: https://play.google.com/store/apps/details?id=com.zykl.app
+Web demo interaktif: https://zykl.app`
 };
 
-let currentCopyKey = 'ig_id';
+let currentCopyKey = 'ig_story';
 
 function switchCopyTab(key) {
   currentCopyKey = key;
@@ -915,7 +851,7 @@ function copyCaptionText() {
 // Init
 window.addEventListener('DOMContentLoaded', () => {
   initGallery();
-  document.getElementById('copyContentArea').innerText = copyTemplates['ig_id'];
+  document.getElementById('copyContentArea').innerText = copyTemplates['ig_story'];
 });
 </script>
 </body>
