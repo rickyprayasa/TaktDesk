@@ -33,7 +33,8 @@ class CrownPushButton extends StatefulWidget {
     this.gradientColors,
     this.borderColor,
     this.stemColor,
-  }) : assert(!(isPressed && isPulledOut), 'Crown cannot be simultaneously pressed and pulled out');
+  }) : assert(!(isPressed && isPulledOut),
+            'Crown cannot be simultaneously pressed and pulled out');
 
   @override
   State<CrownPushButton> createState() => _CrownPushButtonState();
@@ -154,109 +155,157 @@ class _CrownPushButtonState extends State<CrownPushButton>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    // Light finishes (bone, cream, steel) need darker detailing, otherwise the
+    // pale crown dissolves into the canvas and reads as floating.
+    final isLightFinish =
+        (widget.gradientColors?.first.computeLuminance() ?? 0.0) > 0.4;
+    final stem = widget.stemColor ?? const Color(0xFF181A1D);
+    final collarTop = Color.lerp(stem, Colors.black, isLightFinish ? 0.30 : 0.10)!;
+    final collarBottom = Color.lerp(stem, Colors.black, isLightFinish ? 0.55 : 0.35)!;
+
+    return Semantics(
+      button: true,
+      label: 'Crown button',
+      hint: widget.isPressed ? 'Pause timer' : 'Start timer',
       onTap: _handleTap,
-      onVerticalDragStart: _handleDragStart,
-      onVerticalDragUpdate: _handleDragUpdate,
-      onVerticalDragEnd: _handleDragEnd,
-      onVerticalDragCancel: _handleDragCancel,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 36,
-        height: 28,
-        child: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.topCenter,
-          children: [
-            // Stem Collar (stationary on bezel socket)
-            Positioned(
-              bottom: 0,
-              child: Container(
-                key: const Key('crown_stem_collar'),
-                width: 14,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: widget.stemColor ?? const Color(0xFF181A1D),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(1)),
-                ),
-              ),
-            ),
-            // Polished Metallic Stem Shaft (revealed when pulled out)
-            Positioned(
-              bottom: 4,
-              child: Container(
-                key: const Key('crown_stem_shaft'),
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      Color(0xFF7A7E85),
-                      Color(0xFFE5E8EC),
-                      Color(0xFFA0A5AC),
-                      Color(0xFF5A5E65),
-                    ],
-                  ),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(1)),
-                  border: Border.all(
-                    color: const Color(0xFF40454D),
-                    width: 0.5,
-                  ),
-                ),
-              ),
-            ),
-            // Crown Cap with ribbed knurling lines (elevates when pulled out, depresses when pressed)
-            AnimatedBuilder(
-              animation: Listenable.merge([_pressAnimation, _pullAnimation]),
-              builder: (context, child) {
-                return Positioned(
-                  top: 12.0 + _pressAnimation.value + _pullAnimation.value,
-                  child: child!,
-                );
-              },
-              child: Container(
-                key: const Key('crown_cap'),
-                width: 32,
-                height: 12,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: widget.gradientColors ?? const [
-                      Color(0xFF424750),
-                      Color(0xFF2A2D33),
-                      Color(0xFF1E2125),
-                    ],
-                  ),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-                  border: Border.all(
-                    color: widget.borderColor ?? TaktColors.slateBorder,
-                    width: 1.0,
-                  ),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x25000000),
-                      offset: Offset(0, 1.5),
-                      blurRadius: 2.0,
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(
-                    5,
-                    (index) => Container(
-                      width: 1.5,
-                      height: 8,
-                      color: Colors.white.withValues(alpha: 0.12),
+      child: GestureDetector(
+        onTap: _handleTap,
+        onVerticalDragStart: _handleDragStart,
+        onVerticalDragUpdate: _handleDragUpdate,
+        onVerticalDragEnd: _handleDragEnd,
+        onVerticalDragCancel: _handleDragCancel,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          width: 36,
+          height: 28,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.topCenter,
+            children: [
+              // Contact shadow where the collar enters the bezel socket. The
+              // dial seats the collar ~2 px into the bezel (chrono_dial_widget),
+              // so the crown reads as mounted, not hovering.
+              Positioned(
+                bottom: -3,
+                child: IgnorePointer(
+                  child: Container(
+                    key: const Key('crown_socket_shadow'),
+                    width: 26,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        colors: [
+                          Colors.black.withValues(alpha: isLightFinish ? 0.22 : 0.35),
+                          Colors.black.withValues(alpha: 0.0),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+              // Stem Collar (stationary on bezel socket)
+              Positioned(
+                bottom: 0,
+                child: Container(
+                  key: const Key('crown_stem_collar'),
+                  width: 16,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [collarTop, collarBottom],
+                    ),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(1)),
+                  ),
+                ),
+              ),
+              // Polished Metallic Stem Shaft (revealed when pulled out)
+              Positioned(
+                bottom: 4,
+                child: Container(
+                  key: const Key('crown_stem_shaft'),
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        Color(0xFF7A7E85),
+                        Color(0xFFE5E8EC),
+                        Color(0xFFA0A5AC),
+                        Color(0xFF5A5E65),
+                      ],
+                    ),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(1)),
+                    border: Border.all(
+                      color: const Color(0xFF40454D),
+                      width: 0.5,
+                    ),
+                  ),
+                ),
+              ),
+              // Crown Cap with ribbed knurling lines (elevates when pulled out, depresses when pressed)
+              AnimatedBuilder(
+                animation: Listenable.merge([_pressAnimation, _pullAnimation]),
+                builder: (context, child) {
+                  return Positioned(
+                    top: 12.0 + _pressAnimation.value + _pullAnimation.value,
+                    child: child!,
+                  );
+                },
+                child: Container(
+                  key: const Key('crown_cap'),
+                  width: 32,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: widget.gradientColors ??
+                          const [
+                            Color(0xFF424750),
+                            Color(0xFF2A2D33),
+                            Color(0xFF1E2125),
+                          ],
+                    ),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(4)),
+                    border: Border.all(
+                      color: widget.borderColor ?? TaktColors.slateBorder,
+                      width: 1.0,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isLightFinish
+                            ? const Color(0x38000000)
+                            : const Color(0x25000000),
+                        offset: const Offset(0, 1.5),
+                        blurRadius: isLightFinish ? 2.5 : 2.0,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: List.generate(
+                      5,
+                      (index) => Container(
+                        width: 1.5,
+                        height: 8,
+                        // Knurl grooves: dark cuts on light metal, light on dark
+                        color: isLightFinish
+                            ? Colors.black.withValues(alpha: 0.16)
+                            : Colors.white.withValues(alpha: 0.12),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../domain/focus_analytics_models.dart';
+import '../domain/focus_session_rules.dart';
 
 const List<String> _monthNames = [
   'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
@@ -120,14 +121,48 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
   }) {
     final today = DateTime.now();
 
-    switch (period) {
-      case FocusAnalyticsPeriod.day:
-        return _computeDayState(selectedDate, today, sessions);
-      case FocusAnalyticsPeriod.week:
-        return _computeWeekState(selectedDate, today, sessions);
-      case FocusAnalyticsPeriod.month:
-        return _computeMonthState(selectedDate, today, sessions);
+    final base = switch (period) {
+      FocusAnalyticsPeriod.day => _computeDayState(selectedDate, today, sessions),
+      FocusAnalyticsPeriod.week => _computeWeekState(selectedDate, today, sessions),
+      FocusAnalyticsPeriod.month => _computeMonthState(selectedDate, today, sessions),
+    };
+    final streak = FocusStreak.compute(sessions, today);
+    final startOfToday = DateTime(today.year, today.month, today.day);
+    final todayCycles = sessions
+        .where((s) => s.isCompletedCycle && !s.startedAt.isBefore(startOfToday) && _sameDay(s.startedAt, today))
+        .length;
+    return base.copyWith(
+      currentStreak: streak.current,
+      bestStreak: streak.best,
+      todayCycles: todayCycles,
+    );
+  }
+
+  static bool _sameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
+
+  /// Days of [start, end) that have already begun, so averages for the period
+  /// in progress are not diluted by days that haven't happened yet.
+  static int _elapsedDays(DateTime start, DateTime end, DateTime today) {
+    final startOfToday = DateTime(today.year, today.month, today.day);
+    if (!startOfToday.isAfter(start) && !_sameDay(start, startOfToday)) return 0; // future period
+    if (!startOfToday.isBefore(end)) {
+      return DateTime.utc(end.year, end.month, end.day).difference(DateTime.utc(start.year, start.month, start.day)).inDays;
     }
+    return DateTime.utc(today.year, today.month, today.day)
+            .difference(DateTime.utc(start.year, start.month, start.day))
+            .inDays +
+        1;
+  }
+
+  /// (focus minutes, completed cycles, timer sessions) under FocusSessionRules.
+  static (int, int, int) _totals(Iterable<TimerSession> sessions) {
+    var secs = 0, cycles = 0, timerSessions = 0;
+    for (final s in sessions) {
+      secs += s.elapsedSeconds;
+      if (s.isTimerSession) timerSessions++;
+      if (s.isCompletedCycle) cycles++;
+    }
+    return ((secs / 60).round(), cycles, timerSessions);
   }
 
   static FocusAnalyticsState _computeDayState(
@@ -142,15 +177,7 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
         s.startedAt.isAfter(startOfDay.subtract(const Duration(microseconds: 1))) &&
         s.startedAt.isBefore(endOfDay)).toList();
 
-    int totalSecs = 0;
-    int completed = 0;
-    for (final s in daySessions) {
-      totalSecs += s.elapsedSeconds;
-      if (s.isFinished) completed++;
-    }
-
-    final totalMins = (totalSecs / 60).round();
-    final totalCount = daySessions.length;
+    final (totalMins, completed, totalCount) = _totals(daySessions);
     final compRate = totalCount > 0 ? (completed / totalCount) : 0.0;
 
     // 6 4-hour bins: 00h, 04h, 08h, 12h, 16h, 20h
@@ -188,9 +215,18 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
       totalSessions: totalCount,
       completionRate: compRate,
       dailyAverageMinutes: totalMins.toDouble(),
-      bestDayLabel: '$totalMins MIN',
+      bestDayLabel: _peakLabel(binLabels, binMinutes),
       bars: bars,
     );
+  }
+
+  /// "08h · 50m" for the busiest bin, or "—".
+  static String _peakLabel(List<String> labels, List<int> minutes) {
+    var best = -1;
+    for (var i = 0; i < minutes.length; i++) {
+      if (minutes[i] > 0 && (best < 0 || minutes[i] > minutes[best])) best = i;
+    }
+    return best < 0 ? '—' : '${labels[best]} · ${minutes[best]}m';
   }
 
   static FocusAnalyticsState _computeWeekState(
@@ -207,21 +243,16 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
         s.startedAt.isAfter(monday.subtract(const Duration(microseconds: 1))) &&
         s.startedAt.isBefore(endOfWeek)).toList();
 
-    int totalSecs = 0;
-    int completed = 0;
     final dayMinutes = List<int>.filled(7, 0);
-
     for (final s in weekSessions) {
-      totalSecs += s.elapsedSeconds;
-      if (s.isFinished) completed++;
       final dayIndex = (s.startedAt.weekday - 1).clamp(0, 6);
       dayMinutes[dayIndex] += (s.elapsedSeconds / 60).round();
     }
 
-    final totalMins = (totalSecs / 60).round();
-    final totalCount = weekSessions.length;
+    final (totalMins, completed, totalCount) = _totals(weekSessions);
     final compRate = totalCount > 0 ? (completed / totalCount) : 0.0;
-    final dailyAvg = totalMins / 7.0;
+    final elapsed = _elapsedDays(monday, endOfWeek, today);
+    final dailyAvg = elapsed > 0 ? totalMins / elapsed : 0.0;
 
     int maxDayMins = 0;
     int bestDayIndex = -1;
@@ -280,41 +311,43 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
         s.startedAt.isAfter(startOfMonth.subtract(const Duration(microseconds: 1))) &&
         s.startedAt.isBefore(endOfMonth)).toList();
 
-    int totalSecs = 0;
-    int completed = 0;
-    // 5 week buckets: 1-7, 8-14, 15-21, 22-28, 29-31
-    final weekMinutes = List<int>.filled(5, 0);
-
+    // 4 near-equal buckets (31 days -> 8/8/8/7, 28 -> 7 each). The old 5 x 7-day
+    // split left a 0-3 day "W5" that always looked empty.
+    final daysInMonth = DateTime(selectedDate.year, selectedDate.month + 1, 0).day;
+    final bucketLen = (daysInMonth / 4).ceil();
+    int bucketOf(int day) => ((day - 1) ~/ bucketLen).clamp(0, 3);
+    final bucketLabels = List<String>.generate(4, (i) {
+      final from = i * bucketLen + 1;
+      final to = i == 3 ? daysInMonth : (from + bucketLen - 1).clamp(1, daysInMonth);
+      return '$from–$to';
+    });
+    final weekMinutes = List<int>.filled(4, 0);
     for (final s in monthSessions) {
-      totalSecs += s.elapsedSeconds;
-      if (s.isFinished) completed++;
-      final bucket = ((s.startedAt.day - 1) ~/ 7).clamp(0, 4);
-      weekMinutes[bucket] += (s.elapsedSeconds / 60).round();
+      weekMinutes[bucketOf(s.startedAt.day)] += (s.elapsedSeconds / 60).round();
     }
 
-    final totalMins = (totalSecs / 60).round();
-    final totalCount = monthSessions.length;
+    final (totalMins, completed, totalCount) = _totals(monthSessions);
     final compRate = totalCount > 0 ? (completed / totalCount) : 0.0;
-    final daysInMonth = DateTime(selectedDate.year, selectedDate.month + 1, 0).day;
-    final dailyAvg = daysInMonth > 0 ? (totalMins / daysInMonth) : 0.0;
+    final elapsed = _elapsedDays(startOfMonth, endOfMonth, today);
+    final dailyAvg = elapsed > 0 ? (totalMins / elapsed) : 0.0;
 
     int maxWeekMins = 0;
     int bestWeekIndex = -1;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 4; i++) {
       if (weekMinutes[i] > maxWeekMins) {
         maxWeekMins = weekMinutes[i];
         bestWeekIndex = i;
       }
     }
 
-    final bestStr = bestWeekIndex >= 0 ? 'W${bestWeekIndex + 1} · ${maxWeekMins}m' : '—';
+    final bestStr = bestWeekIndex >= 0 ? '${bucketLabels[bestWeekIndex]} · ${maxWeekMins}m' : '—';
     final isCurrentMonth = today.year == selectedDate.year && today.month == selectedDate.month;
-    final currentBucket = ((today.day - 1) ~/ 7).clamp(0, 4);
+    final currentBucket = bucketOf(today.day);
 
     final bars = <FocusBarData>[];
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 4; i++) {
       bars.add(FocusBarData(
-        label: 'W${i + 1}',
+        label: bucketLabels[i],
         valueMinutes: weekMinutes[i],
         isHighlighted: weekMinutes[i] > 0 && weekMinutes[i] == maxWeekMins,
         isToday: isCurrentMonth && currentBucket == i,

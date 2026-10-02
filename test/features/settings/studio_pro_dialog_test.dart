@@ -102,7 +102,7 @@ void main() {
     expect(find.byKey(const ValueKey('material_showcase_plaque')), findsOneWidget);
   });
 
-  testWidgets('showStudioProDialog displays updated Rp 69.000 and Rp 129.000 pricing tiers', (tester) async {
+  testWidgets('showStudioProDialog shows the one-time price without a fake discount', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
@@ -124,7 +124,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Rp 69.000'), findsOneWidget);
-    expect(find.text('Rp 129.000'), findsOneWidget);
-    expect(find.textContaining('47% OFF'), findsOneWidget);
+    expect(find.textContaining('LAUNCH PRICE'), findsOneWidget);
+    // No invented "was" price or discount (misleading-pricing policy).
+    expect(find.text('Rp 129.000'), findsNothing);
+    expect(find.textContaining('% OFF'), findsNothing);
   });
 }

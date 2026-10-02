@@ -10,6 +10,7 @@ void main() {
       final finishTime2 = DateTime(2026, 9, 10, 15, 15);
 
       final session1 = TimerSession(
+        isLockdownOnly: false,
         id: 1,
         targetMinutes: 25,
         elapsedSeconds: 1500,
@@ -19,6 +20,7 @@ void main() {
       );
 
       final session2 = TimerSession(
+        isLockdownOnly: false,
         id: 2,
         targetMinutes: 25,
         elapsedSeconds: 900,
@@ -42,6 +44,7 @@ void main() {
     test('formats session with null finishedAt by deriving finish time from elapsedSeconds', () {
       final startTime = DateTime(2026, 9, 10, 14, 0);
       final session = TimerSession(
+        isLockdownOnly: false,
         id: 3,
         targetMinutes: 25,
         elapsedSeconds: 600,
@@ -61,6 +64,7 @@ void main() {
       final startTime = DateTime(2026, 9, 10, 14, 0);
       final sessions = [
         TimerSession(
+          isLockdownOnly: false,
           id: 1,
           targetMinutes: 25,
           elapsedSeconds: 1500,
@@ -69,6 +73,7 @@ void main() {
           finishedAt: startTime,
         ),
         TimerSession(
+          isLockdownOnly: false,
           id: 2,
           targetMinutes: 25,
           elapsedSeconds: 1500,
@@ -91,14 +96,14 @@ void main() {
 
     test('formats empty sessions list with graceful standby notice', () {
       final log = TelemetryLogFormatter.formatFullAuditLog(
-        editionTitle: 'BRAUN CLASSIC',
+        editionTitle: 'MODERNIST CLASSIC',
         yearLabel: 'MOD. 01 · 1960',
         date: DateTime(2026, 9, 10),
         sessions: [],
       );
 
       expect(log, contains('ZYKL // SESSION TELEMETRY'));
-      expect(log, contains('BRAUN CLASSIC · 1960'));
+      expect(log, contains('MODERNIST CLASSIC · 1960'));
       expect(log, contains('DATE    : 2026-09-10'));
       expect(log, contains('NO SESSIONS RECORDED TODAY'));
       expect(log, contains('STANDBY // COMMENCE CHRONO DIAL'));
@@ -112,6 +117,7 @@ void main() {
 
       final sessions = [
         TimerSession(
+          isLockdownOnly: false,
           id: 1,
           targetMinutes: 25,
           elapsedSeconds: 1500,
@@ -120,6 +126,7 @@ void main() {
           finishedAt: finishTime1,
         ),
         TimerSession(
+          isLockdownOnly: false,
           id: 2,
           targetMinutes: 25,
           elapsedSeconds: 1500,
@@ -130,7 +137,7 @@ void main() {
       ];
 
       final log = TelemetryLogFormatter.formatFullAuditLog(
-        editionTitle: 'BRAUN CLASSIC',
+        editionTitle: 'MODERNIST CLASSIC',
         yearLabel: 'MOD. 01 · 1960',
         date: DateTime(2026, 9, 10),
         sessions: sessions,
@@ -138,7 +145,7 @@ void main() {
 
       expect(log, contains('================================'));
       expect(log, contains('ZYKL // SESSION TELEMETRY'));
-      expect(log, contains('EDITION : BRAUN CLASSIC · 1960'));
+      expect(log, contains('EDITION : MODERNIST CLASSIC · 1960'));
       expect(log, contains('SUMMARY : 2 CYCLES · 50 MIN'));
       expect(log, contains('RATE    : 100% FOCUS EFFICIENCY'));
       expect(log, contains('#01  09:15 - 09:40  [25 MIN]'));

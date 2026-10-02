@@ -322,8 +322,8 @@ class MediaNotificationService : Service() {
 
         val metadata = MediaMetadataCompat.Builder()
             .putString(MediaMetadataCompat.METADATA_KEY_TITLE, formatTrackTitle(currentTrackName))
-            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "ZYKL MONASTIC VINYL")
-            .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, "BRAUN TP-1 SOUNDSCAPE")
+            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "ZYKL · POMODORO FOCUS TIMER")
+            .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, "ZYKL TP-01 SOUNDSCAPE")
             .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, getVinylBitmap())
             .build()
         mediaSession.setMetadata(metadata)
@@ -351,7 +351,7 @@ class MediaNotificationService : Service() {
             .setLargeIcon(getVinylBitmap())
             .setContentTitle(formatTrackTitle(currentTrackName))
             .setContentText(formatTelemetryText(currentPhase, currentRemainingSeconds, currentCycleCount))
-            .setSubText("ZYKL MONASTIC VINYL")
+            .setSubText("ZYKL · POMODORO FOCUS TIMER")
             .setColor(0xFFFF9E00.toInt())
             .setContentIntent(contentPendingIntent)
             .setOngoing(isPlaying)
@@ -404,7 +404,7 @@ class MediaNotificationService : Service() {
         val secs = totalSecs % 60
         val timeStr = String.format("%02d:%02d", mins, secs)
         val cycleStr = "CYCLE ${cycleCount.coerceIn(1, 4)}/4"
-        return "ZYKL BRAUN TP-1 // $phaseLabel $timeStr · $cycleStr"
+        return "ZYKL TP-01 // $phaseLabel $timeStr · $cycleStr"
     }
 
     private fun getVinylBitmap(): Bitmap {
@@ -518,19 +518,19 @@ class MediaNotificationService : Service() {
 
     private fun getAssetPath(trackIndex: Int): String {
         return when (trackIndex) {
-            0 -> "vinyl_lofi_rain.wav"
-            1 -> "vinyl_brown_noise.wav"
-            2 -> "vinyl_library.wav"
-            3 -> "vinyl_kyoto_bamboo.wav"
-            4 -> "vinyl_campfire.wav"
-            5 -> "vinyl_nordic_pines.wav"
-            6 -> "vinyl_warm_tape.wav"
-            7 -> "vinyl_rhodes_velvet.wav"
-            8 -> "vinyl_acoustic_guitar.wav"
-            9 -> "vinyl_ambient_drift.wav"
-            10 -> "vinyl_felt_piano_solo.wav"
-            11 -> "vinyl_modular_clockwork.wav"
-            else -> "vinyl_lofi_rain.wav"
+            0 -> "vinyl_lofi_rain.ogg"
+            1 -> "vinyl_brown_noise.ogg"
+            2 -> "vinyl_library.ogg"
+            3 -> "vinyl_kyoto_bamboo.ogg"
+            4 -> "vinyl_campfire.ogg"
+            5 -> "vinyl_nordic_pines.ogg"
+            6 -> "vinyl_warm_tape.ogg"
+            7 -> "vinyl_rhodes_velvet.ogg"
+            8 -> "vinyl_acoustic_guitar.ogg"
+            9 -> "vinyl_ambient_drift.ogg"
+            10 -> "vinyl_felt_piano_solo.ogg"
+            11 -> "vinyl_modular_clockwork.ogg"
+            else -> "vinyl_lofi_rain.ogg"
         }
     }
 

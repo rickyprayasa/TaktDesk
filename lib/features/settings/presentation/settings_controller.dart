@@ -6,15 +6,23 @@ import '../../../core/audio/audio_service.dart';
 import '../../../core/config/app_security_config.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/haptics/haptic_service.dart';
+import '../../analytics/domain/focus_session_rules.dart';
 import '../../vinyl/presentation/vinyl_controller.dart';
 
 class TodayFocusStats {
+  /// Completed Pomodoro cycles today (see FocusSessionRules).
   final int completedCount;
+
+  /// Focus minutes today, lockdown-only sessions included.
   final int totalMinutes;
+
+  /// Consecutive days with at least one completed cycle.
+  final int streakDays;
 
   const TodayFocusStats({
     this.completedCount = 0,
     this.totalMinutes = 0,
+    this.streakDays = 0,
   });
 
   int get quadrantProgress => completedCount % 4;
@@ -25,10 +33,11 @@ class TodayFocusStats {
       other is TodayFocusStats &&
           runtimeType == other.runtimeType &&
           completedCount == other.completedCount &&
-          totalMinutes == other.totalMinutes;
+          totalMinutes == other.totalMinutes &&
+          streakDays == other.streakDays;
 
   @override
-  int get hashCode => completedCount.hashCode ^ totalMinutes.hashCode;
+  int get hashCode => Object.hash(completedCount, totalMinutes, streakDays);
 }
 
 class LifetimeFocusStats {
@@ -62,6 +71,9 @@ class DeskPreferencesState {
   final String alarmChimeId;
   final bool autoUnlockMonastic;
 
+  /// Completed focus cycles per day the user aims for (1–12, default 4).
+  final int dailyGoalCycles;
+
   const DeskPreferencesState({
     this.soundVolume = 0.8,
     this.foleyEnabled = true,
@@ -71,6 +83,7 @@ class DeskPreferencesState {
     this.isProSimulated = AppSecurityConfig.isProSimulationEnabled,
     this.alarmChimeId = 'braunBell',
     this.autoUnlockMonastic = false,
+    this.dailyGoalCycles = 4,
   });
 
   DeskPreferencesState copyWith({
@@ -82,6 +95,7 @@ class DeskPreferencesState {
     bool? isProSimulated,
     String? alarmChimeId,
     bool? autoUnlockMonastic,
+    int? dailyGoalCycles,
   }) {
     return DeskPreferencesState(
       soundVolume: soundVolume ?? this.soundVolume,
@@ -92,6 +106,7 @@ class DeskPreferencesState {
       isProSimulated: isProSimulated ?? this.isProSimulated,
       alarmChimeId: alarmChimeId ?? this.alarmChimeId,
       autoUnlockMonastic: autoUnlockMonastic ?? this.autoUnlockMonastic,
+      dailyGoalCycles: dailyGoalCycles ?? this.dailyGoalCycles,
     );
   }
 
@@ -107,7 +122,8 @@ class DeskPreferencesState {
           selectedEdition == other.selectedEdition &&
           isProSimulated == other.isProSimulated &&
           alarmChimeId == other.alarmChimeId &&
-          autoUnlockMonastic == other.autoUnlockMonastic;
+          autoUnlockMonastic == other.autoUnlockMonastic &&
+          dailyGoalCycles == other.dailyGoalCycles;
 
   @override
   int get hashCode =>
@@ -118,7 +134,8 @@ class DeskPreferencesState {
       selectedEdition.hashCode ^
       isProSimulated.hashCode ^
       alarmChimeId.hashCode ^
-      autoUnlockMonastic.hashCode;
+      autoUnlockMonastic.hashCode ^
+      dailyGoalCycles.hashCode;
 }
 
 class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
@@ -133,8 +150,13 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
     this._themeController,
     this._vinylController,
   ]) : super(const DeskPreferencesState()) {
-    init();
+    ready = init();
   }
+
+  /// Completes once the saved preferences (theme, edition, haptics, sound) are
+  /// applied. The opening screen waits on this so it never shows the wrong
+  /// finish or fires haptics the user switched off.
+  late final Future<void> ready;
 
   Future<void> init() async {
     final db = _database;
@@ -145,6 +167,7 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
       final effectivePro = AppSecurityConfig.isProSimulationEnabled
           ? pref.isProSimulated
           : false;
+      _themeController?.setDarkMode(pref.isDarkMode);
       _themeController?.setProUnlocked(effectivePro);
       if (!effectivePro) {
         _vinylController?.revertIfProRevoked();
@@ -165,6 +188,7 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
         isProSimulated: effectivePro,
         alarmChimeId: pref.alarmChimeId,
         autoUnlockMonastic: pref.autoUnlockMonastic,
+        dailyGoalCycles: pref.dailyGoalCycles,
       );
       _audioService?.setVolume(pref.soundVolume);
       _audioService?.setFoleyEnabled(pref.foleyEnabled);
@@ -195,6 +219,15 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
     await _database?.updatePreferences(hapticsEnabled: val);
   }
 
+  /// Dark/light chassis finish, persisted so it survives a restart.
+  Future<void> setDarkMode(bool value) async {
+    _themeController?.setDarkMode(value);
+    await _database?.updatePreferences(isDarkMode: value);
+  }
+
+  Future<void> toggleDarkMode() =>
+      setDarkMode(!(_themeController?.state.isDarkMode ?? true));
+
   Future<void> setParallaxEnabled(bool val) async {
     state = state.copyWith(parallaxEnabled: val);
     await _database?.updatePreferences(parallaxEnabled: val);
@@ -224,6 +257,16 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
     );
   }
 
+  static const int minDailyGoal = 1;
+  static const int maxDailyGoal = 12;
+
+  Future<void> setDailyGoalCycles(int cycles) async {
+    final clamped = cycles.clamp(minDailyGoal, maxDailyGoal);
+    if (clamped == state.dailyGoalCycles) return;
+    state = state.copyWith(dailyGoalCycles: clamped);
+    await _database?.updatePreferences(dailyGoalCycles: clamped);
+  }
+
   Future<void> setAlarmChime(String chimeId) async {
     state = state.copyWith(alarmChimeId: chimeId);
     await _database?.updatePreferences(alarmChimeId: chimeId);
@@ -250,13 +293,18 @@ final deskPreferencesControllerProvider =
 
 final todayFocusStatsProvider = StreamProvider<TodayFocusStats>((ref) {
   final db = ref.watch(appDatabaseProvider);
-  return db.watchTodayTimerSessions().map((sessions) {
-    final completed = sessions.where((s) => s.isFinished).length;
-    final totalSeconds = sessions.fold<int>(0, (sum, s) => sum + s.elapsedSeconds);
-    final totalMinutes = (totalSeconds / 60).round();
+  // All sessions (not only today's) so the streak can look back.
+  return db.watchAllTimerSessions().map((sessions) {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final endOfDay = DateTime(now.year, now.month, now.day + 1);
+    final today = sessions.where((s) => !s.startedAt.isBefore(startOfDay) && s.startedAt.isBefore(endOfDay));
+    final completed = today.where((s) => s.isCompletedCycle).length;
+    final totalSeconds = today.fold<int>(0, (sum, s) => sum + s.elapsedSeconds);
     return TodayFocusStats(
       completedCount: completed,
-      totalMinutes: totalMinutes,
+      totalMinutes: (totalSeconds / 60).round(),
+      streakDays: FocusStreak.compute(sessions, now).current,
     );
   });
 });
@@ -264,7 +312,7 @@ final todayFocusStatsProvider = StreamProvider<TodayFocusStats>((ref) {
 final lifetimeFocusStatsProvider = StreamProvider<LifetimeFocusStats>((ref) {
   final db = ref.watch(appDatabaseProvider);
   return db.watchAllTimerSessions().map((sessions) {
-    final totalSessions = sessions.where((s) => s.isFinished).length;
+    final totalSessions = sessions.where((s) => s.isCompletedCycle).length;
     final totalSeconds = sessions.fold<int>(0, (sum, s) => sum + s.elapsedSeconds);
     final totalHours = totalSeconds / 3600.0;
     return LifetimeFocusStats(

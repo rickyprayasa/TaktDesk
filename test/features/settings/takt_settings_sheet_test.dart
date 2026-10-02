@@ -64,7 +64,7 @@ void main() {
       expect(find.text('HARDWARE ACOUSTICS & TACTILITY'), findsOneWidget);
       expect(find.text('SYSTEM CLEARANCE & LOCKDOWN'), findsOneWidget);
       expect(find.text('TELEMETRY & LOGS'), findsOneWidget);
-      expect(find.text('THE BRAUN CREED & LEGAL'), findsOneWidget);
+      expect(find.text('THE DESIGN CREED & LEGAL'), findsOneWidget);
     });
 
     testWidgets('Acoustics section renders volume slider, foley switch, and haptics switch', (tester) async {
@@ -292,13 +292,14 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     });
 
-    testWidgets('Braun creed section displays quote, metadata, and privacy declaration', (tester) async {
+    testWidgets('design creed section displays quote, metadata, and privacy declaration', (tester) async {
       await tester.pumpWidget(buildSheet());
       await tester.pump();
 
       expect(find.textContaining('Weniger, aber besser — Less, but better.'), findsOneWidget);
-      expect(find.textContaining('Dieter Rams'), findsOneWidget);
-      expect(find.textContaining('ZYKL INSTRUMENT // v1.0.0'), findsOneWidget);
+      expect(find.text('— Dieter Rams'), findsOneWidget);
+      expect(find.byKey(const ValueKey('zykl_design_disclaimer')), findsOneWidget);
+      expect(find.textContaining('ZYKL: POMODORO FOCUS TIMER // v1.0.0'), findsOneWidget);
       expect(find.text('CRAFTED BY RSQUARE'), findsOneWidget);
       expect(find.byKey(const ValueKey('zykl_rate_playstore_button')), findsOneWidget);
       expect(find.text('RATE ZYKL ON GOOGLE PLAY'), findsOneWidget);
@@ -310,7 +311,7 @@ void main() {
       );
     });
 
-    testWidgets('Braun creed section displays ZYKL dial logo image asset', (tester) async {
+    testWidgets('design creed section displays ZYKL dial logo image asset', (tester) async {
       await tester.pumpWidget(buildSheet());
       await tester.pump();
 
@@ -384,13 +385,13 @@ void main() {
       await tester.pump();
 
       expect(find.text('HARDWARE EDITIONS // CHASSIS MATERIALITY'), findsOneWidget);
-      expect(find.text('BRAUN CLASSIC'), findsOneWidget);
+      expect(find.text('MODERNIST CLASSIC'), findsOneWidget);
       expect(find.byKey(const ValueKey('edition_next_button')), findsOneWidget);
 
       // Advance through gallery carousel to inspect each edition
       await tester.tap(find.byKey(const ValueKey('edition_next_button')));
       await tester.pumpAndSettle();
-      expect(find.text('BRAUN ATELIER CREAM'), findsOneWidget);
+      expect(find.text('ATELIER CREAM'), findsOneWidget);
 
       await tester.tap(find.byKey(const ValueKey('edition_next_button')));
       await tester.pumpAndSettle();
@@ -757,7 +758,11 @@ void main() {
       expect(find.text('50 MIN'), findsOneWidget);
       expect(find.text('10 MIN'), findsOneWidget);
       expect(find.text('30 MIN'), findsOneWidget);
-      expect(find.text('4 CYCLES'), findsOneWidget);
+      // Cycle count stepper (the daily goal row also shows "4 CYCLES" by default)
+      expect(
+        tester.widget<Text>(find.byKey(const ValueKey('custom_cycle_count_value'))).data,
+        equals('4 CYCLES'),
+      );
     });
 
     testWidgets('Pomodoro Interval Engine steppers are disabled while timer is running', (tester) async {
@@ -797,6 +802,9 @@ void main() {
 
       // Value remains unchanged at 25 MIN
       expect(container.read(chronoDialProvider).customProfile.focusMinutes, equals(25));
+
+      // The controller now owns a running clock; stop it before the test ends
+      container.read(chronoDialProvider.notifier).pause();
     });
 
     testWidgets('TaktSettingsSheet renders 4-tab bar in landscape and switches tabs seamlessly', (tester) async {

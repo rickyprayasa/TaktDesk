@@ -52,14 +52,14 @@ void main() {
       expect(HardwareEdition.braunClassic.textureType, equals(HardwareTextureType.matteAbsGrain));
       expect(HardwareEdition.braunAtelierCream.textureType, equals(HardwareTextureType.matteAbsGrain));
       expect(HardwareEdition.bauhausHeritage.textureType, equals(HardwareTextureType.tubularChrome));
-      expect(HardwareEdition.industrialMonoSteel.textureType, equals(HardwareTextureType.matteAbsGrain));
+      expect(HardwareEdition.industrialMonoSteel.textureType, equals(HardwareTextureType.galvanizedSpangle));
       expect(HardwareEdition.titaniumStealth.textureType, equals(HardwareTextureType.brushedTitanium));
       expect(HardwareEdition.rawBrassPatina.textureType, equals(HardwareTextureType.burnishedBrass));
       expect(HardwareEdition.midCenturyWalnut.textureType, equals(HardwareTextureType.organicWalnut));
       expect(HardwareEdition.forgedCarbon.textureType, equals(HardwareTextureType.forgedCarbon));
-      expect(HardwareEdition.obsidianCeramic.textureType, equals(HardwareTextureType.matteAbsGrain));
+      expect(HardwareEdition.obsidianCeramic.textureType, equals(HardwareTextureType.glossCeramic));
       expect(HardwareEdition.copperHearthAsh.textureType, equals(HardwareTextureType.burnishedBrass));
-      expect(HardwareEdition.britishRacingGreen.textureType, equals(HardwareTextureType.matteAbsGrain));
+      expect(HardwareEdition.britishRacingGreen.textureType, equals(HardwareTextureType.lacquer));
       expect(HardwareEdition.indigoAstronomical.textureType, equals(HardwareTextureType.brushedTitanium));
     });
 
@@ -165,7 +165,7 @@ void main() {
       expect(stateLight.rivetColor, equals(HardwareEdition.braunClassic.rivetLight));
       expect(stateLight.accentColor, equals(HardwareEdition.braunClassic.accentColor));
       expect(stateLight.chassisTextColor, equals(const Color(0xFF1B1E23)));
-      expect(stateLight.chassisMutedTextColor, equals(const Color(0x991B1E23)));
+      expect(stateLight.chassisMutedTextColor, equals(const Color(0xBF1B1E23)));
       expect(stateLight.textureType, equals(HardwareTextureType.matteAbsGrain));
 
       const walnutState = ChassisThemeState(
@@ -175,7 +175,7 @@ void main() {
       expect(walnutState.textureType, equals(HardwareTextureType.organicWalnut));
       expect(walnutState.hasDarkChassis, isFalse);
       expect(walnutState.chassisTextColor, equals(const Color(0xFF1B1E23)));
-      expect(walnutState.chassisMutedTextColor, equals(const Color(0x991B1E23)));
+      expect(walnutState.chassisMutedTextColor, equals(const Color(0xBF1B1E23)));
 
       const carbonState = ChassisThemeState(
         isDarkMode: false,
@@ -184,7 +184,7 @@ void main() {
       expect(carbonState.textureType, equals(HardwareTextureType.forgedCarbon));
       expect(carbonState.hasDarkChassis, isFalse);
       expect(carbonState.chassisTextColor, equals(const Color(0xFF1B1E23)));
-      expect(carbonState.chassisMutedTextColor, equals(const Color(0x991B1E23)));
+      expect(carbonState.chassisMutedTextColor, equals(const Color(0xBF1B1E23)));
 
       expect(stateLight.hasDarkChassis, isFalse);
       expect(stateDark.hasDarkChassis, isTrue);

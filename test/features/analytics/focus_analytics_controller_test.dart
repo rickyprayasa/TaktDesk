@@ -88,8 +88,9 @@ void main() {
     notifier.setPeriod(FocusAnalyticsPeriod.month);
     state = container.read(focusAnalyticsControllerProvider);
     expect(state.period, FocusAnalyticsPeriod.month);
-    expect(state.bars.length, 5); // 5 weeks (W1..W5)
-    expect(state.bars.first.label, 'W1');
+    expect(state.bars.length, 4); // 4 near-equal day ranges (no empty "W5")
+    expect(state.bars.first.label, startsWith('1–'));
+    expect(state.bars.last.label, endsWith('–${DateTime(state.selectedDate.year, state.selectedDate.month + 1, 0).day}'));
 
     // Test previous and next navigation
     final originalDate = state.selectedDate;

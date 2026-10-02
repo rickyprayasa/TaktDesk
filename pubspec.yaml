@@ -1,5 +1,5 @@
 name: takt_desk
-description: "Takt Desk - The Spatial Pocket Desk"
+description: "ZYKL: Pomodoro Focus Timer - an analog focus instrument for Android by RSQUARE"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -10,12 +10,13 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_riverpod: ^2.5.1
+  clock: ^1.1.1
   drift: ^2.18.0
   sqlite3_flutter_libs: ^0.5.24
   path_provider: ^2.1.3
   path: ^1.9.0
   sensors_plus: ^5.0.1
-  rive: ^0.13.0
+  in_app_purchase: ^3.3.1
 
 dev_dependencies:
   flutter_test:
@@ -28,5 +29,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/audio/
-    - assets/rive/
     - assets/images/

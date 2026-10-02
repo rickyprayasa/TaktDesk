@@ -50,3 +50,6 @@ Screenshot/
 # Local distribution builds
 build_outputs/
 
+
+# ElevenLabs API key (never commit)
+11labs.md

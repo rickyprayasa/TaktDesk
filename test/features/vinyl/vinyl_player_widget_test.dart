@@ -229,6 +229,33 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('platter stays still when the system removes animations', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MediaQuery(
+          data: MediaQueryData(disableAnimations: true),
+          child: MaterialApp(
+            home: Scaffold(body: Center(child: VinylPlayerWidget())),
+          ),
+        ),
+      ),
+    );
+    final painterFinder = find.byWidgetPredicate(
+      (widget) => widget is CustomPaint && widget.painter is VinylDeckPainter,
+    );
+    double angle() =>
+        (tester.widget<CustomPaint>(painterFinder).painter as VinylDeckPainter).rotationAngle;
+
+    final before = angle();
+    await tester.tap(painterFinder);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect((tester.widget<CustomPaint>(painterFinder).painter as VinylDeckPainter).needleOnRecord, isTrue);
+    expect(angle(), equals(before));
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
   group('VinylDeckPainter theming & repainting', () {
     test('shouldRepaint returns true when tonearmGradient, armPivotBorderColor, or labelColor changes', () {
       final base = VinylDeckPainter(
@@ -413,8 +440,8 @@ void main() {
 
       final themeLight = container.read(chassisThemeProvider);
 
-      // Verify title "BRAUN TP-1" text color in Light Mode
-      final titleTextLight = tester.widget<Text>(find.text('BRAUN TP-1'));
+      // Verify title "ZYKL TP-01" text color in Light Mode
+      final titleTextLight = tester.widget<Text>(find.text('ZYKL TP-01'));
       expect(titleTextLight.style?.color, equals(themeLight.chassisTextColor));
 
       // Verify "33 RPM" text color when needle is up
@@ -431,8 +458,8 @@ void main() {
 
       final themeDark = container.read(chassisThemeProvider);
 
-      // Verify title "BRAUN TP-1" text color in Dark Mode
-      final titleTextDark = tester.widget<Text>(find.text('BRAUN TP-1'));
+      // Verify title "ZYKL TP-01" text color in Dark Mode
+      final titleTextDark = tester.widget<Text>(find.text('ZYKL TP-01'));
       expect(titleTextDark.style?.color, equals(themeDark.chassisTextColor));
 
       // Verify "33 RPM" text color when needle is up in Dark Mode

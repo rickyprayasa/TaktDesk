@@ -590,7 +590,7 @@ class _CompactRecordSleeveCard extends StatelessWidget {
                   fontSize: 7.5,
                   fontWeight: FontWeight.w600,
                   color: track.isPremium
-                      ? TaktColors.filamentAmber
+                      ? TaktColors.amberText(isDark)
                       : chassisMutedTextColor,
                 ),
               ),
@@ -628,7 +628,7 @@ class _CompactRecordSleeveCard extends StatelessWidget {
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                             color: isSelected
-                                ? TaktColors.filamentAmber
+                                ? TaktColors.amberText(isDark)
                                 : chassisTextColor,
                           ),
                           maxLines: 1,
@@ -680,13 +680,13 @@ class _CompactRecordSleeveCard extends StatelessWidget {
             width: 1.0,
           ),
         ),
-        child: const Text(
+        child: Text(
           '[ ON PLATTER ]',
           style: TextStyle(
             fontFamily: 'monospace',
             fontSize: 8.5,
             fontWeight: FontWeight.w700,
-            color: TaktColors.filamentAmber,
+            color: TaktColors.amberText(isDark),
           ),
         ),
       );
@@ -707,13 +707,13 @@ class _CompactRecordSleeveCard extends StatelessWidget {
               width: 0.8,
             ),
           ),
-          child: const Text(
+          child: Text(
             '[ STUDIO PRO 🔒 ]',
             style: TextStyle(
               fontFamily: 'monospace',
               fontSize: 8.5,
               fontWeight: FontWeight.w700,
-              color: TaktColors.filamentAmber,
+              color: TaktColors.amberText(isDark),
             ),
           ),
         ),

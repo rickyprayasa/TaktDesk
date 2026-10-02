@@ -49,7 +49,7 @@ void main() {
     await tester.pump();
 
     final plateSurface = find.byKey(const ValueKey('desk_spec_plate_surface'));
-    expect(find.descendant(of: plateSurface, matching: find.text('BRAUN CLASSIC')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.text('MODERNIST CLASSIC')), findsOneWidget);
     expect(find.descendant(of: plateSurface, matching: find.textContaining('MOD. 01')), findsOneWidget);
     expect(find.descendant(of: plateSurface, matching: find.textContaining('1960')), findsOneWidget);
     expect(find.descendant(of: plateSurface, matching: find.textContaining('GERMANIC MINIMALISM')), findsOneWidget);
@@ -165,7 +165,8 @@ void main() {
       expect((led.decoration as BoxDecoration).color, equals(TaktColors.basaltSlate));
     }
 
-    await tester.tap(find.byKey(const ValueKey('desk_spec_plate_surface')));
+    // Left side of the plate (the TODAY tally on the right opens the goal sheet)
+    await tester.tapAt(tester.getTopLeft(find.byKey(const ValueKey('desk_spec_plate_surface'))) + const Offset(40, 20));
     await tester.pumpAndSettle();
 
     expect(mockAudio.playedEffects, contains(SoundEffect.dialClick));
@@ -194,7 +195,7 @@ void main() {
     await tester.pump();
 
     final plateSurface = find.byKey(const ValueKey('desk_spec_plate_surface'));
-    expect(find.descendant(of: plateSurface, matching: find.text('BRAUN CLASSIC')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.text('MODERNIST CLASSIC')), findsOneWidget);
     expect(find.descendant(of: plateSurface, matching: find.textContaining('3 / 4 CYCLES')), findsOneWidget);
 
     for (int i = 0; i < 3; i++) {
@@ -279,7 +280,7 @@ void main() {
 
     final plateSurface = find.byKey(const ValueKey('desk_spec_plate_surface'));
     // Verify all text elements are present
-    expect(find.descendant(of: plateSurface, matching: find.text('BRAUN CLASSIC')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.text('MODERNIST CLASSIC')), findsOneWidget);
     expect(find.descendant(of: plateSurface, matching: find.textContaining('MOD. 01')), findsOneWidget);
     expect(find.descendant(of: plateSurface, matching: find.textContaining('1960')), findsOneWidget);
     expect(find.descendant(of: plateSurface, matching: find.textContaining('GERMANIC MINIMALISM')), findsOneWidget);
@@ -357,8 +358,8 @@ void main() {
     expect(find.byType(DeskTelemetryDialog), findsNothing);
     expect(find.byType(DeskTelemetrySlipWidget), findsNothing);
 
-    // Tap plate to open modal dialog
-    await tester.tap(find.byKey(const ValueKey('desk_spec_plate_surface')));
+    // Tap the plate (left side; the TODAY tally on the right opens the goal sheet)
+    await tester.tapAt(tester.getTopLeft(find.byKey(const ValueKey('desk_spec_plate_surface'))) + const Offset(40, 20));
     await tester.pumpAndSettle();
 
     // Dialog is now displayed centered on screen
@@ -379,7 +380,7 @@ void main() {
     expect(find.byKey(const ValueKey('desk_spec_plate_surface')), findsOneWidget);
 
     // Tap plate again to open and dismiss via barrier tap
-    await tester.tap(find.byKey(const ValueKey('desk_spec_plate_surface')));
+    await tester.tapAt(tester.getTopLeft(find.byKey(const ValueKey('desk_spec_plate_surface'))) + const Offset(40, 20));
     await tester.pumpAndSettle();
     expect(find.byType(DeskTelemetryDialog), findsOneWidget);
 
@@ -388,5 +389,67 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(DeskTelemetryDialog), findsNothing);
   });
-}
 
+  testWidgets('DeskSpecPlateWidget follows the daily goal and shows the streak', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          todayTimerSessionsStreamProvider.overrideWith((ref) => Stream.value([])),
+          todayFocusStatsProvider.overrideWith(
+            (ref) => Stream.value(const TodayFocusStats(completedCount: 3, totalMinutes: 75, streakDays: 5)),
+          ),
+          deskPreferencesControllerProvider.overrideWith((ref) {
+            final c = DeskPreferencesController();
+            c.state = c.state.copyWith(dailyGoalCycles: 6);
+            return c;
+          }),
+        ],
+        child: const MaterialApp(home: Scaffold(body: DeskSpecPlateWidget())),
+      ),
+    );
+    await tester.pump();
+
+    final plateSurface = find.byKey(const ValueKey('desk_spec_plate_surface'));
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('3 / 6 CYCLES')), findsOneWidget);
+    expect(find.descendant(of: plateSurface, matching: find.textContaining('5D STREAK')), findsOneWidget);
+    // 3 of 6 = half the goal -> 2 of the 4 LEDs lit
+    int lit = 0;
+    for (var i = 0; i < 4; i++) {
+      final box = tester.widget<Container>(find.byKey(ValueKey('spec_plate_led_$i'))).decoration as BoxDecoration;
+      if (box.boxShadow != null) lit++;
+    }
+    expect(lit, 2);
+  });
+
+  test('setDailyGoalCycles clamps to 1..12', () async {
+    final c = DeskPreferencesController();
+    await c.setDailyGoalCycles(0);
+    expect(c.state.dailyGoalCycles, 1);
+    await c.setDailyGoalCycles(99);
+    expect(c.state.dailyGoalCycles, 12);
+    c.dispose();
+  });
+
+  testWidgets('tapping the TODAY tally opens the daily goal sheet', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          todayTimerSessionsStreamProvider.overrideWith((ref) => Stream.value([])),
+          todayFocusStatsProvider.overrideWith(
+            (ref) => Stream.value(const TodayFocusStats(completedCount: 1, totalMinutes: 25, streakDays: 2)),
+          ),
+        ],
+        child: const MaterialApp(home: Scaffold(body: DeskSpecPlateWidget())),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('desk_spec_plate_goal')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('daily_goal_sheet')), findsOneWidget);
+    expect(find.text('4 CYCLES'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('sheet_daily_goal_plus')));
+    await tester.pumpAndSettle();
+    expect(find.text('5 CYCLES'), findsOneWidget);
+    expect(find.textContaining('1 / 5 CYCLES'), findsWidgets);
+  });
+}

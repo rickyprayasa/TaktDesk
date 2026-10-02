@@ -380,7 +380,12 @@ class _ArchiveDrawerWidgetState extends ConsumerState<ArchiveDrawerWidget> {
             borderRadius: BorderRadius.circular(3),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
-              child: Icon(Icons.close, size: 12, color: themeState.chassisMutedTextColor),
+              child: Icon(
+                Icons.close,
+                size: 12,
+                semanticLabel: 'Delete archived task',
+                color: themeState.chassisMutedTextColor,
+              ),
             ),
           ),
         ],

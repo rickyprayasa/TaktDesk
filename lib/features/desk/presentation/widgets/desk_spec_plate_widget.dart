@@ -6,6 +6,7 @@ import '../../../../core/audio/audio_service.dart';
 import '../../../../core/audio/sound_effect.dart';
 import '../../../../core/haptics/haptic_service.dart';
 import '../../../settings/presentation/settings_controller.dart';
+import '../../../settings/presentation/takt_settings_sheet.dart';
 import 'desk_telemetry_dialog.dart';
 
 /// Industrial spec plate anchoring the lower desk canvas.
@@ -26,9 +27,9 @@ class DeskSpecPlateWidget extends ConsumerWidget {
     final stats = statsAsync.valueOrNull ?? const TodayFocusStats(completedCount: 0, totalMinutes: 0);
 
     final completedCount = stats.completedCount;
-    final activeLeds = (completedCount > 0 && completedCount % 4 == 0)
-        ? 4
-        : (completedCount % 4);
+    final goal = ref.watch(deskPreferencesControllerProvider.select((p) => p.dailyGoalCycles));
+    // The 4 LEDs are quarters of the daily goal; all lit once the goal is met.
+    final activeLeds = goal <= 0 ? 0 : ((completedCount.clamp(0, goal) * 4) / goal).floor();
 
     final plateLuminance = (themeState.edition.plateGradientLight[0].computeLuminance() +
             themeState.edition.plateGradientLight.last.computeLuminance()) /
@@ -146,8 +147,18 @@ class DeskSpecPlateWidget extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Right Column: Daily Focus Tally & Quadrant LEDs
-                    Column(
+                    // Right Column: Daily Focus Tally & Quadrant LEDs. Its own tap target
+                    // opens the daily goal sheet; the rest of the plate opens the log.
+                    InkWell(
+                      key: const ValueKey('desk_spec_plate_goal'),
+                      borderRadius: BorderRadius.circular(4),
+                      onTap: () {
+                        ref.read(audioServiceProvider).play(SoundEffect.dialClick);
+                        showDailyGoalSheet(context);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(2),
+                        child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
@@ -192,7 +203,7 @@ class DeskSpecPlateWidget extends ConsumerWidget {
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerRight,
                           child: Text(
-                            'TODAY: ${stats.completedCount} / 4 CYCLES',
+                            'TODAY: ${stats.completedCount} / $goal CYCLES',
                             maxLines: 1,
                             style: TextStyle(
                               fontFamily: 'monospace',
@@ -208,7 +219,9 @@ class DeskSpecPlateWidget extends ConsumerWidget {
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerRight,
                           child: Text(
-                            '${stats.totalMinutes} MIN FOCUSED',
+                            stats.streakDays > 0
+                                ? '${stats.totalMinutes} MIN FOCUSED · ${stats.streakDays}D STREAK'
+                                : '${stats.totalMinutes} MIN FOCUSED',
                             maxLines: 1,
                             style: TextStyle(
                               fontFamily: 'monospace',
@@ -220,6 +233,8 @@ class DeskSpecPlateWidget extends ConsumerWidget {
                           ),
                         ),
                       ],
+                    ),
+                      ),
                     ),
                   ],
                 ),

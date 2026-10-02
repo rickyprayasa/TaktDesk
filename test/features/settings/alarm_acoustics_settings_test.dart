@@ -10,9 +10,16 @@ class MockAudioService extends AudioService {
   final List<String> playedChimes = [];
   MockAudioService() : super(isMock: true);
 
+  final List<String> previewedChimes = [];
+
   @override
   void playAlarmChime(String chimeId) {
     playedChimes.add(chimeId);
+  }
+
+  @override
+  void previewAlarmChime(String chimeId) {
+    previewedChimes.add(chimeId);
   }
 }
 
@@ -59,14 +66,14 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('ALARM ACOUSTICS'), findsOneWidget);
-      expect(find.text('BRAUN DUAL-HAMMER'), findsOneWidget);
+      expect(find.text('TWIN-HAMMER BELL'), findsOneWidget);
       expect(find.text('BRASS DESK BELL'), findsOneWidget);
       expect(find.text('TIBETAN SINGING BOWL'), findsOneWidget);
       expect(find.text('ZEN TEMPLE GONG'), findsOneWidget);
       expect(find.text('TUBULAR CHIME'), findsOneWidget);
     });
 
-    testWidgets('audition play button triggers playAlarmChime on AudioService', (tester) async {
+    testWidgets('audition play button previews the chime (not the de-duplicated alarm path)', (tester) async {
       await tester.pumpWidget(buildSheet());
       await tester.pumpAndSettle();
 
@@ -78,7 +85,8 @@ void main() {
       await tester.tap(previewButton);
       await tester.pump();
 
-      expect(mockAudioService.playedChimes, contains('deskBell'));
+      expect(mockAudioService.previewedChimes, contains('deskBell'));
+      expect(mockAudioService.playedChimes, isEmpty);
     });
 
     testWidgets('tapping a chime equips it directly', (tester) async {
@@ -93,7 +101,8 @@ void main() {
       await tester.tap(tile);
       await tester.pumpAndSettle();
 
-      expect(mockAudioService.playedChimes, contains('deskBell'));
+      expect(mockAudioService.previewedChimes, contains('deskBell'));
+      expect(mockAudioService.playedChimes, isEmpty);
     });
 
     testWidgets('tapping meditative/organic chimes equips directly without PRO block', (tester) async {
@@ -108,7 +117,8 @@ void main() {
       await tester.tap(proTile);
       await tester.pumpAndSettle();
 
-      expect(mockAudioService.playedChimes, contains('tibetanBowl'));
+      expect(mockAudioService.previewedChimes, contains('tibetanBowl'));
+      expect(mockAudioService.playedChimes, isEmpty);
     });
   });
 }

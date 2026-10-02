@@ -105,14 +105,14 @@ Future<void> showFeedbackDispatchDialog(
             children: [
               RsquareHardwarePlaque(size: 22, isDark: isDark, showRivets: false),
               const SizedBox(width: 5),
-              const Text(
+              Text(
                 'RSQUARE',
                 style: TextStyle(
                   fontFamily: 'monospace',
                   fontSize: 8.5,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
-                  color: TaktColors.filamentAmber,
+                  color: TaktColors.amberText(isDark),
                 ),
               ),
             ],
@@ -254,7 +254,7 @@ Future<void> _dispatchCategoryEmail(_FeedbackCategory cat) async {
     ..write(cat.bodyHint)
     ..writeln('--------------------------------------------')
     ..writeln('// SYSTEM DIAGNOSTICS TELEMETRY')
-    ..writeln('App: ZYKL Monastic Focus Instrument')
+    ..writeln('App: ZYKL: Pomodoro Focus Timer')
     ..writeln('Version: $versionName (Build $versionCode)')
     ..writeln('Package: com.zykl.app')
     ..writeln('Device: $manufacturer $model ($brand)')

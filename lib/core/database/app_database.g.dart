@@ -439,9 +439,26 @@ class $TimerSessionsTable extends TimerSessions
   late final GeneratedColumn<DateTime> finishedAt = GeneratedColumn<DateTime>(
       'finished_at', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _isLockdownOnlyMeta =
+      const VerificationMeta('isLockdownOnly');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, targetMinutes, elapsedSeconds, isFinished, startedAt, finishedAt];
+  late final GeneratedColumn<bool> isLockdownOnly = GeneratedColumn<bool>(
+      'is_lockdown_only', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("is_lockdown_only" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        targetMinutes,
+        elapsedSeconds,
+        isFinished,
+        startedAt,
+        finishedAt,
+        isLockdownOnly
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -487,6 +504,12 @@ class $TimerSessionsTable extends TimerSessions
           finishedAt.isAcceptableOrUnknown(
               data['finished_at']!, _finishedAtMeta));
     }
+    if (data.containsKey('is_lockdown_only')) {
+      context.handle(
+          _isLockdownOnlyMeta,
+          isLockdownOnly.isAcceptableOrUnknown(
+              data['is_lockdown_only']!, _isLockdownOnlyMeta));
+    }
     return context;
   }
 
@@ -508,6 +531,8 @@ class $TimerSessionsTable extends TimerSessions
           .read(DriftSqlType.dateTime, data['${effectivePrefix}started_at'])!,
       finishedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}finished_at']),
+      isLockdownOnly: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_lockdown_only'])!,
     );
   }
 
@@ -524,13 +549,18 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
   final bool isFinished;
   final DateTime startedAt;
   final DateTime? finishedAt;
+
+  /// Monastic Lockdown used WITHOUT a running timer (schema v8). Counts as focus
+  /// minutes but not as a Pomodoro cycle, and is excluded from completion rate.
+  final bool isLockdownOnly;
   const TimerSession(
       {required this.id,
       required this.targetMinutes,
       required this.elapsedSeconds,
       required this.isFinished,
       required this.startedAt,
-      this.finishedAt});
+      this.finishedAt,
+      required this.isLockdownOnly});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -542,6 +572,7 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
     if (!nullToAbsent || finishedAt != null) {
       map['finished_at'] = Variable<DateTime>(finishedAt);
     }
+    map['is_lockdown_only'] = Variable<bool>(isLockdownOnly);
     return map;
   }
 
@@ -555,6 +586,7 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
       finishedAt: finishedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(finishedAt),
+      isLockdownOnly: Value(isLockdownOnly),
     );
   }
 
@@ -568,6 +600,7 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
       isFinished: serializer.fromJson<bool>(json['isFinished']),
       startedAt: serializer.fromJson<DateTime>(json['startedAt']),
       finishedAt: serializer.fromJson<DateTime?>(json['finishedAt']),
+      isLockdownOnly: serializer.fromJson<bool>(json['isLockdownOnly']),
     );
   }
   @override
@@ -580,6 +613,7 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
       'isFinished': serializer.toJson<bool>(isFinished),
       'startedAt': serializer.toJson<DateTime>(startedAt),
       'finishedAt': serializer.toJson<DateTime?>(finishedAt),
+      'isLockdownOnly': serializer.toJson<bool>(isLockdownOnly),
     };
   }
 
@@ -589,7 +623,8 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
           int? elapsedSeconds,
           bool? isFinished,
           DateTime? startedAt,
-          Value<DateTime?> finishedAt = const Value.absent()}) =>
+          Value<DateTime?> finishedAt = const Value.absent(),
+          bool? isLockdownOnly}) =>
       TimerSession(
         id: id ?? this.id,
         targetMinutes: targetMinutes ?? this.targetMinutes,
@@ -597,6 +632,7 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
         isFinished: isFinished ?? this.isFinished,
         startedAt: startedAt ?? this.startedAt,
         finishedAt: finishedAt.present ? finishedAt.value : this.finishedAt,
+        isLockdownOnly: isLockdownOnly ?? this.isLockdownOnly,
       );
   TimerSession copyWithCompanion(TimerSessionsCompanion data) {
     return TimerSession(
@@ -612,6 +648,9 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
       startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
       finishedAt:
           data.finishedAt.present ? data.finishedAt.value : this.finishedAt,
+      isLockdownOnly: data.isLockdownOnly.present
+          ? data.isLockdownOnly.value
+          : this.isLockdownOnly,
     );
   }
 
@@ -623,14 +662,15 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
           ..write('elapsedSeconds: $elapsedSeconds, ')
           ..write('isFinished: $isFinished, ')
           ..write('startedAt: $startedAt, ')
-          ..write('finishedAt: $finishedAt')
+          ..write('finishedAt: $finishedAt, ')
+          ..write('isLockdownOnly: $isLockdownOnly')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, targetMinutes, elapsedSeconds, isFinished, startedAt, finishedAt);
+  int get hashCode => Object.hash(id, targetMinutes, elapsedSeconds, isFinished,
+      startedAt, finishedAt, isLockdownOnly);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -640,7 +680,8 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
           other.elapsedSeconds == this.elapsedSeconds &&
           other.isFinished == this.isFinished &&
           other.startedAt == this.startedAt &&
-          other.finishedAt == this.finishedAt);
+          other.finishedAt == this.finishedAt &&
+          other.isLockdownOnly == this.isLockdownOnly);
 }
 
 class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
@@ -650,6 +691,7 @@ class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
   final Value<bool> isFinished;
   final Value<DateTime> startedAt;
   final Value<DateTime?> finishedAt;
+  final Value<bool> isLockdownOnly;
   const TimerSessionsCompanion({
     this.id = const Value.absent(),
     this.targetMinutes = const Value.absent(),
@@ -657,6 +699,7 @@ class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
     this.isFinished = const Value.absent(),
     this.startedAt = const Value.absent(),
     this.finishedAt = const Value.absent(),
+    this.isLockdownOnly = const Value.absent(),
   });
   TimerSessionsCompanion.insert({
     this.id = const Value.absent(),
@@ -665,6 +708,7 @@ class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
     this.isFinished = const Value.absent(),
     this.startedAt = const Value.absent(),
     this.finishedAt = const Value.absent(),
+    this.isLockdownOnly = const Value.absent(),
   })  : targetMinutes = Value(targetMinutes),
         elapsedSeconds = Value(elapsedSeconds);
   static Insertable<TimerSession> custom({
@@ -674,6 +718,7 @@ class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
     Expression<bool>? isFinished,
     Expression<DateTime>? startedAt,
     Expression<DateTime>? finishedAt,
+    Expression<bool>? isLockdownOnly,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -682,6 +727,7 @@ class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
       if (isFinished != null) 'is_finished': isFinished,
       if (startedAt != null) 'started_at': startedAt,
       if (finishedAt != null) 'finished_at': finishedAt,
+      if (isLockdownOnly != null) 'is_lockdown_only': isLockdownOnly,
     });
   }
 
@@ -691,7 +737,8 @@ class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
       Value<int>? elapsedSeconds,
       Value<bool>? isFinished,
       Value<DateTime>? startedAt,
-      Value<DateTime?>? finishedAt}) {
+      Value<DateTime?>? finishedAt,
+      Value<bool>? isLockdownOnly}) {
     return TimerSessionsCompanion(
       id: id ?? this.id,
       targetMinutes: targetMinutes ?? this.targetMinutes,
@@ -699,6 +746,7 @@ class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
       isFinished: isFinished ?? this.isFinished,
       startedAt: startedAt ?? this.startedAt,
       finishedAt: finishedAt ?? this.finishedAt,
+      isLockdownOnly: isLockdownOnly ?? this.isLockdownOnly,
     );
   }
 
@@ -723,6 +771,9 @@ class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
     if (finishedAt.present) {
       map['finished_at'] = Variable<DateTime>(finishedAt.value);
     }
+    if (isLockdownOnly.present) {
+      map['is_lockdown_only'] = Variable<bool>(isLockdownOnly.value);
+    }
     return map;
   }
 
@@ -734,7 +785,8 @@ class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
           ..write('elapsedSeconds: $elapsedSeconds, ')
           ..write('isFinished: $isFinished, ')
           ..write('startedAt: $startedAt, ')
-          ..write('finishedAt: $finishedAt')
+          ..write('finishedAt: $finishedAt, ')
+          ..write('isLockdownOnly: $isLockdownOnly')
           ..write(')'))
         .toString();
   }
@@ -837,6 +889,24 @@ class $DeskPreferencesTable extends DeskPreferences
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'CHECK ("auto_unlock_monastic" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _isDarkModeMeta =
+      const VerificationMeta('isDarkMode');
+  @override
+  late final GeneratedColumn<bool> isDarkMode = GeneratedColumn<bool>(
+      'is_dark_mode', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("is_dark_mode" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _dailyGoalCyclesMeta =
+      const VerificationMeta('dailyGoalCycles');
+  @override
+  late final GeneratedColumn<int> dailyGoalCycles = GeneratedColumn<int>(
+      'daily_goal_cycles', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(4));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -848,7 +918,9 @@ class $DeskPreferencesTable extends DeskPreferences
         selectedEdition,
         isProSimulated,
         alarmChimeId,
-        autoUnlockMonastic
+        autoUnlockMonastic,
+        isDarkMode,
+        dailyGoalCycles
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -918,6 +990,18 @@ class $DeskPreferencesTable extends DeskPreferences
           autoUnlockMonastic.isAcceptableOrUnknown(
               data['auto_unlock_monastic']!, _autoUnlockMonasticMeta));
     }
+    if (data.containsKey('is_dark_mode')) {
+      context.handle(
+          _isDarkModeMeta,
+          isDarkMode.isAcceptableOrUnknown(
+              data['is_dark_mode']!, _isDarkModeMeta));
+    }
+    if (data.containsKey('daily_goal_cycles')) {
+      context.handle(
+          _dailyGoalCyclesMeta,
+          dailyGoalCycles.isAcceptableOrUnknown(
+              data['daily_goal_cycles']!, _dailyGoalCyclesMeta));
+    }
     return context;
   }
 
@@ -948,6 +1032,10 @@ class $DeskPreferencesTable extends DeskPreferences
           .read(DriftSqlType.string, data['${effectivePrefix}alarm_chime_id'])!,
       autoUnlockMonastic: attachedDatabase.typeMapping.read(
           DriftSqlType.bool, data['${effectivePrefix}auto_unlock_monastic'])!,
+      isDarkMode: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_dark_mode'])!,
+      dailyGoalCycles: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}daily_goal_cycles'])!,
     );
   }
 
@@ -968,6 +1056,10 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
   final bool isProSimulated;
   final String alarmChimeId;
   final bool autoUnlockMonastic;
+  final bool isDarkMode;
+
+  /// Completed focus cycles per day the user aims for (schema v8).
+  final int dailyGoalCycles;
   const DeskPreference(
       {required this.id,
       required this.soundVolume,
@@ -978,7 +1070,9 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       required this.selectedEdition,
       required this.isProSimulated,
       required this.alarmChimeId,
-      required this.autoUnlockMonastic});
+      required this.autoUnlockMonastic,
+      required this.isDarkMode,
+      required this.dailyGoalCycles});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -992,6 +1086,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
     map['is_pro_simulated'] = Variable<bool>(isProSimulated);
     map['alarm_chime_id'] = Variable<String>(alarmChimeId);
     map['auto_unlock_monastic'] = Variable<bool>(autoUnlockMonastic);
+    map['is_dark_mode'] = Variable<bool>(isDarkMode);
+    map['daily_goal_cycles'] = Variable<int>(dailyGoalCycles);
     return map;
   }
 
@@ -1007,6 +1103,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       isProSimulated: Value(isProSimulated),
       alarmChimeId: Value(alarmChimeId),
       autoUnlockMonastic: Value(autoUnlockMonastic),
+      isDarkMode: Value(isDarkMode),
+      dailyGoalCycles: Value(dailyGoalCycles),
     );
   }
 
@@ -1025,6 +1123,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       isProSimulated: serializer.fromJson<bool>(json['isProSimulated']),
       alarmChimeId: serializer.fromJson<String>(json['alarmChimeId']),
       autoUnlockMonastic: serializer.fromJson<bool>(json['autoUnlockMonastic']),
+      isDarkMode: serializer.fromJson<bool>(json['isDarkMode']),
+      dailyGoalCycles: serializer.fromJson<int>(json['dailyGoalCycles']),
     );
   }
   @override
@@ -1042,6 +1142,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       'isProSimulated': serializer.toJson<bool>(isProSimulated),
       'alarmChimeId': serializer.toJson<String>(alarmChimeId),
       'autoUnlockMonastic': serializer.toJson<bool>(autoUnlockMonastic),
+      'isDarkMode': serializer.toJson<bool>(isDarkMode),
+      'dailyGoalCycles': serializer.toJson<int>(dailyGoalCycles),
     };
   }
 
@@ -1055,7 +1157,9 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           String? selectedEdition,
           bool? isProSimulated,
           String? alarmChimeId,
-          bool? autoUnlockMonastic}) =>
+          bool? autoUnlockMonastic,
+          bool? isDarkMode,
+          int? dailyGoalCycles}) =>
       DeskPreference(
         id: id ?? this.id,
         soundVolume: soundVolume ?? this.soundVolume,
@@ -1068,6 +1172,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
         isProSimulated: isProSimulated ?? this.isProSimulated,
         alarmChimeId: alarmChimeId ?? this.alarmChimeId,
         autoUnlockMonastic: autoUnlockMonastic ?? this.autoUnlockMonastic,
+        isDarkMode: isDarkMode ?? this.isDarkMode,
+        dailyGoalCycles: dailyGoalCycles ?? this.dailyGoalCycles,
       );
   DeskPreference copyWithCompanion(DeskPreferencesCompanion data) {
     return DeskPreference(
@@ -1098,6 +1204,11 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       autoUnlockMonastic: data.autoUnlockMonastic.present
           ? data.autoUnlockMonastic.value
           : this.autoUnlockMonastic,
+      isDarkMode:
+          data.isDarkMode.present ? data.isDarkMode.value : this.isDarkMode,
+      dailyGoalCycles: data.dailyGoalCycles.present
+          ? data.dailyGoalCycles.value
+          : this.dailyGoalCycles,
     );
   }
 
@@ -1113,7 +1224,9 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           ..write('selectedEdition: $selectedEdition, ')
           ..write('isProSimulated: $isProSimulated, ')
           ..write('alarmChimeId: $alarmChimeId, ')
-          ..write('autoUnlockMonastic: $autoUnlockMonastic')
+          ..write('autoUnlockMonastic: $autoUnlockMonastic, ')
+          ..write('isDarkMode: $isDarkMode, ')
+          ..write('dailyGoalCycles: $dailyGoalCycles')
           ..write(')'))
         .toString();
   }
@@ -1129,7 +1242,9 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       selectedEdition,
       isProSimulated,
       alarmChimeId,
-      autoUnlockMonastic);
+      autoUnlockMonastic,
+      isDarkMode,
+      dailyGoalCycles);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1143,7 +1258,9 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           other.selectedEdition == this.selectedEdition &&
           other.isProSimulated == this.isProSimulated &&
           other.alarmChimeId == this.alarmChimeId &&
-          other.autoUnlockMonastic == this.autoUnlockMonastic);
+          other.autoUnlockMonastic == this.autoUnlockMonastic &&
+          other.isDarkMode == this.isDarkMode &&
+          other.dailyGoalCycles == this.dailyGoalCycles);
 }
 
 class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
@@ -1157,6 +1274,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
   final Value<bool> isProSimulated;
   final Value<String> alarmChimeId;
   final Value<bool> autoUnlockMonastic;
+  final Value<bool> isDarkMode;
+  final Value<int> dailyGoalCycles;
   const DeskPreferencesCompanion({
     this.id = const Value.absent(),
     this.soundVolume = const Value.absent(),
@@ -1168,6 +1287,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     this.isProSimulated = const Value.absent(),
     this.alarmChimeId = const Value.absent(),
     this.autoUnlockMonastic = const Value.absent(),
+    this.isDarkMode = const Value.absent(),
+    this.dailyGoalCycles = const Value.absent(),
   });
   DeskPreferencesCompanion.insert({
     this.id = const Value.absent(),
@@ -1180,6 +1301,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     this.isProSimulated = const Value.absent(),
     this.alarmChimeId = const Value.absent(),
     this.autoUnlockMonastic = const Value.absent(),
+    this.isDarkMode = const Value.absent(),
+    this.dailyGoalCycles = const Value.absent(),
   });
   static Insertable<DeskPreference> custom({
     Expression<int>? id,
@@ -1192,6 +1315,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     Expression<bool>? isProSimulated,
     Expression<String>? alarmChimeId,
     Expression<bool>? autoUnlockMonastic,
+    Expression<bool>? isDarkMode,
+    Expression<int>? dailyGoalCycles,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1206,6 +1331,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       if (alarmChimeId != null) 'alarm_chime_id': alarmChimeId,
       if (autoUnlockMonastic != null)
         'auto_unlock_monastic': autoUnlockMonastic,
+      if (isDarkMode != null) 'is_dark_mode': isDarkMode,
+      if (dailyGoalCycles != null) 'daily_goal_cycles': dailyGoalCycles,
     });
   }
 
@@ -1219,7 +1346,9 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       Value<String>? selectedEdition,
       Value<bool>? isProSimulated,
       Value<String>? alarmChimeId,
-      Value<bool>? autoUnlockMonastic}) {
+      Value<bool>? autoUnlockMonastic,
+      Value<bool>? isDarkMode,
+      Value<int>? dailyGoalCycles}) {
     return DeskPreferencesCompanion(
       id: id ?? this.id,
       soundVolume: soundVolume ?? this.soundVolume,
@@ -1232,6 +1361,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       isProSimulated: isProSimulated ?? this.isProSimulated,
       alarmChimeId: alarmChimeId ?? this.alarmChimeId,
       autoUnlockMonastic: autoUnlockMonastic ?? this.autoUnlockMonastic,
+      isDarkMode: isDarkMode ?? this.isDarkMode,
+      dailyGoalCycles: dailyGoalCycles ?? this.dailyGoalCycles,
     );
   }
 
@@ -1269,6 +1400,12 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     if (autoUnlockMonastic.present) {
       map['auto_unlock_monastic'] = Variable<bool>(autoUnlockMonastic.value);
     }
+    if (isDarkMode.present) {
+      map['is_dark_mode'] = Variable<bool>(isDarkMode.value);
+    }
+    if (dailyGoalCycles.present) {
+      map['daily_goal_cycles'] = Variable<int>(dailyGoalCycles.value);
+    }
     return map;
   }
 
@@ -1284,7 +1421,9 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
           ..write('selectedEdition: $selectedEdition, ')
           ..write('isProSimulated: $isProSimulated, ')
           ..write('alarmChimeId: $alarmChimeId, ')
-          ..write('autoUnlockMonastic: $autoUnlockMonastic')
+          ..write('autoUnlockMonastic: $autoUnlockMonastic, ')
+          ..write('isDarkMode: $isDarkMode, ')
+          ..write('dailyGoalCycles: $dailyGoalCycles')
           ..write(')'))
         .toString();
   }
@@ -1505,6 +1644,7 @@ typedef $$TimerSessionsTableCreateCompanionBuilder = TimerSessionsCompanion
   Value<bool> isFinished,
   Value<DateTime> startedAt,
   Value<DateTime?> finishedAt,
+  Value<bool> isLockdownOnly,
 });
 typedef $$TimerSessionsTableUpdateCompanionBuilder = TimerSessionsCompanion
     Function({
@@ -1514,6 +1654,7 @@ typedef $$TimerSessionsTableUpdateCompanionBuilder = TimerSessionsCompanion
   Value<bool> isFinished,
   Value<DateTime> startedAt,
   Value<DateTime?> finishedAt,
+  Value<bool> isLockdownOnly,
 });
 
 class $$TimerSessionsTableFilterComposer
@@ -1543,6 +1684,10 @@ class $$TimerSessionsTableFilterComposer
 
   ColumnFilters<DateTime> get finishedAt => $composableBuilder(
       column: $table.finishedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isLockdownOnly => $composableBuilder(
+      column: $table.isLockdownOnly,
+      builder: (column) => ColumnFilters(column));
 }
 
 class $$TimerSessionsTableOrderingComposer
@@ -1573,6 +1718,10 @@ class $$TimerSessionsTableOrderingComposer
 
   ColumnOrderings<DateTime> get finishedAt => $composableBuilder(
       column: $table.finishedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isLockdownOnly => $composableBuilder(
+      column: $table.isLockdownOnly,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$TimerSessionsTableAnnotationComposer
@@ -1601,6 +1750,9 @@ class $$TimerSessionsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get finishedAt => $composableBuilder(
       column: $table.finishedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get isLockdownOnly => $composableBuilder(
+      column: $table.isLockdownOnly, builder: (column) => column);
 }
 
 class $$TimerSessionsTableTableManager extends RootTableManager<
@@ -1635,6 +1787,7 @@ class $$TimerSessionsTableTableManager extends RootTableManager<
             Value<bool> isFinished = const Value.absent(),
             Value<DateTime> startedAt = const Value.absent(),
             Value<DateTime?> finishedAt = const Value.absent(),
+            Value<bool> isLockdownOnly = const Value.absent(),
           }) =>
               TimerSessionsCompanion(
             id: id,
@@ -1643,6 +1796,7 @@ class $$TimerSessionsTableTableManager extends RootTableManager<
             isFinished: isFinished,
             startedAt: startedAt,
             finishedAt: finishedAt,
+            isLockdownOnly: isLockdownOnly,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -1651,6 +1805,7 @@ class $$TimerSessionsTableTableManager extends RootTableManager<
             Value<bool> isFinished = const Value.absent(),
             Value<DateTime> startedAt = const Value.absent(),
             Value<DateTime?> finishedAt = const Value.absent(),
+            Value<bool> isLockdownOnly = const Value.absent(),
           }) =>
               TimerSessionsCompanion.insert(
             id: id,
@@ -1659,6 +1814,7 @@ class $$TimerSessionsTableTableManager extends RootTableManager<
             isFinished: isFinished,
             startedAt: startedAt,
             finishedAt: finishedAt,
+            isLockdownOnly: isLockdownOnly,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (
@@ -1698,6 +1854,8 @@ typedef $$DeskPreferencesTableCreateCompanionBuilder = DeskPreferencesCompanion
   Value<bool> isProSimulated,
   Value<String> alarmChimeId,
   Value<bool> autoUnlockMonastic,
+  Value<bool> isDarkMode,
+  Value<int> dailyGoalCycles,
 });
 typedef $$DeskPreferencesTableUpdateCompanionBuilder = DeskPreferencesCompanion
     Function({
@@ -1711,6 +1869,8 @@ typedef $$DeskPreferencesTableUpdateCompanionBuilder = DeskPreferencesCompanion
   Value<bool> isProSimulated,
   Value<String> alarmChimeId,
   Value<bool> autoUnlockMonastic,
+  Value<bool> isDarkMode,
+  Value<int> dailyGoalCycles,
 });
 
 class $$DeskPreferencesTableFilterComposer
@@ -1756,6 +1916,13 @@ class $$DeskPreferencesTableFilterComposer
 
   ColumnFilters<bool> get autoUnlockMonastic => $composableBuilder(
       column: $table.autoUnlockMonastic,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isDarkMode => $composableBuilder(
+      column: $table.isDarkMode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get dailyGoalCycles => $composableBuilder(
+      column: $table.dailyGoalCycles,
       builder: (column) => ColumnFilters(column));
 }
 
@@ -1805,6 +1972,13 @@ class $$DeskPreferencesTableOrderingComposer
   ColumnOrderings<bool> get autoUnlockMonastic => $composableBuilder(
       column: $table.autoUnlockMonastic,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isDarkMode => $composableBuilder(
+      column: $table.isDarkMode, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get dailyGoalCycles => $composableBuilder(
+      column: $table.dailyGoalCycles,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$DeskPreferencesTableAnnotationComposer
@@ -1845,6 +2019,12 @@ class $$DeskPreferencesTableAnnotationComposer
 
   GeneratedColumn<bool> get autoUnlockMonastic => $composableBuilder(
       column: $table.autoUnlockMonastic, builder: (column) => column);
+
+  GeneratedColumn<bool> get isDarkMode => $composableBuilder(
+      column: $table.isDarkMode, builder: (column) => column);
+
+  GeneratedColumn<int> get dailyGoalCycles => $composableBuilder(
+      column: $table.dailyGoalCycles, builder: (column) => column);
 }
 
 class $$DeskPreferencesTableTableManager extends RootTableManager<
@@ -1884,6 +2064,8 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             Value<bool> isProSimulated = const Value.absent(),
             Value<String> alarmChimeId = const Value.absent(),
             Value<bool> autoUnlockMonastic = const Value.absent(),
+            Value<bool> isDarkMode = const Value.absent(),
+            Value<int> dailyGoalCycles = const Value.absent(),
           }) =>
               DeskPreferencesCompanion(
             id: id,
@@ -1896,6 +2078,8 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             isProSimulated: isProSimulated,
             alarmChimeId: alarmChimeId,
             autoUnlockMonastic: autoUnlockMonastic,
+            isDarkMode: isDarkMode,
+            dailyGoalCycles: dailyGoalCycles,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -1908,6 +2092,8 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             Value<bool> isProSimulated = const Value.absent(),
             Value<String> alarmChimeId = const Value.absent(),
             Value<bool> autoUnlockMonastic = const Value.absent(),
+            Value<bool> isDarkMode = const Value.absent(),
+            Value<int> dailyGoalCycles = const Value.absent(),
           }) =>
               DeskPreferencesCompanion.insert(
             id: id,
@@ -1920,6 +2106,8 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             isProSimulated: isProSimulated,
             alarmChimeId: alarmChimeId,
             autoUnlockMonastic: autoUnlockMonastic,
+            isDarkMode: isDarkMode,
+            dailyGoalCycles: dailyGoalCycles,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (

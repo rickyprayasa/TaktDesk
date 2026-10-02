@@ -7,4 +7,8 @@ class TimerSessions extends Table {
   BoolColumn get isFinished => boolean().withDefault(const Constant(false))();
   DateTimeColumn get startedAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get finishedAt => dateTime().nullable()();
+
+  /// Monastic Lockdown used WITHOUT a running timer (schema v8). Counts as focus
+  /// minutes but not as a Pomodoro cycle, and is excluded from completion rate.
+  BoolColumn get isLockdownOnly => boolean().withDefault(const Constant(false))();
 }

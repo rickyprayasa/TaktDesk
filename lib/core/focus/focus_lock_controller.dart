@@ -23,6 +23,19 @@ class FocusLockController extends StateNotifier<FocusLockState> {
   final AppDatabase? _database;
   bool _isProcessing = false;
 
+  /// Set by the chronometer provider; true while a Pomodoro countdown runs.
+  bool Function() isTimerRunning = () => false;
+
+  /// The timer ran at some point during the current lock. Then the timer
+  /// already records the session and the lock must not record it again
+  /// (it used to, doubling focus minutes and sessions).
+  bool _timerUsedDuringLock = false;
+
+  /// Called by the chronometer when a countdown starts or finishes.
+  void noteTimerActivity() {
+    if (state.isLocked) _timerUsedDuringLock = true;
+  }
+
   FocusLockController({
     required FocusLockService service,
     AudioService? audioService,
@@ -39,6 +52,7 @@ class FocusLockController extends StateNotifier<FocusLockState> {
       _audioService?.play(SoundEffect.switchClick);
       HapticService.heavyClick();
       await _service.enableFocusLock();
+      _timerUsedDuringLock = isTimerRunning();
       state = state.copyWith(
         isLocked: true,
         unlockProgress: 0.0,
@@ -78,21 +92,26 @@ class FocusLockController extends StateNotifier<FocusLockState> {
       HapticService.heavyClick();
       await _service.disableFocusLock();
 
+      // Lockdown on its own is still focus time: record it, flagged so it is
+      // not counted as a Pomodoro cycle. Skipped when the timer ran during the
+      // lock (the timer records that session) or for accidental < 1 min locks.
       final start = state.sessionStartTime;
-      if (start != null && _database != null) {
+      if (start != null && _database != null && !_timerUsedDuringLock && !isTimerRunning()) {
         final elapsedSeconds = DateTime.now().difference(start).inSeconds;
-        if (elapsedSeconds > 0) {
+        if (elapsedSeconds >= 60) {
           try {
             await _database.recordTimerSession(
               startedAt: start,
               durationSeconds: elapsedSeconds,
               completed: true,
+              isLockdownOnly: true,
             );
           } catch (_) {
             // Non-fatal database persistence error
           }
         }
       }
+      _timerUsedDuringLock = false;
     } finally {
       state = state.copyWith(
         isLocked: false,

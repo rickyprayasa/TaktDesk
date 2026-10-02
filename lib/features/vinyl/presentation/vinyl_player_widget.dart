@@ -51,9 +51,26 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
       _lastElapsed = elapsed;
     });
 
-    if (ref.read(vinylProvider).needleOnRecord) {
+  }
+
+  /// System "remove animations" setting: the platter stays still (the tonearm
+  /// and strobe still show the playing state) and no per-frame ticker runs.
+  bool _reduceMotion = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    _syncPlatter(ref.read(vinylProvider).needleOnRecord);
+  }
+
+  void _syncPlatter(bool needleOnRecord) {
+    final shouldSpin = needleOnRecord && !_reduceMotion;
+    if (shouldSpin && !_ticker.isActive) {
       _lastElapsed = Duration.zero;
       _ticker.start();
+    } else if (!shouldSpin && _ticker.isActive) {
+      _ticker.stop();
     }
   }
 
@@ -71,17 +88,11 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
       vinylProvider.select((s) => s.needleOnRecord),
       (previous, needleOnRecord) {
         if (needleOnRecord) {
-          _lastElapsed = Duration.zero;
           _armController.forward();
-          if (!_ticker.isActive) {
-            _ticker.start();
-          }
         } else {
           _armController.reverse();
-          if (_ticker.isActive) {
-            _ticker.stop();
-          }
         }
+        _syncPlatter(needleOnRecord);
       },
     );
 
@@ -104,7 +115,7 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
             children: [
               Expanded(
                 child: Text(
-                  'BRAUN TP-1',
+                  'ZYKL TP-01',
                   style: TaktTypography.controlLabel.copyWith(
                     color: themeState.chassisTextColor,
                   ),

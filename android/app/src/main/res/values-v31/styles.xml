@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ system splash: obsidian background and the ZYKL dial icon,
+         handing over to the Flutter opening without a colour jump. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@color/zykl_splash</item>
+        <item name="android:windowSplashScreenBackground">@color/zykl_splash</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+    </style>
+    <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@color/zykl_splash</item>
+    </style>
+</resources>

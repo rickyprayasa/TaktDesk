@@ -75,6 +75,9 @@ void main() {
     final state = container.read(chronoDialProvider);
     expect(state.profile.type, equals(PomodoroProfileType.classic));
     expect(state.targetMinutes, equals(25));
+
+    // The controller now owns a running clock; stop it before the test ends
+    container.read(chronoDialProvider.notifier).pause();
   });
 
   testWidgets('ChronoProfileSelectorWidget preserves custom intervals across preset switching', (tester) async {
@@ -133,7 +136,7 @@ void main() {
     expect(state.profile.longBreakMinutes, equals(22));
   });
 
-  testWidgets('long-pressing CUSTOM cassette button invokes enterCustomCalibration()', (tester) async {
+  testWidgets('long-pressing CUSTOM opens the Interval Engine sheet (not calibration)', (tester) async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
@@ -156,10 +159,11 @@ void main() {
 
     // Long-press CUSTOM button
     await tester.longPress(find.text('CUSTOM'));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.focus));
-    expect(find.text('SET 1/3 // FOCUS'), findsOneWidget);
+    expect(find.byKey(const ValueKey('interval_engine_sheet')), findsOneWidget);
+    expect(find.text('DAILY GOAL'), findsOneWidget);
+    expect(container.read(chronoDialProvider).setupStage, equals(ChronoSetupStage.none));
   });
 
   testWidgets('tapping CUSTOM button when already active invokes enterCustomCalibration()', (tester) async {
@@ -276,6 +280,8 @@ void main() {
     await tester.pump();
     expect(find.text('CYCLE 1/5'), findsOneWidget);
     expect(container.read(chronoDialProvider).profile.longBreakInterval, equals(5));
+
+    container.read(chronoDialProvider.notifier).pause();
   });
 
   testWidgets('telemetry status plaque displays PULL CROWN // SET when custom profile is idle in standby', (tester) async {

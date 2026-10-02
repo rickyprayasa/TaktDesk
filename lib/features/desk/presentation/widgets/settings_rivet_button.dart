@@ -35,24 +35,27 @@ class SettingsRivetButton extends ConsumerWidget {
       child: Material(
         color: Colors.transparent,
         shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: () {
-            HapticService.lightClick();
-            final isLandscape =
-                MediaQuery.of(context).orientation == Orientation.landscape;
-            showModalBottomSheet<void>(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (ctx) => TaktSettingsSheet(isLandscape: isLandscape),
-            );
-          },
-          child: Center(
-            child: Icon(
-              Icons.tune,
-              size: 16,
-              color: isDark ? TaktColors.warmBone : const Color(0xFF2C3038),
+        child: Tooltip(
+          message: 'Settings',
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () {
+              HapticService.lightClick();
+              final isLandscape =
+                  MediaQuery.of(context).orientation == Orientation.landscape;
+              showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (ctx) => TaktSettingsSheet(isLandscape: isLandscape),
+              );
+            },
+            child: Center(
+              child: Icon(
+                Icons.tune,
+                size: 16,
+                color: isDark ? TaktColors.warmBone : const Color(0xFF2C3038),
+              ),
             ),
           ),
         ),

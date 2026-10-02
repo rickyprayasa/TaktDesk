@@ -4,6 +4,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'chrono_dial_controller.dart';
 import 'chrono_dial_painter.dart';
+import '../domain/pomodoro_phase.dart';
 import '../domain/timer_state.dart';
 import 'widgets/crown_push_button.dart';
 import 'widgets/chrono_profile_selector_widget.dart';
@@ -13,8 +14,6 @@ import '../../../app/theme/hardware_edition.dart';
 import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/theme_controller.dart';
 import '../../../core/sensors/parallax_controller.dart';
-import '../../../core/services/timer_background_service.dart';
-import '../../settings/presentation/settings_controller.dart';
 
 class ChronoDialWidget extends ConsumerStatefulWidget {
   const ChronoDialWidget({super.key});
@@ -25,39 +24,39 @@ class ChronoDialWidget extends ConsumerStatefulWidget {
 
 class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
     with SingleTickerProviderStateMixin {
+  // Visual only: the controller owns the countdown (1 update/s). This ticker
+  // just glides the needle between those updates; each update re-syncs it.
   late final Ticker _ticker;
   final ValueNotifier<double> _remainingSecondsNotifier = ValueNotifier<double>(0.0);
+  // Whole seconds shown on the counter; only changes once per second
+  final ValueNotifier<int> _displaySecondNotifier = ValueNotifier<int>(0);
   Duration? _lastElapsed;
-  double _accumulatedDelta = 0.0;
+
+  void _syncDisplaySecond() =>
+      _displaySecondNotifier.value = _remainingSecondsNotifier.value.floor();
 
   @override
   void initState() {
     super.initState();
     final initialState = ref.read(chronoDialProvider);
     _remainingSecondsNotifier.value = initialState.remainingSeconds;
+    _syncDisplaySecond();
+    _remainingSecondsNotifier.addListener(_syncDisplaySecond);
 
     _ticker = createTicker((elapsed) {
       if (!mounted) return;
       if (_lastElapsed != null) {
         final delta = (elapsed - _lastElapsed!).inMicroseconds / 1000000.0;
+        // Never run more than a second ahead of the controller's value
+        final floor = (ref.read(chronoDialProvider).remainingSeconds - 1.0).clamp(0.0, 90 * 60.0);
         _remainingSecondsNotifier.value =
-            (_remainingSecondsNotifier.value - delta).clamp(0.0, 90 * 60.0);
-
-        _accumulatedDelta += delta;
-        final currentState = ref.read(chronoDialProvider);
-        final remaining = currentState.remainingSeconds - _accumulatedDelta;
-        if (_accumulatedDelta >= 1.0 || remaining <= 0) {
-          final toTick = _accumulatedDelta;
-          _accumulatedDelta = 0.0;
-          ref.read(chronoDialProvider.notifier).tick(toTick);
-        }
+            (_remainingSecondsNotifier.value - delta).clamp(floor, 90 * 60.0);
       }
       _lastElapsed = elapsed;
     });
 
     if (initialState.isRunning) {
       _lastElapsed = null;
-      _accumulatedDelta = 0.0;
       _ticker.start();
     }
   }
@@ -65,8 +64,23 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
   @override
   void dispose() {
     _ticker.dispose();
+    _remainingSecondsNotifier.removeListener(_syncDisplaySecond);
     _remainingSecondsNotifier.dispose();
+    _displaySecondNotifier.dispose();
     super.dispose();
+  }
+
+  String _semanticDialLabel(TimerState state) {
+    final total = state.remainingSeconds.ceil();
+    final m = total ~/ 60;
+    final sec = total % 60;
+    final phase = switch (state.phase) {
+      PomodoroPhase.focus => 'Focus',
+      PomodoroPhase.shortBreak => 'Short break',
+      PomodoroPhase.longBreak => 'Long break',
+    };
+    final status = state.isRunning ? 'running' : 'paused';
+    return '$phase timer, $m minutes $sec seconds remaining, $status';
   }
 
   void _handleToggle() {
@@ -76,13 +90,8 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
       return;
     }
     if (state.isRunning) {
-      if (_accumulatedDelta > 0) {
-        ref.read(chronoDialProvider.notifier).tick(_accumulatedDelta);
-        _accumulatedDelta = 0.0;
-      }
       ref.read(chronoDialProvider.notifier).pause();
     } else {
-      _accumulatedDelta = 0.0;
       ref.read(chronoDialProvider.notifier).start();
     }
   }
@@ -129,36 +138,17 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
 
   @override
   Widget build(BuildContext context) {
+    // Start/stop of the countdown and the background service live in the
+    // controller; here we only drive the needle animation.
     ref.listen<bool>(
       chronoDialProvider.select((s) => s.isRunning),
       (previous, isRunning) {
-        final currentTimerState = ref.read(chronoDialProvider);
-        final bgService = ref.read(timerBackgroundServiceProvider);
-
-        if (isRunning) {
-          _lastElapsed = null;
-          _accumulatedDelta = 0.0;
-          _remainingSecondsNotifier.value = currentTimerState.remainingSeconds;
-          if (!_ticker.isActive) {
-            _ticker.start();
-          }
-          final alarmChimeId = ref.read(deskPreferencesControllerProvider).alarmChimeId;
-          bgService.start(
-            remainingSeconds: currentTimerState.remainingSeconds,
-            targetMinutes: currentTimerState.targetMinutes,
-            phase: currentTimerState.phase,
-            cycleCount: currentTimerState.cycleCount,
-            profileName: currentTimerState.profile.label,
-            alarmChimeId: alarmChimeId,
-          );
-        } else {
-          if (_ticker.isActive) {
-            _ticker.stop();
-          }
-          _lastElapsed = null;
-          _accumulatedDelta = 0.0;
-          _remainingSecondsNotifier.value = currentTimerState.remainingSeconds;
-          bgService.stop();
+        _lastElapsed = null;
+        _remainingSecondsNotifier.value = ref.read(chronoDialProvider).remainingSeconds;
+        if (isRunning && !_ticker.isActive) {
+          _ticker.start();
+        } else if (!isRunning && _ticker.isActive) {
+          _ticker.stop();
         }
       },
     );
@@ -166,9 +156,9 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
     ref.listen<double>(
       chronoDialProvider.select((s) => s.remainingSeconds),
       (previous, nextRemaining) {
-        if (!ref.read(chronoDialProvider).isRunning) {
-          _remainingSecondsNotifier.value = nextRemaining;
-        }
+        _remainingSecondsNotifier.value = nextRemaining;
+        // The update already includes the time up to now; don't subtract it again next frame
+        _lastElapsed = null;
       },
     );
 
@@ -262,63 +252,88 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
                         ),
                       ],
                     ),
-                    child: GestureDetector(
+                    child: Semantics(
+                      container: true,
+                      button: true,
+                      label: _semanticDialLabel(state),
+                      hint: state.isRunning ? 'Double tap to pause' : 'Double tap to start',
+                      onTap: _handleToggle,
+                      excludeSemantics: true,
+                      child: GestureDetector(
                       onTap: _handleToggle,
                       onPanStart: (details) => _handleRotaryPan(details.localPosition, dialDimensions),
                       onPanUpdate: (details) => _handleRotaryPan(details.localPosition, dialDimensions),
                       child: SizedBox(
                         width: dialDimensions.width,
                         height: dialDimensions.height,
-                        child: ValueListenableBuilder<double>(
-                          valueListenable: _remainingSecondsNotifier,
-                          builder: (context, seconds, _) {
-                            final m = (seconds / 60).floor();
-                            final s = (seconds % 60).floor();
-                            return CustomPaint(
-                              size: dialDimensions,
-                              painter: ChronoDialPainter(
-                                remainingSeconds: seconds,
-                                progressPercent: state.progressPercent,
-                                targetMinutes: state.targetMinutes,
-                                isRunning: state.isRunning,
-                                needleColor: effectiveNeedleColor,
-                                filamentColor: effectiveFilamentColor,
-                                outerBezelGradient: themeState.plateGradient,
-                                innerBezelColor: themeState.borderColor,
-                                textureType: themeState.textureType,
-                                isDark: themeState.isDarkMode,
-                                dialFaceColor: lightDialColor,
-                                drawHand: false,
+                        // Three layers so a running countdown only redraws the needle:
+                        // static face (own raster layer) -> counter (rebuilds once a
+                        // second) -> hand (repaints straight from the notifier).
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            RepaintBoundary(
+                              child: CustomPaint(
+                                size: dialDimensions,
+                                isComplex: true,
+                                painter: ChronoDialPainter(
+                                  remainingSeconds: state.remainingSeconds,
+                                  progressPercent: state.progressPercent,
+                                  targetMinutes: state.targetMinutes,
+                                  isRunning: state.isRunning,
+                                  needleColor: effectiveNeedleColor,
+                                  filamentColor: effectiveFilamentColor,
+                                  outerBezelGradient: themeState.plateGradient,
+                                  innerBezelColor: themeState.borderColor,
+                                  textureType: themeState.textureType,
+                                  isDark: themeState.isDarkMode,
+                                  dialFaceColor: lightDialColor,
+                                  darkDialFaceColor: themeState.edition.darkDialFace,
+                                  drawHand: false,
+                                ),
                               ),
-                              foregroundPainter: ChronoDialHandPainter(
-                                remainingSeconds: seconds,
-                                needleColor: effectiveNeedleColor,
-                                hubCapColor: themeState.isDarkMode
-                                    ? const Color(0xFF22252A)
-                                    : const Color(0xFF2B2E34),
-                              ),
-                              child: Center(
-                                child: Transform.translate(
-                                  offset: const Offset(0, 40.0),
-                                  child: IgnorePointer(
-                                    child: MechanicalCounterDisplay(
-                                      minutes: m,
-                                      seconds: s,
+                            ),
+                            Center(
+                              child: Transform.translate(
+                                offset: const Offset(0, 40.0),
+                                child: IgnorePointer(
+                                  child: ValueListenableBuilder<int>(
+                                    valueListenable: _displaySecondNotifier,
+                                    builder: (context, total, _) => MechanicalCounterDisplay(
+                                      minutes: total ~/ 60,
+                                      seconds: total % 60,
                                       isDialInset: true,
                                     ),
                                   ),
                                 ),
                               ),
-                            );
-                          },
+                            ),
+                            RepaintBoundary(
+                              child: IgnorePointer(
+                                child: CustomPaint(
+                                  size: dialDimensions,
+                                  painter: ChronoDialHandPainter(
+                                    remaining: _remainingSecondsNotifier,
+                                    needleColor: effectiveNeedleColor,
+                                    hubCapColor: themeState.isDarkMode
+                                        ? const Color(0xFF22252A)
+                                        : const Color(0xFF2B2E34),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                    ),
                     ),
                   ),
                 ),
                 // Top Crown Push-Button seated directly into the 12 o'clock dial bezel socket
+                // top: 6 seats the collar 2 px into the bezel (bezel edge is at
+                // y = 24 + 8); at top: 0 it hovered 4 px above the dial.
                 Positioned(
-                  top: 0,
+                  top: 6,
                   child: CrownPushButton(
                     isPressed: state.isRunning,
                     isPulledOut: state.setupStage.isActive,

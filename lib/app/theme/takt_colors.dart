@@ -9,6 +9,14 @@ class TaktColors {
   static const Color thermalCarbon = Color(0xFF1F2226);
   static const Color mutedOchre = Color(0xFFC85A32);
   static const Color filamentAmber = Color(0xFFD99B59);
+
+  /// Amber for TEXT on light surfaces. filamentAmber is only 1.9:1 on the light
+  /// panels (WCAG AA needs 4.5:1 for small text); this ink is 4.9-6.2:1.
+  static const Color amberInk = Color(0xFF7A4A12);
+
+  /// Amber text colour for the current surface: glowing filament on dark,
+  /// printed ink on light.
+  static Color amberText(bool isDark) => isDark ? filamentAmber : amberInk;
   static const Color patinaOlive = Color(0xFF4D5D4B);
 
   // Surface variations for depth

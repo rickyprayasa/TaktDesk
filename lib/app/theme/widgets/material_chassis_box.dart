@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/sensors/parallax_controller.dart';
@@ -164,6 +165,21 @@ class MaterialChassisBox extends ConsumerWidget {
                 ),
               ),
             ),
+          // Light-following highlight over the cached texture (cheap: one gradient)
+          if (showTexture)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: MaterialSheenPainter(
+                    textureType: themeState.textureType,
+                    isDark: themeState.isDarkMode,
+                    lightX: parallax.lightX,
+                    lightY: parallax.lightY,
+                    borderRadius: borderRadius,
+                  ),
+                ),
+              ),
+            ),
           if (showGlassRim)
             Positioned.fill(
               child: IgnorePointer(
@@ -224,22 +240,37 @@ class MaterialChassisBox extends ConsumerWidget {
     return chassis;
   }
 
+  /// Domed rivet with a screw slot, lit from the top-left like the chamfer.
+  /// Each slot sits at its own angle, as real screws never line up.
   Widget _buildCornerRivet(int index, Color color) {
+    const slotAngles = [0.35, -0.6, 1.1, -0.15];
     return IgnorePointer(
       child: Container(
         key: rivetKeyPrefix != null ? ValueKey('${rivetKeyPrefix}_$index') : null,
-        width: 5,
-        height: 5,
+        width: 6,
+        height: 6,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: color,
+          gradient: RadialGradient(
+            center: const Alignment(-0.4, -0.45),
+            radius: 0.9,
+            colors: [Color.lerp(color, Colors.white, 0.45)!, color, Color.lerp(color, Colors.black, 0.35)!],
+            stops: const [0.0, 0.55, 1.0],
+          ),
           boxShadow: const [
-            BoxShadow(
-              color: Color(0x44000000),
-              offset: Offset(0, 0.5),
-              blurRadius: 0.5,
-            ),
+            BoxShadow(color: Color(0x55000000), offset: Offset(0, 0.6), blurRadius: 0.8),
           ],
+        ),
+        // Slot drawn as a hard-stop gradient band: no extra widget, no extra layer
+        foregroundDecoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: LinearGradient(
+            begin: Alignment(-math.sin(slotAngles[index % slotAngles.length]), math.cos(slotAngles[index % slotAngles.length])),
+            end: Alignment(math.sin(slotAngles[index % slotAngles.length]), -math.cos(slotAngles[index % slotAngles.length])),
+            colors: [Colors.transparent, Colors.transparent, Colors.black.withValues(alpha: 0.45), Colors.black.withValues(alpha: 0.45), Colors.transparent, Colors.transparent],
+            stops: const [0.0, 0.43, 0.43, 0.57, 0.57, 1.0],
+          ),
         ),
       ),
     );

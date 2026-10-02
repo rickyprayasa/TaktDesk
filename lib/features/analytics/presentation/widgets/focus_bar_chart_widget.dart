@@ -89,7 +89,7 @@ class FocusBarChartWidget extends StatelessWidget {
                           fontFamily: 'monospace',
                           fontSize: 8.5,
                           fontWeight: bar.isHighlighted ? FontWeight.w800 : FontWeight.w600,
-                          color: isAmber ? TaktColors.filamentAmber : secondaryTextColor,
+                          color: isAmber ? TaktColors.amberText(isDark) : secondaryTextColor,
                         ),
                       ),
                     ),
@@ -152,7 +152,7 @@ class FocusBarChartWidget extends StatelessWidget {
                           fontSize: 8.5,
                           fontWeight: bar.isToday ? FontWeight.w800 : FontWeight.w600,
                           color: bar.isToday
-                              ? TaktColors.filamentAmber
+                              ? TaktColors.amberText(isDark)
                               : (bar.isHighlighted ? primaryTextColor : secondaryTextColor),
                         ),
                       ),

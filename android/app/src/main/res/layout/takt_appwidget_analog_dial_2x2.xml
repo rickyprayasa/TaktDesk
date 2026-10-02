@@ -58,7 +58,7 @@
         android:layout_gravity="center"
         android:scaleType="fitCenter"
         android:src="@drawable/widget_dial_standby_face"
-        android:contentDescription="AW10 Analog Chronometer Face" />
+        android:contentDescription="Analog chronometer face" />
 
     <FrameLayout
         android:layout_width="match_parent"

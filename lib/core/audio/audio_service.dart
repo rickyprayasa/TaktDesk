@@ -51,10 +51,24 @@ class AudioService {
 
   void play(SoundEffect effect) => playFoley(effect);
 
+  /// The real end-of-session alarm (alarm stream, de-duplicated natively).
   void playAlarmChime(String chimeId) {
     if (!_initialized) return;
     if (!isMock) {
       channel.invokeMethod('playAlarmChime', {'chimeId': chimeId}).catchError((_) {});
+    }
+  }
+
+  /// Audition from Settings: plays immediately on every tap, cuts off the
+  /// previous preview, and follows the media stream at the master volume.
+  void previewAlarmChime(String chimeId) {
+    if (!_initialized) return;
+    if (!isMock) {
+      channel.invokeMethod('playAlarmChime', {
+        'chimeId': chimeId,
+        'preview': true,
+        'volume': _volume,
+      }).catchError((_) {});
     }
   }
 

@@ -12,7 +12,7 @@
 
     <!-- Widget 3: Analog Chronometer Dial 2x2 -->
     <string name="widget_analog_dial_label">ZYKL Analog Chronometer</string>
-    <string name="widget_analog_dial_desc">Precision Dieter Rams AW10 style chronometer dial face</string>
+    <string name="widget_analog_dial_desc">Minimalist analog chronometer dial face</string>
 
     <!-- Widget 4: Task Dispenser 4x2 -->
     <string name="widget_task_dispenser_label">ZYKL Task Dispenser</string>

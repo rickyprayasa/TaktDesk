@@ -59,6 +59,13 @@ class FocusAnalyticsState {
   final String bestDayLabel;
   final List<FocusBarData> bars;
 
+  /// Consecutive days with >= 1 completed cycle, ending today/yesterday.
+  final int currentStreak;
+  final int bestStreak;
+
+  /// Completed cycles today (for the daily goal meter; independent of period).
+  final int todayCycles;
+
   const FocusAnalyticsState({
     required this.period,
     required this.selectedDate,
@@ -70,6 +77,9 @@ class FocusAnalyticsState {
     this.dailyAverageMinutes = 0.0,
     this.bestDayLabel = '—',
     this.bars = const [],
+    this.currentStreak = 0,
+    this.bestStreak = 0,
+    this.todayCycles = 0,
   });
 
   FocusAnalyticsState copyWith({
@@ -83,6 +93,9 @@ class FocusAnalyticsState {
     double? dailyAverageMinutes,
     String? bestDayLabel,
     List<FocusBarData>? bars,
+    int? currentStreak,
+    int? bestStreak,
+    int? todayCycles,
   }) {
     return FocusAnalyticsState(
       period: period ?? this.period,
@@ -95,6 +108,9 @@ class FocusAnalyticsState {
       dailyAverageMinutes: dailyAverageMinutes ?? this.dailyAverageMinutes,
       bestDayLabel: bestDayLabel ?? this.bestDayLabel,
       bars: bars ?? this.bars,
+      currentStreak: currentStreak ?? this.currentStreak,
+      bestStreak: bestStreak ?? this.bestStreak,
+      todayCycles: todayCycles ?? this.todayCycles,
     );
   }
 
@@ -112,7 +128,10 @@ class FocusAnalyticsState {
           completionRate == other.completionRate &&
           dailyAverageMinutes == other.dailyAverageMinutes &&
           bestDayLabel == other.bestDayLabel &&
-          listEquals(bars, other.bars);
+          listEquals(bars, other.bars) &&
+          currentStreak == other.currentStreak &&
+          bestStreak == other.bestStreak &&
+          todayCycles == other.todayCycles;
 
   @override
   int get hashCode => Object.hash(
@@ -126,5 +145,8 @@ class FocusAnalyticsState {
         dailyAverageMinutes,
         bestDayLabel,
         Object.hashAll(bars),
+        currentStreak,
+        bestStreak,
+        todayCycles,
       );
 }

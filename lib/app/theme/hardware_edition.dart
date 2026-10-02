@@ -8,6 +8,9 @@ enum HardwareTextureType {
   burnishedBrass,
   organicWalnut,
   forgedCarbon,
+  glossCeramic,
+  galvanizedSpangle,
+  lacquer,
 }
 
 enum HardwareEditionType {
@@ -75,7 +78,7 @@ class HardwareEdition {
   static const HardwareEdition braunClassic = HardwareEdition(
     type: HardwareEditionType.braunClassic,
     textureType: HardwareTextureType.matteAbsGrain,
-    title: 'BRAUN CLASSIC',
+    title: 'MODERNIST CLASSIC',
     subtitle: 'GERMANIC MINIMALISM',
     yearLabel: 'MOD. 01 · 1960',
     isPremium: false,
@@ -97,7 +100,7 @@ class HardwareEdition {
   static const HardwareEdition braunAtelierCream = HardwareEdition(
     type: HardwareEditionType.braunAtelierCream,
     textureType: HardwareTextureType.matteAbsGrain,
-    title: 'BRAUN ATELIER CREAM',
+    title: 'ATELIER CREAM',
     subtitle: 'WARM BONE & SIGNAL ORANGE',
     yearLabel: 'MOD. 05 · 1965',
     isPremium: false,
@@ -228,7 +231,7 @@ class HardwareEdition {
 
   static const HardwareEdition industrialMonoSteel = HardwareEdition(
     type: HardwareEditionType.industrialMonoSteel,
-    textureType: HardwareTextureType.matteAbsGrain,
+    textureType: HardwareTextureType.galvanizedSpangle,
     title: 'INDUSTRIAL MONO STEEL',
     subtitle: 'GALVANIZED STEEL & TUNGSTEN',
     yearLabel: 'MOD. 08 · 1980',
@@ -250,7 +253,7 @@ class HardwareEdition {
 
   static const HardwareEdition obsidianCeramic = HardwareEdition(
     type: HardwareEditionType.obsidianCeramic,
-    textureType: HardwareTextureType.matteAbsGrain,
+    textureType: HardwareTextureType.glossCeramic,
     title: 'OBSIDIAN CERAMIC',
     subtitle: 'MIRROR CERAMIC & AMBER',
     yearLabel: 'MOD. 09 · 2025',
@@ -294,7 +297,7 @@ class HardwareEdition {
 
   static const HardwareEdition britishRacingGreen = HardwareEdition(
     type: HardwareEditionType.britishRacingGreen,
-    textureType: HardwareTextureType.matteAbsGrain,
+    textureType: HardwareTextureType.lacquer,
     title: 'BRITISH RACING GREEN',
     subtitle: 'VINTAGE SPRUCE & GOLD',
     yearLabel: 'MOD. 11 · 1962',
@@ -385,5 +388,38 @@ class HardwareEdition {
       if (e.type.name == key) return e;
     }
     return braunClassic;
+  }
+}
+
+/// Dark-mode dial face per edition. Before, every edition shared one charcoal
+/// face, so in dark mode only the needle told them apart.
+extension HardwareEditionDial on HardwareEdition {
+  Color get darkDialFace {
+    switch (type) {
+      case HardwareEditionType.braunClassic:
+        return const Color(0xFF16181B);
+      case HardwareEditionType.braunAtelierCream:
+        return const Color(0xFF1C1B19);
+      case HardwareEditionType.bauhausHeritage:
+        return const Color(0xFF17191D);
+      case HardwareEditionType.industrialMonoSteel:
+        return const Color(0xFF1A1D21);
+      case HardwareEditionType.titaniumStealth:
+        return const Color(0xFF181C22);
+      case HardwareEditionType.rawBrassPatina:
+        return const Color(0xFF1D1B15);
+      case HardwareEditionType.midCenturyWalnut:
+        return const Color(0xFF1C1712);
+      case HardwareEditionType.forgedCarbon:
+        return const Color(0xFF121315);
+      case HardwareEditionType.obsidianCeramic:
+        return const Color(0xFF0B0C0E);
+      case HardwareEditionType.copperHearthAsh:
+        return const Color(0xFF1E1714);
+      case HardwareEditionType.britishRacingGreen:
+        return const Color(0xFF0F1C16);
+      case HardwareEditionType.indigoAstronomical:
+        return const Color(0xFF111A2B);
+    }
   }
 }

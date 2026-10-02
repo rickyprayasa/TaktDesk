@@ -5,6 +5,8 @@ import '../../../../app/theme/takt_colors.dart';
 import '../../../../app/theme/theme_controller.dart';
 import '../../../../app/theme/widgets/material_texture_painter.dart';
 import '../../../../app/theme/widgets/rsquare_hardware_plaque.dart';
+import '../../../../core/billing/pro_purchase_controller.dart';
+import '../../../../core/config/app_security_config.dart';
 import '../../../../core/haptics/haptic_service.dart';
 import '../../../vinyl/domain/vinyl_track.dart';
 import '../../../vinyl/presentation/vinyl_controller.dart';
@@ -31,15 +33,41 @@ void showStudioProDialog(
       ? 'UNLOCK ${targetTrack.name.toUpperCase()} & ALL STUDIO PRO RECORDS'
       : 'UNLOCK STUDIO PRO CLEARANCE';
 
+  // Keep in sync with the website (Terms, FAQ, HonestSpecs): PRO is a single
+  // payment for every edition and soundscape, including everything added in
+  // future updates at no extra cost (owner decision 2026-10-02: no paid packs).
   final bodyText = edition != null
-      ? 'Lifetime clearance gives you access to aerospace titanium, Bauhaus primary palettes, burnished marine brass, and all future hardware materials.'
+      ? 'One payment unlocks every Studio PRO hardware edition, including every new edition added in future updates.'
       : targetTrack != null
-          ? 'Lifetime clearance gives you access to ${targetTrack.name}, all exclusive Studio Pro ambient soundscapes, and future analog master recordings.'
-          : 'Lifetime clearance gives you access to all exclusive hardware finishes, premium analog ambient soundscapes, and all future Studio Pro features.';
+          ? 'One payment unlocks ${targetTrack.name} and every Studio PRO soundscape, including every new soundscape added in future updates.'
+          : 'One payment unlocks every Studio PRO hardware edition and soundscape, including everything added in future updates.';
 
   showDialog<void>(
     context: context,
-    builder: (dialogCtx) => AlertDialog(
+    builder: (dialogCtx) => Consumer(builder: (consumerCtx, dref, _) {
+      const simulated = AppSecurityConfig.isProSimulationEnabled;
+      final pro = dref.watch(proPurchaseProvider);
+      final price = pro.price ?? 'Rp 69.000';
+
+      Future<void> applyUnlock() async {
+        final prefsNotifier = dref.read(deskPreferencesControllerProvider.notifier);
+        await prefsNotifier.setProSimulated(true);
+        if (edition != null) {
+          await prefsNotifier.setHardwareEdition(edition.type);
+        }
+        if (targetTrack != null) {
+          dref.read(vinylProvider.notifier).selectTrack(targetTrack.index, isPro: true);
+        }
+        HapticService.selectionClick();
+        if (dialogCtx.mounted) Navigator.of(dialogCtx).pop();
+      }
+
+      // Real purchase: Google Play reports ownership asynchronously.
+      dref.listen<bool>(proPurchaseProvider.select((s) => s.isOwned), (was, owned) {
+        if (owned && was != true) applyUnlock();
+      });
+
+      return AlertDialog(
       backgroundColor:
           dark ? TaktColors.basaltSlate : const Color(0xFFEDEAE2),
       shape: RoundedRectangleBorder(
@@ -73,14 +101,14 @@ void showStudioProDialog(
                 showRivets: false,
               ),
               const SizedBox(width: 6),
-              const Text(
+              Text(
                 'RSQUARE',
                 style: TextStyle(
                   fontFamily: 'monospace',
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.0,
-                  color: TaktColors.filamentAmber,
+                  color: TaktColors.amberText(dark),
                 ),
               ),
             ],
@@ -106,7 +134,7 @@ void showStudioProDialog(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'LIFETIME ARCHITECTURE',
                       style: TextStyle(
@@ -114,7 +142,7 @@ void showStudioProDialog(
                         fontSize: 8.5,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.8,
-                        color: TaktColors.filamentAmber,
+                        color: TaktColors.amberText(dark),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -153,14 +181,14 @@ void showStudioProDialog(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'FOUNDER LAUNCH EDITION · 47% OFF',
+                        Text(
+                          'LAUNCH PRICE · ONE-TIME',
                           style: TextStyle(
                             fontFamily: 'monospace',
                             fontSize: 8.0,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.8,
-                            color: TaktColors.filamentAmber,
+                            color: TaktColors.amberText(dark),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -171,7 +199,8 @@ void showStudioProDialog(
                         runSpacing: 2,
                         children: [
                           Text(
-                            'Rp 69.000',
+                            price,
+                            key: const ValueKey('pro_dialog_price'),
                             style: TextStyle(
                               fontFamily: 'monospace',
                               fontSize: 15.0,
@@ -180,17 +209,7 @@ void showStudioProDialog(
                             ),
                           ),
                           Text(
-                            'Rp 129.000',
-                            style: TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 10.0,
-                              fontWeight: FontWeight.w500,
-                              decoration: TextDecoration.lineThrough,
-                              color: secondary,
-                            ),
-                          ),
-                          Text(
-                            '· \$9.99',
+                            'no subscription',
                             style: TextStyle(
                               fontFamily: 'monospace',
                               fontSize: 9.0,
@@ -235,12 +254,12 @@ void showStudioProDialog(
             if (edition == null) ...[
               Text(
                 subtitleText,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'monospace',
                   fontSize: 10.5,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
-                  color: TaktColors.filamentAmber,
+                  color: TaktColors.amberText(dark),
                 ),
               ),
               const SizedBox(height: 6),
@@ -257,11 +276,27 @@ void showStudioProDialog(
             const SizedBox(height: 10),
 
             // Benefit feature list
-            _buildBenefitItem('✓ 5 Artisanal Materials (Walnut, Carbon, Titanium, Brass, Bauhaus)', secondary),
-            _buildBenefitItem('✓ 4 Master Analog Soundscapes (Campfire, Forest, Cosmic...)', secondary),
-            _buildBenefitItem('✓ Monastic Focus Lock & Retro Binaural Audio Engine', secondary),
-            _buildBenefitItem('✓ Android AOD Notification & 2x2 Desktop Horological Widget', secondary),
-            _buildBenefitItem('✓ 100% Offline Privacy: Zero telemetry, zero recurring bills', secondary),
+            _buildBenefitItem('✓ 8 more hardware editions (12 in total)', secondary),
+            _buildBenefitItem('✓ 12 more acoustic soundscapes (20 in total)', secondary),
+            _buildBenefitItem('✓ Every new edition & soundscape in future updates', secondary),
+            _buildBenefitItem('✓ Pay once: no subscription, no ads, no account', secondary),
+            _buildBenefitItem('✓ Restore on a new phone with the same Google account', secondary),
+            if (pro.status == ProPurchaseStatus.pending) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Payment pending. Studio PRO unlocks automatically once Google Play confirms it, even if you close ZYKL.',
+                key: const ValueKey('pro_dialog_pending'),
+                style: TextStyle(fontFamily: 'monospace', fontSize: 9, color: TaktColors.amberText(dark), height: 1.3),
+              ),
+            ],
+            if (pro.message != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                pro.message!,
+                key: const ValueKey('pro_dialog_message'),
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 9, color: TaktColors.mutedOchre, height: 1.3),
+              ),
+            ],
           ],
         ),
       ),
@@ -278,6 +313,20 @@ void showStudioProDialog(
             ),
           ),
         ),
+        if (!simulated)
+          TextButton(
+            key: const ValueKey('pro_dialog_restore_button'),
+            onPressed: pro.isBusy ? null : () => dref.read(proPurchaseProvider.notifier).restore(),
+            child: Text(
+              'RESTORE',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                color: secondary,
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+              ),
+            ),
+          ),
         ElevatedButton(
           key: const ValueKey('pro_dialog_unlock_button'),
           style: ElevatedButton.styleFrom(
@@ -287,28 +336,24 @@ void showStudioProDialog(
               borderRadius: BorderRadius.circular(4.0),
             ),
           ),
-          onPressed: () async {
-            await ref
-                .read(deskPreferencesControllerProvider.notifier)
-                .setProSimulated(true);
-            if (edition != null) {
-              await ref
-                  .read(deskPreferencesControllerProvider.notifier)
-                  .setHardwareEdition(edition.type);
-            }
-            if (targetTrack != null) {
-              ref
-                  .read(vinylProvider.notifier)
-                  .selectTrack(targetTrack.index, isPro: true);
-            }
-            HapticService.selectionClick();
-            if (dialogCtx.mounted) {
-              Navigator.of(dialogCtx).pop();
-            }
-          },
-          child: const Text(
-            'UNLOCK NOW (SIMULATED)',
-            style: TextStyle(
+          onPressed: pro.isBusy
+              ? null
+              : () {
+                  if (simulated) {
+                    applyUnlock();
+                  } else {
+                    dref.read(proPurchaseProvider.notifier).buy();
+                  }
+                },
+          child: Text(
+            simulated
+                ? 'UNLOCK NOW (SIMULATED)'
+                : switch (pro.status) {
+                    ProPurchaseStatus.purchasing => 'OPENING GOOGLE PLAY…',
+                    ProPurchaseStatus.pending => 'PAYMENT PENDING',
+                    _ => 'UNLOCK · $price',
+                  },
+            style: const TextStyle(
               fontFamily: 'monospace',
               fontWeight: FontWeight.w700,
               fontSize: 11,
@@ -316,7 +361,8 @@ void showStudioProDialog(
           ),
         ),
       ],
-    ),
+    );
+    }),
   );
 }
 

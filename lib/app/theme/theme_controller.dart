@@ -45,7 +45,7 @@ class ChassisThemeState {
       hasDarkChassis ? const Color(0xFFE8E5DE) : const Color(0xFF1B1E23);
 
   Color get chassisMutedTextColor =>
-      hasDarkChassis ? const Color(0x99E8E5DE) : const Color(0x991B1E23);
+      hasDarkChassis ? const Color(0x99E8E5DE) : const Color(0xBF1B1E23);
 
   HardwareTextureType get textureType => edition.textureType;
 

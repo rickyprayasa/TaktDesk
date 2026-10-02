@@ -1,14 +1,17 @@
 package com.zykl.app
 
+import android.Manifest
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
 import android.view.WindowManager
 import androidx.core.view.WindowCompat
@@ -36,6 +39,32 @@ class MainActivity : FlutterActivity() {
             }
         }
 
+        private const val PERMISSION_PREFS = "zykl_permissions"
+        private const val KEY_NOTIFICATION_ASKED = "post_notifications_asked"
+        private const val REQUEST_POST_NOTIFICATIONS = 3001
+        private const val AUDIO_DIR = "flutter_assets/assets/audio/"
+
+        val FOLEY_ASSETS: Map<String, String> = mapOf(
+            "stylusDrop" to "foley_stylus_drop.wav",
+            "stylusStop" to "foley_stylus_stop.wav",
+            "dialClick" to "foley_dial_click.wav",
+            "paperTear" to "foley_paper_tear.wav",
+            "inkStamp" to "foley_ink_stamp.wav",
+            "switchClick" to "foley_switch_click.wav",
+            "bellChime" to "alarm_braun_bell.wav",
+            "drawerSlide" to "foley_drawer_slide.wav",
+            "drawerLatch" to "foley_drawer_latch.wav",
+            "discLoad" to "foley_disc_load.wav",
+        ).mapValues { AUDIO_DIR + it.value }
+
+        val ALARM_ASSETS: Map<String, String> = mapOf(
+            "braunBell" to "alarm_braun_bell.wav",
+            "deskBell" to "alarm_desk_bell.wav",
+            "tibetanBowl" to "alarm_tibetan_bowl.wav",
+            "zenGong" to "alarm_zen_gong.wav",
+            "tubularChime" to "alarm_tubular_chime.wav",
+        ).mapValues { AUDIO_DIR + it.value }
+
         fun sendWidgetAction(action: String, data: Map<String, Any>? = null) {
             activeInstance?.let { activity ->
                 activity.runOnUiThread {
@@ -56,6 +85,7 @@ class MainActivity : FlutterActivity() {
     private var previousInterruptionFilter: Int? = null
     private var soundscapePlayer: MediaPlayer? = null
     private var masterVolume: Float = 0.8f
+    private val effectPlayer: EffectSoundPlayer by lazy { EffectSoundPlayer(this) }
     private val screenWakeHandler = Handler(Looper.getMainLooper())
 
     private fun safeStopAndReset(player: MediaPlayer?) {
@@ -100,6 +130,7 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        effectPlayer.preload(FOLEY_ASSETS.values.toSet() + ALARM_ASSETS.values)
         super.configureFlutterEngine(flutterEngine)
         if (initialWidgetAction == null) {
             initialWidgetAction = intent?.getStringExtra("open_feature")
@@ -328,27 +359,27 @@ class MainActivity : FlutterActivity() {
                             "flutter_assets/$rawAssetPath"
                         } else {
                             when (trackIndex) {
-                                0 -> "flutter_assets/assets/audio/vinyl_lofi_rain.wav"
-                                1 -> "flutter_assets/assets/audio/vinyl_brown_noise.wav"
-                                2 -> "flutter_assets/assets/audio/vinyl_library.wav"
-                                3 -> "flutter_assets/assets/audio/vinyl_kyoto_bamboo.wav"
-                                4 -> "flutter_assets/assets/audio/vinyl_campfire.wav"
-                                5 -> "flutter_assets/assets/audio/vinyl_nordic_pines.wav"
-                                6 -> "flutter_assets/assets/audio/vinyl_alpine_brook.wav"
-                                7 -> "flutter_assets/assets/audio/vinyl_ocean_waves.wav"
-                                8 -> "flutter_assets/assets/audio/vinyl_morning_meadow.wav"
-                                9 -> "flutter_assets/assets/audio/vinyl_timber_chamber.wav"
-                                10 -> "flutter_assets/assets/audio/vinyl_warm_tape.wav"
-                                11 -> "flutter_assets/assets/audio/vinyl_rhodes_velvet.wav"
-                                12 -> "flutter_assets/assets/audio/vinyl_acoustic_guitar.wav"
-                                13 -> "flutter_assets/assets/audio/vinyl_ambient_drift.wav"
-                                14 -> "flutter_assets/assets/audio/vinyl_felt_piano_solo.wav"
-                                15 -> "flutter_assets/assets/audio/vinyl_modular_clockwork.wav"
-                                16 -> "flutter_assets/assets/audio/vinyl_goldberg_aria.wav"
-                                17 -> "flutter_assets/assets/audio/vinyl_chopin_nocturne.wav"
-                                18 -> "flutter_assets/assets/audio/vinyl_spanish_romance.wav"
-                                19 -> "flutter_assets/assets/audio/vinyl_chamber_quartet.wav"
-                                else -> "flutter_assets/assets/audio/vinyl_lofi_rain.wav"
+                                0 -> "flutter_assets/assets/audio/vinyl_lofi_rain.ogg"
+                                1 -> "flutter_assets/assets/audio/vinyl_brown_noise.ogg"
+                                2 -> "flutter_assets/assets/audio/vinyl_library.ogg"
+                                3 -> "flutter_assets/assets/audio/vinyl_kyoto_bamboo.ogg"
+                                4 -> "flutter_assets/assets/audio/vinyl_campfire.ogg"
+                                5 -> "flutter_assets/assets/audio/vinyl_nordic_pines.ogg"
+                                6 -> "flutter_assets/assets/audio/vinyl_alpine_brook.ogg"
+                                7 -> "flutter_assets/assets/audio/vinyl_ocean_waves.ogg"
+                                8 -> "flutter_assets/assets/audio/vinyl_morning_meadow.ogg"
+                                9 -> "flutter_assets/assets/audio/vinyl_timber_chamber.ogg"
+                                10 -> "flutter_assets/assets/audio/vinyl_warm_tape.ogg"
+                                11 -> "flutter_assets/assets/audio/vinyl_rhodes_velvet.ogg"
+                                12 -> "flutter_assets/assets/audio/vinyl_acoustic_guitar.ogg"
+                                13 -> "flutter_assets/assets/audio/vinyl_ambient_drift.ogg"
+                                14 -> "flutter_assets/assets/audio/vinyl_felt_piano_solo.ogg"
+                                15 -> "flutter_assets/assets/audio/vinyl_modular_clockwork.ogg"
+                                16 -> "flutter_assets/assets/audio/vinyl_goldberg_aria.ogg"
+                                17 -> "flutter_assets/assets/audio/vinyl_chopin_nocturne.ogg"
+                                18 -> "flutter_assets/assets/audio/vinyl_spanish_romance.ogg"
+                                19 -> "flutter_assets/assets/audio/vinyl_chamber_quartet.ogg"
+                                else -> "flutter_assets/assets/audio/vinyl_lofi_rain.ogg"
                             }
                         }
 
@@ -394,30 +425,8 @@ class MainActivity : FlutterActivity() {
                 }
                 "playFoley" -> {
                     try {
-                        val effect = call.argument<String>("effect")
-                        val foleyAsset = when (effect) {
-                            "stylusDrop" -> "flutter_assets/assets/audio/foley_stylus_drop.wav"
-                            "stylusStop" -> "flutter_assets/assets/audio/foley_stylus_stop.wav"
-                            "dialClick" -> "flutter_assets/assets/audio/foley_dial_click.wav"
-                            "paperTear" -> "flutter_assets/assets/audio/foley_paper_tear.wav"
-                            "inkStamp" -> "flutter_assets/assets/audio/foley_ink_stamp.wav"
-                            "switchClick" -> "flutter_assets/assets/audio/foley_switch_click.wav"
-                            "bellChime" -> "flutter_assets/assets/audio/alarm_braun_bell.wav"
-                            "drawerSlide" -> "flutter_assets/assets/audio/foley_drawer_slide.wav"
-                            "drawerLatch" -> "flutter_assets/assets/audio/foley_drawer_latch.wav"
-                            "discLoad" -> "flutter_assets/assets/audio/foley_disc_load.wav"
-                            else -> null
-                        }
-                        if (foleyAsset != null) {
-                            context.assets.openFd(foleyAsset).use { fd ->
-                                MediaPlayer().apply {
-                                    setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
-                                    setOnCompletionListener { mp -> mp.release() }
-                                    prepare()
-                                    start()
-                                }
-                            }
-                        }
+                        val asset = FOLEY_ASSETS[call.argument<String>("effect")]
+                        if (asset != null) effectPlayer.playFoley(asset)
                         result.success(true)
                     } catch (e: Exception) {
                         result.success(false)
@@ -425,18 +434,19 @@ class MainActivity : FlutterActivity() {
                 }
                 "playAlarmChime" -> {
                     try {
-                        if (!shouldPlayAlarm()) {
+                        val chimeId = call.argument<String>("chimeId") ?: "braunBell"
+                        val chimeAsset = ALARM_ASSETS[chimeId] ?: ALARM_ASSETS.getValue("braunBell")
+                        if (call.argument<Boolean>("preview") == true) {
+                            // Settings audition: instant, never de-duplicated,
+                            // follows the media stream at the master volume.
+                            val vol = call.argument<Number>("volume")?.toFloat() ?: masterVolume
+                            effectPlayer.playPreview(chimeAsset, vol)
                             result.success(true)
                             return@setMethodCallHandler
                         }
-                        val chimeId = call.argument<String>("chimeId") ?: "braunBell"
-                        val chimeAsset = when (chimeId) {
-                            "braunBell" -> "flutter_assets/assets/audio/alarm_braun_bell.wav"
-                            "deskBell" -> "flutter_assets/assets/audio/alarm_desk_bell.wav"
-                            "tibetanBowl" -> "flutter_assets/assets/audio/alarm_tibetan_bowl.wav"
-                            "zenGong" -> "flutter_assets/assets/audio/alarm_zen_gong.wav"
-                            "tubularChime" -> "flutter_assets/assets/audio/alarm_tubular_chime.wav"
-                            else -> "flutter_assets/assets/audio/alarm_braun_bell.wav"
+                        if (!shouldPlayAlarm()) {
+                            result.success(true)
+                            return@setMethodCallHandler
                         }
                         context.assets.openFd(chimeAsset).use { fd ->
                             MediaPlayer().apply {
@@ -448,6 +458,7 @@ class MainActivity : FlutterActivity() {
                                 )
                                 setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
                                 setOnCompletionListener { mp -> mp.release() }
+                                setOnErrorListener { mp, _, _ -> mp.release(); true }
                                 prepare()
                                 start()
                             }
@@ -487,9 +498,26 @@ class MainActivity : FlutterActivity() {
                         } else {
                             startService(serviceIntent)
                         }
+                        requestNotificationPermissionOnce()
                         result.success(true)
                     } catch (e: Exception) {
                         result.success(false)
+                    }
+                }
+                "takePendingSessions" -> {
+                    result.success(TimerForegroundService.takePendingSessions(this))
+                }
+                "getRemainingMillis" -> {
+                    // Boot-clock remaining time of the native session, or null
+                    // when none ran in this process. Negative = already finished.
+                    val deadline = TimerForegroundService.deadlineElapsed
+                    if (deadline == 0L) {
+                        result.success(null)
+                    } else {
+                        result.success(mapOf(
+                            "remainingMillis" to (deadline - SystemClock.elapsedRealtime()),
+                            "running" to TimerForegroundService.isCountingDown
+                        ))
                     }
                 }
                 "stopService" -> {
@@ -665,6 +693,34 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    /**
+     * Android 13+: the countdown/alert/vinyl notifications are silently dropped
+     * without POST_NOTIFICATIONS. Asked in context (first timer start), once per
+     * install; afterwards the user can enable it in system settings.
+     */
+    private fun requestNotificationPermissionOnce() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
+        val prefs = getSharedPreferences(PERMISSION_PREFS, Context.MODE_PRIVATE)
+        if (prefs.getBoolean(KEY_NOTIFICATION_ASKED, false)) return
+        prefs.edit().putBoolean(KEY_NOTIFICATION_ASKED, true).apply()
+        requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_POST_NOTIFICATIONS)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_POST_NOTIFICATIONS &&
+            grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED &&
+            TimerForegroundService.isCountingDown
+        ) {
+            try {
+                startService(Intent(this, TimerForegroundService::class.java).apply {
+                    action = TimerForegroundService.ACTION_REFRESH_NOTIFICATION
+                })
+            } catch (_: Exception) {}
+        }
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -691,6 +747,7 @@ class MainActivity : FlutterActivity() {
         MediaNotificationService.mediaControlListener = null
         safeRelease(soundscapePlayer)
         soundscapePlayer = null
+        effectPlayer.release()
         super.onDestroy()
     }
 }

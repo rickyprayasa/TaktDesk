@@ -18,6 +18,12 @@ import 'settings_controller.dart';
 import 'widgets/feedback_dialog.dart';
 import 'widgets/studio_pro_dialog.dart';
 
+part 'settings_sections/alarm_acoustics_section.dart';
+part 'settings_sections/hardware_editions_section.dart';
+part 'settings_sections/pomodoro_interval_section.dart';
+part 'settings_sections/quick_sheets.dart';
+part 'settings_sections/section_header.dart';
+
 /// The Industrial Service Hatch Modal Sheet (Settings, About & Legal).
 ///
 /// Embodies Dieter Rams / Braun design language with tactile sliders,
@@ -129,7 +135,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                               ),
                             ),
                             const SizedBox(height: 3),
-                            const Text(
+                            Text(
                               'DEVELOPED BY RSQUARE',
                               textAlign: TextAlign.center,
                               style: TextStyle(
@@ -137,7 +143,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                                 fontSize: 8.5,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 1.2,
-                                color: TaktColors.filamentAmber,
+                                color: TaktColors.amberText(isDark),
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -213,7 +219,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                           ),
                         ),
                         const SizedBox(height: 3),
-                        const Text(
+                        Text(
                           'DEVELOPED BY RSQUARE',
                           textAlign: TextAlign.center,
                           style: TextStyle(
@@ -221,7 +227,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                             fontSize: 8.5,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1.2,
-                            color: TaktColors.filamentAmber,
+                            color: TaktColors.amberText(isDark),
                           ),
                         ),
                         const SizedBox(height: 18),
@@ -308,7 +314,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
 
                         // Section 5: The Braun Creed & Legal
                         _SectionHeader(
-                          title: 'THE BRAUN CREED & LEGAL',
+                          title: 'THE DESIGN CREED & LEGAL',
                           textColor: secondaryTextColor,
                         ),
                         const SizedBox(height: 8),
@@ -381,7 +387,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                     letterSpacing: 1.0,
                     color: isSelected
-                        ? TaktColors.filamentAmber
+                        ? TaktColors.amberText(isDark)
                         : secondaryTextColor,
                   ),
                 ),
@@ -487,7 +493,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
             ),
             const SizedBox(height: 16),
             _SectionHeader(
-              title: 'THE BRAUN CREED & LEGAL',
+              title: 'THE DESIGN CREED & LEGAL',
               textColor: secondaryTextColor,
             ),
             const SizedBox(height: 8),
@@ -543,11 +549,11 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
               const SizedBox(width: 8),
               Text(
                 '${(prefs.soundVolume * 100).round()}%',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'monospace',
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: TaktColors.filamentAmber,
+                  color: TaktColors.amberText(isDark),
                 ),
               ),
             ],
@@ -953,17 +959,17 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                   HapticService.selectionClick();
                   FocusAnalyticsDialog.show(context);
                 },
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.bar_chart,
                         size: 16,
                         color: TaktColors.filamentAmber,
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Flexible(
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
@@ -974,13 +980,13 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 1.2,
-                              color: TaktColors.filamentAmber,
+                              color: TaktColors.amberText(isDark),
                             ),
                           ),
                         ),
                       ),
-                      SizedBox(width: 4),
-                      Icon(
+                      const SizedBox(width: 4),
+                      const Icon(
                         Icons.chevron_right,
                         size: 16,
                         color: TaktColors.filamentAmber,
@@ -1075,7 +1081,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
             ),
           ),
           Text(
-            'ZYKL INSTRUMENT // v1.0.0 (Build 2026.09)',
+            'ZYKL: POMODORO FOCUS TIMER // v1.0.0 (BUILD 1)',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'monospace',
@@ -1086,7 +1092,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'CRAFTED BY RSQUARE',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -1094,7 +1100,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
               fontSize: 8.5,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.2,
-              color: TaktColors.filamentAmber,
+              color: TaktColors.amberText(isDark),
             ),
           ),
           const SizedBox(height: 6),
@@ -1104,6 +1110,19 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
             style: TextStyle(
               fontFamily: 'monospace',
               fontSize: 8.5,
+              color: secondaryTextColor,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Design inspired by the principles of Dieter Rams. ZYKL is an independent product by RSQUARE, '
+            'not affiliated with or endorsed by Dieter Rams or Braun.',
+            key: const ValueKey('zykl_design_disclaimer'),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 8.0,
               color: secondaryTextColor,
               height: 1.3,
             ),
@@ -1127,15 +1146,15 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                   width: 1.0,
                 ),
               ),
-              child: const Center(
+              child: Center(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.star_rate_rounded, size: 16, color: TaktColors.filamentAmber),
-                      SizedBox(width: 8),
+                      const Icon(Icons.star_rate_rounded, size: 16, color: TaktColors.filamentAmber),
+                      const SizedBox(width: 8),
                       Text(
                         'RATE ZYKL ON GOOGLE PLAY',
                         style: TextStyle(
@@ -1143,11 +1162,11 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                           fontSize: 10.0,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1.2,
-                          color: TaktColors.filamentAmber,
+                          color: TaktColors.amberText(isDark),
                         ),
                       ),
-                      SizedBox(width: 6),
-                      Icon(Icons.arrow_outward, size: 12, color: TaktColors.filamentAmber),
+                      const SizedBox(width: 6),
+                      const Icon(Icons.arrow_outward, size: 12, color: TaktColors.filamentAmber),
                     ],
                   ),
                 ),
@@ -1262,7 +1281,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
             onPressed: () {
               showLicensePage(
                 context: context,
-                applicationName: 'ZYKL by RSQUARE',
+                applicationName: 'ZYKL: Pomodoro Focus Timer',
                 applicationVersion: 'v1.0.0 (Build 2026.09)',
                 applicationIcon: const Padding(
                   padding: EdgeInsets.all(8.0),
@@ -1362,1283 +1381,6 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _AlarmAcousticsSection extends ConsumerWidget {
-  final bool isDark;
-  final Color primaryTextColor;
-  final Color secondaryTextColor;
-  final Color panelBgColor;
-  final Color borderColor;
-
-  const _AlarmAcousticsSection({
-    required this.isDark,
-    required this.primaryTextColor,
-    required this.secondaryTextColor,
-    required this.panelBgColor,
-    required this.borderColor,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final prefs = ref.watch(deskPreferencesControllerProvider);
-    final audioService = ref.watch(audioServiceProvider);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _SectionHeader(
-          title: 'ALARM ACOUSTICS & CHIMES',
-          textColor: secondaryTextColor,
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(
-            color: panelBgColor,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: borderColor, width: 1),
-          ),
-          child: Column(
-            children: AlarmChimes.all.map((chime) {
-              final isSelected = prefs.alarmChimeId == chime.id;
-              final isProLocked = chime.isPro && !prefs.isProSimulated;
-
-              return InkWell(
-                key: ValueKey('alarm_chime_tile_${chime.id}'),
-                onTap: () {
-                  HapticService.selectionClick();
-                  if (isProLocked) {
-                    showStudioProDialog(
-                      context,
-                      ref,
-                      isDark: isDark,
-                      primaryTextColor: primaryTextColor,
-                      secondaryTextColor: secondaryTextColor,
-                    );
-                  } else {
-                    ref
-                        .read(deskPreferencesControllerProvider.notifier)
-                        .setAlarmChime(chime.id);
-                    audioService.playAlarmChime(chime.id);
-                  }
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        key: ValueKey('preview_chime_${chime.id}'),
-                        icon: const Icon(Icons.volume_up, size: 16),
-                        color: isSelected
-                            ? TaktColors.filamentAmber
-                            : (isDark
-                                ? const Color(0xFF9E9B93)
-                                : const Color(0xFF2D3139)),
-                        visualDensity: VisualDensity.compact,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(
-                          minWidth: 28,
-                          minHeight: 28,
-                        ),
-                        onPressed: () {
-                          HapticService.lightClick();
-                          audioService.playAlarmChime(chime.id);
-                        },
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    chime.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontFamily: 'monospace',
-                                      fontSize: 10.5,
-                                      fontWeight: isSelected
-                                          ? FontWeight.w700
-                                          : FontWeight.w600,
-                                      letterSpacing: 0.8,
-                                      color: isSelected
-                                          ? TaktColors.filamentAmber
-                                          : primaryTextColor,
-                                    ),
-                                  ),
-                                ),
-                                if (chime.isPro) ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
-                                      vertical: 1,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isProLocked
-                                          ? Colors.transparent
-                                          : TaktColors.filamentAmber
-                                              .withValues(alpha: 0.15),
-                                      border: Border.all(
-                                        color: TaktColors.filamentAmber,
-                                        width: 0.8,
-                                      ),
-                                      borderRadius: BorderRadius.circular(2),
-                                    ),
-                                    child: const Text(
-                                      'PRO',
-                                      style: TextStyle(
-                                        fontFamily: 'monospace',
-                                        fontSize: 8.0,
-                                        fontWeight: FontWeight.w700,
-                                        color: TaktColors.filamentAmber,
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              chime.description,
-                              style: TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 9.0,
-                                color: secondaryTextColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        width: 14,
-                        height: 14,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected
-                                ? TaktColors.filamentAmber
-                                : (isDark
-                                    ? const Color(0xFF6B7280)
-                                    : const Color(0xFF9CA3AF)),
-                            width: isSelected ? 4 : 1.2,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PomodoroIntervalEngineSection extends ConsumerWidget {
-  final bool isDark;
-  final Color primaryTextColor;
-  final Color secondaryTextColor;
-  final Color panelBgColor;
-  final Color borderColor;
-
-  const _PomodoroIntervalEngineSection({
-    required this.isDark,
-    required this.primaryTextColor,
-    required this.secondaryTextColor,
-    required this.panelBgColor,
-    required this.borderColor,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final timerState = ref.watch(chronoDialProvider);
-    final controller = ref.read(chronoDialProvider.notifier);
-    final activeProfile = timerState.profile;
-    final customProfile = timerState.customProfile;
-    final isRunning = timerState.isRunning;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _SectionHeader(
-          title: 'POMODORO INTERVAL ENGINE',
-          textColor: secondaryTextColor,
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: panelBgColor,
-            borderRadius: BorderRadius.circular(6.0),
-            border: Border.all(color: borderColor, width: 0.8),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Active profile indicator
-              Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 8,
-                runSpacing: 4,
-                children: [
-                  Text(
-                    'ACTIVE PROFILE',
-                    style: TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.0,
-                      color: primaryTextColor,
-                    ),
-                  ),
-                  Text(
-                    activeProfile.type.label,
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: TaktColors.filamentAmber,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-
-              // Quick preset selector cassette keys
-              Row(
-                children: [
-                  _buildPresetButton(
-                    label: '25/5 CLS',
-                    type: PomodoroProfileType.classic,
-                    isSelected: activeProfile.type == PomodoroProfileType.classic,
-                    isRunning: isRunning,
-                    onTap: () => controller.setProfile(PomodoroProfile.classic),
-                    primaryTextColor: primaryTextColor,
-                    borderColor: borderColor,
-                  ),
-                  const SizedBox(width: 6),
-                  _buildPresetButton(
-                    label: '50/10 MON',
-                    type: PomodoroProfileType.monastic,
-                    isSelected: activeProfile.type == PomodoroProfileType.monastic,
-                    isRunning: isRunning,
-                    onTap: () => controller.setProfile(PomodoroProfile.monastic),
-                    primaryTextColor: primaryTextColor,
-                    borderColor: borderColor,
-                  ),
-                  const SizedBox(width: 6),
-                  _buildPresetButton(
-                    label: '15/3 SPR',
-                    type: PomodoroProfileType.sprint,
-                    isSelected: activeProfile.type == PomodoroProfileType.sprint,
-                    isRunning: isRunning,
-                    onTap: () => controller.setProfile(PomodoroProfile.sprint),
-                    primaryTextColor: primaryTextColor,
-                    borderColor: borderColor,
-                  ),
-                  const SizedBox(width: 6),
-                  _buildPresetButton(
-                    label: 'CUSTOM',
-                    type: PomodoroProfileType.custom,
-                    isSelected: activeProfile.type == PomodoroProfileType.custom,
-                    isRunning: isRunning,
-                    onTap: () => controller.setProfile(customProfile),
-                    primaryTextColor: primaryTextColor,
-                    borderColor: borderColor,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Divider(color: borderColor.withValues(alpha: 0.5), height: 1),
-              const SizedBox(height: 12),
-
-              // Stepper 1: Focus Duration
-              _buildStepperRow(
-                title: 'FOCUS DURATION',
-                subtitle: 'Work interval (1 – 90 min)',
-                value: '${activeProfile.focusMinutes} MIN',
-                valueKey: const ValueKey('custom_focus_value'),
-                minusKey: const ValueKey('custom_focus_minus'),
-                plusKey: const ValueKey('custom_focus_plus'),
-                canDecrement: !isRunning && activeProfile.focusMinutes > 1,
-                canIncrement: !isRunning && activeProfile.focusMinutes < 90,
-                onDecrement: () => controller.updateCustomDurations(
-                  focusMinutes: activeProfile.focusMinutes - 1,
-                  activate: true,
-                ),
-                onIncrement: () => controller.updateCustomDurations(
-                  focusMinutes: activeProfile.focusMinutes + 1,
-                  activate: true,
-                ),
-                primaryTextColor: primaryTextColor,
-                secondaryTextColor: secondaryTextColor,
-                borderColor: borderColor,
-              ),
-              const SizedBox(height: 10),
-
-              // Stepper 2: Short Break
-              _buildStepperRow(
-                title: 'SHORT BREAK',
-                subtitle: 'Cycle rest interval (1 – 30 min)',
-                value: '${activeProfile.shortBreakMinutes} MIN',
-                valueKey: const ValueKey('custom_short_break_value'),
-                minusKey: const ValueKey('custom_short_break_minus'),
-                plusKey: const ValueKey('custom_short_break_plus'),
-                canDecrement: !isRunning && activeProfile.shortBreakMinutes > 1,
-                canIncrement: !isRunning && activeProfile.shortBreakMinutes < 30,
-                onDecrement: () => controller.updateCustomDurations(
-                  shortBreakMinutes: activeProfile.shortBreakMinutes - 1,
-                  activate: true,
-                ),
-                onIncrement: () => controller.updateCustomDurations(
-                  shortBreakMinutes: activeProfile.shortBreakMinutes + 1,
-                  activate: true,
-                ),
-                primaryTextColor: primaryTextColor,
-                secondaryTextColor: secondaryTextColor,
-                borderColor: borderColor,
-              ),
-              const SizedBox(height: 10),
-
-              // Stepper 3: Long Break
-              _buildStepperRow(
-                title: 'LONG BREAK',
-                subtitle: 'Extended recovery (1 – 45 min)',
-                value: '${activeProfile.longBreakMinutes} MIN',
-                valueKey: const ValueKey('custom_long_break_value'),
-                minusKey: const ValueKey('custom_long_break_minus'),
-                plusKey: const ValueKey('custom_long_break_plus'),
-                canDecrement: !isRunning && activeProfile.longBreakMinutes > 1,
-                canIncrement: !isRunning && activeProfile.longBreakMinutes < 45,
-                onDecrement: () => controller.updateCustomDurations(
-                  longBreakMinutes: activeProfile.longBreakMinutes - 1,
-                  activate: true,
-                ),
-                onIncrement: () => controller.updateCustomDurations(
-                  longBreakMinutes: activeProfile.longBreakMinutes + 1,
-                  activate: true,
-                ),
-                primaryTextColor: primaryTextColor,
-                secondaryTextColor: secondaryTextColor,
-                borderColor: borderColor,
-              ),
-              const SizedBox(height: 10),
-
-              // Stepper 4: Cycle Count
-              _buildStepperRow(
-                title: 'CYCLE COUNT',
-                subtitle: 'Cycles to long recovery (2 – 8)',
-                value: '${activeProfile.longBreakInterval} CYCLES',
-                valueKey: const ValueKey('custom_cycle_count_value'),
-                minusKey: const ValueKey('custom_cycle_count_minus'),
-                plusKey: const ValueKey('custom_cycle_count_plus'),
-                canDecrement: !isRunning && activeProfile.longBreakInterval > 2,
-                canIncrement: !isRunning && activeProfile.longBreakInterval < 8,
-                onDecrement: () => controller.updateCustomDurations(
-                  longBreakInterval: activeProfile.longBreakInterval - 1,
-                  activate: true,
-                ),
-                onIncrement: () => controller.updateCustomDurations(
-                  longBreakInterval: activeProfile.longBreakInterval + 1,
-                  activate: true,
-                ),
-                primaryTextColor: primaryTextColor,
-                secondaryTextColor: secondaryTextColor,
-                borderColor: borderColor,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPresetButton({
-    required String label,
-    required PomodoroProfileType type,
-    required bool isSelected,
-    required bool isRunning,
-    required VoidCallback onTap,
-    required Color primaryTextColor,
-    required Color borderColor,
-  }) {
-    return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: isRunning ? null : onTap,
-          borderRadius: BorderRadius.circular(4.0),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 6.0),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? TaktColors.filamentAmber.withValues(alpha: 0.15)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(4.0),
-              border: Border.all(
-                color: isSelected
-                    ? TaktColors.filamentAmber
-                    : borderColor.withValues(alpha: 0.5),
-                width: isSelected ? 1.2 : 0.8,
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 4.0,
-                  height: 4.0,
-                  margin: const EdgeInsets.only(bottom: 3.0),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isSelected
-                        ? TaktColors.filamentAmber
-                        : borderColor.withValues(alpha: 0.4),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: TaktColors.filamentAmber.withValues(alpha: 0.6),
-                              blurRadius: 3.0,
-                            ),
-                          ]
-                        : null,
-                  ),
-                ),
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 8.5,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    letterSpacing: 0.5,
-                    color: isSelected
-                        ? TaktColors.filamentAmber
-                        : (isRunning
-                            ? primaryTextColor.withValues(alpha: 0.35)
-                            : primaryTextColor.withValues(alpha: 0.8)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStepperRow({
-    required String title,
-    required String subtitle,
-    required String value,
-    required Key valueKey,
-    required Key minusKey,
-    required Key plusKey,
-    required bool canDecrement,
-    required bool canIncrement,
-    required VoidCallback onDecrement,
-    required VoidCallback onIncrement,
-    required Color primaryTextColor,
-    required Color secondaryTextColor,
-    required Color borderColor,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 10.0,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
-                  color: primaryTextColor,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 8.5,
-                  color: secondaryTextColor,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            IconButton(
-              key: minusKey,
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
-              icon: Icon(
-                Icons.remove_circle_outline,
-                color: canDecrement ? primaryTextColor : borderColor,
-                size: 18,
-              ),
-              onPressed: canDecrement ? onDecrement : null,
-            ),
-            Container(
-              width: 70,
-              alignment: Alignment.center,
-              child: Text(
-                value,
-                key: valueKey,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: TaktColors.filamentAmber,
-                ),
-              ),
-            ),
-            IconButton(
-              key: plusKey,
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
-              icon: Icon(
-                Icons.add_circle_outline,
-                color: canIncrement ? primaryTextColor : borderColor,
-                size: 18,
-              ),
-              onPressed: canIncrement ? onIncrement : null,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final Color textColor;
-
-  const _SectionHeader({
-    required this.title,
-    required this.textColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Flexible(
-          flex: 10,
-          child: Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 9.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.7,
-              color: textColor,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          flex: 1,
-          child: Container(
-            height: 1.0,
-            color: textColor.withValues(alpha: 0.25),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _HardwareEditionsSection extends ConsumerStatefulWidget {
-  final DeskPreferencesState prefs;
-  final bool isDark;
-  final Color primaryTextColor;
-  final Color secondaryTextColor;
-  final Color panelBgColor;
-  final Color borderColor;
-
-  const _HardwareEditionsSection({
-    required this.prefs,
-    required this.isDark,
-    required this.primaryTextColor,
-    required this.secondaryTextColor,
-    required this.panelBgColor,
-    required this.borderColor,
-  });
-
-  @override
-  ConsumerState<_HardwareEditionsSection> createState() =>
-      _HardwareEditionsSectionState();
-}
-
-class _HardwareEditionsSectionState
-    extends ConsumerState<_HardwareEditionsSection> {
-  late final PageController _pageController;
-  late int _currentPage;
-
-  @override
-  void initState() {
-    super.initState();
-    final initialIndex = HardwareEdition.all.indexWhere(
-      (e) => e.type.name == widget.prefs.selectedEdition,
-    );
-    _currentPage = initialIndex >= 0 ? initialIndex : 0;
-    _pageController = PageController(
-      initialPage: _currentPage,
-      viewportFraction: 0.82,
-    );
-  }
-
-  @override
-  void didUpdateWidget(covariant _HardwareEditionsSection oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.prefs.selectedEdition != widget.prefs.selectedEdition) {
-      final newIndex = HardwareEdition.all.indexWhere(
-        (e) => e.type.name == widget.prefs.selectedEdition,
-      );
-      if (newIndex >= 0 &&
-          newIndex != _currentPage &&
-          _pageController.hasClients) {
-        _pageController.animateToPage(
-          newIndex,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  void _goToPrev() {
-    if (!_pageController.hasClients || _currentPage <= 0) return;
-    _pageController.previousPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-    HapticService.selectionClick();
-  }
-
-  void _goToNext() {
-    if (!_pageController.hasClients || _currentPage >= HardwareEdition.all.length - 1) return;
-    _pageController.nextPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-    HapticService.selectionClick();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final themeState = ref.watch(chassisThemeProvider);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Section header with title, counter badge, and arrow buttons
-        Row(
-          children: [
-            Flexible(
-              flex: 4,
-              child: Text(
-                'HARDWARE EDITIONS // CHASSIS MATERIALITY',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 10.0,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                  color: widget.secondaryTextColor,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              flex: 1,
-              child: Container(
-                height: 1.0,
-                color: widget.secondaryTextColor.withValues(alpha: 0.25),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              '[ ${(_currentPage + 1).toString().padLeft(2, '0')} / ${HardwareEdition.all.length.toString().padLeft(2, '0')} ]',
-              style: TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 10.0,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.0,
-                color: widget.secondaryTextColor,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Semantics(
-              label: 'Previous hardware edition',
-              button: true,
-              enabled: _currentPage > 0,
-              child: InkWell(
-                key: const ValueKey('edition_prev_button'),
-                borderRadius: BorderRadius.circular(3.0),
-                onTap: _currentPage > 0 ? _goToPrev : null,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  child: Text(
-                    '◀',
-                    style: TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 10,
-                      color: _currentPage > 0
-                          ? widget.primaryTextColor
-                          : widget.secondaryTextColor.withValues(alpha: 0.4),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 2),
-            Semantics(
-              label: 'Next hardware edition',
-              button: true,
-              enabled: _currentPage < HardwareEdition.all.length - 1,
-              child: InkWell(
-                key: const ValueKey('edition_next_button'),
-                borderRadius: BorderRadius.circular(3.0),
-                onTap: _currentPage < HardwareEdition.all.length - 1 ? _goToNext : null,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  child: Text(
-                    '▶',
-                    style: TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 10,
-                      color: _currentPage < HardwareEdition.all.length - 1
-                          ? widget.primaryTextColor
-                          : widget.secondaryTextColor.withValues(alpha: 0.4),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: widget.panelBgColor,
-            borderRadius: BorderRadius.circular(6.0),
-            border: Border.all(color: widget.borderColor, width: 0.8),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Snapping Carousel of 4 HardwareEdition cards
-              SizedBox(
-                height: 152,
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: HardwareEdition.all.length,
-                  onPageChanged: (idx) {
-                    setState(() {
-                      _currentPage = idx;
-                    });
-                  },
-                  itemBuilder: (context, i) {
-                    final ed = HardwareEdition.all[i];
-                    final isSel =
-                        widget.prefs.selectedEdition == ed.type.name;
-                    final isUnl =
-                        !ed.isPremium || widget.prefs.isProSimulated;
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                      child: _EditionCard(
-                        edition: ed,
-                        isSelected: isSel,
-                        isUnlocked: isUnl,
-                        isDark: widget.isDark,
-                        onTap: () {
-                          if (!isUnl) {
-                            _showStudioProDialog(
-                              context,
-                              ref,
-                              ed,
-                              isDark: widget.isDark,
-                              primaryTextColor: widget.primaryTextColor,
-                              secondaryTextColor: widget.secondaryTextColor,
-                            );
-                          } else if (!isSel) {
-                            ref
-                                .read(
-                                    deskPreferencesControllerProvider.notifier)
-                                .setHardwareEdition(ed.type);
-                            HapticService.selectionClick();
-                          } else {
-                            HapticService.selectionClick();
-                          }
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Page indicator dots
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  for (int i = 0; i < HardwareEdition.all.length; i++) ...[
-                    if (i > 0) const SizedBox(width: 6),
-                    Container(
-                      key: ValueKey('edition_dot_$i'),
-                      width: 5,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _currentPage == i
-                            ? themeState.filamentColor
-                            : widget.borderColor.withValues(alpha: 0.5),
-                        boxShadow: _currentPage == i
-                            ? [
-                                BoxShadow(
-                                  color: themeState.filamentColor
-                                      .withValues(alpha: 0.6),
-                                  blurRadius: 3.0,
-                                  spreadRadius: 0.5,
-                                ),
-                              ]
-                            : null,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              if (AppSecurityConfig.showDeveloperTools) ...[
-                const SizedBox(height: 14),
-                Divider(height: 1, color: widget.borderColor),
-                const SizedBox(height: 12),
-                // SIMULATE STUDIO PRO CLEARANCE switch row (Developer/Internal Test only)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'SIMULATE STUDIO PRO CLEARANCE',
-                            style: TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1.0,
-                              color: widget.primaryTextColor,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Developer preview override for all hardware finishes',
-                            style: TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 9.0,
-                              color: widget.secondaryTextColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Switch(
-                      key: const ValueKey('simulate_pro_switch'),
-                      value: widget.prefs.isProSimulated,
-                      activeThumbColor: TaktColors.filamentAmber,
-                      activeTrackColor:
-                          TaktColors.filamentAmber.withValues(alpha: 0.5),
-                      inactiveThumbColor: widget.isDark
-                          ? const Color(0xFF6B7280)
-                          : const Color(0xFF9CA3AF),
-                      inactiveTrackColor: widget.isDark
-                          ? TaktColors.slateLight
-                          : TaktColors.paperBorder,
-                      onChanged: (val) {
-                        ref
-                            .read(deskPreferencesControllerProvider.notifier)
-                            .setProSimulated(val);
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-
-class _EditionCard extends StatelessWidget {
-  final HardwareEdition edition;
-  final bool isSelected;
-  final bool isUnlocked;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _EditionCard({
-    required this.edition,
-    required this.isSelected,
-    required this.isUnlocked,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final rivetColor = isDark ? edition.rivetDark : edition.rivetLight;
-    final borderColor = isSelected
-        ? TaktColors.filamentAmber
-        : (isDark ? edition.darkBorder : edition.lightBorder);
-    final titleColor = isDark ? TaktColors.warmBone : const Color(0xFF141618);
-    final subtitleColor =
-        isDark ? const Color(0xFF9E9B93) : const Color(0xFF2D3139);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        key: ValueKey('edition_card_${edition.type.name}'),
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6.0),
-        child: Container(
-          width: 180,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(6.0),
-            border: Border.all(
-              color: borderColor,
-              width: isSelected ? 1.4 : 1.0,
-            ),
-            gradient: LinearGradient(
-              colors: isDark
-                  ? edition.plateGradientDark
-                  : edition.plateGradientLight,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: Stack(
-            children: [
-              // 4 Corner Rivets (4x4 circular containers)
-              Positioned(
-                top: 5,
-                left: 5,
-                child: _RivetDot(color: rivetColor),
-              ),
-              Positioned(
-                top: 5,
-                right: 5,
-                child: _RivetDot(color: rivetColor),
-              ),
-              Positioned(
-                bottom: 5,
-                left: 5,
-                child: _RivetDot(color: rivetColor),
-              ),
-              Positioned(
-                bottom: 5,
-                right: 5,
-                child: _RivetDot(color: rivetColor),
-              ),
-
-              // Content
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 10,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Top: Tier badge & Swatch chips
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Badge: FREE or STUDIO PRO
-                        Flexible(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 5,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: edition.isPremium
-                                  ? TaktColors.filamentAmber
-                                      .withValues(alpha: 0.2)
-                                  : (isDark
-                                      ? TaktColors.warmBone
-                                          .withValues(alpha: 0.15)
-                                      : const Color(0xFF141618)
-                                          .withValues(alpha: 0.08)),
-                              borderRadius: BorderRadius.circular(3.0),
-                              border: Border.all(
-                                color: edition.isPremium
-                                    ? TaktColors.filamentAmber
-                                    : (isDark
-                                        ? TaktColors.warmBone
-                                        : const Color(0xFF2D3139)),
-                                width: 0.6,
-                              ),
-                            ),
-                            child: Text(
-                              edition.isPremium ? 'STUDIO PRO' : 'FREE',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 7.5,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.8,
-                                color: edition.isPremium
-                                    ? TaktColors.filamentAmber
-                                    : (isDark
-                                        ? TaktColors.warmBone
-                                        : const Color(0xFF141618)),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        // Swatch chips
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _SwatchDot(
-                              color: edition.needleColor,
-                              isDark: isDark,
-                            ),
-                            const SizedBox(width: 4),
-                            _SwatchDot(
-                              color: edition.filamentColor,
-                              isDark: isDark,
-                            ),
-                            const SizedBox(width: 4),
-                            _SwatchDot(
-                              color: edition.accentColor,
-                              isDark: isDark,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-
-                    // Middle: Title, Year & Subtitle
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          edition.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 10.0,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                            color: titleColor,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${edition.yearLabel} · ${edition.subtitle}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 8.5,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.4,
-                            color: subtitleColor,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // Bottom: Action indicator / button
-                    _buildActionButton(),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton() {
-    if (isSelected) {
-      return Container(
-        width: double.infinity,
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        decoration: BoxDecoration(
-          color: TaktColors.filamentAmber.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(3.0),
-          border: Border.all(
-            color: TaktColors.filamentAmber,
-            width: 0.8,
-          ),
-        ),
-        child: const Text(
-          'EQUIPPED',
-          style: TextStyle(
-            fontFamily: 'monospace',
-            fontSize: 8.5,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.8,
-            color: TaktColors.filamentAmber,
-          ),
-        ),
-      );
-    }
-
-    if (isUnlocked) {
-      return Container(
-        width: double.infinity,
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        decoration: BoxDecoration(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : Colors.black.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(3.0),
-          border: Border.all(
-            color: isDark ? Colors.white24 : Colors.black26,
-            width: 0.8,
-          ),
-        ),
-        child: Text(
-          'EQUIP',
-          style: TextStyle(
-            fontFamily: 'monospace',
-            fontSize: 8.5,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.8,
-            color: isDark ? TaktColors.warmBone : const Color(0xFF141618),
-          ),
-        ),
-      );
-    }
-
-    // Locked
-    return Container(
-      width: double.infinity,
-      alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(3.0),
-        border: Border.all(
-          color: TaktColors.mutedOchre.withValues(alpha: 0.6),
-          width: 0.8,
-        ),
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.lock, size: 9, color: TaktColors.mutedOchre),
-          SizedBox(width: 4),
-          Text(
-            'LOCKED // PREVIEW 👁',
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 8.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-              color: TaktColors.mutedOchre,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RivetDot extends StatelessWidget {
-  final Color color;
-
-  const _RivetDot({required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 4,
-      height: 4,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
-    );
-  }
-}
-
-class _SwatchDot extends StatelessWidget {
-  final Color color;
-  final bool isDark;
-
-  const _SwatchDot({
-    required this.color,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 8,
-      height: 8,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: isDark ? Colors.white24 : Colors.black26,
-          width: 0.5,
-        ),
       ),
     );
   }

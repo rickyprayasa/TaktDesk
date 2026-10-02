@@ -84,6 +84,7 @@ class DispenserSlotHeader extends ConsumerWidget {
                     : themeState.chassisMutedTextColor,
                 size: 18,
               ),
+              tooltip: 'Add task',
               onPressed: onAddTap,
             ),
           ],

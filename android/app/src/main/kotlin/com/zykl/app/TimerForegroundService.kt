@@ -2,6 +2,7 @@ package com.zykl.app
 
 import android.app.Notification
 import android.app.NotificationChannel
+import android.app.AlarmManager
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -30,6 +31,8 @@ class TimerForegroundService : Service() {
 
         const val ACTION_START = "ACTION_START"
         const val ACTION_STOP = "ACTION_STOP"
+        /** Fired by AlarmManager at the absolute end time (works in Doze / screen off). */
+        const val ACTION_COMPLETE = "ACTION_COMPLETE"
 
         const val EXTRA_REMAINING_SECONDS = "EXTRA_REMAINING_SECONDS"
         const val EXTRA_TARGET_MINUTES = "EXTRA_TARGET_MINUTES"
@@ -37,6 +40,40 @@ class TimerForegroundService : Service() {
         const val EXTRA_CYCLE_COUNT = "EXTRA_CYCLE_COUNT"
         const val EXTRA_PROFILE_NAME = "EXTRA_PROFILE_NAME"
         const val EXTRA_ALARM_CHIME_ID = "EXTRA_ALARM_CHIME_ID"
+        const val EXTRA_END_AT_EPOCH = "EXTRA_END_AT_EPOCH"
+        private const val REQUEST_COMPLETE = 2001
+        const val ACTION_REFRESH_NOTIFICATION = "ACTION_REFRESH_NOTIFICATION"
+
+        /**
+         * Session deadline on the boot-time clock (`SystemClock.elapsedRealtime`),
+         * 0 when no session was started in this process. Kept after completion so
+         * Flutter can tell "finished while backgrounded" from "never started".
+         */
+        @Volatile
+        var deadlineElapsed: Long = 0L
+            private set
+
+        @Volatile
+        var isCountingDown: Boolean = false
+            private set
+
+        /** Focus sessions that finished while Flutter was not running (app closed). */
+        private const val PREFS_PENDING = "zykl_pending_sessions"
+        private const val KEY_PENDING = "sessions"
+
+        /** Returns and clears "startedAtEpochMs,targetMinutes" entries. */
+        fun takePendingSessions(context: Context): List<String> {
+            val prefs = context.getSharedPreferences(PREFS_PENDING, Context.MODE_PRIVATE)
+            val raw = prefs.getString(KEY_PENDING, "") ?: ""
+            prefs.edit().remove(KEY_PENDING).apply()
+            return raw.split(';').filter { it.isNotBlank() }
+        }
+
+        private fun addPendingSession(context: Context, startedAt: Long, targetMinutes: Int) {
+            val prefs = context.getSharedPreferences(PREFS_PENDING, Context.MODE_PRIVATE)
+            val raw = prefs.getString(KEY_PENDING, "") ?: ""
+            prefs.edit().putString(KEY_PENDING, "$raw$startedAt,$targetMinutes;").apply()
+        }
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -45,6 +82,10 @@ class TimerForegroundService : Service() {
     private var wakeLock: PowerManager.WakeLock? = null
     private var bellPlayer: MediaPlayer? = null
     private var activeAlarmChimeId: String = "braunBell"
+    private var activeTargetMinutes: Int = 25
+    /** End-time (epoch ms) of the last session already completed; makes completion idempotent. */
+    private var lastCompletedEndAt: Long = 0L
+    private var ongoingNotification: Notification? = null
 
     private fun startWidgetTick(targetEndTime: Long, targetMinutes: Int, phase: String) {
         stopWidgetTick()
@@ -106,6 +147,20 @@ class TimerForegroundService : Service() {
             ACTION_STOP -> {
                 stopCountdown()
             }
+            ACTION_REFRESH_NOTIFICATION -> {
+                // Re-post after POST_NOTIFICATIONS was granted mid-session.
+                val n = ongoingNotification
+                if (isCountingDown && n != null) {
+                    (getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager)
+                        ?.notify(NOTIFICATION_ID, n)
+                }
+            }
+            ACTION_COMPLETE -> {
+                activeAlarmChimeId = intent.getStringExtra(EXTRA_ALARM_CHIME_ID) ?: activeAlarmChimeId
+                activeTargetMinutes = intent.getIntExtra(EXTRA_TARGET_MINUTES, activeTargetMinutes)
+                val endAt = intent.getLongExtra(EXTRA_END_AT_EPOCH, 0L)
+                onTimerFinished(intent.getStringExtra(EXTRA_PHASE) ?: "focus", endAt)
+            }
         }
         return START_NOT_STICKY
     }
@@ -119,13 +174,17 @@ class TimerForegroundService : Service() {
         alarmChimeId: String
     ) {
         cancelScheduledCompletion()
+        cancelExactCompletion()
         activeAlarmChimeId = alarmChimeId
+        activeTargetMinutes = targetMinutes
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
         notificationManager?.cancel(ALERT_NOTIFICATION_ID)
 
         val remainingMillis = (remainingSeconds * 1000).toLong()
         val targetTime = System.currentTimeMillis() + remainingMillis
+        deadlineElapsed = SystemClock.elapsedRealtime() + remainingMillis
+        isCountingDown = true
 
         val title = formatTitle(phase, cycleCount)
         val content = "$targetMinutes MIN · $profileName"
@@ -154,6 +213,7 @@ class TimerForegroundService : Service() {
             .setContentIntent(pendingIntent)
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .build()
+        ongoingNotification = notification
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(
@@ -165,10 +225,13 @@ class TimerForegroundService : Service() {
             startForeground(NOTIFICATION_ID, notification)
         }
 
-        // Schedule completion alarm
+        // Schedule completion. AlarmManager is the primary trigger: Handler
+        // delays use uptime and stall while the CPU sleeps (screen off), so the
+        // Handler is only a same-process fallback; onTimerFinished is idempotent.
         if (remainingMillis > 0) {
+            scheduleExactCompletion(targetTime, phase, alarmChimeId)
             val runnable = Runnable {
-                onTimerFinished(phase)
+                onTimerFinished(phase, targetTime)
             }
             completionRunnable = runnable
             handler.postDelayed(runnable, remainingMillis)
@@ -178,7 +241,60 @@ class TimerForegroundService : Service() {
         startWidgetTick(targetTime, targetMinutes, phase)
     }
 
-    private fun onTimerFinished(phase: String) {
+    private fun completionPendingIntent(endAt: Long, phase: String, chimeId: String): PendingIntent {
+        val intent = Intent(this, TimerForegroundService::class.java).apply {
+            action = ACTION_COMPLETE
+            putExtra(EXTRA_END_AT_EPOCH, endAt)
+            putExtra(EXTRA_PHASE, phase)
+            putExtra(EXTRA_ALARM_CHIME_ID, chimeId)
+            putExtra(EXTRA_TARGET_MINUTES, activeTargetMinutes)
+        }
+        return PendingIntent.getService(
+            this,
+            REQUEST_COMPLETE,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    private fun scheduleExactCompletion(endAt: Long, phase: String, chimeId: String) {
+        try {
+            val am = getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+            val pi = completionPendingIntent(endAt, phase, chimeId)
+            // Trigger on the boot-time clock: immune to wall-clock changes and
+            // keeps counting through deep sleep. endAt (epoch) stays the
+            // session identity and drives the widgets/notification.
+            val triggerAt = SystemClock.elapsedRealtime() +
+                (endAt - System.currentTimeMillis()).coerceAtLeast(0L)
+            val canExact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || am.canScheduleExactAlarms()
+            if (canExact) {
+                am.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
+            } else {
+                am.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
+            }
+        } catch (_: Exception) {}
+    }
+
+    private fun cancelExactCompletion() {
+        try {
+            val am = getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+            am.cancel(completionPendingIntent(0L, "focus", activeAlarmChimeId))
+        } catch (_: Exception) {}
+    }
+
+    private fun onTimerFinished(phase: String, endAt: Long) {
+        // Alarm and Handler both target the same end time; only the first wins.
+        if (endAt != 0L && endAt == lastCompletedEndAt) return
+        lastCompletedEndAt = endAt
+        isCountingDown = false
+        // Flutter records finished focus sessions itself (timer tick / resume
+        // re-sync). If the activity is gone, the Dart side is gone too, so
+        // keep the session here and Flutter imports it on next launch.
+        if (phase == "focus" && MainActivity.activeInstance == null && endAt > 0L) {
+            addPendingSession(this, endAt - activeTargetMinutes * 60_000L, activeTargetMinutes)
+        }
+        cancelScheduledCompletion()
+        cancelExactCompletion()
         stopWidgetTick()
         val prefs = getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
         val targetMinutes = prefs.getInt(TaktAppWidgetProvider.KEY_TARGET_MINUTES, 25)
@@ -252,7 +368,11 @@ class TimerForegroundService : Service() {
     }
 
     private fun stopCountdown() {
+        isCountingDown = false
+        deadlineElapsed = 0L
+        ongoingNotification = null
         cancelScheduledCompletion()
+        cancelExactCompletion()
         stopWidgetTick()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()

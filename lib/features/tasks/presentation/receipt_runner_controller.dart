@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/receipt_task.dart';
 import '../../../core/haptics/haptic_service.dart';
@@ -6,6 +7,8 @@ import '../../../core/audio/audio_service.dart';
 import '../../../core/audio/sound_effect.dart';
 import 'package:drift/drift.dart';
 import '../../../core/database/app_database.dart';
+
+void _logDbError(Object e) => debugPrint('ZYKL: task database write failed: $e');
 
 class ReceiptRunnerState {
   final List<ReceiptTask> tasks;
@@ -135,7 +138,7 @@ class ReceiptRunnerController extends StateNotifier<ReceiptRunnerState> {
       if (intId != null) {
         final task = state.tasks.where((t) => t.id == id).firstOrNull;
         if (task != null) {
-          _database.toggleTaskCompleted(intId, task.isDone).catchError((_) {});
+          _database.toggleTaskCompleted(intId, task.isDone).catchError(_logDbError);
         }
       }
     }
@@ -158,7 +161,7 @@ class ReceiptRunnerController extends StateNotifier<ReceiptRunnerState> {
     if (_database != null) {
       final intId = int.tryParse(id);
       if (intId != null) {
-        _database.archiveTask(intId).catchError((_) {});
+        _database.archiveTask(intId).catchError(_logDbError);
       }
     }
   }
@@ -188,7 +191,7 @@ class ReceiptRunnerController extends StateNotifier<ReceiptRunnerState> {
     if (db != null) {
       final intId = int.tryParse(id);
       if (intId != null) {
-        await db.deleteTask(intId).catchError((_) {});
+        await db.deleteTask(intId).catchError(_logDbError);
       }
     }
   }
@@ -206,7 +209,7 @@ class ReceiptRunnerController extends StateNotifier<ReceiptRunnerState> {
       for (final task in tasksToPurge) {
         final intId = int.tryParse(task.id);
         if (intId != null) {
-          await db.deleteTask(intId).catchError((_) {});
+          await db.deleteTask(intId).catchError(_logDbError);
         }
       }
     }
@@ -216,7 +219,7 @@ class ReceiptRunnerController extends StateNotifier<ReceiptRunnerState> {
     state = state.copyWith(archivedTasks: const []);
     final db = _database;
     if (db != null) {
-      await db.clearArchivedTasks().catchError((_) {});
+      await db.clearArchivedTasks().catchError(_logDbError);
     }
   }
 }

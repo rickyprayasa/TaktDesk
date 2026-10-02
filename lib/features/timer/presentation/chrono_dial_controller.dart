@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'package:clock/clock.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/pomodoro_phase.dart';
 import '../domain/pomodoro_profile.dart';
@@ -8,6 +11,7 @@ import '../../../core/audio/sound_effect.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/focus/focus_lock_controller.dart';
 import '../../../core/services/media_notification_service.dart';
+import '../../../core/services/timer_background_service.dart';
 import '../../settings/presentation/settings_controller.dart';
 
 class ChronoDialController extends StateNotifier<TimerState> {
@@ -16,7 +20,15 @@ class ChronoDialController extends StateNotifier<TimerState> {
   final FocusLockController? _focusLockController;
   final DeskPreferencesController? _preferencesController;
   final MediaNotificationService? _mediaNotificationService;
+  final TimerBackgroundService? _backgroundService;
   DateTime? _sessionStartedAt;
+
+  /// The countdown is driven here, not by the dial widget, so it keeps running
+  /// while the dial is off screen (portrait TASKS/VINYL tabs, home screen
+  /// widget). Wall-clock deltas also catch up after the app was suspended.
+  Timer? _clock;
+  DateTime? _clockLastAt;
+  double _clockPending = 0.0;
 
   ChronoDialController([
     this._audioService,
@@ -24,6 +36,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
     this._focusLockController,
     this._preferencesController,
     this._mediaNotificationService,
+    this._backgroundService,
   ])  : super(const TimerState(
           targetMinutes: 25,
           remainingSeconds: 25 * 60.0,
@@ -33,7 +46,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
 
   void setProfile(PomodoroProfile profile) {
     if (state.isRunning) return;
-    _sessionStartedAt = null;
+    _discardSession();
     state = state.copyWith(
       profile: profile,
       customProfile: profile.type == PomodoroProfileType.custom ? profile : state.customProfile,
@@ -55,7 +68,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
 
   void enterCustomCalibration() {
     if (state.isRunning) return;
-    _sessionStartedAt = null;
+    _discardSession();
     final mins = state.customProfile.focusMinutes;
     state = state.copyWith(
       setupStage: ChronoSetupStage.focus,
@@ -72,7 +85,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
 
   void advanceCalibrationStage() {
     if (state.isRunning || !state.setupStage.isActive) return;
-    _sessionStartedAt = null;
+    _discardSession();
 
     switch (state.setupStage) {
       case ChronoSetupStage.focus:
@@ -118,7 +131,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
 
   void cancelCalibration() {
     if (!state.setupStage.isActive) return;
-    _sessionStartedAt = null;
+    _discardSession();
     final focusMins = state.profile.focusMinutes;
     state = state.copyWith(
       setupStage: ChronoSetupStage.none,
@@ -132,7 +145,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
 
   void setTargetMinutes(int minutes) {
     if (state.isRunning) return;
-    _sessionStartedAt = null;
+    _discardSession();
 
     if (state.setupStage.isActive) {
       final PomodoroProfile updated;
@@ -244,21 +257,38 @@ class ChronoDialController extends StateNotifier<TimerState> {
     }
     HapticService.mechanicalPress();
     _audioService?.playFoley(SoundEffect.springButton);
+    _focusLockController?.noteTimerActivity();
+    _startClock();
+    _backgroundService?.start(
+      remainingSeconds: state.remainingSeconds,
+      targetMinutes: state.targetMinutes,
+      phase: state.phase,
+      cycleCount: state.cycleCount,
+      profileName: state.profile.label,
+      alarmChimeId: _preferencesController?.state.alarmChimeId ?? 'braunBell',
+    );
   }
 
   void pause() {
+    _flushClock();
+    _stopClock();
     state = state.copyWith(isRunning: false);
     HapticService.mechanicalPress();
     _audioService?.playFoley(SoundEffect.springButton);
+    _backgroundService?.stop();
   }
 
   void reset() {
+    final wasRunning = state.isRunning;
+    _flushClock();
+    _discardSession();
+    _stopClock();
     state = state.copyWith(
       isRunning: false,
       remainingSeconds: state.targetMinutes * 60.0,
       lastTickMinute: state.targetMinutes,
     );
-    _sessionStartedAt = null;
+    if (wasRunning) _backgroundService?.stop();
     _syncMediaTelemetry(
       phase: state.phase,
       remainingSeconds: (state.targetMinutes * 60.0).round(),
@@ -266,7 +296,130 @@ class ChronoDialController extends StateNotifier<TimerState> {
     );
   }
 
-  void tick(double deltaSeconds) {
+  /// True while a countdown runs (read by the lockdown to avoid double logging).
+  bool get isCountingDown => state.isRunning;
+
+  /// Drops the current session. A focus session abandoned after at least a
+  /// minute of real focus is recorded as unfinished, so the completion rate
+  /// means something (before, only finished sessions were ever stored).
+  void _discardSession() {
+    final startedAt = _sessionStartedAt;
+    _sessionStartedAt = null;
+    if (startedAt == null || state.phase != PomodoroPhase.focus || _database == null) return;
+    final focusedSeconds = (state.targetMinutes * 60.0 - state.remainingSeconds).round();
+    if (focusedSeconds < 60) return;
+    _database.recordTimerSession(
+      targetMinutes: state.targetMinutes,
+      elapsedSeconds: focusedSeconds,
+      isFinished: false,
+      startedAt: startedAt,
+    ).catchError((Object e) {
+      debugPrint('ZYKL: failed to record abandoned session: $e');
+      return -1;
+    });
+  }
+
+  void _startClock() {
+    _clock?.cancel();
+    _clockLastAt = clock.now();
+    _clockPending = 0.0;
+    _clock = Timer.periodic(const Duration(milliseconds: 250), (_) => _onClock());
+  }
+
+  void _stopClock() {
+    _clock?.cancel();
+    _clock = null;
+    _clockLastAt = null;
+    _clockPending = 0.0;
+  }
+
+  /// Accumulates wall-clock time and commits it once per second (or at zero),
+  /// so listeners still see one state update per second.
+  void _onClock() {
+    if (!state.isRunning) {
+      _stopClock();
+      return;
+    }
+    final now = clock.now();
+    final last = _clockLastAt ?? now;
+    _clockLastAt = now;
+    _clockPending += _elapsedSeconds(last, now);
+    if (_clockPending >= 1.0 || state.remainingSeconds - _clockPending <= 0) {
+      final delta = _clockPending;
+      _clockPending = 0.0;
+      tick(delta);
+    }
+  }
+
+  /// Wall-clock seconds between two readings. Wall-clock (not a monotonic
+  /// Stopwatch) is deliberate: Android's monotonic clock stops in deep sleep,
+  /// so only wall time catches up after the app was suspended. A clock set
+  /// backwards (manual change, NTP correction) must not add time back, so
+  /// negative deltas count as zero.
+  static double _elapsedSeconds(DateTime from, DateTime to) {
+    final us = to.difference(from).inMicroseconds;
+    return us <= 0 ? 0.0 : us / 1000000.0;
+  }
+
+  /// Commits the partial second before pausing, so no time is lost.
+  void _flushClock() {
+    if (_clockLastAt == null || !state.isRunning) return;
+    final now = clock.now();
+    final delta = _clockPending + _elapsedSeconds(_clockLastAt!, now);
+    _clockPending = 0.0;
+    _clockLastAt = now;
+    if (delta > 0) tick(delta);
+  }
+
+  @override
+  void dispose() {
+    _stopClock();
+    super.dispose();
+  }
+
+  /// Records focus sessions that finished natively while the app was closed.
+  Future<void> importPendingNativeSessions() async {
+    final service = _backgroundService;
+    final db = _database;
+    if (service == null || db == null) return;
+    for (final s in await service.takePendingSessions()) {
+      await db.recordTimerSession(
+        targetMinutes: s.targetMinutes,
+        elapsedSeconds: s.targetMinutes * 60,
+        isFinished: true,
+        startedAt: s.startedAt,
+      ).catchError((Object e) {
+        debugPrint('ZYKL: failed to import native session: $e');
+        return -1;
+      });
+    }
+  }
+
+  /// Re-aligns the Dart countdown with the native session after the app comes
+  /// back to the foreground. The native deadline uses the boot-time clock, so
+  /// this corrects wall-clock jumps (either direction) and missed suspension.
+  /// If native already finished (and rang), the phase advances silently.
+  Future<void> resyncWithNative() async {
+    final service = _backgroundService;
+    if (service == null || !state.isRunning) return;
+    final native = await service.status();
+    if (native == null || !state.isRunning) return;
+    _flushClock();
+    if (native.remainingSeconds <= 0) {
+      tick(state.remainingSeconds, ringAlarm: false);
+      return;
+    }
+    final drift = state.remainingSeconds - native.remainingSeconds;
+    if (drift.abs() < 1.0) return;
+    if (drift > 0) {
+      tick(drift);
+    } else {
+      // Dart counted too much (clock jumped forward): give the time back.
+      state = state.copyWith(remainingSeconds: native.remainingSeconds);
+    }
+  }
+
+  void tick(double deltaSeconds, {bool ringAlarm = true}) {
     if (!state.isRunning) return;
     final nextRemaining = (state.remainingSeconds - deltaSeconds).clamp(0.0, 90 * 60.0);
     final currentMinute = (nextRemaining / 60.0).ceil();
@@ -288,14 +441,20 @@ class ChronoDialController extends StateNotifier<TimerState> {
           elapsedSeconds: elapsed,
           isFinished: true,
           startedAt: startedAt,
-        ).catchError((_) => -1);
+        ).catchError((Object e) {
+          debugPrint('ZYKL: failed to record focus session: $e');
+          return -1;
+        });
       }
       _sessionStartedAt = null;
 
       final chimeId = _preferencesController?.state.alarmChimeId ?? 'braunBell';
-      _audioService?.playAlarmChime(chimeId);
-      HapticService.mechanicalPress();
+      if (ringAlarm) {
+        _audioService?.playAlarmChime(chimeId);
+        HapticService.mechanicalPress();
+      }
 
+      _focusLockController?.noteTimerActivity();
       if (state.phase == PomodoroPhase.focus && _focusLockController?.state.isLocked == true) {
         final autoUnlock = _preferencesController?.state.autoUnlockMonastic ?? false;
         if (autoUnlock) {
@@ -316,6 +475,8 @@ class ChronoDialController extends StateNotifier<TimerState> {
         lastTickMinute: nextMins,
         isRunning: false,
       );
+      _stopClock();
+      _backgroundService?.stop();
       _syncMediaTelemetry(
         phase: nextPhase,
         remainingSeconds: nextMins * 60,
@@ -365,7 +526,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
     if (state.isRunning) return;
     if (state.setupStage.isActive) return;
     final mins = _minutesForPhase(nextPhase, state.profile);
-    _sessionStartedAt = null;
+    _discardSession();
     state = state.copyWith(
       phase: nextPhase,
       targetMinutes: mins,
@@ -386,7 +547,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
     if (state.setupStage.isActive) return;
     final next = _nextPhaseAndCycle();
     final mins = _minutesForPhase(next.phase, state.profile);
-    _sessionStartedAt = null;
+    _discardSession();
     state = state.copyWith(
       phase: next.phase,
       cycleCount: next.cycleCount,
@@ -428,13 +589,17 @@ final chronoDialProvider = StateNotifierProvider<ChronoDialController, TimerStat
   final focusLockController = ref.watch(focusLockProvider.notifier);
   final preferencesController = ref.watch(deskPreferencesControllerProvider.notifier);
   final mediaService = ref.watch(mediaNotificationServiceProvider);
-  return ChronoDialController(
+  final backgroundService = ref.watch(timerBackgroundServiceProvider);
+  final controller = ChronoDialController(
     audioService,
     database,
     focusLockController,
     preferencesController,
     mediaService,
+    backgroundService,
   );
+  focusLockController.isTimerRunning = () => controller.mounted && controller.isCountingDown;
+  return controller;
 });
 
 final chronoDialControllerProvider = chronoDialProvider;

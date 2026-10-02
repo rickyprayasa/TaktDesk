@@ -108,7 +108,10 @@ class _AnimatedReceiptStripState extends State<AnimatedReceiptStrip>
             onDismissed: (_) {
               widget.onTorn();
             },
-            child: GestureDetector(
+            child: Semantics(
+              hint: 'Double tap to stamp as done. Swipe to tear off.',
+              onTap: widget.onStampToggle,
+              child: GestureDetector(
               onDoubleTap: widget.onStampToggle,
               child: Container(
                 margin: const EdgeInsets.symmetric(vertical: 4),
@@ -199,6 +202,7 @@ class _AnimatedReceiptStripState extends State<AnimatedReceiptStrip>
                   ),
                 ),
               ),
+            ),
             ),
           ),
         ),

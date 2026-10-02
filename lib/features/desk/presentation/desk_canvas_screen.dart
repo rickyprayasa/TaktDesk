@@ -7,6 +7,7 @@ import '../../../app/theme/takt_typography.dart';
 import '../../../app/theme/theme_controller.dart';
 import '../../../core/audio/audio_service.dart';
 import '../../../core/audio/sound_effect.dart';
+import '../../../core/billing/pro_purchase_controller.dart';
 import '../../../core/focus/focus_lock_controller.dart';
 import '../../../core/haptics/haptic_service.dart';
 import '../../../core/sensors/parallax_controller.dart';
@@ -14,6 +15,7 @@ import '../../../core/services/app_widget_service.dart';
 import '../../settings/presentation/settings_controller.dart';
 import '../../settings/presentation/widgets/studio_pro_dialog.dart';
 import '../../tasks/presentation/receipt_runner_widget.dart';
+import '../../timer/presentation/chrono_dial_controller.dart';
 import '../../timer/presentation/chrono_dial_widget.dart';
 import '../../vinyl/presentation/vinyl_player_widget.dart';
 import 'ambient_lighting_layer.dart';
@@ -47,11 +49,23 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
   double _dragDistance = 0.0;
   bool _sensorsPaused = false;
   bool _isLandscape = false;
+  AppLifecycleListener? _lifecycleListener;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    _reduceMotion = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    _syncSensors();
+  }
+
+  /// Parallax tilt runs only if the user enabled it AND the system does not
+  /// ask to remove animations (also saves the sensor battery cost).
+  bool _reduceMotion = false;
+
+  void _syncSensors() {
+    final enabled = ref.read(deskPreferencesControllerProvider).parallaxEnabled;
+    _setSensorsActive(enabled && !_reduceMotion);
   }
 
   @override
@@ -59,6 +73,16 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
     super.initState();
     _initSensors();
     _initWidgetActions();
+    // Starts the Google Play ownership check (no-op in simulation builds).
+    ref.read(proPurchaseProvider);
+    ref.read(chronoDialProvider.notifier).importPendingNativeSessions();
+    _lifecycleListener = AppLifecycleListener(
+      onResume: () {
+        final chrono = ref.read(chronoDialProvider.notifier);
+        chrono.importPendingNativeSessions();
+        chrono.resyncWithNative();
+      },
+    );
   }
 
   void _setSensorsActive(bool active) {
@@ -73,7 +97,11 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
         _gyroscopeSubscription?.pause();
         _accelerometerSubscription?.pause();
         _sensorsPaused = true;
-        ref.read(parallaxProvider.notifier).reset();
+        // Deferred: may be called from didChangeDependencies (build phase),
+        // where Riverpod forbids provider writes.
+        Future.microtask(() {
+          if (mounted) ref.read(parallaxProvider.notifier).reset();
+        });
       }
     }
   }
@@ -145,10 +173,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
       } catch (_) {}
     }
 
-    final initialEnabled = ref.read(deskPreferencesControllerProvider).parallaxEnabled;
-    if (!initialEnabled) {
-      _setSensorsActive(false);
-    }
+    _syncSensors();
   }
 
   void _initWidgetActions() {
@@ -179,6 +204,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
 
   @override
   void dispose() {
+    _lifecycleListener?.dispose();
     _widgetActionSubscription?.cancel();
     _gyroscopeSubscription?.cancel();
     _accelerometerSubscription?.cancel();
@@ -305,7 +331,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
     ref.listen<bool>(
       deskPreferencesControllerProvider.select((p) => p.parallaxEnabled),
       (prev, enabled) {
-        _setSensorsActive(enabled);
+        _setSensorsActive(enabled && !_reduceMotion);
       },
     );
 

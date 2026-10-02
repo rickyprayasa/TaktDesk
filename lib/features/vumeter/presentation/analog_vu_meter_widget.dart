@@ -104,7 +104,7 @@ class _AnalogVuMeterWidgetState extends ConsumerState<AnalogVuMeterWidget>
                 ),
               ),
               Text(
-                'BRAUN VM-1',
+                'ZYKL VU-01',
                 style: TextStyle(
                   fontFamily: 'monospace',
                   fontSize: 8.5,

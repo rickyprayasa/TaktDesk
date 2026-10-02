@@ -11,6 +11,7 @@ void main() {
     final now = DateTime(2026, 9, 10, 14, 0);
     final mockSessions = [
       TimerSession(
+        isLockdownOnly: false,
         id: 1,
         targetMinutes: 25,
         elapsedSeconds: 1500,
@@ -55,6 +56,7 @@ void main() {
     final now = DateTime(2026, 9, 10, 14, 0);
     final mockSessions = [
       TimerSession(
+        isLockdownOnly: false,
         id: 1,
         targetMinutes: 25,
         elapsedSeconds: 1500,
@@ -131,6 +133,7 @@ void main() {
     final now = DateTime(2026, 9, 10, 14, 0);
     final mockSessions = [
       TimerSession(
+        isLockdownOnly: false,
         id: 1,
         targetMinutes: 25,
         elapsedSeconds: 1500,

@@ -456,4 +456,32 @@ void main() {
     expect(persisted, isNotNull);
     expect(persisted!.alarmChimeId, equals('tibetanBowl'));
   });
+
+  test('dark/light finish is persisted and restored on the next launch', () async {
+    // Regression: the toggle only lived in memory, so every launch reset to dark.
+    final first = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        audioServiceProvider.overrideWithValue(audioService),
+      ],
+    );
+    final controller = first.read(deskPreferencesControllerProvider.notifier);
+    await controller.init();
+    expect(first.read(chassisThemeProvider).isDarkMode, isTrue);
+
+    await controller.toggleDarkMode();
+    expect(first.read(chassisThemeProvider).isDarkMode, isFalse);
+    first.dispose();
+
+    // "Next launch": fresh providers, same database
+    final second = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        audioServiceProvider.overrideWithValue(audioService),
+      ],
+    );
+    addTearDown(second.dispose);
+    await second.read(deskPreferencesControllerProvider.notifier).init();
+    expect(second.read(chassisThemeProvider).isDarkMode, isFalse);
+  });
 }

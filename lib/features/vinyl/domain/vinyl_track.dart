@@ -41,7 +41,7 @@ class VinylTrack {
       description:
           'Warm electric piano chord progression with gentle rain shower and vinyl dust crackle.',
       labelColorHex: '#C85A32',
-      assetPath: 'assets/audio/vinyl_lofi_rain.wav',
+      assetPath: 'assets/audio/vinyl_lofi_rain.ogg',
       isPremium: false,
     ),
     VinylTrack(
@@ -52,7 +52,7 @@ class VinylTrack {
       description:
           'Low-frequency brown noise blanket blocking external room distractions.',
       labelColorHex: '#4D5D4B',
-      assetPath: 'assets/audio/vinyl_brown_noise.wav',
+      assetPath: 'assets/audio/vinyl_brown_noise.ogg',
       isPremium: false,
     ),
     VinylTrack(
@@ -63,7 +63,7 @@ class VinylTrack {
       description:
           'Reverberant wooden hall tone with gentle page turns and quiet solace.',
       labelColorHex: '#D99B59',
-      assetPath: 'assets/audio/vinyl_library.wav',
+      assetPath: 'assets/audio/vinyl_library.ogg',
       isPremium: false,
     ),
     VinylTrack(
@@ -74,7 +74,7 @@ class VinylTrack {
       description:
           'Gentle trickling stream, soft hollow bamboo resonance, and moss stone ripples.',
       labelColorHex: '#4A6B53',
-      assetPath: 'assets/audio/vinyl_kyoto_bamboo.wav',
+      assetPath: 'assets/audio/vinyl_kyoto_bamboo.ogg',
       isPremium: false,
     ),
     VinylTrack(
@@ -85,7 +85,7 @@ class VinylTrack {
       description:
           'Low hearth glow and gentle pine embers crackle without loud pops.',
       labelColorHex: '#E05A2B',
-      assetPath: 'assets/audio/vinyl_campfire.wav',
+      assetPath: 'assets/audio/vinyl_campfire.ogg',
       isPremium: true,
     ),
     VinylTrack(
@@ -96,7 +96,7 @@ class VinylTrack {
       description:
           'Ultra-soft mountain pine breeze filtered through high-altitude timber.',
       labelColorHex: '#3B7A57',
-      assetPath: 'assets/audio/vinyl_nordic_pines.wav',
+      assetPath: 'assets/audio/vinyl_nordic_pines.ogg',
       isPremium: true,
     ),
     VinylTrack(
@@ -107,7 +107,7 @@ class VinylTrack {
       description:
           'Pure mountain snowmelt brook trickling over smooth crystalline pebbles.',
       labelColorHex: '#3A7D8C',
-      assetPath: 'assets/audio/vinyl_alpine_brook.wav',
+      assetPath: 'assets/audio/vinyl_alpine_brook.ogg',
       isPremium: true,
     ),
     VinylTrack(
@@ -118,7 +118,7 @@ class VinylTrack {
       description:
           'Rhythmic coastal tide surges and gentle foaming whitewash receding over pebbles.',
       labelColorHex: '#2B5B84',
-      assetPath: 'assets/audio/vinyl_ocean_waves.wav',
+      assetPath: 'assets/audio/vinyl_ocean_waves.ogg',
       isPremium: true,
     ),
     VinylTrack(
@@ -129,7 +129,7 @@ class VinylTrack {
       description:
           'Early dawn forest canopy with soft morning breeze and quiet distant songbirds.',
       labelColorHex: '#52796F',
-      assetPath: 'assets/audio/vinyl_morning_meadow.wav',
+      assetPath: 'assets/audio/vinyl_morning_meadow.ogg',
       isPremium: true,
     ),
     VinylTrack(
@@ -140,7 +140,7 @@ class VinylTrack {
       description:
           'Warm acoustic wooden chamber resonance with subtle tactile hall presence.',
       labelColorHex: '#7F5539',
-      assetPath: 'assets/audio/vinyl_timber_chamber.wav',
+      assetPath: 'assets/audio/vinyl_timber_chamber.ogg',
       isPremium: true,
     ),
 
@@ -155,7 +155,7 @@ class VinylTrack {
       description:
           'Authentic acoustic felt piano recorded through warm reel-to-reel analog tape saturation.',
       labelColorHex: '#D97736',
-      assetPath: 'assets/audio/vinyl_warm_tape.wav',
+      assetPath: 'assets/audio/vinyl_warm_tape.ogg',
       isPremium: false,
     ),
     VinylTrack(
@@ -166,7 +166,7 @@ class VinylTrack {
       description:
           'Rich acoustic cello prelude recorded in resonant hall solitude by master cellist John Michel.',
       labelColorHex: '#8B5E3C',
-      assetPath: 'assets/audio/vinyl_rhodes_velvet.wav',
+      assetPath: 'assets/audio/vinyl_rhodes_velvet.ogg',
       isPremium: false,
     ),
     VinylTrack(
@@ -177,7 +177,7 @@ class VinylTrack {
       description:
           'Intimate nylon classical guitar arpeggios with natural wooden body warmth and delicate tape flutter.',
       labelColorHex: '#A86D3B',
-      assetPath: 'assets/audio/vinyl_acoustic_guitar.wav',
+      assetPath: 'assets/audio/vinyl_acoustic_guitar.ogg',
       isPremium: false,
     ),
     VinylTrack(
@@ -188,7 +188,7 @@ class VinylTrack {
       description:
           'Lyrical, spacious French impressionist acoustic grand piano performance for deep contemplative focus.',
       labelColorHex: '#4A6984',
-      assetPath: 'assets/audio/vinyl_ambient_drift.wav',
+      assetPath: 'assets/audio/vinyl_ambient_drift.ogg',
       isPremium: false,
     ),
     VinylTrack(
@@ -199,7 +199,7 @@ class VinylTrack {
       description:
           'Hypnotic acoustic upright piano hammers striking muted strings with slow, introspective minimalist cadences.',
       labelColorHex: '#5C5E62',
-      assetPath: 'assets/audio/vinyl_felt_piano_solo.wav',
+      assetPath: 'assets/audio/vinyl_felt_piano_solo.ogg',
       isPremium: true,
     ),
     VinylTrack(
@@ -210,7 +210,7 @@ class VinylTrack {
       description:
           'Resonant authentic Tibetan singing bowl vibrations and pure acoustic bronze temple bell harmonics.',
       labelColorHex: '#D4883A',
-      assetPath: 'assets/audio/vinyl_modular_clockwork.wav',
+      assetPath: 'assets/audio/vinyl_modular_clockwork.ogg',
       isPremium: true,
     ),
     VinylTrack(
@@ -221,7 +221,7 @@ class VinylTrack {
       description:
           'Contemplative Goldberg Variations Aria performed on a Bösendorfer Imperial concert grand by Kimiko Ishizaka.',
       labelColorHex: '#9C6644',
-      assetPath: 'assets/audio/vinyl_goldberg_aria.wav',
+      assetPath: 'assets/audio/vinyl_goldberg_aria.ogg',
       isPremium: true,
     ),
     VinylTrack(
@@ -232,7 +232,7 @@ class VinylTrack {
       description:
           'Poetic, expressive Chopin Nocturne in E-flat major Op. 9 No. 2 performed on Steinway concert grand by Frank Levy.',
       labelColorHex: '#6B705C',
-      assetPath: 'assets/audio/vinyl_chopin_nocturne.wav',
+      assetPath: 'assets/audio/vinyl_chopin_nocturne.ogg',
       isPremium: true,
     ),
     VinylTrack(
@@ -243,7 +243,7 @@ class VinylTrack {
       description:
           'Timeless Spanish Romance anonymous classical nylon-string guitar melody with rich cedar body warmth.',
       labelColorHex: '#B07D62',
-      assetPath: 'assets/audio/vinyl_spanish_romance.wav',
+      assetPath: 'assets/audio/vinyl_spanish_romance.ogg',
       isPremium: true,
     ),
     VinylTrack(
@@ -254,7 +254,7 @@ class VinylTrack {
       description:
           'Solemn acoustic chamber strings with intertwined violins, viola, and cello by the Musopen String Quartet.',
       labelColorHex: '#4A5568',
-      assetPath: 'assets/audio/vinyl_chamber_quartet.wav',
+      assetPath: 'assets/audio/vinyl_chamber_quartet.ogg',
       isPremium: true,
     ),
   ];

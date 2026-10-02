@@ -4,6 +4,7 @@ import '../../domain/pomodoro_phase.dart';
 import '../../domain/pomodoro_profile.dart';
 import '../chrono_dial_controller.dart';
 import '../../../../app/theme/takt_colors.dart';
+import '../../../settings/presentation/takt_settings_sheet.dart';
 import '../../../../app/theme/theme_controller.dart';
 
 /// Consolidated Horizontal Industrial Control Console for Pomodoro.
@@ -266,36 +267,16 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
                                 ),
                               ),
                               const SizedBox(width: 4),
-                              for (int c = 1; c <= timerState.profile.longBreakInterval; c++) ...[
-                                Container(
-                                  margin: const EdgeInsets.symmetric(horizontal: 1.0),
-                                  width: 4.5,
-                                  height: 4.5,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: c < timerState.cycleCount
-                                        ? activeColor.withValues(alpha: 0.55)
-                                        : (c == timerState.cycleCount
-                                            ? activeColor
-                                            : inactiveLedColor),
-                                    border: Border.all(
-                                      color: isDark
-                                          ? const Color(0xFF33373E)
-                                          : const Color(0xFFB5B0A4),
-                                      width: 0.6,
-                                    ),
-                                    boxShadow: c == timerState.cycleCount
-                                        ? [
-                                            BoxShadow(
-                                              color: activeColor.withValues(alpha: 0.65),
-                                              blurRadius: 3.5,
-                                              spreadRadius: 0.5,
-                                            ),
-                                          ]
-                                        : null,
-                                  ),
-                                ),
-                              ],
+                              // Fixed width for every cycle count: the capsule sits in a
+                              // scaleDown FittedBox, so a dot per cycle made 8 cycles shrink
+                              // the whole capsule (text included).
+                              _CycleTrack(
+                                total: timerState.profile.longBreakInterval,
+                                current: timerState.cycleCount,
+                                activeColor: activeColor,
+                                inactiveColor: inactiveLedColor,
+                                borderColor: isDark ? const Color(0xFF33373E) : const Color(0xFFB5B0A4),
+                              ),
                               const SizedBox(width: 4),
                               // Hairline micro divider
                               Container(
@@ -411,9 +392,12 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
                       : segment.profile;
                   ref.read(chronoDialProvider.notifier).setProfile(targetProfile);
                 },
-          onLongPress: (isRunning || segment.type != PomodoroProfileType.custom)
+          // Long-press CUSTOM opens the Interval Engine sheet (same widgets as
+          // Settings). Crown calibration stays on tap-when-active / crown pull.
+          // Allowed while running: the steppers lock themselves.
+          onLongPress: segment.type != PomodoroProfileType.custom
               ? null
-              : () => ref.read(chronoDialProvider.notifier).enterCustomCalibration(),
+              : () => showIntervalEngineSheet(context),
           borderRadius: BorderRadius.circular(4.0),
           child: Container(
             decoration: isActive
@@ -487,6 +471,73 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Cycle progress inside the CYCLE capsule, always [width] wide.
+/// Up to 4 cycles: round lamps (the classic look). 5–8: a segmented bar, like
+/// the cells of a battery gauge, so each cell stays legible.
+class _CycleTrack extends StatelessWidget {
+  static const double width = 30.0;
+  final int total;
+  final int current;
+  final Color activeColor;
+  final Color inactiveColor;
+  final Color borderColor;
+
+  const _CycleTrack({
+    required this.total,
+    required this.current,
+    required this.activeColor,
+    required this.inactiveColor,
+    required this.borderColor,
+  });
+
+  Color _fill(int c) => c < current
+      ? activeColor.withValues(alpha: 0.55)
+      : (c == current ? activeColor : inactiveColor);
+
+  List<BoxShadow>? _glow(int c) => c == current
+      ? [BoxShadow(color: activeColor.withValues(alpha: 0.65), blurRadius: 3.5, spreadRadius: 0.5)]
+      : null;
+
+  @override
+  Widget build(BuildContext context) {
+    final lamps = total <= 4;
+    return SizedBox(
+      key: const ValueKey('chrono_cycle_track'),
+      width: width,
+      height: 6,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          for (int c = 1; c <= total; c++)
+            lamps
+                ? Container(
+                    width: 4.5,
+                    height: 4.5,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _fill(c),
+                      border: Border.all(color: borderColor, width: 0.6),
+                      boxShadow: _glow(c),
+                    ),
+                  )
+                : Expanded(
+                    child: Container(
+                      height: 5,
+                      margin: const EdgeInsets.symmetric(horizontal: 0.6),
+                      decoration: BoxDecoration(
+                        color: _fill(c),
+                        borderRadius: BorderRadius.circular(0.8),
+                        border: Border.all(color: borderColor, width: 0.5),
+                        boxShadow: _glow(c),
+                      ),
+                    ),
+                  ),
+        ],
       ),
     );
   }

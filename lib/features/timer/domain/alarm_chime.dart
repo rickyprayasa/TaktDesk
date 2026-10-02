@@ -27,7 +27,7 @@ class AlarmChime {
 class AlarmChimes {
   static const AlarmChime braunBell = AlarmChime(
     id: 'braunBell',
-    name: 'BRAUN DUAL-HAMMER',
+    name: 'TWIN-HAMMER BELL',
     category: 'MECHANICAL',
     description: 'Authentic twin-bell mechanical clockwork chime',
     assetPath: 'assets/audio/alarm_braun_bell.wav',

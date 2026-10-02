@@ -30,6 +30,11 @@ void main() {
     (widget) => widget is CustomPaint && widget.painter is ChronoDialPainter,
   );
 
+  // The needle has its own CustomPaint layer above the counter
+  final handFinder = find.byWidgetPredicate(
+    (widget) => widget is CustomPaint && widget.painter is ChronoDialHandPainter,
+  );
+
   void expectDisplay(WidgetTester tester, int minutes, int seconds) {
     final display = tester.widget<MechanicalCounterDisplay>(
       find.byType(MechanicalCounterDisplay, skipOffstage: false),
@@ -37,6 +42,23 @@ void main() {
     expect(display.minutes, minutes);
     expect(display.seconds, seconds);
   }
+
+  testWidgets('ChronoDialWidget exposes the countdown to screen readers', (tester) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(body: Center(child: ChronoDialWidget())),
+        ),
+      ),
+    );
+
+    expect(
+      find.bySemanticsLabel('Focus timer, 25 minutes 0 seconds remaining, paused'),
+      findsOneWidget,
+    );
+    handle.dispose();
+  });
 
   testWidgets('ChronoDialWidget renders initial state and custom painter', (tester) async {
     await tester.pumpWidget(
@@ -705,7 +727,7 @@ void main() {
     expect(darkDialPainter.numeralColor, equals(TaktColors.warmBone.withValues(alpha: 0.65)));
   });
 
-  testWidgets('ChronoDialWidget mounts ChronoDialHandPainter as foregroundPainter over embedded MechanicalCounterDisplay child', (tester) async {
+  testWidgets('ChronoDialWidget mounts ChronoDialHandPainter on a layer over the embedded MechanicalCounterDisplay', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
@@ -723,8 +745,8 @@ void main() {
     final painter = customPaint.painter as ChronoDialPainter;
     expect(painter.drawHand, isFalse);
 
-    expect(customPaint.foregroundPainter, isA<ChronoDialHandPainter>());
-    final handPainter = customPaint.foregroundPainter as ChronoDialHandPainter;
+    expect(handFinder, findsOneWidget);
+    final handPainter = tester.widget<CustomPaint>(handFinder).painter as ChronoDialHandPainter;
     expect(handPainter.remainingSeconds, equals(25 * 60.0));
 
     final counter = tester.widget<MechanicalCounterDisplay>(find.byType(MechanicalCounterDisplay));
@@ -811,9 +833,8 @@ void main() {
     await tester.pump();
 
     // Verify ChronoDialHandPainter is mounted
-    var customPaint = tester.widget<CustomPaint>(dialFinder);
-    expect(customPaint.foregroundPainter, isA<ChronoDialHandPainter>());
-    var handPainter = customPaint.foregroundPainter as ChronoDialHandPainter;
+    expect(handFinder, findsOneWidget);
+    var handPainter = tester.widget<CustomPaint>(handFinder).painter as ChronoDialHandPainter;
     expect(handPainter.remainingSeconds, equals(1500.0));
 
     // Verify 3D perspective transform exists around dial
@@ -831,8 +852,7 @@ void main() {
     );
     await tester.pump();
 
-    customPaint = tester.widget<CustomPaint>(dialFinder);
-    handPainter = customPaint.foregroundPainter as ChronoDialHandPainter;
+    handPainter = tester.widget<CustomPaint>(handFinder).painter as ChronoDialHandPainter;
     expect(handPainter.remainingSeconds, equals(1500.0));
 
     await tester.pumpWidget(const SizedBox());
@@ -1183,7 +1203,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('ChronoDialWidget allocates 24px dial headroom with crown at top 0 and dial canvas at top 24', (tester) async {
+  testWidgets('ChronoDialWidget allocates 24px dial headroom with crown seated at top 6 and dial canvas at top 24', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
@@ -1197,14 +1217,15 @@ void main() {
     );
     await tester.pump();
 
-    // Verify CrownPushButton Positioned has top == 0
+    // Crown at top 6: its 28 px box ends at 34, 2 px inside the bezel edge (24 + 8),
+    // so the collar is seated instead of hovering
     final crownPositioned = tester.widget<Positioned>(
       find.ancestor(
         of: find.byType(CrownPushButton),
         matching: find.byType(Positioned),
       ).first,
     );
-    expect(crownPositioned.top, equals(0.0));
+    expect(crownPositioned.top, equals(6.0));
 
     // Verify Dial Canvas Positioned has top == 24
     final dialPositioned = tester.widget<Positioned>(
@@ -1226,7 +1247,59 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('countdown keeps running while the dial is off screen', (tester) async {
+    // Regression: the countdown used to live in the dial widget's Ticker, so
+    // switching to the TASKS/VINYL tab (which disposes the dial) froze it.
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    Widget host(bool showDial) => UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: Scaffold(body: Center(child: showDial ? const ChronoDialWidget() : const SizedBox())),
+          ),
+        );
+
+    await tester.pumpWidget(host(true));
+    await tester.tap(dialFinder);
+    await tester.pump();
+
+    // Dial leaves the tree while the session runs
+    await tester.pumpWidget(host(false));
+    await tester.pump(const Duration(seconds: 10));
+    expect(container.read(chronoDialProvider).isRunning, isTrue);
+    expect(container.read(chronoDialProvider).remainingSeconds, closeTo(25 * 60 - 10, 0.3));
+
+    // And shows the right time when it comes back
+    await tester.pumpWidget(host(true));
+    await tester.pump();
+    expectDisplay(tester, 24, 50);
+
+    container.read(chronoDialProvider.notifier).pause();
+  });
+
+  test('dial face does not repaint for time alone; only the hand does', () {
+    ChronoDialPainter face(double secs) => ChronoDialPainter(
+          remainingSeconds: secs,
+          targetMinutes: 25,
+          isRunning: true,
+          needleColor: Colors.orange,
+          filamentColor: Colors.orange,
+          outerBezelGradient: const [Colors.black, Colors.grey],
+          innerBezelColor: Colors.black,
+          textureType: HardwareTextureType.matteAbsGrain,
+          isDark: true,
+          dialFaceColor: Colors.white,
+          drawHand: false,
+        );
+    expect(face(1499.5).shouldRepaint(face(1500.0)), isFalse);
+
+    final remaining = ValueNotifier<double>(1500.0);
+    addTearDown(remaining.dispose);
+    final hand = ChronoDialHandPainter(remaining: remaining, needleColor: Colors.orange, hubCapColor: Colors.black);
+    expect(hand.remainingSeconds, 1500.0);
+    remaining.value = 1499.5;
+    expect(hand.remainingSeconds, 1499.5);
+  });
 }
-
-
-

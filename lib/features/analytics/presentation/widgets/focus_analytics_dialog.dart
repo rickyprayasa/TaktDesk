@@ -5,6 +5,7 @@ import '../../../../app/theme/theme_controller.dart';
 import '../../../../core/audio/audio_service.dart';
 import '../../../../core/audio/sound_effect.dart';
 import '../../../../core/haptics/haptic_service.dart';
+import '../../../settings/presentation/settings_controller.dart';
 import '../../domain/focus_analytics_models.dart';
 import '../focus_analytics_controller.dart';
 import 'focus_bar_chart_widget.dart';
@@ -37,6 +38,7 @@ class FocusAnalyticsDialog extends ConsumerWidget {
     final isDark = themeState.isDarkMode;
     final state = ref.watch(focusAnalyticsControllerProvider);
     final notifier = ref.read(focusAnalyticsControllerProvider.notifier);
+    final dailyGoal = ref.watch(deskPreferencesControllerProvider.select((p) => p.dailyGoalCycles));
 
     final bgColor = isDark ? TaktColors.basaltSlate : const Color(0xFFEDEAE2);
     final panelBg = isDark ? const Color(0xFF16191D) : const Color(0xFFE2DFD6);
@@ -131,7 +133,7 @@ class FocusAnalyticsDialog extends ConsumerWidget {
                               fontSize: 10,
                               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                               letterSpacing: 0.8,
-                              color: isSelected ? TaktColors.filamentAmber : secondaryTextColor,
+                              color: isSelected ? TaktColors.amberText(isDark) : secondaryTextColor,
                             ),
                           ),
                         ),
@@ -213,11 +215,11 @@ class FocusAnalyticsDialog extends ConsumerWidget {
                         const SizedBox(height: 2),
                         Text(
                           _formatTotalTime(state.totalMinutes),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'monospace',
                             fontSize: 20.0,
                             fontWeight: FontWeight.w800,
-                            color: TaktColors.filamentAmber,
+                            color: TaktColors.amberText(isDark),
                           ),
                         ),
                       ],
@@ -249,6 +251,20 @@ class FocusAnalyticsDialog extends ConsumerWidget {
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(height: 8),
+
+              // Daily goal meter + streak (always "today", independent of period)
+              _GoalStreakPanel(
+                todayCycles: state.todayCycles,
+                goal: dailyGoal,
+                currentStreak: state.currentStreak,
+                bestStreak: state.bestStreak,
+                isDark: isDark,
+                panelBg: panelBg,
+                borderColor: borderColor,
+                primaryTextColor: primaryTextColor,
+                secondaryTextColor: secondaryTextColor,
               ),
               const SizedBox(height: 12),
 
@@ -379,6 +395,114 @@ class _MetricCard extends StatelessWidget {
                 color: primaryTextColor,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GoalStreakPanel extends StatelessWidget {
+  final int todayCycles;
+  final int goal;
+  final int currentStreak;
+  final int bestStreak;
+  final bool isDark;
+  final Color panelBg;
+  final Color borderColor;
+  final Color primaryTextColor;
+  final Color secondaryTextColor;
+
+  const _GoalStreakPanel({
+    required this.todayCycles,
+    required this.goal,
+    required this.currentStreak,
+    required this.bestStreak,
+    required this.isDark,
+    required this.panelBg,
+    required this.borderColor,
+    required this.primaryTextColor,
+    required this.secondaryTextColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final met = todayCycles >= goal;
+    final labelStyle = TextStyle(
+      fontFamily: 'monospace',
+      fontSize: 7.5,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.6,
+      color: secondaryTextColor,
+    );
+    return Container(
+      key: const ValueKey('analytics_goal_streak_panel'),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: panelBg,
+        borderRadius: BorderRadius.circular(6.0),
+        border: Border.all(color: borderColor, width: 0.8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(met ? "TODAY'S GOAL · MET" : "TODAY'S GOAL", style: labelStyle),
+                const SizedBox(height: 3),
+                Text(
+                  '$todayCycles / $goal CYCLES',
+                  key: const ValueKey('analytics_goal_value'),
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 13.0,
+                    fontWeight: FontWeight.w700,
+                    color: met ? TaktColors.amberText(isDark) : primaryTextColor,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                // One segment per goal cycle, like a row of indicator lamps
+                Row(
+                  children: List.generate(goal, (i) {
+                    final lit = i < todayCycles;
+                    return Expanded(
+                      child: Container(
+                        height: 5,
+                        margin: EdgeInsets.only(right: i == goal - 1 ? 0 : 3),
+                        decoration: BoxDecoration(
+                          color: lit
+                              ? TaktColors.filamentAmber
+                              : (isDark ? const Color(0xFF2A2E34) : const Color(0xFFCFCBC1)),
+                          borderRadius: BorderRadius.circular(1.5),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text('FOCUS STREAK', style: labelStyle),
+              const SizedBox(height: 3),
+              Text(
+                currentStreak == 1 ? '1 DAY' : '$currentStreak DAYS',
+                key: const ValueKey('analytics_streak_value'),
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 13.0,
+                  fontWeight: FontWeight.w700,
+                  color: currentStreak > 0 ? TaktColors.amberText(isDark) : primaryTextColor,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text('BEST $bestStreak', style: labelStyle),
+            ],
           ),
         ],
       ),

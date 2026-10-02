@@ -25,7 +25,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -42,6 +42,13 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 6) {
             await m.addColumn(deskPreferences, deskPreferences.autoUnlockMonastic);
+          }
+          if (from < 7) {
+            await m.addColumn(deskPreferences, deskPreferences.isDarkMode);
+          }
+          if (from < 8) {
+            await m.addColumn(timerSessions, timerSessions.isLockdownOnly);
+            await m.addColumn(deskPreferences, deskPreferences.dailyGoalCycles);
           }
         },
       );
@@ -112,6 +119,7 @@ class AppDatabase extends _$AppDatabase {
     int? durationSeconds,
     bool isFinished = false,
     bool? completed,
+    bool isLockdownOnly = false,
     required DateTime startedAt,
   }) {
     final actualElapsed = elapsedSeconds ?? durationSeconds ?? 0;
@@ -123,6 +131,7 @@ class AppDatabase extends _$AppDatabase {
       isFinished: Value(actualFinished),
       startedAt: Value(startedAt),
       finishedAt: Value(DateTime.now()),
+      isLockdownOnly: Value(isLockdownOnly),
     ));
   }
 
@@ -166,6 +175,8 @@ class AppDatabase extends _$AppDatabase {
     bool? isProSimulated,
     String? alarmChimeId,
     bool? autoUnlockMonastic,
+    bool? isDarkMode,
+    int? dailyGoalCycles,
   }) {
     return transaction(() async {
       final existing = await (select(deskPreferences)..limit(1)).getSingleOrNull();
@@ -181,6 +192,8 @@ class AppDatabase extends _$AppDatabase {
         alarmChimeId: alarmChimeId != null ? Value(alarmChimeId) : const Value.absent(),
         autoUnlockMonastic:
             autoUnlockMonastic != null ? Value(autoUnlockMonastic) : const Value.absent(),
+        isDarkMode: isDarkMode != null ? Value(isDarkMode) : const Value.absent(),
+        dailyGoalCycles: dailyGoalCycles != null ? Value(dailyGoalCycles) : const Value.absent(),
       );
 
       if (existing == null) {
@@ -201,6 +214,8 @@ class AppDatabase extends _$AppDatabase {
     bool? isProSimulated,
     String? alarmChimeId,
     bool? autoUnlockMonastic,
+    bool? isDarkMode,
+    int? dailyGoalCycles,
   }) =>
       updateDeskPreferences(
         soundVolume: soundVolume,
@@ -212,6 +227,8 @@ class AppDatabase extends _$AppDatabase {
         isProSimulated: isProSimulated,
         alarmChimeId: alarmChimeId,
         autoUnlockMonastic: autoUnlockMonastic,
+        isDarkMode: isDarkMode,
+        dailyGoalCycles: dailyGoalCycles,
       );
 }
 

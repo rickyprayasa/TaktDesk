@@ -64,7 +64,8 @@ void main() {
 
     await tester.tap(find.text('MONTH'));
     await tester.pumpAndSettle();
-    expect(find.text('W1'), findsOneWidget);
+    // Month = 4 near-equal day ranges, the first always starts on day 1
+    expect(find.textContaining(RegExp(r'^1–\d+$')), findsOneWidget);
 
     // Verify close
     await tester.tap(find.byKey(const ValueKey('focus_analytics_close_btn')));

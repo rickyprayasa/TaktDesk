@@ -67,4 +67,11 @@ void main() {
     audioService.stopAmbient();
     expect(methodCalls.last.method, 'stopAmbient');
   });
+
+  test('AudioService previewAlarmChime marks the call as a preview with the master volume', () {
+    audioService.setVolume(0.5);
+    audioService.previewAlarmChime('zenGong');
+    expect(methodCalls.last.method, 'playAlarmChime');
+    expect(methodCalls.last.arguments, {'chimeId': 'zenGong', 'preview': true, 'volume': 0.5});
+  });
 }

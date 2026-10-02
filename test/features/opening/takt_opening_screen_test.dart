@@ -21,7 +21,7 @@ void main() {
 
     // Assert prominent ZYKL identity and Pomodoro system subtitle
     expect(find.text('ZYKL'), findsOneWidget);
-    expect(find.text('ANALOG POMODORO SYSTEM'), findsOneWidget);
+    expect(find.text('POMODORO FOCUS TIMER'), findsOneWidget);
 
     // Assert NO developer logo image or developer text is displayed
     expect(find.byType(Image), findsNothing);
@@ -56,7 +56,7 @@ void main() {
     expect(find.byType(DeskCanvasScreen), findsOneWidget);
   });
 
-  testWidgets('TaktOpeningScreen automatically navigates to DeskCanvasScreen upon completion (relaxed 4200ms sequence)', (tester) async {
+  testWidgets('TaktOpeningScreen automatically navigates to DeskCanvasScreen upon completion (4.2s boot sequence)', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
@@ -65,9 +65,13 @@ void main() {
       ),
     );
 
-    // Pump through full 4200ms duration plus 600ms transition
+    // Not yet: the cinematic boot is still running at 2 s
     await tester.pump(const Duration(milliseconds: 2000));
-    await tester.pump(const Duration(milliseconds: 2500));
+    expect(find.byType(DeskCanvasScreen), findsNothing);
+
+    // Pump through the 4.2s boot plus the 900ms hand-off
+    await tester.pump(const Duration(milliseconds: 2300));
+    await tester.pump(const Duration(milliseconds: 1000));
     await tester.pumpAndSettle();
 
     expect(find.byType(DeskCanvasScreen), findsOneWidget);
@@ -93,6 +97,35 @@ void main() {
     await tester.tap(find.byType(TaktOpeningScreen));
     await tester.pump();
 
+    expect(completed, isTrue);
+  });
+
+  testWidgets('TaktOpeningScreen shows a static lockup and still hands over when animations are disabled', (tester) async {
+    bool completed = false;
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: MediaQuery(
+            data: const MediaQueryData(disableAnimations: true),
+            child: TaktOpeningScreen(autoNavigate: false, onComplete: () => completed = true),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Everything is already in place on the first frame
+    expect(find.text('ZYKL'), findsOneWidget);
+    expect(find.text('QUIET TIME. PHYSICAL INTENT.'), findsOneWidget);
+    final brandLine = tester.widget<Opacity>(
+      find.ancestor(of: find.text('QUIET TIME. PHYSICAL INTENT.'), matching: find.byType(Opacity)).first,
+    );
+    expect(brandLine.opacity, 1.0);
+
+    // The preference load never resolves under fake async, so this also covers
+    // the 3 s safety timeout that keeps a slow disk from holding the user here.
+    await tester.pump(const Duration(milliseconds: 700));
+    await tester.pump(const Duration(milliseconds: 2400));
     expect(completed, isTrue);
   });
 }

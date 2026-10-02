@@ -11,4 +11,8 @@ class DeskPreferences extends Table {
   BoolColumn get isProSimulated => boolean().withDefault(const Constant(true))();
   TextColumn get alarmChimeId => text().withDefault(const Constant('braunBell'))();
   BoolColumn get autoUnlockMonastic => boolean().withDefault(const Constant(false))();
+  BoolColumn get isDarkMode => boolean().withDefault(const Constant(true))();
+
+  /// Completed focus cycles per day the user aims for (schema v8).
+  IntColumn get dailyGoalCycles => integer().withDefault(const Constant(4))();
 }
