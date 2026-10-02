@@ -29,6 +29,17 @@
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 - Working tree is large and uncommitted (previous agents' work). Commit by topic when the user asks.
 
+## 2026-10-02 (p) — v1.0.0 built and tagged  (status: owner uploads the AAB to Play Console Internal testing)
+
+- `build_outputs/zykl-playstore-release.aab` (65.4 MB), `zykl-user-testing-universal.apk`, `zykl-developer-pro-universal.apk`.
+  versionCode 1 / 1.0.0, targetSdk 36, signed with the upload key (SHA-256 `27:5B:8E:D7…A1:23`), BILLING permission
+  present, 16 KB-aligned native libs. The AAB's `libapp.so` is byte-identical to the user-testing APK's (so PRO
+  simulation is off); the dev-pro build differs, as expected.
+- Git tag `v1.0.0` marks the commit these were built from.
+- Copy-paste texts for Play Console (exact alarm, foreground service, Data safety, content rating, the
+  `studio_pro_lifetime` product, release steps): `docs/play-console-declarations.md`.
+- Next releases: bump `version:` in pubspec.yaml (e.g. 1.0.1+2). The versionCode must increase on every upload.
+
 ## 2026-10-02 (o) — Everything committed and pushed  (status: ready to build the v1.0.0 AAB)
 
 - Flutter repo → `github.com/rickyprayasa/TaktDesk` `main`: `387f844` feat(app) v1.0.0 RC, `28e505e` film_capture,
