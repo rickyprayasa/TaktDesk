@@ -29,6 +29,19 @@
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 - Working tree is large and uncommitted (previous agents' work). Commit by topic when the user asks.
 
+## 2026-10-02 (o) — Everything committed and pushed  (status: ready to build the v1.0.0 AAB)
+
+- Flutter repo → `github.com/rickyprayasa/TaktDesk` `main`: `387f844` feat(app) v1.0.0 RC, `28e505e` film_capture,
+  `e2b3478` docs, `a639ea6` promo, plus the 23 older local commits that had never been pushed. Secret scan clean;
+  `11labs.md` and `android/key.properties` are git-ignored. `Claude outputs/` (old preview PNGs) is left untracked on purpose.
+- Website repo → `github.com/rickyprayasa/ZYKL` `main`: pricing copy is in `0bf41f7` (final text, no paid packs).
+  It is NOT deployed (deploy is manual: `npm run deploy`, wrangler).
+- ⚠ **Security:** the website repo's `origin` URL embeds a GitHub personal access token (`https://ghp_…@github.com/…`).
+  The owner was advised to revoke it and use a credential helper (the Flutter repo already uses `credential.helper store`).
+  Never print or commit it.
+- Next: build `aab` + both universal APKs with `scripts/build_test_apks.sh aab user-testing developer-pro` (one at a
+  time, capped), tag `v1.0.0` on the built commit, then the owner uploads the AAB to Play Console → Internal testing.
+
 ## 2026-10-02 (n) — PRO promise finalised: every future addition is free for PRO owners  (status: DONE, not committed)
 
 Owner decision: **no optional/themed paid packs, ever.** Studio PRO = a single payment for every edition and soundscape,
