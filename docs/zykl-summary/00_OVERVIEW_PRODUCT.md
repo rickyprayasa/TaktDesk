@@ -28,7 +28,7 @@ ZYKL menggabungkan tiga unit fungsional yang beroperasi secara harmonis di satu 
 
 ```
 +-----------------------------------------------------------------------+
-|                       ZYKL MONASTIC INSTRUMENT                        |
+|                       ZYKL: Pomodoro Focus Timer                       |
 +-----------------------------------+-----------------------------------+
 |  UNIT 01 // ANALOG CHRONOMETER    |  UNIT 02 // THERMAL DISPENSER     |
 |  - Escapement Mekanikal 1.0 Hz    |  - Batas Tegas 5 Task (Miller)    |
