@@ -64,6 +64,8 @@ Lampu filamen indikator     Pin poros & aksen kuningan Cap stempel selesai
 
 ZYKL menggunakan keluarga huruf **JetBrains Mono** dan **Space Mono** untuk memberikan kesan instrumen pengukuran ilmiah yang presisi:
 
+> Catatan (2026-10-07): **website** zykl.app memakai JetBrains Mono. **Aplikasi Android** tidak membundel font; ia memakai keluarga sistem `monospace` (Noto Sans Mono) dan `sans-serif`. Skala `text-*` di bawah adalah kelas Tailwind website.
+
 ### Hirarki Tipografi
 1. **Headline Instrumen (`text-3xl` s/d `text-5xl`)**:
    - `font-mono font-black uppercase tracking-tight`

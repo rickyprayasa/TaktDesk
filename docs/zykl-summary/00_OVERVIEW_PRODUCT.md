@@ -1,7 +1,7 @@
 # ZYKL // Product Overview & Specification Blueprint
 **Monastic Focus Hardware Instrument**
 *Studio: RSQUARE (Established 2023)*
-*Firmware Revision: v1.0.5 (Build 105)*
+*Versi: v1.0.0 (versionCode 1), Closed Testing di Google Play sejak 2026-10-05*
 *Official Web: https://zykl.app | Package: com.zykl.app*
 
 ---
@@ -37,8 +37,8 @@ ZYKL menggabungkan tiga unit fungsional yang beroperasi secara harmonis di satu 
 +-----------------------------------+-----------------------------------+
 |               UNIT 03 // 33⅓ RPM MONASTIC TURNTABLE                   |
 |  - Pemutar Vinyl Minimalis Terinspirasi Braun TP-1                    |
-|  - 20 Master Audio Akustik (Dual 10-Disc Drawers)                     |
-|  - Mesin DSP Audio 22.05 kHz Tanpa Henti (Seamless Background Loop)   |
+|  - 20 Soundscape (Dual 10-Disc Drawers), 8 gratis + 12 PRO           |
+|  - Loop Ogg 40 s, 22.05 kHz, diputar offline di background           |
 +-----------------------------------------------------------------------+
 ```
 
@@ -59,10 +59,10 @@ ZYKL menggabungkan tiga unit fungsional yang beroperasi secara harmonis di satu 
 
 ### Unit 03 // 33⅓ RPM Monastic Turntable & DSP Soundscapes
 - **Braun TP-1 Minimalist Turntable**: Representasi visual pemutar piringan hitam klasik yang berputar pada 33⅓ RPM saat audio aktif, lengkap dengan tonearm mekanis yang turun ke atas piringan.
-- **Dual Modular Drawers (20 Master Audio)**:
-  - **Laci 1 (Drawer 01) // Nature & Ambient Noise**: Hujan lo-fi, angin bambu Kyoto, gemerisik pita kaset analog, aliran sungai alpine, badai salju utara, gelombang laut dalam, kafe klasik, desau api unggun, gemerisik hutan pinus, suara mekanik perpustakaan.
-  - **Laci 2 (Drawer 02) // Classical Piano & Strings**: Goldberg Variations (Bach), Nocturne Op. 9 (Chopin), Gymnopédie (Satie), Clair de Lune (Debussy), Spanish Romance, Chamber Quartet, Solo Cello Meditation, Ambient Piano Dust, Vintage Vinyl Resonance, Monastic Drone.
-- **Mesin Audio DSP Lokal**: Audio diputar offline dari penyimpanan lokal tanpa perlu koneksi internet, dengan transisi crossfade sinus yang mulus saat berganti track.
+- **Dual Modular Drawers (20 soundscape, nama sesuai `vinyl_track.dart`)**:
+  - **Laci 01 // NATURE**: Lo-fi Rain, Deep Brown Noise, Library Atmosphere, Kyoto Bamboo Stream (gratis); Campfire Embers, Nordic Pine Whispers, Alpine Mountain Brook, Pacific Ocean Waves, Misty Morning Meadow, Timber Chamber Hall (PRO).
+  - **Laci 02 // HARMONICS**: Warm Tape & Felt Piano, Monastic Cello Solo, Tape Acoustic Guitar, Debussy Clair de Lune (gratis); Midnight Solitude Piano, Zen Bronze Singing Bowl, Goldberg Variations Aria, Chopin Nocturne Op. 9, Spanish Romance Guitar, Chamber String Quartet (PRO).
+- **Audio lokal**: semua soundscape di-bundle di APK dan diputar offline (tanpa internet).
 
 ---
 
@@ -70,8 +70,24 @@ ZYKL menggabungkan tiga unit fungsional yang beroperasi secara harmonis di satu 
 
 ZYKL menyediakan 12 varian tema sasis material industri yang mengubah seluruh atmosfer aplikasi:
 
-| No | Nama Edisi | Akses | Material & Karakter Palet |
+| No | Nama Edisi (di app) | Akses | Material & Karakter |
 |:---|:---|:---|:---|
+| 01 | **MODERNIST CLASSIC** | **FREE** | Germanic minimalism |
+| 02 | **ATELIER CREAM** | **FREE** | Warm bone & signal orange |
+| 03 | **TITANIUM STEALTH** | **STUDIO PRO** | Aerospace PVD grade 5 |
+| 04 | **BAUHAUS HERITAGE** | **FREE** | Tubular chrome & primary |
+| 05 | **RAW BRASS & PATINA** | **STUDIO PRO** | Burnished marine chrono |
+| 06 | **MID-CENTURY WALNUT** | **STUDIO PRO** | Natural timber & satin gold |
+| 07 | **FORGED CARBON** | **STUDIO PRO** | Composite marble & amber |
+| 08 | **INDUSTRIAL MONO STEEL** | **FREE** | Galvanized steel & tungsten |
+| 09 | **OBSIDIAN CERAMIC** | **STUDIO PRO** | Mirror ceramic & amber |
+| 10 | **COPPER HEARTH & ASH** | **STUDIO PRO** | Brushed rose copper |
+| 11 | **BRITISH RACING GREEN** | **STUDIO PRO** | Vintage spruce & gold |
+| 12 | **INDIGO ASTRONOMICAL** | **STUDIO PRO** | Deep sea navy & cyan |
+
+Sumber: `lib/app/theme/hardware_edition.dart` (urutan sesuai kode).
+
+---|:---|:---|:---|
 | 01 | **Warm Bone 1976** | **FREE** | Putih krem klasik Braun LE1, aksen Filament Amber & Raw Brass |
 | 02 | **Obsidian Atelier** | **FREE** | Hitam doff pekat anodized, kontras tinggi, minim pantulan |
 | 03 | **Basalt Industrial** | **FREE** | Abu-abu batu vulkanik matte, aksen mekanikal teletype |
@@ -109,9 +125,9 @@ ZYKL menolak skema langganan bulanan (*anti-subscription manifesto*):
 
 ## 5. Ringkasan Spesifikasi Teknis (*Technical Spec Sheet*)
 
-- **Platform Target**: Android 10 (API 29) hingga Android 15 (Vanilla Ice Cream API 35).
-- **Arsitektur Database**: 100% Offline SQLite (Drift / Room Engine), tanpa penyimpanan cloud pihak ketiga.
-- **Audio Output**: 22,050 Hz / 44,100 Hz 16-Bit Mono PCM, seamless continuous loop via Android `MediaSessionCompat`.
+- **Platform Target**: Android 7.0 (minSdk 24) ke atas, targetSdk 36. Dibangun dengan Flutter + Kotlin native.
+- **Arsitektur Database**: 100% offline SQLite via Drift (schema v8), tanpa penyimpanan cloud.
+- **Audio Output**: soundscape Ogg Vorbis 22,05 kHz mono (loop 40 s, `MediaPlayer` + MediaSession); alarm & foley WAV.
 - **Dampak Daya (Energy Footprint)**: Konsumsi CPU background < 0.1%, dioptimalkan untuk mode standby di atas meja kerja (*desk stand*).
-- **Privasi & Keamanan**: 0 pelacak iklan, 0 analitik pihak ketiga, 0 pembuatan akun wajib. Kompilasi R8/ProGuard terenkripsi.
+- **Privasi & Keamanan**: 0 pelacak iklan, 0 analitik pihak ketiga, 0 pembuatan akun wajib. 
 - **Paket Distribusi**: Universal Release APK & Google Play AAB (Android App Bundle).

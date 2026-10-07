@@ -1,171 +1,185 @@
-# ZYKL // Android Application Architecture Blueprint
-**Codebase: Takt Desk // Android 10 - 15 (API 29 - 35)**
-*Engineering Studio: RSQUARE (Established 2023)*
-*Package: com.zykl.app*
+# ZYKL // Arsitektur Aplikasi Android
+**Codebase: `Takt Desk` (nama folder lama) · Package `com.zykl.app` · v1.0.0 (versionCode 1)**
+*Studio: RSQUARE*
+
+> Ditulis ulang 2026-10-07 dari kode yang sebenarnya. Versi sebelumnya menyebut Kotlin Jetpack Compose,
+> Room, Billing v7, EncryptedSharedPreferences dan SKU `zykl_studio_pro`; **semua itu tidak pernah ada di kode.**
+> Kalau dokumen ini bertentangan dengan kode, kode yang benar. Riwayat kerja terbaru: `docs/handoff/HANDOFF.md`.
 
 ---
 
-## 1. Ikhtisar Arsitektur (*Architectural Overview*)
+## 1. Stack
 
-ZYKL dibangun menggunakan standar rekayasa modern Android dengan paradigma **Offline-First**, **Unidirectional Data Flow (UDF)**, dan **Clean Architecture**.
+| Lapisan | Teknologi |
+|:---|:---|
+| UI & logika | **Flutter / Dart** (SDK ≥ 3.2; dibangun dengan Flutter 3.44), Material + `CustomPainter` |
+| State | **Riverpod 2** (`StateNotifierProvider`, `StreamProvider`) |
+| Database | **Drift** (SQLite lokal, `sqlite3_flutter_libs`), schema **v8** |
+| Pembelian | **`in_app_purchase`** (Google Play Billing Library 8.0.0), produk `studio_pro_lifetime` |
+| Sensor | `sensors_plus` (efek parallax meja) |
+| Waktu | `clock` (bisa dipalsukan di test dan film capture) |
+| Native Android | **Kotlin** di `android/app/src/main/kotlin/com/zykl/app/` (service, notifikasi, widget, audio) |
+| Target | minSdk **24** (Android 7.0), targetSdk **36** |
+
+Nama paket Dart masih `takt_desk` dan MethodChannel masih `com.takt.desk/*`. **Jangan di-rename**: ini
+dipakai bersama oleh Dart dan Kotlin.
+
+---
+
+## 2. Struktur folder `lib/`
 
 ```
-+-------------------------------------------------------------------------+
-|                           PRESENTATION LAYER                            |
-|  - Jetpack Compose UI (Material 3 + Custom Industrial Design Tokens)     |
-|  - ViewModels (StateFlow, SharedFlow, MVI/UDF Pattern)                 |
-|  - Android Home Screen Widgets (AppWidgetProvider + RemoteViews/Glance) |
-+------------------------------------+------------------------------------+
-                                     |
-                                     v
-+-------------------------------------------------------------------------+
-|                              DOMAIN LAYER                               |
-|  - Pomodoro State Machine (Focus, Break, LongBreak transitions)         |
-|  - Task Dispenser Interactors (5-slot cap, archive, ink stamp)         |
-|  - Audio Focus & Playback Controller UseCases                           |
-|  - License & Purchase Entitlement Validator                             |
-+------------------------------------+------------------------------------+
-                                     |
-                                     v
-+-------------------------------------------------------------------------+
-|                               DATA LAYER                                |
-|  - Local SQLite Database (Drift / Room Engine)                          |
-|  - DataStore Preferences (Theme, Escapement Ticking, Volume Calibration)|
-|  - Audio DSP Engine (Android MediaPlayer / SoundPool Foley Engine)      |
-|  - Google Play Billing Client v7 (In-App Purchase Security)            |
-+------------------------------------+------------------------------------+
-                                     |
-                                     v
-+-------------------------------------------------------------------------+
-|                           BACKGROUND SERVICES                           |
-|  - ForegroundService with Ongoing Notification & MediaSessionCompat     |
-|  - AlarmManager / Exact Timing WakeLocks for Precise Chronometer       |
-+-------------------------------------------------------------------------+
+lib/
+├─ main.dart                      ProviderScope + opening screen
+├─ app/theme/                     12 HardwareEdition, TaktColors (amberText untuk kontras), tekstur, plakat
+├─ core/
+│  ├─ audio/                      AudioService (Dart → MethodChannel audio), SoundEffect (foley)
+│  ├─ billing/                    ProStore (seam) + PlayProStore, proPurchaseProvider
+│  ├─ config/                     AppSecurityConfig (flag PRO simulation / dev tools)
+│  ├─ database/                   AppDatabase (Drift) + tables/
+│  ├─ focus/                      Monastic Lockdown (DND + screen pinning)
+│  ├─ haptics/, sensors/          haptic + parallax
+│  └─ services/                   timer_background, app_widget, media_notification, url
+└─ features/
+   ├─ opening/                    animasi pembuka 4,2 s (reduced-motion = statis)
+   ├─ desk/                       DeskCanvasScreen (layar utama), spec plate, telemetry, layout landscape
+   ├─ timer/                      ChronoDialController (state machine), dial painter, crown, split-flap
+   ├─ chrono/                     re-export lama dari timer (1 baris)
+   ├─ tasks/                      thermal dispenser (maks. 5 task), stempel DONE, laci arsip
+   ├─ vinyl/                      20 soundscape, turntable, laci record
+   ├─ vumeter/                    VU meter analog
+   ├─ analytics/                  FocusAnalyticsDialog, focus_session_rules.dart (aturan tunggal statistik)
+   └─ settings/                   settings sheet (+ part files settings_sections/), Studio PRO dialog
 ```
 
----
-
-## 2. Lapisan Presentasi (*Presentation Layer & UI Engine*)
-
-### 2.1 Deklaratif Murni Jetpack Compose
-Seluruh antarmuka visual dibangun 100% menggunakan **Jetpack Compose** tanpa XML view layout warisan (kecuali RemoteViews untuk widget layar utama):
-- **Custom Design Tokens**: Palet warna (`ChassisTheme`), bentuk geometris (`ChamferCornerShape`, `RivetBorder`), dan tipografi (`JetBrainsMonoFontFamily`) diinjeksi via `CompositionLocalProvider`.
-- **Canvas-Driven Analog Dial**: Dial jam dan jarum chronometer dirender langsung pada `androidx.compose.ui.graphics.drawscope.DrawScope`, meminimalkan alokasi objek pada *composition pass* dan menjamin animasi 60–120 FPS tanpa *jank*.
-- **State Hoisting & Immobility**: State UI diikat dalam *immutable data class* (`ChronometerUiState`, `TaskDispenserUiState`, `TurntableUiState`), menjamin perilaku deterministik saat rotasi layar atau perubahan konfigurasi.
+Pola umum: `domain/` = model murni, `presentation/` = controller (StateNotifier) + widget + painter.
+Tidak ada lapisan repository terpisah; controller membaca/menulis `AppDatabase` langsung.
 
 ---
 
-## 3. Mesin Waktu & Chronometer State Machine
+## 3. Timer (Unit 01)
 
-### 3.1 Presisi Escapement 1.0 Hz
-Aplikasi ini tidak bergantung pada `Thread.sleep` atau `Handler` sederhana yang rentan meleset akibat *CPU throttling* Android:
-- Menggunakan `kotlinx.coroutines.flow` dengan basis interval `SystemClock.elapsedRealtime()`.
-- Menghitung delta waktu riil (*real elapsed time*) terhadap target *timestamp* akhir, sehingga timer tetap akurat 100% bahkan jika aplikasi masuk ke mode *Doze* atau latar belakang.
+- **`ChronoDialController`** (`features/timer/presentation/chrono_dial_controller.dart`) memegang fase
+  (focus / short break / long break), siklus, dan sisa waktu. Profil: CLASSIC 25/5/15, MONASTIC 50/10/30,
+  SPRINT 15/3/10, plus CUSTOM (fokus 1–90 menit, diatur lewat tarik crown atau Pomodoro Interval Engine).
+- Waktu dihitung dari **wall-clock** (`clock.now()`), bukan stopwatch, supaya bisa mengejar setelah deep
+  sleep. Delta negatif (jam mundur) di-clamp ke 0.
+- Saat app kembali ke foreground, `resyncWithNative()` mencocokkan sisa waktu dengan service native
+  (`getRemainingMillis`), termasuk kasus native sudah selesai (fase dimajukan tanpa bunyi ganda).
+- Sesi yang dibatalkan setelah ≥ 60 detik fokus dicatat sebagai `isFinished = false`.
 
-### 3.2 Diagram Transisi State Pomodoro
-```
-       +------------------+
-       |       IDLE       |
-       +--------+---------+
-                | [START_FOCUS]
-                v
-       +------------------+     [TICK / 25 MIN]     +-------------------+
-       |   FOCUS_RUNNING  +------------------------>|  FOCUS_COMPLETED  |
-       +--------+---------+                         +---------+---------+
-                |                                             |
-                | [PAUSE]                                     | [AUTO / MANUAL]
-                v                                             v
-       +------------------+                         +-------------------+
-       |   FOCUS_PAUSED   |                         |   BREAK_RUNNING   |
-       +------------------+                         +---------+---------+
-                                                              |
-                                           [4th CYCLE?]-------+
-                                           |                  |
-                                     (YES) |                  | (NO)
-                                           v                  v
-                                  +-----------------+  +----------------+
-                                  |   LONG_BREAK    |  |  SHORT_BREAK   |
-                                  |    (15 MIN)     |  |    (5 MIN)     |
-                                  +-----------------+  +----------------+
-```
+### Native: `TimerForegroundService.kt`
+- Foreground service tipe **`specialUse`** dengan notifikasi countdown (channel `IMPORTANCE_LOW`) dan channel
+  alert terpisah (`IMPORTANCE_HIGH`).
+- Akhir sesi dijadwalkan dengan **`AlarmManager.setExactAndAllowWhileIdle(ELAPSED_REALTIME_WAKEUP)`**
+  (kebal perubahan jam, jalan saat Doze); fallback `setAndAllowWhileIdle` bila exact alarm ditolak.
+  Permission: `USE_EXACT_ALARM` (API 33+), `SCHEDULE_EXACT_ALARM` (≤ 32).
+- Penyelesaian idempotent (`lastCompletedEndAt`). Kalau Dart sudah mati, sesi selesai disimpan di
+  SharedPreferences `zykl_pending_sessions` lalu diimpor Dart lewat `takePendingSessions`.
+- `POST_NOTIFICATIONS` diminta sekali, saat START pertama (bukan saat launch).
 
 ---
 
-## 4. Mesin Audio DSP & Background Playback Service
+## 4. Task dispenser (Unit 02)
 
-### 4.1 Arsitektur Latar Belakang (*Foreground Service & MediaSessionCompat*)
-Audio soundscape piringan hitam harus terus berputar tenang saat layar mati atau pengguna membuka aplikasi lain:
-- **`AudioService` (Android Foreground Service)**: Menggunakan tipe layanan `android:foregroundServiceType="mediaPlayback"`.
-- **`MediaSessionCompat`**: Menghubungkan kontrol audio dengan sistem Android (layar kunci, *notification drawer*, smartwatch, dan headset Bluetooth).
-- **Penanganan Audio Focus**: Mengimplementasikan `AudioManager.OnAudioFocusChangeListener`. Saat menerima panggilan telepon atau navigasi GPS, audio soundscape meredup (*ducking*) atau menjeda secara anggun (*graceful pause*).
-
-### 4.2 Mesin Suara Ganda (*Dual Audio Architecture*)
-1. **Looping Ambient Master Player**:
-   - Memutar file audio master stereo/mono 22.05 kHz / 44.1 kHz.
-   - Menggunakan teknik *sinusoidal crossfade* di ujung file untuk menghilangkan bunyi *click/pop* saat loop berulang.
-2. **Low-Latency Foley Sound Engine (`SoundPool`)**:
-   - Khusus memproses efek suara taktil instrumen:
-     - `foley_switch_click.wav`: Suara sakelar fisik *toggle switch*.
-     - `foley_dial_click.wav`: Suara putaran knop *crown dial*.
-     - `foley_paper_tear.wav`: Suara sobekan kertas dispenser thermal.
-   - Diproses langsung di RAM untuk latensi mendekati 0 milidetik.
+- `ReceiptRunnerController` + `receipt_runner_widget.dart`: maksimal **5 task aktif**, judul 1–140 karakter.
+- Selesai = stempel DONE; task selesai bisa diarsipkan (`isArchived`), tidak dihapus.
+- Error DB dicatat lewat `debugPrint` (`_logDbError`), tanpa retry.
 
 ---
 
-## 5. Subsistem Basis Data Lokal (*Offline SQLite*)
+## 5. Audio (Unit 03 + foley)
 
-### 5.1 Filosofi Zero-Cloud & Privasi Total
-ZYKL tidak memiliki server backend untuk menyimpan data pengguna. Tidak ada API endpoint, tidak ada Firebase Database, dan tidak ada analitik pihak ketiga:
-- Semua data disimpan secara lokal pada file basis data SQLite perangkat pengguna.
-- Enkripsi dan perlindungan file sistem Android menjamin privasi absolut.
+| Jenis | Format | Pemutar native |
+|:---|:---|:---|
+| 20 soundscape vinyl (`assets/audio/vinyl_*.ogg`, 22,05 kHz mono, loop 40 s) | Ogg Vorbis q4 | `MediaPlayer` (looping) di `MediaNotificationService` |
+| Alarm chime (5: Twin-Hammer Bell, Brass Desk Bell, Tibetan Singing Bowl, Zen Temple Gong, Tubular Chime) | WAV | Alarm nyata: `MediaPlayer` `USAGE_ALARM`; preview: `SoundPool` |
+| Foley UI (`foley_*.wav`) | WAV | `EffectSoundPlayer` (`SoundPool`, latensi rendah) |
 
-### 5.2 Skema Tabel Utama
-1. **`tasks`**:
-   - `id` (UUID, Primary Key)
-   - `title` (String, Max 120 chars)
-   - `is_completed` (Boolean)
-   - `created_at` (Timestamp)
-   - `completed_at` (Nullable Timestamp)
-   - `order_index` (Integer, 0 - 4: membatasi 5 slot aktif)
-2. **`pomodoro_sessions`**:
-   - `id` (UUID, Primary Key)
-   - `session_type` (FOCUS / SHORT_BREAK / LONG_BREAK)
-   - `duration_seconds` (Integer)
-   - `completed_at` (Timestamp)
-3. **`preferences`**:
-   - `hardware_edition` (String ID tema)
-   - `is_pro_unlocked` (Boolean)
-   - `chronometer_ticking_enabled` (Boolean)
-   - `master_volume` (Float 0.0 - 1.0)
+- `MediaNotificationService.kt`: foreground service **`mediaPlayback`**, MediaSession + notifikasi media
+  (prev / play-pause / next), audio focus listener.
+- Sumber lossless ada di `assets_src/audio_wav/` (tidak di-bundle). Script generator di `scripts/`.
+- **Menambah chime baru** harus di tiga tempat: `MainActivity` (`ALARM_ASSETS`),
+  `lib/features/timer/domain/alarm_chime.dart`, dan `TimerForegroundService.getAlarmAssetPath`.
 
 ---
 
-## 6. Subsistem Widget Layar Utama (*Android Home Screen Widgets*)
+## 6. Database (Drift, schema v8)
 
-ZYKL menyediakan widget meja kerja interaktif yang membawa nuansa instrumen langsung ke layar depan ponsel:
-1. **Chronometer Widget**:
-   - Menampilkan dial jam mekanik.
-   - Jarum jam terhubung dengan service timer via broadcast terenkripsi.
-   - Update presisi 1.0 Hz saat timer aktif.
-2. **Task Dispenser Widget**:
-   - Menampilkan daftar 5 tugas aktif dengan tekstur kertas thermal.
-   - Mendukung interaksi ceklis langsung dari widget.
-   - **Safety Guard Terverifikasi**: Terlindungi dari *intent leak* saat modal upgrade PRO terbuka (mencegah pembuatan task bayangan).
+| Tabel | Kolom penting |
+|:---|:---|
+| `tasks` | `id` (int auto), `title` (1–140), `isCompleted`, `isArchived`, `sortOrder`, `createdAt`, `completedAt?` |
+| `timer_sessions` | `id`, `targetMinutes`, `elapsedSeconds`, `isFinished`, `startedAt`, `finishedAt?`, `isLockdownOnly` (v8) |
+| `desk_preferences` | `soundVolume`, `parallaxEnabled`, `activeAmbientTrackIndex`, `foleyEnabled`, `hapticsEnabled`, `selectedEdition`, `isProSimulated`, `alarmChimeId`, `autoUnlockMonastic`, `isDarkMode`, `dailyGoalCycles` (v8) |
 
----
-
-## 7. Subsistem Keamanan & Google Play In-App Billing v7
-
-### 7.1 Monetisasi Jujur (*Studio PRO In-App Purchase*)
-- **SKU Produk**: `zykl_studio_pro` (Tipe: In-App Product / One-Time Purchase).
-- **Protokol Verifikasi**: Menggunakan Google Play Billing Library v7 terbaru.
-- **Cache Terenkripsi Lokal**: Status kepemilikan lisensi diverifikasi melalui Google Play Store API saat terhubung ke jaringan, lalu disimpan dalam *EncryptedSharedPreferences* (AES-256 GCM) sehingga pengguna tetap memiliki akses PRO penuh saat perangkat berada dalam mode offline / pesawat (*airplane mode*).
-- **Zero Ads SDK**: Seluruh kode sumber bebas dari SDK jaringan periklanan (AdMob, Unity Ads, dll.).
+- Semua statistik (analytics, plate TODAY, lifetime) memakai satu aturan:
+  `features/analytics/domain/focus_session_rules.dart`. **Pakai file ini untuk statistik baru.**
+- Setelah mengubah tabel: naikkan `schemaVersion`, tambah migrasi `from < N`, jalankan `build_runner`.
+- ID tersimpan seperti `braunClassic` dan `braunBell` ada di data pengguna; jangan di-rename.
 
 ---
 
-## 8. Optimasi Performa & Jejak Memori (*Memory & Battery Footprint*)
+## 7. Studio PRO & billing
 
-- **Kompilasi R8 / ProGuard**: Obfuscation penuh dengan penghapusan metadata yang tidak perlu, menghasilkan ukuran APK yang sangat ramping.
-- **Konsumsi Baterai**: Tidak ada wakelock berlebih; saat timer selesai, CPU segera diistirahatkan (*deep sleep*).
-- **Zero Leak Canaries**: Siklus hidup objek *disposable* (audio track, bitmap textures, compose state listeners) dibersihkan tuntas saat composable masuk ke `onDispose`.
+- Produk Play: **`studio_pro_lifetime`** (one-time, Rp 69.000 harga peluncuran). ID tidak boleh diganti.
+- `proPurchaseProvider` (`core/billing/pro_purchase_controller.dart`): state unavailable / idle / purchasing /
+  pending / owned. Saat start memanggil `restorePurchases()`; `purchased`/`restored` → PRO terbuka; setiap
+  pembelian di-acknowledge (`completePurchase`), kalau tidak Google refund otomatis dalam 3 hari.
+- **Kepemilikan tidak pernah dibaca dari DB di build release**: `settings_controller.dart` memaksa
+  `effectivePro = false` saat load kecuali simulation aktif, lalu Play restore yang membukanya.
+  (Nama `isProSimulated` adalah nama lama untuk "PRO terbuka".)
+- `AppSecurityConfig`: `isProSimulationEnabled` hanya untuk APK developer-pro
+  (`--dart-define=ENABLE_PRO_SIMULATION=true`). Di build debug/simulation, `proStoreProvider` = null
+  sehingga test tidak pernah menyentuh Play. `FILM_HIDE_DEV_TOOLS` menyembunyikan dev tools saat film capture.
+- Gratis: 4 edisi, 8 soundscape, semua widget, Monastic Lockdown. PRO: 8 edisi + 12 soundscape lainnya,
+  plus semua tambahan di update berikutnya tanpa biaya.
+
+---
+
+## 8. Monastic Lockdown
+
+`core/focus/`: `FocusLockController` + `FocusLockService` → MethodChannel `com.takt.desk/focus_lock` →
+`MainActivity` menyalakan DND (`INTERRUPTION_FILTER_NONE`, perlu `ACCESS_NOTIFICATION_POLICY`) dan
+`startLockTask()` (screen pinning). Lock hanya mencatat sesi sendiri bila tidak ada timer yang berjalan,
+durasinya ≥ 60 s, dan diberi `isLockdownOnly = true` (mencegah hitungan ganda).
+
+---
+
+## 9. Widget layar utama
+
+Empat `AppWidgetProvider` (RemoteViews), info XML di `res/xml/`:
+`TaktAppWidgetProvider`, `TaktAnalogDialWidgetProvider`, `TaktFocusStripWidgetProvider`,
+`TaktTaskDispenserWidgetProvider`. Aksi dari widget (toggle timer, centang task) lewat
+`WidgetActionReceiver`; Dart menyinkronkan data lewat `com.takt.desk/app_widget` (`appWidgetSyncProvider`).
+
+---
+
+## 10. MethodChannel
+
+| Channel | Arah / fungsi |
+|:---|:---|
+| `com.takt.desk/timer_service` | start/stop service, `getRemainingMillis`, `takePendingSessions` |
+| `com.takt.desk/audio` | soundscape, foley, alarm/preview chime, volume |
+| `com.takt.desk/focus_lock` | DND + screen pinning |
+| `com.takt.desk/app_widget` | sinkronisasi data widget |
+| `com.zykl.app/media_notification` | notifikasi media vinyl |
+
+---
+
+## 11. Aksesibilitas & tema
+
+- Reduce motion (`MediaQuery.disableAnimations`): platter tidak berputar, parallax mati, opening statis.
+- Kontras WCAG AA dipaksa oleh `test/app/theme/contrast_test.dart` untuk 12 edisi × terang/gelap.
+  Teks amber memakai `TaktColors.amberText(isDark)`.
+- Font: keluarga sistem `monospace` (Noto Sans Mono di Android) dan `sans-serif`; tidak ada font bundel.
+
+---
+
+## 12. Verifikasi & build
+
+- `flutter analyze` → 0 issues; `flutter test -j 1` (jalankan per folder di mesin 7,6 GB).
+- Kotlin: `cd android && ./gradlew :app:compileDebugKotlin --offline -q`.
+- Build hanya atas permintaan owner, selalu lewat `scripts/build_test_apks.sh [developer-pro] [user-testing] [aab]`
+  (cgroup, satu per satu). Test APK = universal, jangan `--split-per-abi`. Detail di `HANDOFF.md`.
+- Setiap upload ke Play wajib menaikkan `version:` di `pubspec.yaml` (mis. `1.0.1+2`).
+- Film/promo capture dari widget asli: `film_capture/` (di luar `test/`).
