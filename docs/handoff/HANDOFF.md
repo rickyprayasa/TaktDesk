@@ -28,6 +28,47 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-07 (b) — Security audit + fixes, demo videos v3 rendered, v1.0.1+2 built  (status: built, NOT committed, NOT uploaded)
+
+- **Demo videos v3 rendered** (all 8, 1080×1350, 60 fps, AAC): `promo/Konten/Konten 1/video/ZYKL_Demo_*_4x5.mp4`
+  (Overview 31.1 s, Reading 20.9, Coding 29.2, Studying 33.8, Writing 26.3, Creative 34.3, Languages 25.2, Admin 29.3).
+  Calm camera: whole phone, still, zooms only on the SHOTS in `promo/Konten/demo/compose.py`. Awaiting owner review.
+  Old v2 videos: `~/.cache/zykl-film/content_videos_v2/`.
+- **Security audit** (skill `security-audit`, quick profile, scoped to this repo + `zykl.app/`, source-only: no target
+  code executed). Artifacts: `~/security-audit-skill/zykl/run-1/` (`REPORT.md`, `NEEDS-VALIDATION.md`, `findings.json`,
+  `coverage-ledger.json`; both skill validators pass). 0 confirmed, 3 needs_validation leads, all fixed below.
+  1. **Unpaid pending purchase unlocked PRO** via restore: `in_app_purchase_android` 0.5.3 `restorePurchases` marks every
+     Play purchase `restored`, including `purchaseState == pending` (cash not paid). Fix: `isPaidPurchase()` in
+     `lib/core/billing/pro_store.dart` (GooglePlayPurchaseDetails → `purchaseState == purchased`);
+     `ProPurchaseController._onPurchases` keeps such purchases `pending`, grants nothing and does not acknowledge them.
+     `in_app_purchase_android: ^0.5.3` is now a direct dependency (lock unchanged except "direct main").
+     Tests: 2 new cases in `test/core/billing/pro_purchase_controller_test.dart`; the pending one fails without the fix.
+     Device check still worth doing: closed-testing licence tester + Play "slow test card", relaunch before approval.
+  2. **Other apps could start/pause the timer** with `open_feature=toggleTimer` on the exported `MainActivity`
+     (`onNewIntent` forwarded any value to the widget-action stream). Fix: `MainActivity.externalFeature()` allowlists
+     `studio_pro`, `tasks`, `dial` at all three reads; `toggleTimer` now only comes from the non-exported
+     `WidgetActionReceiver` via `sendWidgetAction`. Kotlin compiles. Emulator check: `adb shell am start -n
+     com.zykl.app/.MainActivity --es open_feature toggleTimer` must not change the timer.
+  3. **Website feedback → Sheet formula injection** (`zykl.app/scripts/feedback-apps-script.gs`): values starting with
+     `= + - @` were stored as formulas. Fix: `text_()` caps every field, `literal_()` prefixes an apostrophe, category
+     allowlist (unknown → `OTHER`), lock result honoured (`busy`), generic `error` response (details in `console.error`).
+     Verified with a node stub harness (scratch only). **Owner must paste the new script into the Apps Script editor and
+     deploy a new version**; the repo copy does not update the live web app.
+- Hardening done: `promo/Video Motion v4 (wip)/audio/generate_audio.py` reads only the first line of `11labs.md`
+  (that file also holds a GitHub token; whole-file read could send it to ElevenLabs). Owner advised to move the token to
+  a credential helper and rotate it.
+- Hardening NOT done (open): release signing falls back to the debug key silently (`build.gradle.kts:52-55`, make it
+  fail); developer-pro APK is a release build with PRO unlocked, same applicationId and upload key (use a `.devpro`
+  flavor + debug signing); CSP `'unsafe-inline' 'unsafe-eval'`; unused `FeedbackTerminal.tsx`; webhook rate limit;
+  root `.gitignore` patterns for `.env*`, `*.jks`, `*.pem`.
+- Verified: `flutter analyze` 0 issues; `flutter test -j 1` **450 pass** (1 skipped); Kotlin compiles.
+- Version bumped to **1.0.1+2** (pubspec). v1.0.0 outputs archived in `build_outputs/previous/2026-10-02-v1.0.0/`.
+- **Built 2026-10-07 12:28–12:36** with `scripts/build_test_apks.sh aab user-testing developer-pro` (exit 0):
+  `build_outputs/zykl-playstore-release.aab` (65.4 MB), `zykl-user-testing-universal.apk` (66.9 MB),
+  `zykl-developer-pro-universal.apk` (66.4 MB). versionCode 2 / 1.0.1. All signed with the upload key (SHA-256
+  `27:5B:8E:D7…A1:23`, same as v1.0.0; no debug-key fallback). Next: owner uploads the AAB to Play Console → Closed
+  testing → Create new release; then tag `v1.0.1` on the commit that holds these changes.
+
 ## 2026-10-07 — Closed test live; PRO badge, docs rewrite, beta link, calm camera for the demo videos  (status: code done, NOT built, NOT committed; website NOT deployed)
 
 - **Play status (owner, 2026-10-07):** Closed testing track "Tester" is **Active**, release 1 (1.0.0) available to
