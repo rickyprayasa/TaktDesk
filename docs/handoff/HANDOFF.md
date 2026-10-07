@@ -27,7 +27,98 @@
 - **Do not build APK/AAB unless the owner asks in that message** (owner reviews code changes on Linux first).
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
-- Working tree is large and uncommitted (previous agents' work). Commit by topic when the user asks.
+
+## 2026-10-07 — Closed test live; PRO badge, docs rewrite, beta link, calm camera for the demo videos  (status: code done, NOT built, NOT committed; website NOT deployed)
+
+- **Play status (owner, 2026-10-07):** Closed testing track "Tester" is **Active**, release 1 (1.0.0) available to
+  testers since 2026-10-05, 178 countries. Owner still needs **3 more testers** to reach 12, then 14 days.
+- **PRO badge bug fixed** (`vinyl_disc_drawer_widget.dart`): premium sleeves showed "STUDIO PRO 🔒" even when owned.
+  Now `STUDIO PRO 🔒` only while locked, `STUDIO PRO` when unlocked (uses the card's existing `isUnlocked`).
+  Test assertions added (scoped to `record_sleeve_14`; the PageView also builds neighbour cards).
+  `flutter test -j 1 test/features/vinyl` → 36 pass. Note: `dart format` reformats whole files here; don't run it
+  on untouched files (noise diffs).
+- **Docs:** `docs/zykl-summary/01_APP_ARCHITECTURE.md` **rewritten from the real code** (the old one described Kotlin
+  Jetpack Compose, Room, Billing v7, EncryptedSharedPreferences, SKU `zykl_studio_pro`: none of that exists).
+  `00_OVERVIEW_PRODUCT.md`: version (was "v1.0.5 Build 105"), the 12 edition names (the old table was invented),
+  the 20 soundscape names (8 free / 12 PRO), SDK levels (minSdk 24, targetSdk 36). `02_UI_UX…`: note that the app
+  uses system `monospace`, JetBrains Mono is website-only. README index updated.
+- Verified while auditing: release builds ignore the DB's `isProSimulated` (`settings_controller.dart` forces
+  `effectivePro = false` unless simulation), so the column default `true` is harmless. Tag `v1.0.0` = HEAD for
+  `lib/`, `android/`, pubspec (the uploaded AAB matches the source). Website remote URL no longer embeds a token.
+- **Website** (`zykl.app/src/data/app.ts`): `BETA_OPT_IN_URL` = `https://play.google.com/apps/testing/com.zykl.app`,
+  so step 02 on `/coming-soon` is a live button. `tsc` clean; checked on `next dev` (link present, no console errors).
+  **Needs `npm run deploy` (owner OK)**; that deploy also ships the pricing copy from `0bf41f7`.
+- **Content-pack demo videos, camera v3** (owner: too much auto-zoom following the cursor, viewers get dizzy).
+  `promo/Konten/demo/compose.py` no longer follows the per-tap `cam` cues. The phone stays whole and still; each clip
+  has 2–4 **SHOTS** (key moments only: preset dial in Overview, typing the first task, DONE stamp, crown wind,
+  countdown start, lockdown hold). Each shot frames a screen **region** (`DIAL`, `DIAL_LOCK`, `SLIP`, `DISP`,
+  `LOCK`) between the caption scrims, max zoom 1.55, holds perfectly still, eases in/out once (smootherstep 1.0 s,
+  zoom interpolated geometrically); shots < 1.6 s apart glide directly. Result: 2–6 moves per clip (was 12–23 cue
+  changes), camera moving 11–21 % of the time. `--cues` prints a capture's chapter/tap timeline for retiming SHOTS
+  (times are capture seconds; re-check after any re-capture). No re-capture was needed.
+  Render: `~/.cache/zykl-film/render_content_v3.sh` (sequential, cgroup 3 GB, resumable: skips existing files), log
+  `~/.cache/zykl-film/render_content_v3.log`. Old v2 videos moved to `~/.cache/zykl-film/content_videos_v2/`.
+- Still open: timer notification channel is `IMPORTANCE_LOW` (lands in "Silent"); changing it needs a NEW channel ID
+  (existing installs keep the old importance). `promo/Konten/` (≈71 MB of mp4/png) is untracked; keep renders out of
+  git. README.md is still the Flutter template.
+
+## 2026-10-06 — Content-pack demo videos (all 8 use-case posts)  (status: v2 with opening/closing rendered, awaiting owner review; nothing committed)
+
+- Owner asked for "screen-record style" demo videos with a device mockup and smooth auto-zoom, matching the
+  use-case content pack (`promo/Konten/Konten 1/zykl-use-case-content-pack-en-id.docx`, posts 1/4/2 = overview,
+  reading, coding). Video remaster work is **paused** by the owner.
+- Q&A same day: on the Play internal-test build, "Upgrade PRO" unlocking instantly is a **license-tester test
+  purchase** (no charge), not a leak. Release code only unlocks on Play `purchased/restored`. Non-license testers pay
+  for real. Cosmetic bug noted, not fixed: vinyl card badge still shows "STUDIO PRO 🔒" when owned
+  (`vinyl_disc_drawer_widget.dart:587`).
+- **Capture (real widgets, no device):** `film_capture/content_clips_test.dart` + `film_capture/run_content.sh
+  [--smoke] [overview|reading|coding]` (one at a time, cgroup-capped). Output `~/.cache/zykl-film/content/<clip>/`.
+  The clips drive the UI like a person: tap preset segment, open record drawer, page to the disc, LOAD, tap the platter,
+  "+" → type the task into the slip sheet → FEED PAPER, double-tap to stamp, crown to start.
+- `film_capture/film_scene.dart`: new `FilmAudioService` (overrides `audioServiceProvider`) logs every foley/ambient
+  event per frame; new `s.cam(point, zoom)` / `s.camOn(finder, zoom)` camera cues, `s.typeText`, and
+  `s.rec.chapter = 'NN|Label|Value'` captions. All written into `touches.json` (`cam`, `sfx`, `ch`).
+- **Compose:** `promo/Konten/demo/compose.py <clip> [--still s ...]` → 1080×1350 (4:5, matches the carousel
+  slides) 60 fps: phone mockup + status bar, critically-damped spring camera toward the cues (no touch circles),
+  slide-style header/footer/frame, step captions, audio = the app's real foley (MainActivity mapping; springButton /
+  stepperPrint are silent on device too) + the loaded soundscape, loudnorm −16 LUFS. Output:
+  `promo/Konten/Konten 1/video/ZYKL_Demo_<Clip>_4x5.mp4`.
+- Rendered 2026-10-06: Overview 18.6 s, Reading 16.9 s, Coding 25.2 s (1080×1350, 60 fps, AAC). Capture ≈3–4 min per
+  clip at 3×, compose ≈2–5 min per clip (cgroup 3 GB). Possible next steps if the owner wants them: ID-language captions,
+  a 9:16 cut (change W/H/DEVICE_H/ANCHOR in compose.py), and the remaining posts (studying, writing, creative, languages,
+  admin; their slides are not in Konten 1 yet). `flutter analyze film_capture` = 0 issues.
+- **v2 (owner feedback, same day):** Overview now also shows tasks (2 typed, 1 stamped). All videos get a 1.2 s
+  opening (copy reveals, phone rises in) and a 2.8 s closing (phone fades, end card: icon, ZYKL, "Pomodoro Focus Timer",
+  tagline, zykl.app, the app's twin-hammer bell). No "beta" wording (content-pack rule). Added the 5 remaining posts:
+  studying (25/5, Lo-Fi Rain, 3 tasks, Lockdown + 5 s hold), writing (crown → 40/8, Warm Tape), creative (crown → 45/10,
+  Atelier Cream edition via Settings + LIGHT theme, Clair de Lune), languages (25/5, Kyoto Bamboo), admin (15/3,
+  Monastic Cello Solo, stamp all 3). Headlines for these 5 are my own (no slides yet): edit `CLIPS` in compose.py.
+- **App code touched:** `AppSecurityConfig.showDeveloperTools` now also requires `!FILM_HIDE_DEV_TOOLS` (dart-define
+  set only by `run_content.sh`) so the debug-mode capture doesn't show the "SIMULATE STUDIO PRO CLEARANCE" switch.
+  Release behaviour unchanged. `app_security_config_test` + `takt_settings_sheet_test` pass (28).
+
+## 2026-10-05 — Closed Testing submitted to review & Promo Remaster unified Dial scene plan  (status: Play review pending; film revision planned, NOT executed)
+
+- **Google Play Console Closed Testing (v1.0.0, versionCode 1) submitted for review:**
+  - 14 changes submitted: attached `zykl-playstore-release.aab` from library, completed declarations for Foreground Service (Special Use + Media Playback with video demo links), Exact Alarm (`USE_EXACT_ALARM`), Data Safety (0 data collected/shared), and Advertising ID (`No`).
+  - Status is currently **"Changes in review"** (automated checks passed; under Google Play review).
+  - One-time product **`studio_pro_lifetime`** (Rp 69.000, "ZYKL Studio PRO") is verified active in One-time products.
+  - Next for release: once Google approves, share opt-in link (`zykl-beta@googlegroups.com`) and run the mandatory 14-day closed test with ≥12 active testers before applying for Production.
+  - Device test note: if ongoing countdown notification does not show on Android 13+, check system settings (sideloaded APKs default `POST_NOTIFICATIONS` to off); consider promoting channel importance from `IMPORTANCE_LOW` to `IMPORTANCE_DEFAULT` with `setSound(null, null)` in future update so it doesn't get collapsed into "Silent notifications".
+
+- **Promo Video Motion Remaster: Unified Dial Scene Plan (Agreed with owner; DO NOT EXECUTE YET):**
+  - **Context & Feedback:** In the 44s remaster, audio was artificially extended to 44s by duplicating 2 bars (11.97–16.0s), creating an audible repetitive music loop. Moreover, having separate scenes for Analog Preset and Pull Crown caused duplicate static layouts (mockup sitting statically on the right side across two scenes).
+  - **Decision:** Merge **Pull the Crown (Custom rhythm calibration)** and **Analog Presets & Cycle (1.0 Hz escapement)** into **ONE single unified Dial scene** (Scene 04 / 4.0 seconds, 12.0s – 16.0s on the 120 BPM grid).
+  - **Duration & Music:** Overall video duration returns to **40.0s** (2400 frames @ 60 fps, 10 scenes x 4.0s). Audio returns to the original, seamless **40.0s master mix** (`ZYKL_Promo_Motion_40s_EN_audio_v2.wav` or `mix2.py` with `music_a`), eliminating the music loop repeat completely. If extra audio/SFX is needed, owner provided ElevenLabs API (`11labs.md`).
+  - **Choreography (Continuous Take):**
+    1. **12.0s – 13.5s (Beat 1: Macro Crown Pull):** Scene starts with device already **zoomed in macro (~1.4x scale)** focused on the top crown button. Crown is pulled and dial wound. As it pulls back to ~0.92x scale, device docks on the **LEFT side**. Text appears on the RIGHT: `UNIT 01 // CROWN CALIBRATION`, `Pull the crown. Set your own rhythm.`, with dynamic counters `40 · 05 · 15`.
+    2. **13.5s – 14.2s (Beat 2: Dynamic Glide Across):** On the musical beat, the mockup glides with a smooth 3D tilt across from the **LEFT side to the RIGHT side** with a light sheen across the screen glass. Crown text blurs out.
+    3. **14.2s – 16.0s (Beat 3: Analog Presets & Escapement):** Mockup settles on the **RIGHT side**, needle ticks smoothly at 1.0 Hz. Text appears on the **LEFT side**: `UNIT 01 // ANALOG CHRONOMETER`, `Analog hands. A calmer rhythm.`, with rows `ESCAPEMENT 1.0 Hz`, `DEEP FOCUS 25 MIN`, `CYCLE 1/4`.
+    4. **Transition to Scene 05 (16.0s):** Because the device ends on the **RIGHT side**, it seamlessly connects into Scene 05 (**Monastic Lockdown**, which is also positioned on the right) with zero position jump cut!
+  - **Files involved when executed later:**
+    - `zykl.app/promo/Video Motion Remaster/source/anim.js` (re-route S4 timeline & device position interpolation; restore `TOTAL = 40`, `DUR = 36` warped to 40).
+    - `audio_remaster_44s.wav` replaced by 40s audio master (`ZYKL_Promo_Motion_40s_EN_audio_v2.wav`).
+    - Render pipeline: `render_chunks.sh` with 40s duration (`DUR=40`), 10s chunks, render one variant at a time under nice/cgroup only when owner instructs.
 
 ## 2026-10-02 (p) — v1.0.0 built and tagged  (status: owner uploads the AAB to Play Console Internal testing)
 
@@ -65,7 +156,7 @@ unlocks nothing (not built yet). **Do not add paid content packs.** That would b
   and edition we add in future updates, at no extra cost"), `src/data/faq.ts`, `src/components/sections/HonestSpecs.tsx`
   ("all future additions included"). Deploy before the public release.
 
-## 2026-10-02 (m) — PENDING: render the 3 remaining remaster videos  (status: Dark 16:9 approved by the owner)
+## 2026-10-02 (m) — RENDERING (started 2026-10-02 afternoon, sequential light_16x9 → dark_9x16 → light_9x16; logs `~/.cache/zykl-film/render_remaster_<variant>.log`; if interrupted, re-run the same command and it resumes) — the 3 remaining remaster videos  (status: Dark 16:9 approved by the owner)
 
 The owner approved `zykl.app/promo/Video Motion Remaster/ZYKL_Promo_Remaster_44s_EN_Dark_16x9.mp4` (13:45) and
 **postponed** the other three. Work moved to the AAB/APK release. When the owner asks, render ONE AT A TIME (PC freezes
