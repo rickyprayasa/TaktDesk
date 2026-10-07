@@ -28,7 +28,39 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
-## 2026-10-07 (b) — Security audit + fixes, demo videos v3 rendered, v1.0.1+2 built  (status: built, NOT committed, NOT uploaded)
+## 2026-10-07 (c) — Audit hardening  (status: done + verified; NOT committed; website NOT deployed)
+
+App (`Takt Desk`):
+- **Release signing fails closed** (`android/app/build.gradle.kts`): `assembleRelease`/`bundleRelease` without
+  `android/key.properties` now throws instead of silently using the debug key. Escape hatch for a throwaway local
+  release: `ZYKL_ALLOW_DEBUG_RELEASE=1`. Verified with Gradle dry runs (`-m`): no key → fails; no key + escape → ok;
+  debug build → ok; devpro → ok; with key → ok.
+- **Developer-pro APK is now a separate app**: Gradle decodes `-Pdart-defines` (what `flutter build --dart-define`
+  passes); when `ENABLE_PRO_SIMULATION=true` it sets `applicationIdSuffix = ".devpro"`, launcher label
+  "ZYKL DEV PRO" (manifest `android:label="${appLabel}"` placeholder, default `@string/app_name`) and signs with the
+  **debug key**, never the upload key. It installs next to the Play version and a leaked copy cannot pass as the store
+  app. `scripts/build_test_apks.sh` needs no change. Note for the owner's test phone: the old dev-pro install
+  (`com.zykl.app`) stays until uninstalled; the new one is `com.zykl.app.devpro`.
+- `MainActivity.startAmbient` accepts a Dart asset path only if it matches `assets/audio/vinyl_[a-z0-9_]+\.ogg`
+  (all 20 tracks do); anything else falls back to the index table.
+- Root `.gitignore`: `.env`, `.env.*`, `*.jks`, `*.keystore`, `*.p12`, `*.pem`, `key.properties`, `Claude outputs/`;
+  `android/.gitignore`: `/build/` (Gradle reports).
+
+Website (`zykl.app`):
+- CSP drops `'unsafe-eval'` (`public/_headers`, `vercel.json`); the production bundles contain no `eval`/`new Function`.
+  `'unsafe-inline'` stays: the static export inlines ~10 per-build RSC/JSON-LD scripts and has no server for nonces.
+  Verified by serving `out/` locally with the exact `_headers` CSP: home, /coming-soon, /changelog, /terms, /about
+  hydrate with no CSP violations; `frame-ancestors 'none'` blocks framing.
+- Removed dead `src/components/sections/FeedbackTerminal.tsx` (never imported).
+- Apps Script webhook: global rate limit 20 requests / 10 min via `CacheService` under the script lock → `busy`
+  (no caller IP in Apps Script). Stub-tested. **Owner must redeploy the Apps Script** (new version of the existing
+  deployment) for this and the formula fix to go live.
+
+Not done (by design or owner action): billing server verification (no backend), `WidgetActionReceiver` writing SQLite
+next to Drift (consistency, not security), GitHub token in `11labs.md` (owner: move to credential helper + rotate),
+`img-src https:` in CSP (needed for external images in content).
+
+## 2026-10-07 (b) — Security audit + fixes, demo videos v3 rendered, v1.0.1+2 built  (status: committed + pushed, tag v1.0.1; AAB not uploaded yet)
 
 - **Demo videos v3 rendered** (all 8, 1080×1350, 60 fps, AAC): `promo/Konten/Konten 1/video/ZYKL_Demo_*_4x5.mp4`
   (Overview 31.1 s, Reading 20.9, Coding 29.2, Studying 33.8, Writing 26.3, Creative 34.3, Languages 25.2, Admin 29.3).
@@ -76,7 +108,7 @@
   repo (check the Worker's Settings → Build), pushing does not update zykl.app. The Apps Script fix is separate: paste
   into the Apps Script editor and deploy a new version of the existing web app deployment.
 
-## 2026-10-07 — Closed test live; PRO badge, docs rewrite, beta link, calm camera for the demo videos  (status: code done, NOT built, NOT committed; website NOT deployed)
+## 2026-10-07 — Closed test live; PRO badge, docs rewrite, beta link, calm camera for the demo videos  (status: committed + pushed; website NOT deployed)
 
 - **Play status (owner, 2026-10-07):** Closed testing track "Tester" is **Active**, release 1 (1.0.0) available to
   testers since 2026-10-05, 178 countries. Owner still needs **3 more testers** to reach 12, then 14 days.
