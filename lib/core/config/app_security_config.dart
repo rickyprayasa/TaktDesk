@@ -21,9 +21,13 @@ abstract class AppSecurityConfig {
   ///
   /// In standard Production Release builds, this evaluates to `false`,
   /// completely stripping developer controls from the Settings widget tree.
-  static const bool showDeveloperTools = kDebugMode ||
-      bool.fromEnvironment(
-        'ENABLE_PRO_SIMULATION',
-        defaultValue: false,
-      );
+  ///
+  /// Promo footage capture (`film_capture/`, `--dart-define=FILM_HIDE_DEV_TOOLS=true`)
+  /// runs in debug mode but must look like the store build.
+  static const bool showDeveloperTools = !bool.fromEnvironment('FILM_HIDE_DEV_TOOLS') &&
+      (kDebugMode ||
+          bool.fromEnvironment(
+            'ENABLE_PRO_SIMULATION',
+            defaultValue: false,
+          ));
 }

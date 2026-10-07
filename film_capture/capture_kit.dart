@@ -93,6 +93,16 @@ class FilmRecorder {
   final List<Map<String, Object?>> _touches = [];
   int frame = 0;
 
+  /// Camera target set by the clip script: [x, y] (0..1 of the screen) and zoom.
+  /// The compositor eases toward it, so a clip says where to look, not how.
+  List<double>? cam;
+
+  /// On-screen caption chapter set by the clip script (e.g. the step being shown).
+  String? chapter;
+
+  /// App sound events since the last frame (logged by the film AudioService).
+  final List<String> sfx = [];
+
   FilmRecorder(this.tester, this.boundaryKey, String outDir, this.finger)
       : dir = Directory(outDir)..createSync(recursive: true);
 
@@ -111,7 +121,11 @@ class FilmRecorder {
       if (p != null) 'x': (p.dx / kPhoneLogical.width).toStringAsFixed(4),
       if (p != null) 'y': (p.dy / kPhoneLogical.height).toStringAsFixed(4),
       'down': finger.isDown,
+      if (cam != null) 'cam': cam,
+      if (chapter != null) 'ch': chapter,
+      if (sfx.isNotEmpty) 'sfx': [...sfx],
     });
+    sfx.clear();
   }
 
   void finish() {

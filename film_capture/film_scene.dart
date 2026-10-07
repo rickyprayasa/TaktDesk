@@ -14,6 +14,8 @@ import 'package:sensors_plus/sensors_plus.dart';
 import 'package:takt_desk/app/theme/hardware_edition.dart';
 import 'package:takt_desk/app/theme/takt_theme.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
+import 'package:takt_desk/core/audio/audio_service.dart';
+import 'package:takt_desk/core/audio/sound_effect.dart';
 import 'package:takt_desk/core/database/app_database.dart';
 import 'package:takt_desk/core/focus/focus_lock_service.dart';
 import 'package:takt_desk/features/desk/presentation/desk_canvas_screen.dart';
@@ -27,6 +29,32 @@ class FilmFocusLockService extends FocusLockService {
   Future<bool> enableFocusLock() async => true;
   @override
   Future<bool> disableFocusLock() async => true;
+}
+
+/// Silent AudioService that logs what the app would play, so the film mix
+/// cues the real foley and soundscapes on the exact frame.
+class FilmAudioService extends AudioService {
+  void Function(String event)? onEvent;
+  FilmAudioService() : super(isMock: true);
+
+  @override
+  void playFoley(SoundEffect effect) {
+    super.playFoley(effect);
+    if (isInitialized && foleyEnabled) onEvent?.call(effect.name);
+  }
+
+  @override
+  void startAmbient({required int trackIndex, String? assetPath, double? primaryVolume,
+      double? crackleVolume, double? binauralVolume}) {
+    super.startAmbient(trackIndex: trackIndex, assetPath: assetPath);
+    onEvent?.call('ambient:$trackIndex');
+  }
+
+  @override
+  void stopAmbient() {
+    super.stopAmbient();
+    onEvent?.call('ambient:stop');
+  }
 }
 
 class FilmScene {
@@ -70,8 +98,10 @@ class FilmScene {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     await withClock(Clock(() => clockNow), () async {
       if (seed != null) await tester.runAsync(() => seed(db, clockNow));
+      final audio = FilmAudioService()..init();
       final container = ProviderContainer(overrides: [
         appDatabaseProvider.overrideWithValue(db),
+        audioServiceProvider.overrideWithValue(audio),
         focusLockServiceProvider.overrideWithValue(FilmFocusLockService()),
         chassisThemeProvider.overrideWith((ref) => ThemeController(
               initial: ChassisThemeState(
@@ -83,6 +113,7 @@ class FilmScene {
       ]);
       final s = FilmScene._(tester, container, db, clockNow);
       s.rec = FilmRecorder(tester, s.boundary, out, s.finger);
+      audio.onEvent = s.rec.sfx.add;
       s._advance = (d) => clockNow = clockNow.add(d);
 
       await tester.pumpWidget(UncontrolledProviderScope(
@@ -213,4 +244,24 @@ class FilmScene {
   }
 
   Future<void> tab(String label) => tapFinder(find.text(label));
+
+  /// Points the film camera at [p] (logical px) with [zoom]; null = full device.
+  void cam(Offset? p, [double zoom = 1.0]) {
+    rec.cam = p == null
+        ? null
+        : [p.dx / kPhoneLogical.width, p.dy / kPhoneLogical.height, zoom];
+  }
+
+  void camOn(Finder f, [double zoom = 1.6]) => cam(tester.getCenter(f.first), zoom);
+
+  /// Types into the focused field one character at a time, like a person.
+  Future<void> typeText(Finder field, String text, {double cps = 14}) async {
+    final per = math.max(1, (kFps / cps).round());
+    for (var i = 1; i <= text.length; i++) {
+      await tester.enterText(field, text.substring(0, i));
+      for (var k = 0; k < per; k++) {
+        await frame();
+      }
+    }
+  }
 }
