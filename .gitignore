@@ -57,3 +57,15 @@ build_outputs/
 # Content-pack demo renders (regenerate with promo/Konten/demo/compose.py)
 promo/Konten/**/video/
 __pycache__/
+
+# Secrets and signing material (never commit; keystore lives outside the repo)
+.env
+.env.*
+*.jks
+*.keystore
+*.p12
+*.pem
+key.properties
+
+# Local AI/preview scratch output
+Claude outputs/
