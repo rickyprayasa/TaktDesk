@@ -9,7 +9,9 @@ Costs (Starter, 2026): music ~900 credits/min, SFX ~200 credits each.
 import json, os, sys, urllib.request, urllib.error
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-KEY = open(os.path.join(HERE, '..', '..', '..', '11labs.md')).read().strip()
+# First line only: the key file may hold other credentials below it, and the
+# whole file must never end up in the xi-api-key header.
+KEY = open(os.path.join(HERE, '..', '..', '..', '11labs.md')).readline().strip()
 API = 'https://api.elevenlabs.io/v1'
 
 def post(path, body, out):
