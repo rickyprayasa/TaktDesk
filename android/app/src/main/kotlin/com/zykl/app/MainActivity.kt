@@ -43,6 +43,7 @@ class MainActivity : FlutterActivity() {
         private const val KEY_NOTIFICATION_ASKED = "post_notifications_asked"
         private const val REQUEST_POST_NOTIFICATIONS = 3001
         private const val AUDIO_DIR = "flutter_assets/assets/audio/"
+        private val VINYL_ASSET = Regex("""assets/audio/vinyl_[a-z0-9_]+\.ogg""")
 
         val FOLEY_ASSETS: Map<String, String> = mapOf(
             "stylusDrop" to "foley_stylus_drop.wav",
@@ -366,7 +367,8 @@ class MainActivity : FlutterActivity() {
                         masterVolume = (call.argument<Number>("volume")?.toDouble() ?: 0.8).toFloat()
                         val rawAssetPath = call.argument<String>("assetPath")
 
-                        val assetPath = if (!rawAssetPath.isNullOrEmpty()) {
+                        // Only bundled vinyl loops; anything else falls back to the index table.
+                        val assetPath = if (rawAssetPath != null && VINYL_ASSET.matches(rawAssetPath)) {
                             "flutter_assets/$rawAssetPath"
                         } else {
                             when (trackIndex) {
