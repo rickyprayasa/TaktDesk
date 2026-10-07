@@ -8,10 +8,35 @@ import 'package:takt_desk/core/focus/focus_lock_service.dart';
 import 'package:takt_desk/features/desk/presentation/widgets/monastic_switch_widget.dart';
 
 class MockFocusLockService extends FocusLockService {
+  bool dndGranted;
+  int settingsOpened = 0;
+  MockFocusLockService({this.dndGranted = true});
+
   @override
   Future<bool> enableFocusLock() async => true;
   @override
   Future<bool> disableFocusLock() async => true;
+  @override
+  Future<bool> isNotificationPolicyAccessGranted() async => dndGranted;
+  @override
+  Future<bool> openNotificationPolicySettings() async {
+    settingsOpened++;
+    return true;
+  }
+}
+
+Future<ProviderContainer> _pumpSwitch(WidgetTester tester, MockFocusLockService service) async {
+  final container = ProviderContainer(
+    overrides: [focusLockServiceProvider.overrideWithValue(service)],
+  );
+  addTearDown(container.dispose);
+  await tester.pumpWidget(
+    UncontrolledProviderScope(
+      container: container,
+      child: const MaterialApp(home: Scaffold(body: MonasticSwitchWidget())),
+    ),
+  );
+  return container;
 }
 
 void main() {
@@ -42,6 +67,75 @@ void main() {
     await tester.pump();
 
     expect(container.read(focusLockProvider).isLocked, isTrue);
+  });
+
+  group('Do Not Disturb pre-flight', () {
+    testWidgets('locks straight away when DND access is granted', (tester) async {
+      final container = await _pumpSwitch(tester, MockFocusLockService());
+      await tester.tap(find.byType(MonasticSwitchWidget));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('lockdown_silence_preflight')), findsNothing);
+      expect(container.read(focusLockProvider).isLocked, isTrue);
+    });
+
+    testWidgets('without access, explains and can lock without silence', (tester) async {
+      final service = MockFocusLockService(dndGranted: false);
+      final container = await _pumpSwitch(tester, service);
+      await tester.tap(find.byType(MonasticSwitchWidget));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('lockdown_silence_preflight')), findsOneWidget);
+      expect(container.read(focusLockProvider).isLocked, isFalse);
+
+      await tester.tap(find.byKey(const ValueKey('lockdown_without_silence')));
+      await tester.pumpAndSettle();
+      expect(container.read(focusLockProvider).isLocked, isTrue);
+      expect(service.settingsOpened, 0);
+    });
+
+    testWidgets('grant access opens Android settings, then locks on return once granted', (tester) async {
+      final service = MockFocusLockService(dndGranted: false);
+      final container = await _pumpSwitch(tester, service);
+      await tester.tap(find.byType(MonasticSwitchWidget));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('lockdown_grant_dnd')));
+      await tester.pumpAndSettle();
+      expect(service.settingsOpened, 1);
+      expect(container.read(focusLockProvider).isLocked, isFalse);
+
+      // The user grants access in Android settings and comes back.
+      service.dndGranted = true;
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(container.read(focusLockProvider).isLocked, isTrue);
+    });
+
+    testWidgets('returning without granting does not lock', (tester) async {
+      final service = MockFocusLockService(dndGranted: false);
+      final container = await _pumpSwitch(tester, service);
+      await tester.tap(find.byType(MonasticSwitchWidget));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('lockdown_grant_dnd')));
+      await tester.pumpAndSettle();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(container.read(focusLockProvider).isLocked, isFalse);
+    });
+
+    testWidgets('dismissing the dialog does not lock', (tester) async {
+      final container = await _pumpSwitch(tester, MockFocusLockService(dndGranted: false));
+      await tester.tap(find.byType(MonasticSwitchWidget));
+      await tester.pumpAndSettle();
+      await tester.tapAt(const Offset(5, 5)); // barrier
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('lockdown_silence_preflight')), findsNothing);
+      expect(container.read(focusLockProvider).isLocked, isFalse);
+    });
   });
 
   testWidgets('MonasticSwitchWidget renders locked state and handles tap when locked', (tester) async {

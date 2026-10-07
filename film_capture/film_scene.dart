@@ -29,6 +29,9 @@ class FilmFocusLockService extends FocusLockService {
   Future<bool> enableFocusLock() async => true;
   @override
   Future<bool> disableFocusLock() async => true;
+  // Film the store experience: DND access already granted, no pre-flight dialog.
+  @override
+  Future<bool> isNotificationPolicyAccessGranted() async => true;
 }
 
 /// Silent AudioService that logs what the app would play, so the film mix

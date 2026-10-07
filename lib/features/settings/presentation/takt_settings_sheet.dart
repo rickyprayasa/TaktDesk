@@ -853,6 +853,8 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  _DndAccessStatus(isDark: isDark, mutedColor: secondaryTextColor),
                 ],
               ),
             ),
@@ -1402,4 +1404,56 @@ void _showStudioProDialog(
     primaryTextColor: primaryTextColor,
     secondaryTextColor: secondaryTextColor,
   );
+}
+
+/// GRANTED / NOT GRANTED next to the DND button. Rechecked when the user comes
+/// back from Android settings, so the sheet never shows a stale answer.
+class _DndAccessStatus extends ConsumerStatefulWidget {
+  final bool isDark;
+  final Color mutedColor;
+
+  const _DndAccessStatus({required this.isDark, required this.mutedColor});
+
+  @override
+  ConsumerState<_DndAccessStatus> createState() => _DndAccessStatusState();
+}
+
+class _DndAccessStatusState extends ConsumerState<_DndAccessStatus> {
+  late final AppLifecycleListener _lifecycle;
+  bool? _granted;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onResume: _check);
+    _check();
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  Future<void> _check() async {
+    final granted = await ref.read(focusLockServiceProvider).isNotificationPolicyAccessGranted();
+    if (mounted) setState(() => _granted = granted);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final granted = _granted;
+    if (granted == null) return const SizedBox.shrink();
+    return Text(
+      granted ? 'GRANTED' : 'NOT GRANTED',
+      key: const ValueKey('dnd_access_status'),
+      style: TextStyle(
+        fontFamily: 'monospace',
+        fontSize: 8.5,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.8,
+        color: granted ? TaktColors.amberText(widget.isDark) : widget.mutedColor,
+      ),
+    );
+  }
 }
