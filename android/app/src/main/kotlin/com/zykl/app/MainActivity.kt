@@ -65,6 +65,17 @@ class MainActivity : FlutterActivity() {
             "tubularChime" to "alarm_tubular_chime.wav",
         ).mapValues { AUDIO_DIR + it.value }
 
+        /**
+         * Values another app may pass in the `open_feature` extra of this exported
+         * launcher (our widgets send "tasks" / "dial"). Timer control such as
+         * "toggleTimer" must come only from the non-exported WidgetActionReceiver
+         * via [sendWidgetAction], never from an external intent.
+         */
+        private val EXTERNAL_FEATURES = setOf("studio_pro", "tasks", "dial")
+
+        fun externalFeature(intent: Intent?): String? =
+            intent?.getStringExtra("open_feature")?.takeIf { it in EXTERNAL_FEATURES }
+
         fun sendWidgetAction(action: String, data: Map<String, Any>? = null) {
             activeInstance?.let { activity ->
                 activity.runOnUiThread {
@@ -133,7 +144,7 @@ class MainActivity : FlutterActivity() {
         effectPlayer.preload(FOLEY_ASSETS.values.toSet() + ALARM_ASSETS.values)
         super.configureFlutterEngine(flutterEngine)
         if (initialWidgetAction == null) {
-            initialWidgetAction = intent?.getStringExtra("open_feature")
+            initialWidgetAction = externalFeature(intent)
         }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, FOCUS_CHANNEL).setMethodCallHandler { call, result ->
@@ -632,7 +643,7 @@ class MainActivity : FlutterActivity() {
         widgetChannel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "getInitialAction" -> {
-                    val action = initialWidgetAction ?: intent?.getStringExtra("open_feature")
+                    val action = initialWidgetAction ?: externalFeature(intent)
                     initialWidgetAction = null
                     intent?.removeExtra("open_feature")
                     result.success(action)
@@ -724,8 +735,8 @@ class MainActivity : FlutterActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        val action = intent.getStringExtra("open_feature")
-        if (!action.isNullOrEmpty()) {
+        val action = externalFeature(intent)
+        if (action != null) {
             widgetChannel?.invokeMethod("onWidgetAction", mapOf("action" to action))
         }
     }
