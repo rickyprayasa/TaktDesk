@@ -134,6 +134,13 @@ class ProPurchaseController extends StateNotifier<ProPurchaseState> {
       switch (p.status) {
         case PurchaseStatus.purchased:
         case PurchaseStatus.restored:
+          if (!isPaidPurchase(p)) {
+            // An unpaid delayed payment comes back as `restored` at launch.
+            // Stay pending (and don't acknowledge: Play rejects that for a
+            // pending order) until Google reports it paid.
+            if (mounted) state = state.copyWith(status: ProPurchaseStatus.pending, clearMessage: true);
+            continue;
+          }
           if (mounted) state = state.copyWith(status: ProPurchaseStatus.owned, clearMessage: true);
           await _onEntitlement(true);
         case PurchaseStatus.pending:

@@ -1,8 +1,28 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_android/billing_client_wrappers.dart';
+import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:takt_desk/core/billing/pro_purchase_controller.dart';
 import 'package:takt_desk/core/billing/pro_store.dart';
+
+/// What Play's restorePurchases delivers: status `restored` whatever the real
+/// purchase state is.
+GooglePlayPurchaseDetails _playRestored(PurchaseStateWrapper state) {
+  return GooglePlayPurchaseDetails.fromPurchase(PurchaseWrapper(
+    orderId: 'GPA.2',
+    packageName: 'com.zykl.app',
+    purchaseTime: 0,
+    purchaseToken: 'token',
+    signature: '',
+    products: const [kStudioProProductId],
+    isAutoRenewing: false,
+    originalJson: '{}',
+    isAcknowledged: false,
+    purchaseState: state,
+  )).single
+    ..status = PurchaseStatus.restored;
+}
 
 class _FakeStore implements ProStore {
   final controller = StreamController<List<PurchaseDetails>>.broadcast();
@@ -102,6 +122,24 @@ void main() {
     expect(entitlements, isEmpty);
     await controller.buy(); // busy: ignored
     expect(store.buys, 1);
+  });
+
+  test('an unpaid delayed payment restored at launch stays locked and is not acknowledged', () async {
+    await controller.init();
+    store.controller.add([_playRestored(PurchaseStateWrapper.pending)]);
+    await _settle();
+    expect(controller.state.status, ProPurchaseStatus.pending);
+    expect(entitlements, isEmpty);
+    expect(store.completed, isEmpty);
+  });
+
+  test('a paid Play purchase restored at launch unlocks and is acknowledged', () async {
+    await controller.init();
+    store.controller.add([_playRestored(PurchaseStateWrapper.purchased)]);
+    await _settle();
+    expect(controller.state.isOwned, isTrue);
+    expect(entitlements, [true]);
+    expect(store.completed, ['restored']);
   });
 
   test('cancel returns to idle without unlocking', () async {
