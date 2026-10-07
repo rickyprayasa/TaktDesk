@@ -584,7 +584,11 @@ class _CompactRecordSleeveCard extends StatelessWidget {
                 ),
               ),
               Text(
-                track.isPremium ? 'STUDIO PRO 🔒' : '33 RPM // HI-FI',
+                !track.isPremium
+                    ? '33 RPM // HI-FI'
+                    : isUnlocked
+                        ? 'STUDIO PRO'
+                        : 'STUDIO PRO 🔒',
                 style: TextStyle(
                   fontFamily: 'monospace',
                   fontSize: 7.5,

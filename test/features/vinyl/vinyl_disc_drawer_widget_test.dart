@@ -247,6 +247,13 @@ void main() {
 
       final lockedButton14 = find.byKey(const ValueKey('locked_track_button_14'));
       expect(lockedButton14, findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('record_sleeve_14')),
+          matching: find.text('STUDIO PRO 🔒'),
+        ),
+        findsOneWidget,
+      );
       await tester.tap(lockedButton14);
       await tester.pumpAndSettle();
 
@@ -287,6 +294,21 @@ void main() {
       final loadButton14 = find.byKey(const ValueKey('load_track_button_14'));
       expect(loadButton14, findsOneWidget);
       expect(find.byKey(const ValueKey('locked_track_button_14')), findsNothing);
+      // Owners see the PRO label without the padlock.
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('record_sleeve_14')),
+          matching: find.text('STUDIO PRO'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('record_sleeve_14')),
+          matching: find.text('STUDIO PRO 🔒'),
+        ),
+        findsNothing,
+      );
 
       await tester.tap(loadButton14);
       await tester.pumpAndSettle();
