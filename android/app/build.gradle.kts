@@ -1,3 +1,4 @@
+import java.util.Base64
 import java.util.Properties
 
 plugins {
@@ -7,13 +8,23 @@ plugins {
 }
 
 // Upload key for Google Play, read from android/key.properties (git-ignored).
-// Without it, release builds fall back to the debug key: fine for local
-// `flutter run --release`, but Play rejects debug-signed bundles.
 val keystoreProperties = Properties().apply {
     val file = rootProject.file("key.properties")
     if (file.exists()) file.inputStream().use { load(it) }
 }
 val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
+
+// `flutter build --dart-define=K=V` reaches Gradle as -Pdart-defines (each
+// define base64, comma separated).
+val dartDefines: Set<String> = (project.findProperty("dart-defines") as String?)
+    ?.split(",")?.filter { it.isNotBlank() }
+    ?.map { String(Base64.getDecoder().decode(it)) }?.toSet() ?: emptySet()
+
+// A PRO-simulation build (developer-pro APK) unlocks Studio PRO without paying,
+// so it must never look like the store app: its own application ID (installs
+// next to the Play version), its own name, and the debug key instead of the
+// upload key.
+val isProSimulationBuild = "ENABLE_PRO_SIMULATION=true" in dartDefines
 
 android {
     namespace = "com.zykl.app"
@@ -34,6 +45,11 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["appLabel"] = "@string/app_name"
+        if (isProSimulationBuild) {
+            applicationIdSuffix = ".devpro"
+            manifestPlaceholders["appLabel"] = "ZYKL DEV PRO"
+        }
     }
 
     signingConfigs {
@@ -49,11 +65,22 @@ android {
 
     buildTypes {
         release {
-            if (!hasUploadKey) {
-                logger.warn("ZYKL: android/key.properties not found, release is signed with the DEBUG key (not uploadable to Play)")
-            }
-            signingConfig = signingConfigs.getByName(if (hasUploadKey) "upload" else "debug")
+            signingConfig = signingConfigs.getByName(
+                if (hasUploadKey && !isProSimulationBuild) "upload" else "debug",
+            )
         }
+    }
+}
+
+// Fail closed: a store release without the upload key would silently be
+// debug-signed. Set ZYKL_ALLOW_DEBUG_RELEASE=1 for a throwaway local release.
+gradle.taskGraph.whenReady {
+    val storeRelease = allTasks.any { it.project == project && it.name in setOf("assembleRelease", "bundleRelease") }
+    if (storeRelease && !hasUploadKey && !isProSimulationBuild && System.getenv("ZYKL_ALLOW_DEBUG_RELEASE") != "1") {
+        throw GradleException(
+            "ZYKL: android/key.properties is missing, so this release would be signed with the debug key. " +
+                "Restore key.properties, or set ZYKL_ALLOW_DEBUG_RELEASE=1 for a local-only build.",
+        )
     }
 }
 
