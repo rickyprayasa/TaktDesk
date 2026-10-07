@@ -67,7 +67,14 @@
   `build_outputs/zykl-playstore-release.aab` (65.4 MB), `zykl-user-testing-universal.apk` (66.9 MB),
   `zykl-developer-pro-universal.apk` (66.4 MB). versionCode 2 / 1.0.1. All signed with the upload key (SHA-256
   `27:5B:8E:D7…A1:23`, same as v1.0.0; no debug-key fallback). Next: owner uploads the AAB to Play Console → Closed
-  testing → Create new release; then tag `v1.0.1` on the commit that holds these changes.
+  testing → Create new release.
+- **Committed and pushed 2026-10-07:** app repo `16f64a0` billing, `e435002` android intent, `1b743b1` promo key,
+  `db83929` release (tag **`v1.0.1`**, source identical to the build), handoff; website repo `0ab09ea` (Apps Script fix).
+- **Website NOT deployed yet:** `npx wrangler whoami` = not authenticated on this machine. The owner runs
+  `npx wrangler login` once (browser OAuth), then `npm run deploy` in `zykl.app/` (next build passes; `out/` verified:
+  opt-in link on /coming-soon, Rp 69.000 copy on /terms). Unless Cloudflare Workers Builds is connected to the GitHub
+  repo (check the Worker's Settings → Build), pushing does not update zykl.app. The Apps Script fix is separate: paste
+  into the Apps Script editor and deploy a new version of the existing web app deployment.
 
 ## 2026-10-07 — Closed test live; PRO badge, docs rewrite, beta link, calm camera for the demo videos  (status: code done, NOT built, NOT committed; website NOT deployed)
 
