@@ -53,3 +53,7 @@ build_outputs/
 
 # ElevenLabs API key (never commit)
 11labs.md
+
+# Content-pack demo renders (regenerate with promo/Konten/demo/compose.py)
+promo/Konten/**/video/
+__pycache__/
