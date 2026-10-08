@@ -24,7 +24,11 @@ import androidx.core.app.NotificationCompat
 
 class TimerForegroundService : Service() {
     companion object {
-        const val CHANNEL_TIMER_ID = "takt_desk_timer_channel"
+        // DEFAULT importance so the countdown shows with normal notifications instead of
+        // being folded into "Silent". Android never lets an app raise an existing
+        // channel's importance, hence a new ID; the old LOW channel is deleted.
+        const val CHANNEL_TIMER_ID = "zykl_timer_countdown"
+        private const val LEGACY_TIMER_CHANNEL_ID = "takt_desk_timer_channel"
         const val CHANNEL_ALERT_ID = "takt_desk_alert_channel"
         const val NOTIFICATION_ID = 1001
         const val ALERT_NOTIFICATION_ID = 1002
@@ -204,6 +208,8 @@ class TimerForegroundService : Service() {
             .setContentTitle(title)
             .setContentText(content)
             .setOngoing(true)
+            .setSilent(true)
+            .setOnlyAlertOnce(true)
             .setColor(0xFFFF9E00.toInt())
             .setShowWhen(true)
             .setUsesChronometer(true)
@@ -486,11 +492,12 @@ class TimerForegroundService : Service() {
             val timerChannel = NotificationChannel(
                 CHANNEL_TIMER_ID,
                 "ZYKL Active Timer",
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = "Live analog timer telemetry on Lockscreen and Always-On Display"
                 setSound(null, null)
                 enableVibration(false)
+                setShowBadge(false)
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             }
 
@@ -504,6 +511,7 @@ class TimerForegroundService : Service() {
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             }
 
+            manager.deleteNotificationChannel(LEGACY_TIMER_CHANNEL_ID)
             manager.createNotificationChannel(timerChannel)
             manager.createNotificationChannel(alertChannel)
         }
