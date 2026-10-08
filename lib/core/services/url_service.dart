@@ -1,4 +1,8 @@
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+/// "v1.0.2 (BUILD 3)" read from the installed package, or null off-device.
+final appVersionLabelProvider = FutureProvider<String?>((ref) => UrlService.appVersionLabel());
 
 /// Service providing native deep-linking and browser navigation.
 class UrlService {
@@ -22,6 +26,15 @@ class UrlService {
     } catch (_) {
       return {};
     }
+  }
+
+  /// The installed versionName / versionCode (pubspec `version:`), never hardcoded.
+  static Future<String?> appVersionLabel() async {
+    final info = await getDeviceInfo();
+    final name = info['versionName'];
+    final code = info['versionCode'];
+    if (name == null || code == null) return null;
+    return 'v$name (BUILD $code)';
   }
 
   /// Dispatches email directly to support@zykl.app with pre-filled subject and diagnostic body.

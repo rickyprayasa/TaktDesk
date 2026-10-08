@@ -712,39 +712,45 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Status Badge
-          Row(
-            key: const ValueKey('clearance_status_badge'),
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: TaktColors.patinaOlive,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0x664D5D4B),
-                      blurRadius: 4.0,
-                      spreadRadius: 1.0,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'STATUS: VERIFIED (ANDROID DND / APP PINNING)',
-                  style: TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 10.0,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
-                    color: primaryTextColor,
+          // Status badge: the real Do Not Disturb access, rechecked on resume
+          _DndAccess(
+            builder: (context, granted) => Row(
+              key: const ValueKey('clearance_status_badge'),
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: granted == false ? TaktColors.mutedOchre : TaktColors.patinaOlive,
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x664D5D4B),
+                        blurRadius: 4.0,
+                        spreadRadius: 1.0,
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    switch (granted) {
+                      true => 'STATUS: DND ACCESS GRANTED · APP PINNING READY',
+                      false => 'STATUS: DND ACCESS NEEDED · CALLS WILL STILL RING',
+                      null => 'STATUS: CHECKING ANDROID DND ACCESS',
+                    },
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 10.0,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                      color: primaryTextColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -1083,7 +1089,10 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
             ),
           ),
           Text(
-            'ZYKL: POMODORO FOCUS TIMER // v1.0.0 (BUILD 1)',
+            switch (ref.watch(appVersionLabelProvider).valueOrNull) {
+              final String version => 'ZYKL: POMODORO FOCUS TIMER // $version',
+              _ => 'ZYKL: POMODORO FOCUS TIMER',
+            },
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'monospace',
@@ -1284,7 +1293,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
               showLicensePage(
                 context: context,
                 applicationName: 'ZYKL: Pomodoro Focus Timer',
-                applicationVersion: 'v1.0.0 (Build 2026.09)',
+                applicationVersion: ref.read(appVersionLabelProvider).valueOrNull,
                 applicationIcon: const Padding(
                   padding: EdgeInsets.all(8.0),
                   child: ZyklHardwarePlaque(size: 48),
@@ -1406,19 +1415,19 @@ void _showStudioProDialog(
   );
 }
 
-/// GRANTED / NOT GRANTED next to the DND button. Rechecked when the user comes
-/// back from Android settings, so the sheet never shows a stale answer.
-class _DndAccessStatus extends ConsumerStatefulWidget {
-  final bool isDark;
-  final Color mutedColor;
+/// Android Do Not Disturb access, checked on build and again whenever the user
+/// comes back from Android settings, so the sheet never shows a stale answer.
+/// `granted` is null until the first check returns.
+class _DndAccess extends ConsumerStatefulWidget {
+  final Widget Function(BuildContext context, bool? granted) builder;
 
-  const _DndAccessStatus({required this.isDark, required this.mutedColor});
+  const _DndAccess({required this.builder});
 
   @override
-  ConsumerState<_DndAccessStatus> createState() => _DndAccessStatusState();
+  ConsumerState<_DndAccess> createState() => _DndAccessState();
 }
 
-class _DndAccessStatusState extends ConsumerState<_DndAccessStatus> {
+class _DndAccessState extends ConsumerState<_DndAccess> {
   late final AppLifecycleListener _lifecycle;
   bool? _granted;
 
@@ -1441,19 +1450,32 @@ class _DndAccessStatusState extends ConsumerState<_DndAccessStatus> {
   }
 
   @override
+  Widget build(BuildContext context) => widget.builder(context, _granted);
+}
+
+/// GRANTED / NOT GRANTED next to the DND button.
+class _DndAccessStatus extends StatelessWidget {
+  final bool isDark;
+  final Color mutedColor;
+
+  const _DndAccessStatus({required this.isDark, required this.mutedColor});
+
+  @override
   Widget build(BuildContext context) {
-    final granted = _granted;
-    if (granted == null) return const SizedBox.shrink();
-    return Text(
-      granted ? 'GRANTED' : 'NOT GRANTED',
-      key: const ValueKey('dnd_access_status'),
-      style: TextStyle(
-        fontFamily: 'monospace',
-        fontSize: 8.5,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.8,
-        color: granted ? TaktColors.amberText(widget.isDark) : widget.mutedColor,
-      ),
+    return _DndAccess(
+      builder: (context, granted) => granted == null
+          ? const SizedBox.shrink()
+          : Text(
+              granted ? 'GRANTED' : 'NOT GRANTED',
+              key: const ValueKey('dnd_access_status'),
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 8.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+                color: granted ? TaktColors.amberText(isDark) : mutedColor,
+              ),
+            ),
     );
   }
 }

@@ -154,12 +154,38 @@ void main() {
       expect(container.read(deskPreferencesControllerProvider).hapticsEnabled, isFalse);
     });
 
-    testWidgets('System clearance section displays active badge and unlatch instructions', (tester) async {
+    testWidgets('System clearance badge reports granted DND access from Android', (tester) async {
+      const channel = MethodChannel('com.takt.desk/focus_lock');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
+        if (call.method == 'isNotificationPolicyAccessGranted') return true;
+        return null;
+      });
+      addTearDown(() => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null));
+
       await tester.pumpWidget(buildSheet());
       await tester.pump();
+      await tester.pump();
 
+      expect(find.textContaining('STATUS: DND ACCESS GRANTED'), findsOneWidget);
+      expect(find.textContaining('VERIFIED'), findsNothing);
+    });
+
+    testWidgets('System clearance section displays active badge and unlatch instructions', (tester) async {
+      const channel = MethodChannel('com.takt.desk/focus_lock');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
+        if (call.method == 'isNotificationPolicyAccessGranted') return false;
+        return null;
+      });
+      addTearDown(() => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null));
+
+      await tester.pumpWidget(buildSheet());
+      await tester.pump();
+      await tester.pump();
       expect(find.byKey(const ValueKey('clearance_status_badge')), findsOneWidget);
-      expect(find.textContaining('STATUS: VERIFIED (ANDROID DND / APP PINNING)'), findsOneWidget);
+      // No DND access off-device: the badge must say so instead of claiming it is verified.
+      expect(find.textContaining('STATUS: DND ACCESS NEEDED'), findsOneWidget);
       expect(
         find.textContaining('In Monastic Lockdown, press and hold the bottom unlatch lever for 5 continuous seconds'),
         findsOneWidget,
@@ -299,7 +325,9 @@ void main() {
       expect(find.textContaining('Weniger, aber besser — Less, but better.'), findsOneWidget);
       expect(find.text('— Dieter Rams'), findsOneWidget);
       expect(find.byKey(const ValueKey('zykl_design_disclaimer')), findsOneWidget);
-      expect(find.textContaining('ZYKL: POMODORO FOCUS TIMER // v1.0.0'), findsOneWidget);
+      // The version comes from the installed package; off-device there is none, and never a fake v1.0.0.
+      expect(find.textContaining('ZYKL: POMODORO FOCUS TIMER'), findsOneWidget);
+      expect(find.textContaining('v1.0.0'), findsNothing);
       expect(find.text('CRAFTED BY RSQUARE'), findsOneWidget);
       expect(find.byKey(const ValueKey('zykl_rate_playstore_button')), findsOneWidget);
       expect(find.text('RATE ZYKL ON GOOGLE PLAY'), findsOneWidget);
