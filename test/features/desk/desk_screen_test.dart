@@ -312,7 +312,7 @@ void main() {
       expect(container.read(parallaxProvider).tiltX, 0.0);
       expect(container.read(parallaxProvider).tiltY, 0.0);
 
-      streamController.add(GyroscopeEvent(2.5, 1.5, 0.0));
+      streamController.add(GyroscopeEvent(2.5, 1.5, 0.0, DateTime(2026)));
       await tester.pump();
 
       expect(container.read(parallaxProvider).tiltX, isNonZero);
@@ -366,7 +366,7 @@ void main() {
       expect(container.read(parallaxProvider).tiltX, 0.0);
       expect(container.read(parallaxProvider).tiltY, 0.0);
 
-      streamController.add(AccelerometerEvent(0.4, 0.3, 9.8));
+      streamController.add(AccelerometerEvent(0.4, 0.3, 9.8, DateTime(2026)));
       await tester.pump();
 
       expect(container.read(parallaxProvider).tiltX, isNonZero);
