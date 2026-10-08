@@ -28,6 +28,73 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-08 (d) — v1.0.3 (versionCode 4) built and verified  (status: built + pushed with tag; owner uploads the AAB)
+
+- Commits `448fbf6` (countdown notification channel), `328f9ae` (deps), `c072e56` (`version: 1.0.3+4`), tag
+  **`v1.0.3`**. Built 2026-10-08 08:04–08:08 with `scripts/build_test_apks.sh aab developer-pro` (AAB + dev-pro only,
+  as the owner asked). v1.0.2 outputs archived in `build_outputs/previous/2026-10-08-v1.0.2/`.
+- Verified (next session, read-only): `zykl-playstore-release.aab` (65.5 MB) base module → aapt2 badging
+  `com.zykl.app`, versionCode 4, 1.0.3; signed with the upload key `27:5B:8E:D7…` (CN=RSQUARE, OU=ZYKL).
+  `zykl-developer-pro-universal.apk` (66.4 MB) → `com.zykl.app.devpro`, versionCode 4, 1.0.3.
+  Tip: to badge an AAB, unzip `base/`, move `manifest/AndroidManifest.xml` to the root, zip with `resources.pb` + `res`,
+  `aapt2 convert --output-format binary`.
+- Next (owner): Play Console → Closed testing → Tester → Create new release → upload the AAB. Device checks after
+  install over 1.0.2: countdown notification sits with normal notifications and stays silent; existing SQLite data still
+  opens (sqlite3_flutter_libs removed); parallax still works.
+- Don't commit `promo/Konten/Konten 1/.~lock.*.docx#` (LibreOffice lock file while the docx is open).
+
+## 2026-10-08 (c) — Website: Google Search Console "Blocked by robots.txt"  (status: FIXED and verified live; owner validates in Search Console)
+
+- **Root cause:** `www.zykl.app` was a proxied CNAME to `zykl.app`, but the `zykl-app` Worker is bound only to the apex,
+  so www had no origin → HTTP 522 → Google treats a 5xx robots.txt as "disallow all" for that host.
+- **Owner did in Cloudflare (2026-10-08):** Redirect Rule "Redirect from WWW to root" (`https://www.*` →
+  `https://${1}`, 301, preserve query string; the "DNS may not be proxied" warning was a false alarm, the www CNAME is
+  proxied) and SSL/TLS → Always Use HTTPS = On.
+- **Verified with curl:** `http://zykl.app/` → 301 https; `http://www.zykl.app/terms` → 2 redirects → 200
+  `https://zykl.app/terms`; `https://www.zykl.app/robots.txt` → 301 apex; live `/changelog` canonical is its own URL.
+- Remaining (owner, Search Console): Validate fix on each issue, resubmit `sitemap.xml`, Request indexing for /changelog.
+  Optional: disable the `zykl-app.ricky-yusar-40b.workers.dev` route (duplicate host; canonicals already point to zykl.app).
+- **Done (website `c90cca2`, auto-deployed):** `src/app/changelog/layout.tsx` gives /changelog its own canonical (verified
+  in the export: `out/changelog.html` → `https://zykl.app/changelog`); `public/sitemap.xml` lastmod per page's last
+  commit. `/coming-soon`'s relative canonical already resolves via `metadataBase` (export shows the absolute URL).
+
+Original diagnosis (kept for reference). Owner request 2026-10-08. Search Console (domain property `sc-domain:zykl.app`) reports: Blocked by robots.txt (1),
+Indexed though blocked by robots.txt (1), Alternate page with proper canonical tag (1), Discovered – currently not
+indexed (4). Findings so far (read-only checks):
+- `zykl.app/public/robots.txt` and the live `https://zykl.app/robots.txt` (and `http://`) both say `Allow: /` with the
+  sitemap. So the apex host is NOT blocking.
+- **`https://www.zykl.app/robots.txt` returns HTTP 522** (Cloudflare: origin connection timed out). Google treats a 5xx
+  robots.txt as "disallow all" for that host, so any `www.` URL shows as blocked. Most likely cause of both robots.txt
+  rows. Fix in Cloudflare (owner dashboard): either add `www.zykl.app` as a custom domain / route on the `zykl`
+  Worker, or add a Redirect Rule `www.zykl.app/*` → `https://zykl.app/${1}` (301), or delete the dangling proxied `www`
+  DNS record. Then in Search Console: URL Inspection on the affected URL → "Validate fix".
+- `/changelog` has no own canonical, so it inherits `alternates.canonical: "https://zykl.app"` from
+  `src/app/layout.tsx:52` → "Alternate page with proper canonical tag". Add `alternates: { canonical:
+  "https://zykl.app/changelog" }` (as `terms`, `privacy`, `about` do). `/coming-soon` uses a relative canonical
+  (`/coming-soon`); make it absolute or set `robots: { index: false }` if it should not rank.
+- `http://zykl.app` serves 200 instead of redirecting to https (enable "Always Use HTTPS" in Cloudflare).
+- `public/sitemap.xml`: all `lastmod` are 2026-09-22; update when pages change. "Discovered – currently not indexed"
+  (4) is normal for a new site; resubmit the sitemap after the fixes.
+- First confirm in Search Console which exact URL is blocked (Pages → Blocked by robots.txt → example URL) before
+  changing anything. Website deploys automatically on push (Cloudflare); DNS/rules are dashboard-only.
+
+## 2026-10-08 (b) — Timer notification no longer "Silent"; dependency upgrade  (status: committed `448fbf6`, `328f9ae`; shipped in v1.0.3, see entry (d))
+
+- `TimerForegroundService.kt`: countdown channel was `IMPORTANCE_LOW` (folded into Android's "Silent" section). New
+  channel `zykl_timer_countdown` with `IMPORTANCE_DEFAULT`, no sound/vibration/badge; the legacy
+  `takt_desk_timer_channel` is deleted on start (Android never lets an app raise an existing channel's importance).
+  The notification is `setSilent(true)` + `setOnlyAlertOnce(true)` so per-second updates never alert. Kotlin compiles.
+  Device check: start a timer → the countdown appears with normal notifications, silently.
+- Dependencies: `sensors_plus` 5.0.1 → **7.1.1** (supports Flutter's built-in Kotlin; the "plugins that apply KGP will
+  fail" warning came from it; needs AGP ≥ 8.12.1 / Gradle ≥ 8.13 / Kotlin 2.2, project has AGP 9.0.1 / Gradle 9.1 /
+  Kotlin 2.3.20). Sensor events now carry a `timestamp` (tests updated). **Removed `sqlite3_flutter_libs`** (EOL: only
+  for `package:sqlite3` v2; we already use sqlite3 3.5.2, which bundles SQLite via build hooks). `drift` 2.35.2 /
+  `drift_dev` 2.35.1; regenerated `app_database.g.dart` is byte-identical. Not upgraded on purpose: riverpod 3 (app-wide
+  migration), flutter_lints 6. `android.builtInKotlin=false` / `android.newDsl=false` in `gradle.properties` come from
+  the Flutter template; leave them to Flutter's own migration.
+- Verified: analyze 0, `flutter test -j 1` **458 pass**. Release build not run yet: build the next AAB as **1.0.3+4**
+  and check on device that SQLite still opens (existing data intact) and parallax still works.
+
 ## 2026-10-08 — v1.0.2: real version label + live DND status, AAB + dev-pro built  (status: built; owner uploads the AAB)
 
 - Owner spotted Settings still said `v1.0.0 (BUILD 1)` on 1.0.1. It was hardcoded in the creed card and the licence
@@ -695,6 +762,6 @@ testing → add tester emails. 5) Test buy / reinstall / restore on a device ins
 5. ~~rive~~ removed (entry b).
 6. ~~Settings split, contrast, reduce motion~~ done (entry d). Possible follow-up: move the `_build…Card` methods into widgets.
 7. ~~Play Billing~~ code done (entry e). Remaining: owner's Play Console steps, real-device purchase test, website deploy.
-8. Replace default `README.md`; commit work by topic; upgrade deps after release (`sqlite3_flutter_libs` is EOL).
+8. Replace default `README.md`; commit work by topic; ~~upgrade deps~~ done in v1.0.3 (riverpod 3 and flutter_lints 6 still pending).
 9. Note: during this session `chrono_dial_widget.dart` was modified by something other than the agent
    (likely IDE format-on-save); re-run `flutter analyze` after pulling external edits.
