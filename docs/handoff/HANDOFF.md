@@ -28,7 +28,72 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
-## 2026-10-07 (c) — Audit hardening  (status: done + verified; NOT committed; website NOT deployed)
+## 2026-10-08 — v1.0.2: real version label + live DND status, AAB + dev-pro built  (status: built; owner uploads the AAB)
+
+- Owner spotted Settings still said `v1.0.0 (BUILD 1)` on 1.0.1. It was hardcoded in the creed card and the licence
+  page (`v1.0.0 (Build 2026.09)`). Now `appVersionLabelProvider` / `UrlService.appVersionLabel()`
+  (`lib/core/services/url_service.dart`) reads `versionName` / `versionCode` from the installed package via the existing
+  native `getDeviceInfo`; off-device the line shows no version. **Never hardcode the version again**: bump only
+  `pubspec.yaml`.
+- The Lockdown badge in Settings always said `STATUS: VERIFIED (ANDROID DND / APP PINNING)`. It now reports the real
+  DND access: `GRANTED · APP PINNING READY` (olive LED) or `NEEDED · CALLS WILL STILL RING` (ochre LED), rechecked on
+  resume (`_DndAccess` builder, shared with the GRANTED / NOT GRANTED label).
+- Tests: `test/core/services/app_version_label_test.dart` (2), settings sheet tests mock the
+  `com.takt.desk/focus_lock` channel explicitly (an unmocked channel call is timing-dependent in a full file run).
+  Full suite **458 pass**, analyze 0.
+- Release: `version: 1.0.2+3`, tag **`v1.0.2`** on the fix commit (moved before it was ever pushed). 1.0.1
+  (versionCode 2) is live on Closed testing; 1.0.2 is the update. Owner asked for **AAB + developer-pro APK only** (no
+  user-testing APK). v1.0.1 outputs archived in `build_outputs/previous/2026-10-07-v1.0.1/`.
+- **Built 2026-10-08 07:19–07:27** (`scripts/build_test_apks.sh aab developer-pro`, exit 0):
+  `build_outputs/zykl-playstore-release.aab` (65.4 MB; verified by converting the base module with aapt2:
+  `com.zykl.app`, versionCode 3, 1.0.2; signed with the upload key `27:5B:8E:D7…`) and
+  `zykl-developer-pro-universal.apk` (66.4 MB; `com.zykl.app.devpro`, label ZYKL DEV PRO, debug key `5c83ace3…`).
+  Next: owner uploads the AAB to Closed testing → Tester → Create new release.
+- Gotcha: `pkill -f` with broad patterns killed the agent's own shell (exit 144) while stopping a build; kill build
+  processes by PID instead.
+
+## 2026-10-07 (e) — YouTube channel assets  (status: done; owner uploads)
+
+- `promo/YouTube/`: `ZYKL_YouTube_Banner_2560x1440.png` (1.8 MB; logo, clock avatar and copy inside the 1546×423
+  all-devices safe area; dial scales only on the desktop-only sides), `ZYKL_YouTube_Watermark_150.png` (owner choice:
+  the ZYKL wordmark from `ZYKL_Wordmark_OnDark_transparent.png`, transparent, soft shadow for light frames, 9 KB) and `ZYKL_YouTube_Watermark_150_Tagline.png`
+  (wordmark + "QUIET TIME. PHYSICAL INTENT."; tagline is ~5 px tall at 150 px, unreadable as a player watermark;
+  `make_watermark.py tagline`), `DESCRIPTIONS.md` (channel description, links, promo video title/description/
+  tags, Play Console video requirements). Regenerate with `make_banner.py [--guides]` and `make_watermark.py`
+  (sources: `promo/Logo ZYKL/`). `banner_guides_preview.png` is only a crop-box check.
+- `ZYKL_YouTube_Thumbnail_1280x720.jpg` (90 KB) for the promo upload (youtu.be/NiKlyjlACEI, uploaded by the owner):
+  phone from the remaster's Lockdown scene at 21.5 s + "Quiet Time. / Physical / Intent.". `make_thumbnail.py [VIDEO] [SECONDS]`.
+- YouTube "AI use" for the promo: the music and SFX are ElevenLabs-generated (`zykl.app/promo/scripts/
+  generate_zykl_promo_audio_v2.py`); visuals are real app captures + motion graphics. Owner advised: answer "Yes" to be
+  transparent (music is AI-created). App soundscapes are separate (real recordings).
+- Security: `zykl.app/promo/scripts/generate_zykl_promo_audio{,_v2}.py` had an old ElevenLabs key hardcoded as a
+  fallback (git-ignored, never in either repo's history; different from the current key in `11labs.md`). Now
+  `os.environ["ELEVENLABS_API_KEY"]` only. Owner: revoke that old key in the ElevenLabs dashboard if still active.
+- Channel: handle @zyklnow. Suggested Play promo video: `zykl.app/promo/Video Motion Remaster/
+  ZYKL_Promo_Remaster_44s_EN_Dark_16x9.mp4` (public/unlisted, embeddable, no ads, normal watch URL, not Shorts).
+
+## 2026-10-07 (d) — Lockdown: Do Not Disturb pre-flight  (status: committed in v1.0.2)
+
+- Problem (owner): during Monastic Lockdown phone calls still rang. Lockdown = screen pinning (`startLockTask`, no
+  device owner, so the user can always leave) + DND `INTERRUPTION_FILTER_NONE`, but DND is applied **only if the user
+  granted Notification Policy (DND) access**, and the only way to grant it was a button buried in Settings. Most users
+  locked without DND, so calls rang through.
+- `lib/features/desk/presentation/widgets/monastic_switch_widget.dart` (now stateful): tapping LOCKDOWN checks
+  `isNotificationPolicyAccessGranted`. Granted → lock as before. Not granted → dialog "SILENCE CALLS TOO?" with
+  **GRANT ACCESS** (opens Android DND access settings; when the app resumes and access is granted, it locks
+  automatically) or **LOCK WITHOUT SILENCE**. Dismiss = no lock. Keys: `lockdown_silence_preflight`,
+  `lockdown_grant_dnd`, `lockdown_without_silence`.
+- Settings → DND button shows `GRANTED` / `NOT GRANTED` (`_DndAccessStatus`, rechecked on resume; key
+  `dnd_access_status`).
+- `film_capture/film_scene.dart` `FilmFocusLockService` reports DND granted so demo captures show no dialog.
+- Tests: 5 new in `test/features/desk/monastic_switch_test.dart` (granted, without silence, grant → resume locks,
+  resume without grant, dismiss). Full suite **455 pass**, analyze 0.
+- Device check: with DND access granted, start Lockdown and call the phone: it must not ring. Limits told to the owner:
+  pinning cannot fully block other apps without device-owner (kiosk) provisioning; a stronger opt-in "Strict Lockdown"
+  would need an AccessibilityService (Play declaration + prominent disclosure). Rejecting calls outright is only
+  possible via `CallScreeningService` for numbers NOT in contacts. Not started; owner chose the DND fix first.
+
+## 2026-10-07 (c) — Audit hardening  (status: committed + pushed; website auto-deployed by Cloudflare)
 
 App (`Takt Desk`):
 - **Release signing fails closed** (`android/app/build.gradle.kts`): `assembleRelease`/`bundleRelease` without
