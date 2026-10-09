@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/services.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
 import 'package:takt_desk/core/audio/audio_service.dart';
+import 'package:takt_desk/core/backup/history_backup.dart';
 import 'package:takt_desk/core/database/app_database.dart';
 import 'package:takt_desk/features/settings/presentation/settings_controller.dart';
 import 'package:takt_desk/features/settings/presentation/takt_settings_sheet.dart';
@@ -222,6 +223,24 @@ void main() {
       await tester.tap(finder);
       await tester.pump();
       expect(container.read(deskPreferencesControllerProvider).autoStartNextPhase, isTrue);
+    });
+
+    testWidgets('History files: restore reports what was added, export cancel says nothing', (tester) async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(db.close);
+      final backup = _FakeHistoryBackup(db);
+      await tester.pumpWidget(buildSheet(overrides: [historyBackupProvider.overrideWithValue(backup)]));
+      await tester.pump();
+
+      final restore = find.byKey(const ValueKey('history_restore'));
+      await tester.scrollUntilVisible(restore, 200, scrollable: find.byType(Scrollable).first);
+      await tester.tap(find.byKey(const ValueKey('history_export_csv')));
+      await tester.pump();
+      expect(find.byKey(const ValueKey('history_files_status')), findsNothing);
+
+      await tester.tap(restore);
+      await tester.pump();
+      expect(find.text('Restored 12 sessions and 3 slips (2 already here or skipped).'), findsOneWidget);
     });
 
     testWidgets('System clearance badge reports granted DND access from Android', (tester) async {
@@ -1099,4 +1118,15 @@ void main() {
 String? _assetName(ImageProvider image) {
   final inner = image is ResizeImage ? image.imageProvider : image;
   return inner is AssetImage ? inner.assetName : null;
+}
+
+class _FakeHistoryBackup extends HistoryBackup {
+  _FakeHistoryBackup(super.db);
+
+  @override
+  Future<bool?> exportCsv({DateTime? now}) async => null; // picker cancelled
+
+  @override
+  Future<RestoreResult?> pickAndRestore() async =>
+      const RestoreResult(sessionsAdded: 12, sessionsSkipped: 2, tasksAdded: 3, tasksSkipped: 0);
 }

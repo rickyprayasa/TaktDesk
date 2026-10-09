@@ -45,6 +45,10 @@ class MainActivity : FlutterActivity() {
         private const val PERMISSION_PREFS = "zykl_permissions"
         private const val KEY_NOTIFICATION_ASKED = "post_notifications_asked"
         private const val REQUEST_POST_NOTIFICATIONS = 3001
+        private const val REQUEST_SAVE_FILE = 3101
+        private const val REQUEST_OPEN_FILE = 3102
+        /** A ZYKL backup is a few hundred KB at most; refuse anything far bigger. */
+        private const val MAX_BACKUP_BYTES = 8 * 1024 * 1024
         private const val AUDIO_DIR = "flutter_assets/assets/audio/"
         private val VINYL_ASSET = Regex("""assets/audio/vinyl_[a-z0-9_]+\.ogg""")
 
@@ -93,6 +97,11 @@ class MainActivity : FlutterActivity() {
 
     private val FOCUS_CHANNEL = "com.takt.desk/focus_lock"
     private val DISPLAY_CHANNEL = "com.zykl.app/display"
+    private val BACKUP_CHANNEL = "com.zykl.app/backup"
+
+    /** Waiting system file picker (backup export / restore) and what to write once a file is chosen. */
+    private var pendingFileResult: MethodChannel.Result? = null
+    private var pendingFileContent: ByteArray? = null
     private val AUDIO_CHANNEL = "com.takt.desk/audio"
     private val TIMER_CHANNEL = "com.takt.desk/timer_service"
     private val WIDGET_CHANNEL = "com.takt.desk/app_widget"
@@ -611,6 +620,47 @@ class MainActivity : FlutterActivity() {
             }
         }
 
+        // Export / restore through the system file picker (Storage Access Framework): no storage permission, the
+        // user picks the place (Downloads, Drive, ...).
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, BACKUP_CHANNEL).setMethodCallHandler { call, result ->
+            if (pendingFileResult != null) {
+                result.error("BUSY", "A file picker is already open", null)
+                return@setMethodCallHandler
+            }
+            try {
+                when (call.method) {
+                    "saveFile" -> {
+                        pendingFileResult = result
+                        pendingFileContent = (call.argument<String>("content") ?: "").toByteArray(Charsets.UTF_8)
+                        startActivityForResult(
+                            Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                                addCategory(Intent.CATEGORY_OPENABLE)
+                                type = call.argument<String>("mimeType") ?: "application/octet-stream"
+                                putExtra(Intent.EXTRA_TITLE, call.argument<String>("fileName") ?: "zykl-export")
+                            },
+                            REQUEST_SAVE_FILE
+                        )
+                    }
+                    "openFile" -> {
+                        pendingFileResult = result
+                        startActivityForResult(
+                            Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                                addCategory(Intent.CATEGORY_OPENABLE)
+                                type = "*/*"
+                                putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("application/json", "text/plain", "application/octet-stream"))
+                            },
+                            REQUEST_OPEN_FILE
+                        )
+                    }
+                    else -> result.notImplemented()
+                }
+            } catch (e: Exception) {
+                pendingFileResult = null
+                pendingFileContent = null
+                result.error("NO_PICKER", e.message, null)
+            }
+        }
+
         val mediaChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.zykl.app/media_notification")
         MediaNotificationService.mediaControlListener = { action ->
             runOnUiThread {
@@ -802,6 +852,47 @@ class MainActivity : FlutterActivity() {
                 })
             } catch (_: Exception) {}
         }
+    }
+
+    @Deprecated("FlutterActivity is not a ComponentActivity; the result API is not available here")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != REQUEST_SAVE_FILE && requestCode != REQUEST_OPEN_FILE) return
+        val result = pendingFileResult ?: return
+        val content = pendingFileContent
+        pendingFileResult = null
+        pendingFileContent = null
+        val uri = data?.data
+        if (resultCode != RESULT_OK || uri == null) {
+            result.success(null) // cancelled
+            return
+        }
+        val main = Handler(Looper.getMainLooper())
+        Thread {
+            try {
+                if (requestCode == REQUEST_SAVE_FILE) {
+                    contentResolver.openOutputStream(uri, "wt")?.use { it.write(content ?: ByteArray(0)) }
+                        ?: throw IllegalStateException("Cannot write the chosen file")
+                    main.post { result.success(true) }
+                } else {
+                    val bytes = contentResolver.openInputStream(uri)?.use { input ->
+                        val out = java.io.ByteArrayOutputStream()
+                        val buffer = ByteArray(16 * 1024)
+                        while (true) {
+                            val n = input.read(buffer)
+                            if (n < 0) break
+                            out.write(buffer, 0, n)
+                            if (out.size() > MAX_BACKUP_BYTES) throw IllegalStateException("File too large")
+                        }
+                        out.toByteArray()
+                    } ?: throw IllegalStateException("Cannot read the chosen file")
+                    val text = String(bytes, Charsets.UTF_8)
+                    main.post { result.success(text) }
+                }
+            } catch (e: Exception) {
+                main.post { result.error("IO", e.message, null) }
+            }
+        }.start()
     }
 
     override fun onNewIntent(intent: Intent) {

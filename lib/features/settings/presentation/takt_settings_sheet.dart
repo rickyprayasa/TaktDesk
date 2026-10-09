@@ -6,6 +6,7 @@ import '../../../app/theme/theme_controller.dart';
 import '../../../app/theme/widgets/zykl_hardware_plaque.dart';
 import '../../../core/audio/audio_service.dart';
 import '../../../core/audio/sound_effect.dart';
+import '../../../core/backup/history_backup.dart';
 import '../../../core/config/app_security_config.dart';
 import '../../../core/focus/focus_lock_service.dart';
 import '../../../core/haptics/haptic_service.dart';
@@ -20,6 +21,7 @@ import 'widgets/studio_pro_dialog.dart';
 
 part 'settings_sections/alarm_acoustics_section.dart';
 part 'settings_sections/hardware_editions_section.dart';
+part 'settings_sections/history_files_section.dart';
 part 'settings_sections/pomodoro_interval_section.dart';
 part 'settings_sections/quick_sheets.dart';
 part 'settings_sections/section_header.dart';
@@ -1056,6 +1058,13 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
             ),
           ),
           const SizedBox(height: 10),
+          _HistoryFilesControls(
+            isDark: isDark,
+            primaryTextColor: primaryTextColor,
+            secondaryTextColor: secondaryTextColor,
+            borderColor: borderColor,
+          ),
+          const SizedBox(height: 12),
           OutlinedButton(
             style: OutlinedButton.styleFrom(
               foregroundColor: TaktColors.mutedOchre,
