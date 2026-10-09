@@ -48,7 +48,7 @@ android {
         manifestPlaceholders["appLabel"] = "@string/app_name"
         if (isProSimulationBuild) {
             applicationIdSuffix = ".devpro"
-            manifestPlaceholders["appLabel"] = "ZYKL DEV PRO"
+            manifestPlaceholders["appLabel"] = "ZYKL Dev" // short: launchers cut longer labels
         }
     }
 
