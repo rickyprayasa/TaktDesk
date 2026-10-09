@@ -339,6 +339,51 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('timer notification buttons pause, resume and stop the Flutter timer', (tester) async {
+    final dialController = TestChronoDialController(
+      const TimerState(remainingSeconds: 1200, targetMinutes: 25, isRunning: true),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ...createOverrides(),
+          chronoDialControllerProvider.overrideWith((ref) => dialController),
+        ],
+        child: const MaterialApp(
+          home: DeskCanvasScreen(
+            gyroscopeStream: Stream.empty(),
+            accelerometerStream: Stream.empty(),
+          ),
+        ),
+      ),
+    );
+
+    Future<void> press(String action) async {
+      await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.handlePlatformMessage(
+        AppWidgetService.channel.name,
+        AppWidgetService.channel.codec.encodeMethodCall(MethodCall('onWidgetAction', {'action': action})),
+        (_) {},
+      );
+      await tester.pump();
+    }
+
+    await press('pauseTimer');
+    expect(dialController.state.isRunning, isFalse);
+    expect(dialController.state.remainingSeconds, closeTo(1200, 1));
+
+    await press('pauseTimer'); // already paused: stays paused
+    expect(dialController.state.isRunning, isFalse);
+
+    await press('resumeTimer');
+    expect(dialController.state.isRunning, isTrue);
+
+    await press('stopTimer');
+    expect(dialController.state.isRunning, isFalse);
+    expect(dialController.state.remainingSeconds, 1500);
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('DeskCanvasScreen syncs active tasks payload to AppWidget channel when tasks stream emits', (tester) async {
     final tasksStreamController = StreamController<List<Task>>.broadcast(sync: true);
     addTearDown(tasksStreamController.close);

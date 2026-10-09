@@ -14,6 +14,10 @@ class WidgetActionReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_TOGGLE_TIMER = "com.zykl.app.ACTION_TOGGLE_TIMER"
         const val ACTION_TOGGLE_TASK = "com.zykl.app.ACTION_TOGGLE_TASK"
+        /** Buttons on the timer notifications (running: PAUSE / STOP, paused card: RESUME / STOP). */
+        const val ACTION_NOTIF_PAUSE = "com.zykl.app.ACTION_NOTIF_PAUSE"
+        const val ACTION_NOTIF_RESUME = "com.zykl.app.ACTION_NOTIF_RESUME"
+        const val ACTION_NOTIF_STOP = "com.zykl.app.ACTION_NOTIF_STOP"
         const val EXTRA_TASK_INDEX = "EXTRA_TASK_INDEX"
         const val EXTRA_TASK_ID = "EXTRA_TASK_ID"
     }
@@ -21,6 +25,7 @@ class WidgetActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
             ACTION_TOGGLE_TIMER -> handleToggleTimer(context)
+            ACTION_NOTIF_PAUSE, ACTION_NOTIF_RESUME, ACTION_NOTIF_STOP -> handleNotificationAction(context, intent)
             ACTION_TOGGLE_TASK -> {
                 val index = intent.getIntExtra(EXTRA_TASK_INDEX, -1)
                 val taskId = intent.getIntExtra(EXTRA_TASK_ID, -1)
@@ -90,6 +95,50 @@ class WidgetActionReceiver : BroadcastReceiver() {
         TaktAppWidgetProvider.updateAllWidgets(context)
         TaktFocusStripWidgetProvider.updateAllWidgets(context)
         TaktAnalogDialWidgetProvider.updateAllWidgets(context)
+    }
+
+    private fun handleNotificationAction(context: Context, intent: Intent) {
+        // App process alive: Flutter owns the timer. Its pause/start/reset drive the service, and it posts or clears
+        // the paused card from its own state (pausedTimerNotificationSyncProvider).
+        if (MainActivity.activeInstance != null) {
+            MainActivity.sendWidgetAction(
+                when (intent.action) {
+                    ACTION_NOTIF_PAUSE -> "pauseTimer"
+                    ACTION_NOTIF_RESUME -> "resumeTimer"
+                    else -> "stopTimer"
+                }
+            )
+            return
+        }
+        try {
+            when (intent.action) {
+                ACTION_NOTIF_PAUSE -> context.startService(
+                    Intent(context, TimerForegroundService::class.java).setAction(TimerForegroundService.ACTION_PAUSE)
+                )
+                ACTION_NOTIF_RESUME -> {
+                    TimerNotifications.cancelPaused(context)
+                    val serviceIntent = Intent(context, TimerForegroundService::class.java).apply {
+                        action = TimerForegroundService.ACTION_START
+                        intent.extras?.let { putExtras(it) }
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        context.startForegroundService(serviceIntent)
+                    } else {
+                        context.startService(serviceIntent)
+                    }
+                }
+                else -> {
+                    TimerNotifications.cancelPaused(context)
+                    if (TimerForegroundService.isCountingDown) {
+                        context.startService(
+                            Intent(context, TimerForegroundService::class.java).setAction(TimerForegroundService.ACTION_STOP)
+                        )
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("WidgetActionReceiver", "Timer notification action failed: ${e.message}")
+        }
     }
 
     private fun handleToggleTask(context: Context, taskIndex: Int, taskId: Int) {

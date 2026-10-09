@@ -65,14 +65,19 @@ final appWidgetSyncProvider = Provider.autoDispose<void>((ref) {
   ref.listen(chronoDialControllerProvider.select((s) => (s.profile, s.cycleCount)), (_, __) => sync());
 
   // Listen for direct interactive widget actions from Android homescreen
+  // and from the timer notification buttons (PAUSE / STOP while running, RESUME / STOP on the paused card).
   final actionSub = widgetService.onWidgetAction.listen((action) {
-    if (action == 'toggleTimer') {
-      final chrono = ref.read(chronoDialControllerProvider);
-      if (chrono.isRunning) {
-        ref.read(chronoDialControllerProvider.notifier).pause();
-      } else {
-        ref.read(chronoDialControllerProvider.notifier).start();
-      }
+    final timer = ref.read(chronoDialControllerProvider.notifier);
+    final running = ref.read(chronoDialControllerProvider).isRunning;
+    switch (action) {
+      case 'toggleTimer':
+        running ? timer.pause() : timer.start();
+      case 'pauseTimer':
+        if (running) timer.pause();
+      case 'resumeTimer':
+        if (!running) timer.start();
+      case 'stopTimer':
+        timer.reset();
     }
   });
   ref.onDispose(actionSub.cancel);

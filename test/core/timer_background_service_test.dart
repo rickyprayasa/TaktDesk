@@ -101,4 +101,41 @@ void main() {
     final providedService = container.read(timerBackgroundServiceProvider);
     expect(providedService, isA<TimerBackgroundService>());
   });
+
+  test('showPaused sends the paused session to the native card', () async {
+    await service.showPaused(
+      remainingSeconds: 754.0,
+      targetMinutes: 25,
+      phase: PomodoroPhase.focus,
+      cycleCount: 2,
+      profileName: 'CLASSIC 25/5',
+      alarmChimeId: 'zenGong',
+    );
+    expect(log.single.method, 'showPausedNotification');
+    expect(log.single.arguments, {
+      'remainingSeconds': 754.0,
+      'targetMinutes': 25,
+      'phase': 'focus',
+      'cycleCount': 2,
+      'profileName': 'CLASSIC 25/5',
+      'alarmChimeId': 'zenGong',
+    });
+  });
+
+  test('clearPaused calls the native channel and swallows errors', () async {
+    await service.clearPaused();
+    expect(log.single.method, 'clearPausedNotification');
+    shouldThrow = true;
+    await expectLater(service.clearPaused(), completes);
+    await expectLater(
+      service.showPaused(
+        remainingSeconds: 1,
+        targetMinutes: 1,
+        phase: PomodoroPhase.shortBreak,
+        cycleCount: 1,
+        profileName: 'X',
+      ),
+      completes,
+    );
+  });
 }

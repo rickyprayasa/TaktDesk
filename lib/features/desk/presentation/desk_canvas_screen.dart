@@ -17,6 +17,7 @@ import '../../settings/presentation/widgets/studio_pro_dialog.dart';
 import '../../tasks/presentation/receipt_runner_widget.dart';
 import '../../timer/presentation/chrono_dial_controller.dart';
 import '../../timer/presentation/chrono_dial_widget.dart';
+import '../../timer/presentation/paused_timer_notification.dart';
 import '../../vinyl/presentation/vinyl_player_widget.dart';
 import 'ambient_lighting_layer.dart';
 import 'isometric_desk_layout.dart';
@@ -352,6 +353,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
     final theme = ref.watch(chassisThemeProvider);
     final focusState = ref.watch(focusLockProvider);
     ref.watch(appWidgetSyncProvider);
+    ref.watch(pausedTimerNotificationSyncProvider);
 
     ref.listen<bool>(
       deskPreferencesControllerProvider.select((p) => p.parallaxEnabled),

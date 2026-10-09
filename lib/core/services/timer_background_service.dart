@@ -74,6 +74,34 @@ class TimerBackgroundService {
     }
   }
 
+  /// Shows a paused session as a notification (lock screen too) with RESUME / STOP buttons. Android only; the
+  /// running countdown notification goes away with [stop], this one stays until [clearPaused] or RESUME.
+  Future<void> showPaused({
+    required double remainingSeconds,
+    required int targetMinutes,
+    required PomodoroPhase phase,
+    required int cycleCount,
+    required String profileName,
+    String alarmChimeId = 'braunBell',
+  }) async {
+    try {
+      await channel.invokeMethod<bool>('showPausedNotification', {
+        'remainingSeconds': remainingSeconds,
+        'targetMinutes': targetMinutes,
+        'phase': phase.name,
+        'cycleCount': cycleCount,
+        'profileName': profileName,
+        'alarmChimeId': alarmChimeId,
+      });
+    } catch (_) {}
+  }
+
+  Future<void> clearPaused() async {
+    try {
+      await channel.invokeMethod<bool>('clearPausedNotification');
+    } catch (_) {}
+  }
+
   Future<bool> stop() async {
     try {
       final res = await channel.invokeMethod<bool>('stopService');

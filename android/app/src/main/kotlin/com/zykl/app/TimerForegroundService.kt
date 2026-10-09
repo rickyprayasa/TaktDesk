@@ -1,7 +1,6 @@
 package com.zykl.app
 
 import android.app.Notification
-import android.app.NotificationChannel
 import android.app.AlarmManager
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -27,12 +26,8 @@ import androidx.core.content.ContextCompat
 
 class TimerForegroundService : Service() {
     companion object {
-        // DEFAULT importance so the countdown shows with normal notifications instead of
-        // being folded into "Silent". Android never lets an app raise an existing
-        // channel's importance, hence a new ID; the old LOW channel is deleted.
-        const val CHANNEL_TIMER_ID = "zykl_timer_countdown"
-        private const val LEGACY_TIMER_CHANNEL_ID = "takt_desk_timer_channel"
-        const val CHANNEL_ALERT_ID = "takt_desk_alert_channel"
+        const val CHANNEL_TIMER_ID = TimerNotifications.CHANNEL_TIMER_ID
+        const val CHANNEL_ALERT_ID = TimerNotifications.CHANNEL_ALERT_ID
         const val NOTIFICATION_ID = 1001
         const val ALERT_NOTIFICATION_ID = 1002
 
@@ -42,6 +37,8 @@ class TimerForegroundService : Service() {
 
         const val ACTION_START = "ACTION_START"
         const val ACTION_STOP = "ACTION_STOP"
+        /** Native pause (notification PAUSE while the app is gone): stops the countdown, posts the paused card. */
+        const val ACTION_PAUSE = "ACTION_PAUSE"
         /** Fired by AlarmManager at the absolute end time (works in Doze / screen off). */
         const val ACTION_COMPLETE = "ACTION_COMPLETE"
 
@@ -94,6 +91,9 @@ class TimerForegroundService : Service() {
     private var bellPlayer: MediaPlayer? = null
     private var activeAlarmChimeId: String = "braunBell"
     private var activeTargetMinutes: Int = 25
+    private var activePhase: String = "focus"
+    private var activeCycleCount: Int = 1
+    private var activeProfileName: String = "CLASSIC 25/5"
     /** End-time (epoch ms) of the last session already completed; makes completion idempotent. */
     private var lastCompletedEndAt: Long = 0L
     private var ongoingNotification: Notification? = null
@@ -190,6 +190,9 @@ class TimerForegroundService : Service() {
             ACTION_STOP -> {
                 stopCountdown()
             }
+            ACTION_PAUSE -> {
+                pauseCountdown()
+            }
             ACTION_REFRESH_NOTIFICATION -> {
                 // Re-post after POST_NOTIFICATIONS was granted mid-session.
                 val n = ongoingNotification
@@ -220,36 +223,32 @@ class TimerForegroundService : Service() {
         cancelExactCompletion()
         activeAlarmChimeId = alarmChimeId
         activeTargetMinutes = targetMinutes
+        activePhase = phase
+        activeCycleCount = cycleCount
+        activeProfileName = profileName
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
         notificationManager?.cancel(ALERT_NOTIFICATION_ID)
+        TimerNotifications.cancelPaused(this)
 
         val remainingMillis = (remainingSeconds * 1000).toLong()
         val targetTime = System.currentTimeMillis() + remainingMillis
         deadlineElapsed = SystemClock.elapsedRealtime() + remainingMillis
         isCountingDown = true
 
-        val title = formatTitle(phase, cycleCount)
+        val title = TimerNotifications.title(phase, cycleCount)
         val content = "$targetMinutes MIN · $profileName"
+        val pendingIntent = TimerNotifications.openAppIntent(this, 0)
 
-        val openAppIntent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            openAppIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0)
-        )
-
-        val notification = NotificationCompat.Builder(this, CHANNEL_TIMER_ID)
+        // Standard style, ongoing, not colorized: promotable to an Android 16 Live Update (chip + lock screen card).
+        val builder = NotificationCompat.Builder(this, CHANNEL_TIMER_ID)
             .setSmallIcon(R.drawable.ic_takt_timer)
             .setContentTitle(title)
             .setContentText(content)
             .setOngoing(true)
             .setSilent(true)
             .setOnlyAlertOnce(true)
-            .setColor(0xFFFF9E00.toInt())
+            .setColor(TimerNotifications.ACCENT)
             .setShowWhen(true)
             .setUsesChronometer(true)
             .setChronometerCountDown(true)
@@ -257,7 +256,9 @@ class TimerForegroundService : Service() {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(pendingIntent)
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
-            .build()
+        TimerNotifications.addRunningActions(this, builder)
+        TimerNotifications.requestPromotion(builder)
+        val notification = builder.build()
         ongoingNotification = notification
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -414,6 +415,19 @@ class TimerForegroundService : Service() {
         }
     }
 
+    /** Stops the countdown and keeps it on the lock screen as a paused card (RESUME starts it again). */
+    private fun pauseCountdown() {
+        val wasRunning = isCountingDown
+        val remainingSeconds = ((deadlineElapsed - SystemClock.elapsedRealtime()) / 1000.0).coerceAtLeast(0.0)
+        stopCountdown()
+        if (wasRunning && remainingSeconds >= 1.0) {
+            TimerNotifications.showPaused(
+                this, remainingSeconds, activeTargetMinutes, activePhase, activeCycleCount, activeProfileName,
+                activeAlarmChimeId
+            )
+        }
+    }
+
     private fun stopCountdown() {
         isCountingDown = false
         deadlineElapsed = 0L
@@ -441,14 +455,6 @@ class TimerForegroundService : Service() {
     private fun cancelScheduledCompletion() {
         completionRunnable?.let { handler.removeCallbacks(it) }
         completionRunnable = null
-    }
-
-    private fun formatTitle(phase: String, cycleCount: Int): String {
-        return when (phase) {
-            "shortBreak" -> "ZYKL · SHORT BRK"
-            "longBreak" -> "ZYKL · LONG BRK"
-            else -> "ZYKL · FOCUS (CYCLE $cycleCount/4)"
-        }
     }
 
     private fun getAlarmAssetPath(chimeId: String): String {
@@ -528,35 +534,7 @@ class TimerForegroundService : Service() {
     }
 
     private fun createNotificationChannels() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-            val timerChannel = NotificationChannel(
-                CHANNEL_TIMER_ID,
-                "ZYKL Active Timer",
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply {
-                description = "Live analog timer telemetry on Lockscreen and Always-On Display"
-                setSound(null, null)
-                enableVibration(false)
-                setShowBadge(false)
-                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-            }
-
-            val alertChannel = NotificationChannel(
-                CHANNEL_ALERT_ID,
-                "ZYKL Session Alerts",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Pomodoro focus and break interval completion alarms"
-                enableVibration(true)
-                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-            }
-
-            manager.deleteNotificationChannel(LEGACY_TIMER_CHANNEL_ID)
-            manager.createNotificationChannel(timerChannel)
-            manager.createNotificationChannel(alertChannel)
-        }
+        TimerNotifications.createChannels(this)
     }
 
     override fun onDestroy() {
