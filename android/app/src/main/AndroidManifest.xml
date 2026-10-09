@@ -47,7 +47,7 @@
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="User-started Pomodoro focus timer: shows the live countdown notification and lock-screen widgets, and rings the session-end alarm while the screen is off. Stops when the session ends or the user stops it." />
+                android:value="User-started Pomodoro focus timer: shows the live countdown notification, keeps the home-screen widgets in sync, and rings the session-end alarm while the screen is off. Stops when the session ends or the user stops it." />
         </service>
         <service
             android:name=".MediaNotificationService"

@@ -59,10 +59,11 @@ class TaktFocusStripWidgetProvider : AppWidgetProvider() {
             // Update 4 Micro-LEDs
             val activeLed = R.drawable.ic_widget_led_amber
             val dimLed = R.drawable.ic_widget_led_dim
-            views.setImageViewResource(R.id.led_1, if (cycles >= 1) activeLed else dimLed)
-            views.setImageViewResource(R.id.led_2, if (cycles >= 2) activeLed else dimLed)
-            views.setImageViewResource(R.id.led_3, if (cycles >= 3) activeLed else dimLed)
-            views.setImageViewResource(R.id.led_4, if (cycles >= 4) activeLed else dimLed)
+            val lit = TaktAppWidgetProvider.litLeds(cycles, target)
+            views.setImageViewResource(R.id.led_1, if (lit >= 1) activeLed else dimLed)
+            views.setImageViewResource(R.id.led_2, if (lit >= 2) activeLed else dimLed)
+            views.setImageViewResource(R.id.led_3, if (lit >= 3) activeLed else dimLed)
+            views.setImageViewResource(R.id.led_4, if (lit >= 4) activeLed else dimLed)
 
             // 1. Direct interactive action on [ START ➔ ] / [ ⏸ PAUSE ] button without opening app
             val toggleTimerIntent = Intent(context, WidgetActionReceiver::class.java).apply {

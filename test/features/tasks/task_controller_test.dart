@@ -39,6 +39,38 @@ void main() {
   });
 
   group('ReceiptRunnerController', () {
+    test('applyExternalCompletion mirrors a widget check-off without the stamp sound', () {
+      final audio = MockAudioService();
+      final controller = ReceiptRunnerController(audio);
+      controller.addTask('Reply to the studio');
+      final id = controller.state.tasks.first.id;
+      audio.playedEffects.clear();
+
+      controller.applyExternalCompletion(id, true);
+      expect(controller.state.tasks.first.isDone, isTrue);
+      expect(audio.playedEffects, isEmpty, reason: 'the widget already gave its own feedback');
+
+      controller.applyExternalCompletion('no-such-task', false);
+      expect(controller.state.tasks.first.isDone, isTrue);
+    });
+
+    test('applyExternalCompletion persists the check-off through Drift', () async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(db.close);
+      final controller = ReceiptRunnerController(null, db);
+      await controller.addTask('Read 20 pages');
+      final id = controller.state.tasks.first.id;
+
+      controller.applyExternalCompletion(id, true);
+      await pumpEventQueue();
+
+      final row = (await db.select(db.tasks).get()).single;
+      expect(row.isCompleted, isTrue);
+      expect(row.completedAt, isNotNull);
+      expect(row.completedAt!.difference(DateTime.now()).inMinutes.abs(), lessThan(5),
+          reason: 'stored as a real date, not milliseconds read as seconds');
+    });
+
     test('TaskRunner restricts max 5 items and handles stamp & tear', () {
       final controller = ReceiptRunnerController();
       for (int i = 1; i <= 5; i++) {

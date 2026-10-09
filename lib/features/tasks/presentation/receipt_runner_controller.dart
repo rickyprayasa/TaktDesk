@@ -144,6 +144,23 @@ class ReceiptRunnerController extends StateNotifier<ReceiptRunnerState> {
     }
   }
 
+  /// A task checked off on the home-screen widget while the app is open. The widget already wrote the row
+  /// natively; this mirrors it into the in-memory list (no stamp sound) and rewrites it through Drift so the
+  /// active-task stream, and with it the next widget sync, see the same state instead of reverting it.
+  void applyExternalCompletion(String id, bool isDone) {
+    final index = state.tasks.indexWhere((t) => t.id == id);
+    if (index < 0) return;
+    if (state.tasks[index].isDone != isDone) {
+      state = state.copyWith(
+        tasks: [for (final t in state.tasks) t.id == id ? t.copyWith(isDone: isDone) : t],
+      );
+    }
+    final intId = int.tryParse(id);
+    if (intId != null) {
+      _database?.toggleTaskCompleted(intId, isDone).catchError(_logDbError);
+    }
+  }
+
   void updateTearProgress(double progress) {
     state = state.copyWith(tearDragProgress: progress.clamp(0.0, 1.0));
   }

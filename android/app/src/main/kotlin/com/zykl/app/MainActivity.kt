@@ -217,6 +217,9 @@ class MainActivity : FlutterActivity() {
                     }
                 }
                 "isLockTaskPermitted" -> {
+                    // Lockdown uses plain screen pinning (startLockTask without a device owner), which every
+                    // Android 5+ device allows after the system confirmation. So "available" is always true here;
+                    // DevicePolicyManager.isLockTaskPermitted would only matter for a DPC-whitelisted kiosk.
                     result.success(true)
                 }
                 "isNotificationPolicyAccessGranted" -> {
@@ -682,9 +685,15 @@ class MainActivity : FlutterActivity() {
                         val tasksList = call.argument<List<Map<String, Any>>>("tasks") ?: emptyList()
                         val tasksJson = org.json.JSONArray(tasksList).toString()
                         val isPro = call.argument<Boolean>("isPro") ?: false
+                        val profileName = call.argument<String>("profileName") ?: "CLASSIC 25/5"
+                        val alarmChimeId = call.argument<String>("alarmChimeId") ?: "braunBell"
+                        val cycleCount = (call.argument<Number>("cycleCount"))?.toInt() ?: 1
 
                         val prefs = getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
                         prefs.edit()
+                            .putString(TaktAppWidgetProvider.KEY_PROFILE_NAME, profileName)
+                            .putString(TaktAppWidgetProvider.KEY_ALARM_CHIME_ID, alarmChimeId)
+                            .putInt(TaktAppWidgetProvider.KEY_CYCLE_COUNT, cycleCount)
                             .putInt(TaktAppWidgetProvider.KEY_CYCLES_COMPLETED, cycles)
                             .putInt(TaktAppWidgetProvider.KEY_CYCLES_TARGET, target)
                             .putInt(TaktAppWidgetProvider.KEY_MINUTES_FOCUSED, minutes)

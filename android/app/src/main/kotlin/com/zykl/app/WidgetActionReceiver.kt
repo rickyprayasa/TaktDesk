@@ -30,6 +30,13 @@ class WidgetActionReceiver : BroadcastReceiver() {
     }
 
     private fun handleToggleTimer(context: Context) {
+        // App process alive (also when it's only in the background): Flutter owns the timer. It starts with the real
+        // profile/chime/cycle and PAUSES (keeps the remaining time), then re-syncs the widgets itself. Driving the
+        // service here as well used to toggle twice and reset the time.
+        if (MainActivity.activeInstance != null) {
+            MainActivity.sendWidgetAction("toggleTimer")
+            return
+        }
         val prefs = context.getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
         val currentStatus = prefs.getString(TaktAppWidgetProvider.KEY_STATUS, "STANDBY") ?: "STANDBY"
         val targetMinutes = prefs.getInt(TaktAppWidgetProvider.KEY_TARGET_MINUTES, 25).coerceAtLeast(1)
@@ -41,9 +48,11 @@ class WidgetActionReceiver : BroadcastReceiver() {
                 putExtra(TimerForegroundService.EXTRA_REMAINING_SECONDS, targetMinutes * 60.0)
                 putExtra(TimerForegroundService.EXTRA_TARGET_MINUTES, targetMinutes)
                 putExtra(TimerForegroundService.EXTRA_PHASE, "focus")
-                putExtra(TimerForegroundService.EXTRA_CYCLE_COUNT, 1)
-                putExtra(TimerForegroundService.EXTRA_PROFILE_NAME, "CLASSIC 25/5")
-                putExtra(TimerForegroundService.EXTRA_ALARM_CHIME_ID, "braunBell")
+                putExtra(TimerForegroundService.EXTRA_CYCLE_COUNT, prefs.getInt(TaktAppWidgetProvider.KEY_CYCLE_COUNT, 1))
+                putExtra(TimerForegroundService.EXTRA_PROFILE_NAME,
+                    prefs.getString(TaktAppWidgetProvider.KEY_PROFILE_NAME, "CLASSIC 25/5") ?: "CLASSIC 25/5")
+                putExtra(TimerForegroundService.EXTRA_ALARM_CHIME_ID,
+                    prefs.getString(TaktAppWidgetProvider.KEY_ALARM_CHIME_ID, "braunBell") ?: "braunBell")
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(serviceIntent)
@@ -60,6 +69,7 @@ class WidgetActionReceiver : BroadcastReceiver() {
             // 3. Notify Flutter app if active
             MainActivity.sendWidgetAction("toggleTimer", mapOf("status" to "FOCUS"))
         } else {
+            // App not running: there is no Flutter state to pause into, so this stops the session.
             // 1. Stop foreground timer service
             val serviceIntent = Intent(context, TimerForegroundService::class.java).apply {
                 action = TimerForegroundService.ACTION_STOP
@@ -134,7 +144,8 @@ class WidgetActionReceiver : BroadcastReceiver() {
                 try {
                     val db = SQLiteDatabase.openDatabase(file.path, null, SQLiteDatabase.OPEN_READWRITE)
                     val completedInt = if (isCompleted) 1 else 0
-                    val completedAt = if (isCompleted) System.currentTimeMillis() else null
+                    // Drift stores DateTime as Unix SECONDS (default, no store_date_time_values_as_text).
+                    val completedAt = if (isCompleted) System.currentTimeMillis() / 1000L else null
                     db.execSQL(
                         "UPDATE tasks SET is_completed = ?, completed_at = ? WHERE id = ?",
                         arrayOf<Any?>(completedInt, completedAt, taskId)

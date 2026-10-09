@@ -120,6 +120,9 @@ void main() {
       'targetMinutes': 25,
       'tasks': [],
       'isPro': true,
+      'profileName': 'CLASSIC 25/5',
+      'alarmChimeId': 'braunBell',
+      'cycleCount': 1,
     }));
 
     await tester.pumpWidget(const SizedBox());
@@ -170,6 +173,9 @@ void main() {
       'targetMinutes': 25,
       'tasks': [],
       'isPro': true,
+      'profileName': 'CLASSIC 25/5',
+      'alarmChimeId': 'braunBell',
+      'cycleCount': 1,
     }));
 
     await tester.pumpWidget(const SizedBox());
@@ -224,7 +230,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('DeskCanvasScreen maps cyclesCompleted correctly on quadrant boundaries',
+  testWidgets('DeskCanvasScreen sends the real cycle count of the day with the daily goal as target',
       (tester) async {
     tester.view.physicalSize = const Size(400, 800);
     tester.view.devicePixelRatio = 1.0;
@@ -242,7 +248,7 @@ void main() {
       ),
     );
 
-    // 0 completed -> cyclesCompleted: 0
+    // 0 completed -> 0 of the goal
     statsStreamController.add(const TodayFocusStats(
       completedCount: 0,
       totalMinutes: 0,
@@ -250,7 +256,7 @@ void main() {
     await tester.pump();
     expect(channelCalls.last.arguments['cyclesCompleted'], equals(0));
 
-    // 4 completed -> cyclesCompleted: 4 (full cycle)
+    // 4 completed -> 4 (goal met; the widget lights all 4 LEDs)
     statsStreamController.add(const TodayFocusStats(
       completedCount: 4,
       totalMinutes: 100,
@@ -258,21 +264,24 @@ void main() {
     await tester.pump();
     expect(channelCalls.last.arguments['cyclesCompleted'], equals(4));
 
-    // 7 completed -> cyclesCompleted: 3
+    // 7 completed -> 7, no longer folded to 7 % 4 = 3 (the widget caps the LEDs itself)
     statsStreamController.add(const TodayFocusStats(
       completedCount: 7,
       totalMinutes: 175,
     ));
     await tester.pump();
-    expect(channelCalls.last.arguments['cyclesCompleted'], equals(3));
+    expect(channelCalls.last.arguments['cyclesCompleted'], equals(7));
 
-    // 8 completed -> cyclesCompleted: 4 (second full quadrant)
+    // 8 completed -> 8
     statsStreamController.add(const TodayFocusStats(
       completedCount: 8,
       totalMinutes: 200,
     ));
     await tester.pump();
-    expect(channelCalls.last.arguments['cyclesCompleted'], equals(4));
+    expect(channelCalls.last.arguments['cyclesCompleted'], equals(8));
+
+    // The target is the user's daily goal (default 4), not a hard-coded 4.
+    expect(channelCalls.last.arguments['cyclesTarget'], equals(4));
 
     await tester.pumpWidget(const SizedBox());
   });

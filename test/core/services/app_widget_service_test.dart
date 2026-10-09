@@ -84,6 +84,9 @@ void main() {
       targetMinutes: 25,
       tasks: tasksPayload,
       isPro: true,
+      profileName: 'MONASTIC 50/10',
+      alarmChimeId: 'zenGong',
+      cycleCount: 2,
     );
 
     expect(result, isTrue);
@@ -98,6 +101,10 @@ void main() {
       'targetMinutes': 25,
       'tasks': tasksPayload,
       'isPro': true,
+      // the app's profile / chime / cycle, so a widget start with the app closed matches it
+      'profileName': 'MONASTIC 50/10',
+      'alarmChimeId': 'zenGong',
+      'cycleCount': 2,
     }));
   });
 
@@ -160,5 +167,18 @@ void main() {
     final action = await service.getInitialAction();
     expect(action, isNull);
   });
-}
 
+  test('a toggleTask widget action is surfaced with its task id and state', () async {
+    final toggles = service.onWidgetTaskToggle.first;
+    await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.handlePlatformMessage(
+      AppWidgetService.channel.name,
+      AppWidgetService.channel.codec.encodeMethodCall(
+        const MethodCall('onWidgetAction', {'action': 'toggleTask', 'taskId': 7, 'isCompleted': true}),
+      ),
+      (_) {},
+    );
+    final toggle = await toggles;
+    expect(toggle.taskId, 7);
+    expect(toggle.isCompleted, isTrue);
+  });
+}

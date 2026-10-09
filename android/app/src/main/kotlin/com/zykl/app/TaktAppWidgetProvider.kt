@@ -30,6 +30,14 @@ class TaktAppWidgetProvider : AppWidgetProvider() {
         const val KEY_TARGET_MINUTES = "target_minutes"
         const val KEY_TASKS_JSON = "tasks_json"
         const val KEY_IS_PRO = "is_pro"
+        /** Last profile / chime / cycle the app used, so a widget start without the app open matches it. */
+        const val KEY_PROFILE_NAME = "profile_name"
+        const val KEY_ALARM_CHIME_ID = "alarm_chime_id"
+        const val KEY_CYCLE_COUNT = "cycle_count"
+
+        /** How many of the 4 LEDs to light: today's cycles as a share of the daily goal (goal 4 = one LED each). */
+        fun litLeds(cycles: Int, target: Int): Int =
+            if (target <= 0) 0 else ((cycles * 4) / target).coerceIn(0, 4)
 
         @JvmStatic
         fun updateAllWidgets(context: Context) {
@@ -70,10 +78,11 @@ class TaktAppWidgetProvider : AppWidgetProvider() {
             val activeLed = R.drawable.ic_widget_led_amber
             val dimLed = R.drawable.ic_widget_led_dim
 
-            views.setImageViewResource(R.id.led_1, if (cycles >= 1) activeLed else dimLed)
-            views.setImageViewResource(R.id.led_2, if (cycles >= 2) activeLed else dimLed)
-            views.setImageViewResource(R.id.led_3, if (cycles >= 3) activeLed else dimLed)
-            views.setImageViewResource(R.id.led_4, if (cycles >= 4) activeLed else dimLed)
+            val lit = litLeds(cycles, target)
+            views.setImageViewResource(R.id.led_1, if (lit >= 1) activeLed else dimLed)
+            views.setImageViewResource(R.id.led_2, if (lit >= 2) activeLed else dimLed)
+            views.setImageViewResource(R.id.led_3, if (lit >= 3) activeLed else dimLed)
+            views.setImageViewResource(R.id.led_4, if (lit >= 4) activeLed else dimLed)
 
             // 1. Direct interactive action on STATUS button to toggle timer
             val toggleTimerIntent = Intent(context, WidgetActionReceiver::class.java).apply {
