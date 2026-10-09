@@ -49,6 +49,8 @@ class TimerForegroundService : Service() {
         const val EXTRA_PROFILE_NAME = "EXTRA_PROFILE_NAME"
         const val EXTRA_ALARM_CHIME_ID = "EXTRA_ALARM_CHIME_ID"
         const val EXTRA_END_AT_EPOCH = "EXTRA_END_AT_EPOCH"
+        /** The user's "auto-start next phase": Flutter starts the next phase as soon as this one ends. */
+        const val EXTRA_AUTO_START_NEXT = "EXTRA_AUTO_START_NEXT"
         private const val REQUEST_COMPLETE = 2001
         const val ACTION_REFRESH_NOTIFICATION = "ACTION_REFRESH_NOTIFICATION"
 
@@ -94,6 +96,7 @@ class TimerForegroundService : Service() {
     private var activePhase: String = "focus"
     private var activeCycleCount: Int = 1
     private var activeProfileName: String = "CLASSIC 25/5"
+    private var activeAutoStartNext: Boolean = false
     /** End-time (epoch ms) of the last session already completed; makes completion idempotent. */
     private var lastCompletedEndAt: Long = 0L
     private var ongoingNotification: Notification? = null
@@ -184,6 +187,7 @@ class TimerForegroundService : Service() {
                 val cycleCount = intent.getIntExtra(EXTRA_CYCLE_COUNT, 1)
                 val profileName = intent.getStringExtra(EXTRA_PROFILE_NAME) ?: "CLASSIC 25/5"
                 val alarmChimeId = intent.getStringExtra(EXTRA_ALARM_CHIME_ID) ?: "braunBell"
+                activeAutoStartNext = intent.getBooleanExtra(EXTRA_AUTO_START_NEXT, false)
 
                 startCountdown(remainingSeconds, targetMinutes, phase, cycleCount, profileName, alarmChimeId)
             }
@@ -339,6 +343,10 @@ class TimerForegroundService : Service() {
         if (phase == "focus" && MainActivity.activeInstance == null && endAt > 0L) {
             addPendingSession(this, endAt - activeTargetMinutes * 60_000L, activeTargetMinutes)
         }
+        // Flutter alive: tell it now (its own clock may be asleep) so it advances the phase, and with auto-start on
+        // starts the next one in this service.
+        val handOff = activeAutoStartNext && MainActivity.activeInstance != null
+        MainActivity.sendWidgetAction("nativePhaseFinished")
         cancelScheduledCompletion()
         cancelExactCompletion()
         stopWidgetTick()
@@ -381,7 +389,9 @@ class TimerForegroundService : Service() {
         val alertNotif = NotificationCompat.Builder(this, CHANNEL_ALERT_ID)
             .setSmallIcon(R.drawable.ic_takt_timer)
             .setContentTitle("ZYKL · $phaseLabel COMPLETED")
-            .setContentText("Standby active. Tap to enter console and begin next phase.")
+            .setContentText(
+                if (handOff) "Next phase starting." else "Standby active. Tap to enter console and begin next phase."
+            )
             .setAutoCancel(true)
             .setColor(0xFFFF9E00.toInt())
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -393,26 +403,34 @@ class TimerForegroundService : Service() {
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(ALERT_NOTIFICATION_ID, alertNotif)
 
-        // 4. Dismiss ongoing countdown chronometer from notification shade
-        stopForeground(STOP_FOREGROUND_REMOVE)
+        // 4. Dismiss ongoing countdown chronometer from notification shade. With a hand-off it stays until Flutter's
+        //    START replaces it: a backgrounded app may not bring a stopped foreground service back.
+        if (!handOff) stopForeground(STOP_FOREGROUND_REMOVE)
 
         // 5. Play selected gallery alarm chime unless Flutter in foreground already triggered playback
         if (MainActivity.shouldPlayAlarm()) {
-            val fallbackTeardown = Runnable {
-                stopSelf()
-            }
+            val fallbackTeardown = Runnable { finishIfIdle() }
             // Safety net only: the completion listener below stops the service as soon as the chime ends.
             // It must outlast the longest chime, or stopSelf() -> onDestroy() releases the player mid-ring.
             handler.postDelayed(fallbackTeardown, COMPLETION_HOLD_MS)
 
             playSelectedAlarm(activeAlarmChimeId) {
                 handler.removeCallbacks(fallbackTeardown)
-                stopSelf()
+                finishIfIdle()
             }
+        } else if (handOff) {
+            handler.postDelayed({ finishIfIdle() }, COMPLETION_HOLD_MS)
         } else {
             // Already played by foreground Flutter activity; exit cleanly without duplicate audio
             stopSelf()
         }
+    }
+
+    /** Ends the service after a finished phase, unless the next phase already started in it (auto-start). */
+    private fun finishIfIdle() {
+        if (isCountingDown) return
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
     }
 
     /** Stops the countdown and keeps it on the lock screen as a paused card (RESUME starts it again). */

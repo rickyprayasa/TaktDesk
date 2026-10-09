@@ -524,9 +524,11 @@ class MainActivity : FlutterActivity() {
                         val cycleCount = (call.argument<Number>("cycleCount"))?.toInt() ?: 1
                         val profileName = call.argument<String>("profileName") ?: "CLASSIC 25/5"
                         val alarmChimeId = call.argument<String>("alarmChimeId") ?: "braunBell"
+                        val autoStartNext = call.argument<Boolean>("autoStartNext") == true
 
                         val serviceIntent = Intent(this, TimerForegroundService::class.java).apply {
                             action = TimerForegroundService.ACTION_START
+                            putExtra(TimerForegroundService.EXTRA_AUTO_START_NEXT, autoStartNext)
                             putExtra(TimerForegroundService.EXTRA_REMAINING_SECONDS, remainingSeconds)
                             putExtra(TimerForegroundService.EXTRA_TARGET_MINUTES, targetMinutes)
                             putExtra(TimerForegroundService.EXTRA_PHASE, phase)

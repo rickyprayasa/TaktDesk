@@ -192,6 +192,38 @@ void main() {
       expect(container.read(deskPreferencesControllerProvider).deskClockMode, isFalse);
     });
 
+    testWidgets('Auto-start next phase switch toggles the preference', (tester) async {
+      final controller = DeskPreferencesController(null, AudioService(isMock: true));
+      final container = ProviderContainer(
+        overrides: [
+          deskPreferencesControllerProvider.overrideWith((ref) => controller),
+          lifetimeFocusStatsProvider.overrideWith(
+            (ref) => Stream.value(const LifetimeFocusStats()),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: Scaffold(
+              body: TaktSettingsSheet(),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final finder = find.byKey(const ValueKey('auto_start_next_phase_switch'));
+      await tester.scrollUntilVisible(finder, 200, scrollable: find.byType(Scrollable).first);
+      expect(container.read(deskPreferencesControllerProvider).autoStartNextPhase, isFalse);
+      await tester.tap(finder);
+      await tester.pump();
+      expect(container.read(deskPreferencesControllerProvider).autoStartNextPhase, isTrue);
+    });
+
     testWidgets('System clearance badge reports granted DND access from Android', (tester) async {
       const channel = MethodChannel('com.takt.desk/focus_lock');
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {

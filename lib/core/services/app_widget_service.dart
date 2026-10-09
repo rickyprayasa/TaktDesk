@@ -78,6 +78,10 @@ final appWidgetSyncProvider = Provider.autoDispose<void>((ref) {
         if (!running) timer.start();
       case 'stopTimer':
         timer.reset();
+      case 'nativePhaseFinished':
+        // The native alarm ended the phase while the Dart clock may have been asleep: advance now (and auto-start
+        // the next phase if that is on) instead of on the next resume.
+        timer.resyncWithNative();
     }
   });
   ref.onDispose(actionSub.cancel);

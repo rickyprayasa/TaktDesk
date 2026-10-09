@@ -19,6 +19,7 @@ class TimerBackgroundService {
     required int cycleCount,
     required String profileName,
     String alarmChimeId = 'braunBell',
+    bool autoStartNext = false,
   }) async {
     try {
       final res = await channel.invokeMethod<bool>('startService', {
@@ -28,6 +29,7 @@ class TimerBackgroundService {
         'cycleCount': cycleCount,
         'profileName': profileName,
         'alarmChimeId': alarmChimeId,
+        'autoStartNext': autoStartNext,
       });
       return res ?? false;
     } catch (_) {

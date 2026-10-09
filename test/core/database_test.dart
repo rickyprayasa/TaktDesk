@@ -183,6 +183,13 @@ void main() {
     expect(pref.soundVolume, 0.7);
   });
 
+  test('autoStartNextPhase defaults to off and persists (schema v10)', () async {
+    await db.updatePreferences(soundVolume: 0.6);
+    expect((await db.watchPreferences().first)!.autoStartNextPhase, isFalse);
+    await db.updatePreferences(autoStartNextPhase: true);
+    expect((await db.watchPreferences().first)!.autoStartNextPhase, isTrue);
+  });
+
   test('can persist and update selectedEdition and isProSimulated in preferences', () async {
     await db.into(db.deskPreferences).insert(
       const DeskPreferencesCompanion(),

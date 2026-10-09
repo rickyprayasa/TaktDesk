@@ -18,4 +18,7 @@ class DeskPreferences extends Table {
 
   /// Keep the screen on (dimmed when idle) while a timer runs (schema v9).
   BoolColumn get deskClockMode => boolean().withDefault(const Constant(false))();
+
+  /// Start the next phase (break after focus, focus after break) as soon as one ends (schema v10).
+  BoolColumn get autoStartNextPhase => boolean().withDefault(const Constant(false))();
 }

@@ -242,7 +242,8 @@ class ChronoDialController extends StateNotifier<TimerState> {
     _audioService?.playFoley(SoundEffect.dialClick);
   }
 
-  void start() {
+  /// [auto]: started by "auto-start next phase" at the end of a phase, so no button press sound (the chime plays).
+  void start({bool auto = false}) {
     if (state.setupStage.isActive) return;
     if (state.remainingSeconds <= 0) {
       state = state.copyWith(
@@ -255,8 +256,10 @@ class ChronoDialController extends StateNotifier<TimerState> {
       state = state.copyWith(isRunning: true);
       _sessionStartedAt ??= DateTime.now();
     }
-    HapticService.mechanicalPress();
-    _audioService?.playFoley(SoundEffect.springButton);
+    if (!auto) {
+      HapticService.mechanicalPress();
+      _audioService?.playFoley(SoundEffect.springButton);
+    }
     _focusLockController?.noteTimerActivity();
     _startClock();
     _backgroundService?.start(
@@ -266,8 +269,11 @@ class ChronoDialController extends StateNotifier<TimerState> {
       cycleCount: state.cycleCount,
       profileName: state.profile.label,
       alarmChimeId: _preferencesController?.state.alarmChimeId ?? 'braunBell',
+      autoStartNext: _autoStartNext,
     );
   }
+
+  bool get _autoStartNext => _preferencesController?.state.autoStartNextPhase ?? false;
 
   void pause() {
     _flushClock();
@@ -476,7 +482,13 @@ class ChronoDialController extends StateNotifier<TimerState> {
         isRunning: false,
       );
       _stopClock();
-      _backgroundService?.stop();
+      if (_autoStartNext) {
+        // Straight into the next phase. start() restarts the native countdown in place instead of stop + start, so
+        // the service never leaves the foreground (a backgrounded app may not bring it back).
+        start(auto: true);
+      } else {
+        _backgroundService?.stop();
+      }
       _syncMediaTelemetry(
         phase: nextPhase,
         remainingSeconds: nextMins * 60,

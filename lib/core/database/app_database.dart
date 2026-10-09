@@ -25,7 +25,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -52,6 +52,9 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 9) {
             await m.addColumn(deskPreferences, deskPreferences.deskClockMode);
+          }
+          if (from < 10) {
+            await m.addColumn(deskPreferences, deskPreferences.autoStartNextPhase);
           }
         },
       );
@@ -181,6 +184,7 @@ class AppDatabase extends _$AppDatabase {
     bool? isDarkMode,
     int? dailyGoalCycles,
     bool? deskClockMode,
+    bool? autoStartNextPhase,
   }) {
     return transaction(() async {
       final existing = await (select(deskPreferences)..limit(1)).getSingleOrNull();
@@ -199,6 +203,7 @@ class AppDatabase extends _$AppDatabase {
         isDarkMode: isDarkMode != null ? Value(isDarkMode) : const Value.absent(),
         dailyGoalCycles: dailyGoalCycles != null ? Value(dailyGoalCycles) : const Value.absent(),
         deskClockMode: deskClockMode != null ? Value(deskClockMode) : const Value.absent(),
+        autoStartNextPhase: autoStartNextPhase != null ? Value(autoStartNextPhase) : const Value.absent(),
       );
 
       if (existing == null) {
@@ -222,6 +227,7 @@ class AppDatabase extends _$AppDatabase {
     bool? isDarkMode,
     int? dailyGoalCycles,
     bool? deskClockMode,
+    bool? autoStartNextPhase,
   }) =>
       updateDeskPreferences(
         soundVolume: soundVolume,
@@ -236,6 +242,7 @@ class AppDatabase extends _$AppDatabase {
         isDarkMode: isDarkMode,
         dailyGoalCycles: dailyGoalCycles,
         deskClockMode: deskClockMode,
+        autoStartNextPhase: autoStartNextPhase,
       );
 }
 

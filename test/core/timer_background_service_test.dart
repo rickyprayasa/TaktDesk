@@ -102,6 +102,18 @@ void main() {
     expect(providedService, isA<TimerBackgroundService>());
   });
 
+  test('startService passes the auto-start flag', () async {
+    await service.start(
+      remainingSeconds: 300,
+      targetMinutes: 5,
+      phase: PomodoroPhase.shortBreak,
+      cycleCount: 1,
+      profileName: 'CLASSIC 25/5',
+      autoStartNext: true,
+    );
+    expect(log.single.arguments['autoStartNext'], isTrue);
+  });
+
   test('showPaused sends the paused session to the native card', () async {
     await service.showPaused(
       remainingSeconds: 754.0,

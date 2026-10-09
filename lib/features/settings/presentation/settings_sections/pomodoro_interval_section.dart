@@ -25,6 +25,7 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
     final customProfile = timerState.customProfile;
     final isRunning = timerState.isRunning;
     final prefsGoal = ref.watch(deskPreferencesControllerProvider.select((p) => p.dailyGoalCycles));
+    final autoStart = ref.watch(deskPreferencesControllerProvider.select((p) => p.autoStartNextPhase));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -244,6 +245,50 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
                 primaryTextColor: primaryTextColor,
                 secondaryTextColor: secondaryTextColor,
                 borderColor: borderColor,
+              ),
+              const SizedBox(height: 12),
+
+              // Auto-start: the break follows the focus (and the focus the break) without pressing START.
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'AUTO-START NEXT PHASE',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1.0,
+                            color: primaryTextColor,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'When a phase ends, the next one starts on its own after the chime.',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 9.0,
+                            color: secondaryTextColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Switch(
+                    key: const ValueKey('auto_start_next_phase_switch'),
+                    value: autoStart,
+                    activeThumbColor: TaktColors.filamentAmber,
+                    activeTrackColor: TaktColors.filamentAmber.withValues(alpha: 0.5),
+                    inactiveThumbColor: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
+                    inactiveTrackColor: isDark ? TaktColors.slateLight : TaktColors.paperBorder,
+                    onChanged: (val) =>
+                        ref.read(deskPreferencesControllerProvider.notifier).setAutoStartNextPhase(val),
+                  ),
+                ],
               ),
             ],
           ),

@@ -917,6 +917,16 @@ class $DeskPreferencesTable extends DeskPreferences
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'CHECK ("desk_clock_mode" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _autoStartNextPhaseMeta =
+      const VerificationMeta('autoStartNextPhase');
+  @override
+  late final GeneratedColumn<bool> autoStartNextPhase = GeneratedColumn<bool>(
+      'auto_start_next_phase', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("auto_start_next_phase" IN (0, 1))'),
+      defaultValue: const Constant(false));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -931,7 +941,8 @@ class $DeskPreferencesTable extends DeskPreferences
         autoUnlockMonastic,
         isDarkMode,
         dailyGoalCycles,
-        deskClockMode
+        deskClockMode,
+        autoStartNextPhase
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1019,6 +1030,12 @@ class $DeskPreferencesTable extends DeskPreferences
           deskClockMode.isAcceptableOrUnknown(
               data['desk_clock_mode']!, _deskClockModeMeta));
     }
+    if (data.containsKey('auto_start_next_phase')) {
+      context.handle(
+          _autoStartNextPhaseMeta,
+          autoStartNextPhase.isAcceptableOrUnknown(
+              data['auto_start_next_phase']!, _autoStartNextPhaseMeta));
+    }
     return context;
   }
 
@@ -1055,6 +1072,8 @@ class $DeskPreferencesTable extends DeskPreferences
           .read(DriftSqlType.int, data['${effectivePrefix}daily_goal_cycles'])!,
       deskClockMode: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}desk_clock_mode'])!,
+      autoStartNextPhase: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}auto_start_next_phase'])!,
     );
   }
 
@@ -1082,6 +1101,9 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
 
   /// Keep the screen on (dimmed when idle) while a timer runs (schema v9).
   final bool deskClockMode;
+
+  /// Start the next phase (break after focus, focus after break) as soon as one ends (schema v10).
+  final bool autoStartNextPhase;
   const DeskPreference(
       {required this.id,
       required this.soundVolume,
@@ -1095,7 +1117,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       required this.autoUnlockMonastic,
       required this.isDarkMode,
       required this.dailyGoalCycles,
-      required this.deskClockMode});
+      required this.deskClockMode,
+      required this.autoStartNextPhase});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1112,6 +1135,7 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
     map['is_dark_mode'] = Variable<bool>(isDarkMode);
     map['daily_goal_cycles'] = Variable<int>(dailyGoalCycles);
     map['desk_clock_mode'] = Variable<bool>(deskClockMode);
+    map['auto_start_next_phase'] = Variable<bool>(autoStartNextPhase);
     return map;
   }
 
@@ -1130,6 +1154,7 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       isDarkMode: Value(isDarkMode),
       dailyGoalCycles: Value(dailyGoalCycles),
       deskClockMode: Value(deskClockMode),
+      autoStartNextPhase: Value(autoStartNextPhase),
     );
   }
 
@@ -1151,6 +1176,7 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       isDarkMode: serializer.fromJson<bool>(json['isDarkMode']),
       dailyGoalCycles: serializer.fromJson<int>(json['dailyGoalCycles']),
       deskClockMode: serializer.fromJson<bool>(json['deskClockMode']),
+      autoStartNextPhase: serializer.fromJson<bool>(json['autoStartNextPhase']),
     );
   }
   @override
@@ -1171,6 +1197,7 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       'isDarkMode': serializer.toJson<bool>(isDarkMode),
       'dailyGoalCycles': serializer.toJson<int>(dailyGoalCycles),
       'deskClockMode': serializer.toJson<bool>(deskClockMode),
+      'autoStartNextPhase': serializer.toJson<bool>(autoStartNextPhase),
     };
   }
 
@@ -1187,7 +1214,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           bool? autoUnlockMonastic,
           bool? isDarkMode,
           int? dailyGoalCycles,
-          bool? deskClockMode}) =>
+          bool? deskClockMode,
+          bool? autoStartNextPhase}) =>
       DeskPreference(
         id: id ?? this.id,
         soundVolume: soundVolume ?? this.soundVolume,
@@ -1203,6 +1231,7 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
         isDarkMode: isDarkMode ?? this.isDarkMode,
         dailyGoalCycles: dailyGoalCycles ?? this.dailyGoalCycles,
         deskClockMode: deskClockMode ?? this.deskClockMode,
+        autoStartNextPhase: autoStartNextPhase ?? this.autoStartNextPhase,
       );
   DeskPreference copyWithCompanion(DeskPreferencesCompanion data) {
     return DeskPreference(
@@ -1241,6 +1270,9 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       deskClockMode: data.deskClockMode.present
           ? data.deskClockMode.value
           : this.deskClockMode,
+      autoStartNextPhase: data.autoStartNextPhase.present
+          ? data.autoStartNextPhase.value
+          : this.autoStartNextPhase,
     );
   }
 
@@ -1259,7 +1291,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           ..write('autoUnlockMonastic: $autoUnlockMonastic, ')
           ..write('isDarkMode: $isDarkMode, ')
           ..write('dailyGoalCycles: $dailyGoalCycles, ')
-          ..write('deskClockMode: $deskClockMode')
+          ..write('deskClockMode: $deskClockMode, ')
+          ..write('autoStartNextPhase: $autoStartNextPhase')
           ..write(')'))
         .toString();
   }
@@ -1278,7 +1311,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       autoUnlockMonastic,
       isDarkMode,
       dailyGoalCycles,
-      deskClockMode);
+      deskClockMode,
+      autoStartNextPhase);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1295,7 +1329,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           other.autoUnlockMonastic == this.autoUnlockMonastic &&
           other.isDarkMode == this.isDarkMode &&
           other.dailyGoalCycles == this.dailyGoalCycles &&
-          other.deskClockMode == this.deskClockMode);
+          other.deskClockMode == this.deskClockMode &&
+          other.autoStartNextPhase == this.autoStartNextPhase);
 }
 
 class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
@@ -1312,6 +1347,7 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
   final Value<bool> isDarkMode;
   final Value<int> dailyGoalCycles;
   final Value<bool> deskClockMode;
+  final Value<bool> autoStartNextPhase;
   const DeskPreferencesCompanion({
     this.id = const Value.absent(),
     this.soundVolume = const Value.absent(),
@@ -1326,6 +1362,7 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     this.isDarkMode = const Value.absent(),
     this.dailyGoalCycles = const Value.absent(),
     this.deskClockMode = const Value.absent(),
+    this.autoStartNextPhase = const Value.absent(),
   });
   DeskPreferencesCompanion.insert({
     this.id = const Value.absent(),
@@ -1341,6 +1378,7 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     this.isDarkMode = const Value.absent(),
     this.dailyGoalCycles = const Value.absent(),
     this.deskClockMode = const Value.absent(),
+    this.autoStartNextPhase = const Value.absent(),
   });
   static Insertable<DeskPreference> custom({
     Expression<int>? id,
@@ -1356,6 +1394,7 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     Expression<bool>? isDarkMode,
     Expression<int>? dailyGoalCycles,
     Expression<bool>? deskClockMode,
+    Expression<bool>? autoStartNextPhase,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1373,6 +1412,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       if (isDarkMode != null) 'is_dark_mode': isDarkMode,
       if (dailyGoalCycles != null) 'daily_goal_cycles': dailyGoalCycles,
       if (deskClockMode != null) 'desk_clock_mode': deskClockMode,
+      if (autoStartNextPhase != null)
+        'auto_start_next_phase': autoStartNextPhase,
     });
   }
 
@@ -1389,7 +1430,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       Value<bool>? autoUnlockMonastic,
       Value<bool>? isDarkMode,
       Value<int>? dailyGoalCycles,
-      Value<bool>? deskClockMode}) {
+      Value<bool>? deskClockMode,
+      Value<bool>? autoStartNextPhase}) {
     return DeskPreferencesCompanion(
       id: id ?? this.id,
       soundVolume: soundVolume ?? this.soundVolume,
@@ -1405,6 +1447,7 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       isDarkMode: isDarkMode ?? this.isDarkMode,
       dailyGoalCycles: dailyGoalCycles ?? this.dailyGoalCycles,
       deskClockMode: deskClockMode ?? this.deskClockMode,
+      autoStartNextPhase: autoStartNextPhase ?? this.autoStartNextPhase,
     );
   }
 
@@ -1451,6 +1494,9 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     if (deskClockMode.present) {
       map['desk_clock_mode'] = Variable<bool>(deskClockMode.value);
     }
+    if (autoStartNextPhase.present) {
+      map['auto_start_next_phase'] = Variable<bool>(autoStartNextPhase.value);
+    }
     return map;
   }
 
@@ -1469,7 +1515,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
           ..write('autoUnlockMonastic: $autoUnlockMonastic, ')
           ..write('isDarkMode: $isDarkMode, ')
           ..write('dailyGoalCycles: $dailyGoalCycles, ')
-          ..write('deskClockMode: $deskClockMode')
+          ..write('deskClockMode: $deskClockMode, ')
+          ..write('autoStartNextPhase: $autoStartNextPhase')
           ..write(')'))
         .toString();
   }
@@ -1903,6 +1950,7 @@ typedef $$DeskPreferencesTableCreateCompanionBuilder = DeskPreferencesCompanion
   Value<bool> isDarkMode,
   Value<int> dailyGoalCycles,
   Value<bool> deskClockMode,
+  Value<bool> autoStartNextPhase,
 });
 typedef $$DeskPreferencesTableUpdateCompanionBuilder = DeskPreferencesCompanion
     Function({
@@ -1919,6 +1967,7 @@ typedef $$DeskPreferencesTableUpdateCompanionBuilder = DeskPreferencesCompanion
   Value<bool> isDarkMode,
   Value<int> dailyGoalCycles,
   Value<bool> deskClockMode,
+  Value<bool> autoStartNextPhase,
 });
 
 class $$DeskPreferencesTableFilterComposer
@@ -1975,6 +2024,10 @@ class $$DeskPreferencesTableFilterComposer
 
   ColumnFilters<bool> get deskClockMode => $composableBuilder(
       column: $table.deskClockMode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get autoStartNextPhase => $composableBuilder(
+      column: $table.autoStartNextPhase,
+      builder: (column) => ColumnFilters(column));
 }
 
 class $$DeskPreferencesTableOrderingComposer
@@ -2034,6 +2087,10 @@ class $$DeskPreferencesTableOrderingComposer
   ColumnOrderings<bool> get deskClockMode => $composableBuilder(
       column: $table.deskClockMode,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get autoStartNextPhase => $composableBuilder(
+      column: $table.autoStartNextPhase,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$DeskPreferencesTableAnnotationComposer
@@ -2083,6 +2140,9 @@ class $$DeskPreferencesTableAnnotationComposer
 
   GeneratedColumn<bool> get deskClockMode => $composableBuilder(
       column: $table.deskClockMode, builder: (column) => column);
+
+  GeneratedColumn<bool> get autoStartNextPhase => $composableBuilder(
+      column: $table.autoStartNextPhase, builder: (column) => column);
 }
 
 class $$DeskPreferencesTableTableManager extends RootTableManager<
@@ -2125,6 +2185,7 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             Value<bool> isDarkMode = const Value.absent(),
             Value<int> dailyGoalCycles = const Value.absent(),
             Value<bool> deskClockMode = const Value.absent(),
+            Value<bool> autoStartNextPhase = const Value.absent(),
           }) =>
               DeskPreferencesCompanion(
             id: id,
@@ -2140,6 +2201,7 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             isDarkMode: isDarkMode,
             dailyGoalCycles: dailyGoalCycles,
             deskClockMode: deskClockMode,
+            autoStartNextPhase: autoStartNextPhase,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -2155,6 +2217,7 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             Value<bool> isDarkMode = const Value.absent(),
             Value<int> dailyGoalCycles = const Value.absent(),
             Value<bool> deskClockMode = const Value.absent(),
+            Value<bool> autoStartNextPhase = const Value.absent(),
           }) =>
               DeskPreferencesCompanion.insert(
             id: id,
@@ -2170,6 +2233,7 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             isDarkMode: isDarkMode,
             dailyGoalCycles: dailyGoalCycles,
             deskClockMode: deskClockMode,
+            autoStartNextPhase: autoStartNextPhase,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (
