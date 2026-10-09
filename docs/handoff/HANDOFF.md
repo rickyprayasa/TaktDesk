@@ -28,6 +28,42 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-09 (g) — Group C: Live Update on the lock screen, paused card, desk clock mode  (status: committed `916028d`, `9920ef5`; analyze 0, tests green; NOT built; needs a device check, ideally an Android 16 phone)
+
+Review (d) section C, options 1 and 2. Kotlin compiles; `flutter analyze` 0; full `flutter test -j 1` green (473 passed,
+1 skipped). No APK/AAB built. No dependency bump: compileSdk is already 36.
+- **C1 Live Update** (`TimerNotifications.kt`, `TimerForegroundService.kt`, manifest): the running countdown requests
+  promotion with the extra `android.requestPromotedOngoing` (what NotificationCompat 1.17's `setRequestPromotedOngoing`
+  writes; the SDK constant is only public from 36.1) + `POST_PROMOTED_NOTIFICATIONS` (normal permission, no prompt).
+  It already met the rules (ongoing, title, standard style, not colorized, channel DEFAULT, no custom view), so on
+  Android 16 it shows as a status-bar chip with the countdown and an expanded card on the lock screen / AOD. No
+  `setShortCriticalText` on purpose: it would replace the live chronometer in the chip. The user can switch Live
+  Updates off per app; then it is the normal notification. Older Android: unchanged.
+- **Buttons**: running = PAUSE / STOP, paused card = RESUME / STOP (`WidgetActionReceiver.ACTION_NOTIF_*`). App alive →
+  forwarded to Flutter as `pauseTimer` / `resumeTimer` / `stopTimer` (`appWidgetSyncProvider` routes them to
+  pause/start/reset). App gone → the service pauses natively (`ACTION_PAUSE`, remaining from the boot-clock deadline),
+  RESUME restarts it from the extras on the button, STOP stops it.
+- **Paused card** (fixes A6 "nothing on the lock screen while paused"): `pausedTimerNotificationSyncProvider`
+  (watched by the desk) posts it whenever the timer is stopped part-way (`pausedCardOf`) and clears it on start, reset,
+  phase change and app start (a card from a session the app no longer knows). Not ongoing (swipeable), PUBLIC, id 1003.
+  `ACTION_STOP` does not touch it (Dart pause = stop service + card); `ACTION_START` clears it.
+- **C2 Desk clock mode**: setting "DESK CLOCK WHILE RUNNING" (System clearance card; Drift schema **v9**, column
+  `desk_clock_mode`, default off; `.g.dart` regenerated). `DeskClockHost` (wraps the desk route in
+  `takt_opening_screen.dart`): mode on + timer running → `FLAG_KEEP_SCREEN_ON`; 60 s without a touch → window brightness
+  0.04 + 40 % black veil, desk shifts 3 px every minute (9 positions) against burn-in; the first touch only wakes (veil
+  swallows it); app resume wakes too. Pause/finish/mode off → flag cleared, brightness back. `MainActivity` keeps
+  separate claims for lockdown and desk clock on the keep-screen-on flag (`applyKeepScreenOn`).
+- Not done: C3 DreamService (screen saver), C4 full-screen intent (Play restricts it). A settings shortcut to the
+  system "Live Updates" toggle (`canPostPromotedNotifications`) could come later.
+- Known, pre-existing: a session started natively while the app was closed (widget, or RESUME on a stale card) is not
+  adopted by Flutter when the app opens later (Flutter only re-syncs a session it started itself).
+- **Device checks**: Android 16 (Pixel / One UI 8): start focus → chip with countdown in the status bar, card on the lock
+  screen and AOD; PAUSE from the lock screen → paused card "PAUSED · mm:ss LEFT", app shows paused; RESUME → counts on
+  from the same time; STOP → card gone, app reset. Swipe the app away, then PAUSE / RESUME / STOP from the notification
+  still work. Android ≤15: same buttons, normal notification. Desk clock: on, start a timer, don't touch → dims after
+  1 min and moves slightly each minute, first tap only wakes; pause → screen times out normally; lockdown + desk clock
+  → releasing lockdown keeps the screen on while the timer still runs.
+
 ## 2026-10-09 (f) — Group B: battery / performance fixes  (status: committed `391a5b4`..`6a9721c`; analyze 0, tests green; NOT built; needs a device check)
 
 Fixes for review (d) section B. Kotlin compiles (`compileDebugKotlin --offline`); `flutter analyze` 0; full `flutter test -j 1`
@@ -94,7 +130,7 @@ green (461 passed, 1 skipped). No APK/AAB built.
   → real pause, correct preset; daily goal 6 → LEDs fill by share; Reduce motion on (Settings → Accessibility) → no
   entry/switch/roll animations.
 
-## 2026-10-09 (d) — App review: bugs, battery, lock screen / AOD plan  (status: review; group A fixed in (e), group B in (f), C/D open)
+## 2026-10-09 (d) — App review: bugs, battery, lock screen / AOD plan  (status: review; group A fixed in (e), group B in (f), group C (1, 2) in (g), D open)
 
 Read-only review (3 parallel code audits + spot checks by the agent). Verified items are marked (✓ checked in code).
 
