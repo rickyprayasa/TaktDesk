@@ -9,7 +9,6 @@ import '../../../../app/theme/takt_typography.dart';
 class AnimatedReceiptStrip extends StatefulWidget {
   final ReceiptTask task;
   final int index;
-  final double currentTearProgress;
   final ValueChanged<double> onTearUpdate;
   final VoidCallback onTorn;
   final VoidCallback onStampToggle;
@@ -18,7 +17,6 @@ class AnimatedReceiptStrip extends StatefulWidget {
     super.key,
     required this.task,
     required this.index,
-    required this.currentTearProgress,
     required this.onTearUpdate,
     required this.onTorn,
     required this.onStampToggle,
@@ -60,7 +58,21 @@ class _AnimatedReceiptStripState extends State<AnimatedReceiptStrip>
       ),
     );
 
-    _extrusionController.forward();
+  }
+
+  bool _extrusionStarted = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_extrusionStarted) return;
+    _extrusionStarted = true;
+    // Reduce motion: the slip is simply there, no slide-out from the printer.
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+      _extrusionController.value = 1.0;
+    } else {
+      _extrusionController.forward();
+    }
   }
 
   @override
@@ -125,11 +137,8 @@ class _AnimatedReceiptStripState extends State<AnimatedReceiptStrip>
                   ],
                 ),
                 child: CustomPaint(
-                  painter: ReceiptRunnerPainter(
-                    tearProgress: _localTearProgress > 0
-                        ? _localTearProgress
-                        : widget.currentTearProgress,
-                  ),
+                  // Only this strip's own drag: a shared progress made every slip show the tear line.
+                  painter: ReceiptRunnerPainter(tearProgress: _localTearProgress),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(12, 10, 12, 18),
                     child: Column(
