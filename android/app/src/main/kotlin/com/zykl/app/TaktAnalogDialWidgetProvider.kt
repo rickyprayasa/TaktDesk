@@ -181,10 +181,9 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
             canvas.drawText("ZYKL", center, center - innerRadius * 0.32f, brandTextPaint)
 
             // 5. Lower face telemetry (Digital readout or status)
+            // Minutes left (rounded up): the dial widget is redrawn once a minute, not every second.
             val subText = if (status == "FOCUS" || status == "BREAK") {
-                val mins = remainingSeconds / 60
-                val secs = remainingSeconds % 60
-                String.format(java.util.Locale.ROOT, "%02d:%02d", mins, secs)
+                "${(remainingSeconds + 59) / 60} MIN"
             } else {
                 "STANDBY"
             }

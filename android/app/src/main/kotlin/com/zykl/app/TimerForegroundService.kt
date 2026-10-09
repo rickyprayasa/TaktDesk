@@ -7,6 +7,8 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
+import android.content.IntentFilter
+import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.media.AudioAttributes
@@ -21,6 +23,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 
 class TimerForegroundService : Service() {
     companion object {
@@ -94,10 +97,19 @@ class TimerForegroundService : Service() {
     /** End-time (epoch ms) of the last session already completed; makes completion idempotent. */
     private var lastCompletedEndAt: Long = 0L
     private var ongoingNotification: Notification? = null
+    private var screenOnReceiver: BroadcastReceiver? = null
 
+    /**
+     * Keeps the home-screen widgets current while a phase runs. The Focus Strip shows a Chronometer that counts
+     * down by itself (KEY_END_ELAPSED), and the dial widget shows minutes, so this only runs on each minute
+     * boundary (it used to redraw a 320x320 dial bitmap and write prefs every second), plus once when the screen
+     * turns on, so a dial never shows a stale minute after the CPU slept.
+     */
     private fun startWidgetTick(targetEndTime: Long, targetMinutes: Int, phase: String) {
         stopWidgetTick()
         val status = if (phase == "shortBreak" || phase == "longBreak") "BREAK" else "FOCUS"
+        val endElapsed = SystemClock.elapsedRealtime() + (targetEndTime - System.currentTimeMillis()).coerceAtLeast(0)
+        var firstRun = true
         val tickRunnable = object : Runnable {
             override fun run() {
                 val now = System.currentTimeMillis()
@@ -109,21 +121,36 @@ class TimerForegroundService : Service() {
                     .putString(TaktAppWidgetProvider.KEY_STATUS, status)
                     .putInt(TaktAppWidgetProvider.KEY_REMAINING_SECONDS, remainingSecs)
                     .putInt(TaktAppWidgetProvider.KEY_TARGET_MINUTES, targetMinutes)
+                    .putLong(TaktAppWidgetProvider.KEY_END_ELAPSED, endElapsed)
                     .apply()
 
                 try {
                     TaktAnalogDialWidgetProvider.updateAllWidgets(this@TimerForegroundService)
-                    TaktFocusStripWidgetProvider.updateAllWidgets(this@TimerForegroundService)
-                    TaktAppWidgetProvider.updateAllWidgets(this@TimerForegroundService)
+                    if (firstRun) {
+                        // Status change only: the strip's Chronometer ticks by itself, the console has no countdown.
+                        TaktFocusStripWidgetProvider.updateAllWidgets(this@TimerForegroundService)
+                        TaktAppWidgetProvider.updateAllWidgets(this@TimerForegroundService)
+                    }
                 } catch (_: Throwable) {}
+                firstRun = false
 
                 if (remainingSecs > 0) {
-                    handler.postDelayed(this, 1000L)
+                    // Next minute boundary of the remaining time (+20 ms so the minute has flipped).
+                    val toNextMinute = (remainingMillis % 60_000L).let { if (it == 0L) 60_000L else it }
+                    handler.postDelayed(this, toNextMinute + 20L)
                 }
             }
         }
         widgetTickRunnable = tickRunnable
         handler.post(tickRunnable)
+        screenOnReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                handler.removeCallbacks(tickRunnable)
+                handler.post(tickRunnable)
+            }
+        }.also {
+            ContextCompat.registerReceiver(this, it, IntentFilter(Intent.ACTION_SCREEN_ON), ContextCompat.RECEIVER_NOT_EXPORTED)
+        }
     }
 
     private fun stopWidgetTick() {
@@ -131,6 +158,14 @@ class TimerForegroundService : Service() {
             handler.removeCallbacks(it)
             widgetTickRunnable = null
         }
+        screenOnReceiver?.let {
+            try { unregisterReceiver(it) } catch (_: Exception) {}
+            screenOnReceiver = null
+        }
+        // Not running any more: the strip's Chronometer must not keep counting.
+        getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE).edit()
+            .putLong(TaktAppWidgetProvider.KEY_END_ELAPSED, 0L)
+            .apply()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

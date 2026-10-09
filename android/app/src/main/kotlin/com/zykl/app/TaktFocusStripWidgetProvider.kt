@@ -6,6 +6,8 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.SystemClock
+import android.view.View
 import android.widget.RemoteViews
 
 class TaktFocusStripWidgetProvider : AppWidgetProvider() {
@@ -36,16 +38,25 @@ class TaktFocusStripWidgetProvider : AppWidgetProvider() {
 
             val views = RemoteViews(context.packageName, R.layout.takt_appwidget_focus_strip_4x1)
 
-            // Format status & time
-            val statusText = if (status == "FOCUS" || status == "BREAK") {
-                val mins = remainingSeconds / 60
-                val secs = remainingSeconds % 60
-                val timeFormatted = String.format("%02d:%02d", mins, secs)
-                "$status // $timeFormatted"
+            // Running: "FOCUS // " + a Chronometer the launcher counts down itself (no per-second updates).
+            val endElapsed = prefs.getLong(TaktAppWidgetProvider.KEY_END_ELAPSED, 0L)
+            val running = (status == "FOCUS" || status == "BREAK")
+            if (running && endElapsed > SystemClock.elapsedRealtime()) {
+                views.setTextViewText(R.id.widget_status_text, "$status // ")
+                views.setChronometer(R.id.widget_status_chrono, endElapsed, null, true)
+                views.setChronometerCountDown(R.id.widget_status_chrono, true)
+                views.setViewVisibility(R.id.widget_status_chrono, View.VISIBLE)
             } else {
-                "STANDBY // READY"
+                views.setChronometer(R.id.widget_status_chrono, SystemClock.elapsedRealtime(), null, false)
+                views.setViewVisibility(R.id.widget_status_chrono, View.GONE)
+                val statusText = if (running) {
+                    // No end time known (e.g. the app pushed the state): fall back to the static mm:ss.
+                    String.format("%s // %02d:%02d", status, remainingSeconds / 60, remainingSeconds % 60)
+                } else {
+                    "STANDBY // READY"
+                }
+                views.setTextViewText(R.id.widget_status_text, statusText)
             }
-            views.setTextViewText(R.id.widget_status_text, statusText)
             views.setTextViewText(R.id.widget_cycles_text, "$cycles/$target CYC")
 
             // Action button text

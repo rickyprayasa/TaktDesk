@@ -34,6 +34,9 @@ class TaktAppWidgetProvider : AppWidgetProvider() {
         const val KEY_PROFILE_NAME = "profile_name"
         const val KEY_ALARM_CHIME_ID = "alarm_chime_id"
         const val KEY_CYCLE_COUNT = "cycle_count"
+        /** SystemClock.elapsedRealtime() at which the running phase ends (0 = not running). Drives the Focus Strip
+         *  Chronometer, which counts down by itself, so widgets need no per-second updates. */
+        const val KEY_END_ELAPSED = "end_elapsed_realtime"
 
         /** How many of the 4 LEDs to light: today's cycles as a share of the daily goal (goal 4 = one LED each). */
         fun litLeds(cycles: Int, target: Int): Int =
