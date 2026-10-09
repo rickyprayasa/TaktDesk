@@ -9,13 +9,14 @@ class IsometricDeskLayout extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final parallax = ref.watch(parallaxProvider);
+    // Tilt only: light changes must not rebuild the desk transform.
+    final tilt = ref.watch(parallaxProvider.select((p) => (p.tiltX, p.tiltY)));
 
     return Transform(
       transform: Matrix4.identity()
         ..setEntry(3, 2, 0.001) // perspective
-        ..rotateX(-parallax.tiltY * 0.25)
-        ..rotateY(parallax.tiltX * 0.25),
+        ..rotateX(-tilt.$2 * 0.25)
+        ..rotateY(tilt.$1 * 0.25),
       alignment: Alignment.center,
       child: child,
     );
