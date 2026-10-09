@@ -28,6 +28,40 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-09 (f) — Group B: battery / performance fixes  (status: committed `391a5b4`..`6a9721c`; analyze 0, tests green; NOT built; needs a device check)
+
+Fixes for review (d) section B. Kotlin compiles (`compileDebugKotlin --offline`); `flutter analyze` 0; full `flutter test -j 1`
+green (461 passed, 1 skipped). No APK/AAB built.
+- **B1 dial needle** (`chrono_dial_widget.dart`): the per-frame Ticker is gone; the needle notifier follows the
+  controller's `remainingSeconds` (`ref.listen` + select), i.e. it repaints with the 250 ms clock instead of every frame.
+- **B2 sensors** (`desk_canvas_screen.dart`, `parallax_controller.dart`): device gyro/accelerometer subscriptions are
+  CANCELLED on `onHide` (pausing a sensors_plus stream keeps the hardware sensor on) and re-listened on `onShow`;
+  injected test streams keep pause/resume. Touch/hover parallax respects the paused/opt-out state. Smoothing steps below
+  `stepDeadband = 0.00008` no longer emit state (0.0002 broke the clamp convergence test).
+- **B3 rebuilds**: dial tilt moved into `_DialTilt` / `_DialTiltShadow` (select on tilt only); `MaterialChassisBox`
+  selects tilt only when `enablePerspective`, and light only when texture/glass rim is shown, quantised to 1/50
+  (`_quantize`; the GlassRimPainter test uses `closeTo(.., 0.01)`); `IsometricDeskLayout` selects tilt only.
+- **B4 vinyl** (`vinyl_deck_painter.dart`, `vinyl_player_widget.dart`): `VinylDeckLayer { all, base, disc, arm }`. The
+  widget stacks base (static), disc (painted once in a RepaintBoundary, spun by `Transform.rotate` keyed
+  `vinyl_disc_spin`, pivot `Alignment(-0.12, 0)`) and arm (repaints only while it moves). `layer: all` stays for stills.
+  Tests read the spin angle from the Transform matrix.
+- **B5 media telemetry**: the media notification shows "N MIN" (minutes left, rounded up) and `_syncMediaTelemetry` only
+  pushes when phase, cycle or the minute changes (was every second). NOT done: stopping the Dart 250 ms clock while
+  backgrounded (too risky for the phase-end logic; the foreground service owns the real deadline anyway).
+- **B6 widgets** (`TimerForegroundService.kt`, widget providers, `takt_appwidget_focus_strip_4x1.xml`): the widget tick
+  runs on minute boundaries of the remaining time (+20 ms) instead of every second, plus once on `SCREEN_ON` (receiver
+  registered only while ticking). New pref `KEY_END_ELAPSED` (elapsedRealtime of the phase end, 0 when stopped, cleared in
+  `stopWidgetTick`). Focus Strip: "FOCUS // " + a count-down `Chronometer` (`widget_status_chrono`) the launcher ticks by
+  itself; falls back to static mm:ss if no end time is known (state pushed by the app). Analog dial: "N MIN", redrawn per
+  minute. Console widget: only on start/stop (it has no countdown).
+- **B7** plaques decode at display size (`cacheWidth = size × devicePixelRatio`; rsquare_logo 2000 px, zykl_icon 512 px).
+  Tests unwrap `ResizeImage` via `_assetName`.
+- **B8** (5 s opening) left as is: product decision.
+- **Device checks**: run a 25-min session: dial needle moves smoothly, tilt still works, no jank; leave the app (home) →
+  sensors stop (battery stats / no parallax drift on return); vinyl spins smoothly, arm drops/lifts; Focus Strip widget
+  counts down every second, Analog dial widget shows "25 MIN" → "24 MIN" at the right time, screen off/on refreshes it;
+  stop/finish → strip shows "STANDBY // READY" and the Chronometer stops; media notification shows "N MIN".
+
 ## 2026-10-09 (e) — Bug group A fixed (alarm, widgets, tear line, reduce motion)  (status: code done, analyze 0, tests green; NOT built; needs a device check)
 
 Fixes for review (d) section A. Kotlin compiles (`compileDebugKotlin --offline`); `flutter analyze` 0; full `flutter test -j 1`
@@ -60,7 +94,7 @@ green (461 passed, 1 skipped). No APK/AAB built.
   → real pause, correct preset; daily goal 6 → LEDs fill by share; Reduce motion on (Settings → Accessibility) → no
   entry/switch/roll animations.
 
-## 2026-10-09 (d) — App review: bugs, battery, lock screen / AOD plan  (status: review; group A fixed in (e), B/C/D open)
+## 2026-10-09 (d) — App review: bugs, battery, lock screen / AOD plan  (status: review; group A fixed in (e), group B in (f), C/D open)
 
 Read-only review (3 parallel code audits + spot checks by the agent). Verified items are marked (✓ checked in code).
 
