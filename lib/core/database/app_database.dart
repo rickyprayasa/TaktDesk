@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
@@ -24,8 +25,18 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
   AppDatabase.forTesting(super.e);
 
+  /// Fires after focus time was added to a slip (a plain stream: drift's watch() leaves timers in widget tests).
+  final StreamController<void> _taskFocusChanges = StreamController<void>.broadcast();
+  Stream<void> get taskFocusChanges => _taskFocusChanges.stream;
+
   @override
-  int get schemaVersion => 10;
+  Future<void> close() async {
+    await _taskFocusChanges.close();
+    return super.close();
+  }
+
+  @override
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -56,6 +67,9 @@ class AppDatabase extends _$AppDatabase {
           if (from < 10) {
             await m.addColumn(deskPreferences, deskPreferences.autoStartNextPhase);
           }
+          if (from < 11) {
+            await m.addColumn(tasks, tasks.focusSeconds);
+          }
         },
       );
 
@@ -84,6 +98,36 @@ class AppDatabase extends _$AppDatabase {
         sortOrder: Value(activeCount.length),
       ));
     });
+  }
+
+  /// The slip a focus session works on: the top open (not stamped) slip in the dispenser, null when there is none.
+  Future<int?> currentFocusTaskId() async {
+    final row = await (select(tasks)
+          ..where((t) => t.isArchived.equals(false) & t.isCompleted.equals(false))
+          ..orderBy([
+            (t) => OrderingTerm(expression: t.sortOrder),
+            (t) => OrderingTerm(expression: t.id),
+          ])
+          ..limit(1))
+        .getSingleOrNull();
+    return row?.id;
+  }
+
+  /// Adds focused time to a slip (also after it was stamped or torn off during the session).
+  Future<void> addTaskFocus(int id, int seconds) async {
+    if (seconds <= 0) return;
+    await customUpdate(
+      'UPDATE tasks SET focus_seconds = focus_seconds + ? WHERE id = ?',
+      variables: [Variable.withInt(seconds), Variable.withInt(id)],
+      updates: {tasks},
+    );
+    if (!_taskFocusChanges.isClosed) _taskFocusChanges.add(null);
+  }
+
+  /// Focus seconds per slip id (active and archived), for the dispenser and the archive drawer.
+  Future<Map<int, int>> taskFocusSeconds() async {
+    final rows = await (selectOnly(tasks)..addColumns([tasks.id, tasks.focusSeconds])).get();
+    return {for (final r in rows) r.read(tasks.id)!: r.read(tasks.focusSeconds) ?? 0};
   }
 
   Future<void> toggleTaskCompleted(int id, bool completed) {

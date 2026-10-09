@@ -67,6 +67,8 @@ class ReceiptRunnerWidget extends ConsumerWidget {
               return AnimatedReceiptStrip(
                 task: task,
                 index: index,
+                isCurrent: task.id == state.currentTaskId,
+                focusMinutes: state.focusMinutesOf(task.id),
                 onTearUpdate: (p) => controller.updateTearProgress(p),
                 onTorn: () => controller.tearTask(task.id),
                 onStampToggle: () => controller.stampDone(task.id),

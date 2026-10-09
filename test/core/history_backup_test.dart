@@ -40,6 +40,7 @@ void main() {
           isArchived: const Value(true),
           createdAt: Value(start),
           completedAt: Value(start.add(const Duration(minutes: 40))),
+          focusSeconds: const Value(3000),
         ));
     await db.into(db.tasks).insert(TasksCompanion.insert(title: 'Reply to "Ana"', createdAt: Value(start)));
   }
@@ -77,6 +78,7 @@ void main() {
     final tasks = await target.select(target.tasks).get();
     expect(tasks.map((t) => t.title), containsAll(['Draft, chapter 3', 'Reply to "Ana"']));
     expect(tasks.firstWhere((t) => t.isArchived).completedAt, start.add(const Duration(minutes: 40)));
+    expect(tasks.firstWhere((t) => t.isArchived).focusSeconds, 3000);
   });
 
   test('restoring the same backup twice adds nothing the second time', () async {

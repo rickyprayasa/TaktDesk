@@ -253,7 +253,13 @@ class _ArchiveDrawerWidgetState extends ConsumerState<ArchiveDrawerWidget> {
                                   separatorBuilder: (_, __) => const SizedBox(height: 4),
                                   itemBuilder: (context, index) {
                                     final task = chunk[index];
-                                    return _buildArchivedTaskItem(context, task, controller, themeState);
+                                    return _buildArchivedTaskItem(
+                                      context,
+                                      task,
+                                      controller,
+                                      themeState,
+                                      ref.read(receiptRunnerProvider).focusMinutesOf(task.id),
+                                    );
                                   },
                                 ),
                               ),
@@ -317,6 +323,7 @@ class _ArchiveDrawerWidgetState extends ConsumerState<ArchiveDrawerWidget> {
     ReceiptTask task,
     ReceiptRunnerController controller,
     ChassisThemeState themeState,
+    int focusMinutes,
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
@@ -351,6 +358,18 @@ class _ArchiveDrawerWidgetState extends ConsumerState<ArchiveDrawerWidget> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          if (focusMinutes > 0) ...[
+            const SizedBox(width: 6),
+            Text(
+              '$focusMinutes MIN',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 8,
+                fontWeight: FontWeight.w600,
+                color: themeState.chassisMutedTextColor,
+              ),
+            ),
+          ],
           const SizedBox(width: 6),
           // Reprint button
           InkWell(

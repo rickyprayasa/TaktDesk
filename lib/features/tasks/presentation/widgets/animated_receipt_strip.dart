@@ -13,10 +13,18 @@ class AnimatedReceiptStrip extends StatefulWidget {
   final VoidCallback onTorn;
   final VoidCallback onStampToggle;
 
+  /// The top open slip: the next focus session counts for it ("NOW").
+  final bool isCurrent;
+
+  /// Minutes focused on this slip so far.
+  final int focusMinutes;
+
   const AnimatedReceiptStrip({
     super.key,
     required this.task,
     required this.index,
+    this.isCurrent = false,
+    this.focusMinutes = 0,
     required this.onTearUpdate,
     required this.onTorn,
     required this.onStampToggle,
@@ -150,7 +158,9 @@ class _AnimatedReceiptStripState extends State<AnimatedReceiptStrip>
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '#${(widget.index + 1).toString().padLeft(2, '0')} // ZYKL',
+                              '#${(widget.index + 1).toString().padLeft(2, '0')} // '
+                              '${widget.isCurrent ? 'NOW' : 'ZYKL'}'
+                              '${widget.focusMinutes > 0 ? ' · ${widget.focusMinutes} MIN' : ''}',
                               style: TextStyle(
                                 fontFamily: 'monospace',
                                 fontSize: 8.5,

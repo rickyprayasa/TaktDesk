@@ -16,24 +16,36 @@ class ReceiptRunnerState {
   final double tearDragProgress; // 0.0 to 1.0
   final bool isArchiveOpen;
 
+  /// Focus seconds per slip id (active and archived), kept current from the database.
+  final Map<String, int> focusSecondsById;
+
   const ReceiptRunnerState({
     this.tasks = const [],
     this.archivedTasks = const [],
     this.tearDragProgress = 0.0,
     this.isArchiveOpen = false,
+    this.focusSecondsById = const {},
   });
+
+  /// Whole minutes focused on a slip (rounded), 0 when none.
+  int focusMinutesOf(String id) => ((focusSecondsById[id] ?? 0) / 60).round();
+
+  /// The slip the next focus session counts for: the top open (not stamped) slip.
+  String? get currentTaskId => tasks.where((t) => !t.isDone).firstOrNull?.id;
 
   ReceiptRunnerState copyWith({
     List<ReceiptTask>? tasks,
     List<ReceiptTask>? archivedTasks,
     double? tearDragProgress,
     bool? isArchiveOpen,
+    Map<String, int>? focusSecondsById,
   }) {
     return ReceiptRunnerState(
       tasks: tasks ?? this.tasks,
       archivedTasks: archivedTasks ?? this.archivedTasks,
       tearDragProgress: tearDragProgress ?? this.tearDragProgress,
       isArchiveOpen: isArchiveOpen ?? this.isArchiveOpen,
+      focusSecondsById: focusSecondsById ?? this.focusSecondsById,
     );
   }
 }
@@ -42,12 +54,34 @@ class ReceiptRunnerController extends StateNotifier<ReceiptRunnerState> {
   final AudioService? _audioService;
   final AppDatabase? _database;
 
+  StreamSubscription<void>? _focusSubscription;
+
   ReceiptRunnerController([this._audioService, this._database])
       : super(const ReceiptRunnerState()) {
-    if (_database != null) {
+    final db = _database;
+    if (db != null) {
       loadFromDatabase();
       loadArchivedTasks();
+      // The timer adds focus time to slips; follow it so the minutes on the paper stay current.
+      refreshFocusTimes();
+      _focusSubscription = db.taskFocusChanges.listen((_) => refreshFocusTimes());
     }
+  }
+
+  Future<void> refreshFocusTimes() async {
+    final db = _database;
+    if (db == null) return;
+    try {
+      final byId = await db.taskFocusSeconds();
+      if (!mounted) return;
+      state = state.copyWith(focusSecondsById: {for (final e in byId.entries) '${e.key}': e.value});
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _focusSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> loadArchivedTasks() async {

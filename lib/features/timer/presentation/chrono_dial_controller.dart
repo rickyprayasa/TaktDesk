@@ -23,6 +23,9 @@ class ChronoDialController extends StateNotifier<TimerState> {
   final TimerBackgroundService? _backgroundService;
   DateTime? _sessionStartedAt;
 
+  /// The slip this focus session counts for (top open slip when it started); resolved from the database.
+  Future<int?>? _sessionTaskId;
+
   /// The countdown is driven here, not by the dial widget, so it keeps running
   /// while the dial is off screen (portrait TASKS/VINYL tabs, home screen
   /// widget). Wall-clock deltas also catch up after the app was suspended.
@@ -245,6 +248,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
   /// [auto]: started by "auto-start next phase" at the end of a phase, so no button press sound (the chime plays).
   void start({bool auto = false}) {
     if (state.setupStage.isActive) return;
+    final newSession = _sessionStartedAt == null || state.remainingSeconds <= 0;
     if (state.remainingSeconds <= 0) {
       state = state.copyWith(
         remainingSeconds: state.targetMinutes * 60.0,
@@ -255,6 +259,11 @@ class ChronoDialController extends StateNotifier<TimerState> {
     } else {
       state = state.copyWith(isRunning: true);
       _sessionStartedAt ??= DateTime.now();
+    }
+    if (newSession) {
+      _sessionTaskId = state.phase == PomodoroPhase.focus
+          ? _database?.currentFocusTaskId().catchError((Object _) => null)
+          : null;
     }
     if (!auto) {
       HapticService.mechanicalPress();
@@ -311,9 +320,12 @@ class ChronoDialController extends StateNotifier<TimerState> {
   void _discardSession() {
     final startedAt = _sessionStartedAt;
     _sessionStartedAt = null;
+    final taskId = _sessionTaskId;
+    _sessionTaskId = null;
     if (startedAt == null || state.phase != PomodoroPhase.focus || _database == null) return;
     final focusedSeconds = (state.targetMinutes * 60.0 - state.remainingSeconds).round();
     if (focusedSeconds < 60) return;
+    _creditTask(taskId, focusedSeconds);
     _database.recordTimerSession(
       targetMinutes: state.targetMinutes,
       elapsedSeconds: focusedSeconds,
@@ -322,6 +334,17 @@ class ChronoDialController extends StateNotifier<TimerState> {
     ).catchError((Object e) {
       debugPrint('ZYKL: failed to record abandoned session: $e');
       return -1;
+    });
+  }
+
+  /// Adds the focused time to the session's slip, if one was on top when it started.
+  void _creditTask(Future<int?>? taskId, int seconds) {
+    final db = _database;
+    if (taskId == null || db == null) return;
+    taskId.then((id) {
+      if (id != null) return db.addTaskFocus(id, seconds);
+    }).catchError((Object e) {
+      debugPrint('ZYKL: failed to add focus time to the slip: $e');
     });
   }
 
@@ -451,8 +474,10 @@ class ChronoDialController extends StateNotifier<TimerState> {
           debugPrint('ZYKL: failed to record focus session: $e');
           return -1;
         });
+        _creditTask(_sessionTaskId, elapsed);
       }
       _sessionStartedAt = null;
+      _sessionTaskId = null;
 
       final chimeId = _preferencesController?.state.alarmChimeId ?? 'braunBell';
       if (ringAlarm) {

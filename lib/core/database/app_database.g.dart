@@ -67,9 +67,25 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
   late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
       'completed_at', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _focusSecondsMeta =
+      const VerificationMeta('focusSeconds');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, title, isCompleted, isArchived, sortOrder, createdAt, completedAt];
+  late final GeneratedColumn<int> focusSeconds = GeneratedColumn<int>(
+      'focus_seconds', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        title,
+        isCompleted,
+        isArchived,
+        sortOrder,
+        createdAt,
+        completedAt,
+        focusSeconds
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -115,6 +131,12 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
           completedAt.isAcceptableOrUnknown(
               data['completed_at']!, _completedAtMeta));
     }
+    if (data.containsKey('focus_seconds')) {
+      context.handle(
+          _focusSecondsMeta,
+          focusSeconds.isAcceptableOrUnknown(
+              data['focus_seconds']!, _focusSecondsMeta));
+    }
     return context;
   }
 
@@ -138,6 +160,8 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       completedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}completed_at']),
+      focusSeconds: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}focus_seconds'])!,
     );
   }
 
@@ -155,6 +179,9 @@ class Task extends DataClass implements Insertable<Task> {
   final int sortOrder;
   final DateTime createdAt;
   final DateTime? completedAt;
+
+  /// Focus time spent on this slip: each focus session counts for the top open slip when it started (schema v11).
+  final int focusSeconds;
   const Task(
       {required this.id,
       required this.title,
@@ -162,7 +189,8 @@ class Task extends DataClass implements Insertable<Task> {
       required this.isArchived,
       required this.sortOrder,
       required this.createdAt,
-      this.completedAt});
+      this.completedAt,
+      required this.focusSeconds});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -175,6 +203,7 @@ class Task extends DataClass implements Insertable<Task> {
     if (!nullToAbsent || completedAt != null) {
       map['completed_at'] = Variable<DateTime>(completedAt);
     }
+    map['focus_seconds'] = Variable<int>(focusSeconds);
     return map;
   }
 
@@ -189,6 +218,7 @@ class Task extends DataClass implements Insertable<Task> {
       completedAt: completedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(completedAt),
+      focusSeconds: Value(focusSeconds),
     );
   }
 
@@ -203,6 +233,7 @@ class Task extends DataClass implements Insertable<Task> {
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
+      focusSeconds: serializer.fromJson<int>(json['focusSeconds']),
     );
   }
   @override
@@ -216,6 +247,7 @@ class Task extends DataClass implements Insertable<Task> {
       'sortOrder': serializer.toJson<int>(sortOrder),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'completedAt': serializer.toJson<DateTime?>(completedAt),
+      'focusSeconds': serializer.toJson<int>(focusSeconds),
     };
   }
 
@@ -226,7 +258,8 @@ class Task extends DataClass implements Insertable<Task> {
           bool? isArchived,
           int? sortOrder,
           DateTime? createdAt,
-          Value<DateTime?> completedAt = const Value.absent()}) =>
+          Value<DateTime?> completedAt = const Value.absent(),
+          int? focusSeconds}) =>
       Task(
         id: id ?? this.id,
         title: title ?? this.title,
@@ -235,6 +268,7 @@ class Task extends DataClass implements Insertable<Task> {
         sortOrder: sortOrder ?? this.sortOrder,
         createdAt: createdAt ?? this.createdAt,
         completedAt: completedAt.present ? completedAt.value : this.completedAt,
+        focusSeconds: focusSeconds ?? this.focusSeconds,
       );
   Task copyWithCompanion(TasksCompanion data) {
     return Task(
@@ -248,6 +282,9 @@ class Task extends DataClass implements Insertable<Task> {
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       completedAt:
           data.completedAt.present ? data.completedAt.value : this.completedAt,
+      focusSeconds: data.focusSeconds.present
+          ? data.focusSeconds.value
+          : this.focusSeconds,
     );
   }
 
@@ -260,14 +297,15 @@ class Task extends DataClass implements Insertable<Task> {
           ..write('isArchived: $isArchived, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
-          ..write('completedAt: $completedAt')
+          ..write('completedAt: $completedAt, ')
+          ..write('focusSeconds: $focusSeconds')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, title, isCompleted, isArchived, sortOrder, createdAt, completedAt);
+  int get hashCode => Object.hash(id, title, isCompleted, isArchived, sortOrder,
+      createdAt, completedAt, focusSeconds);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -278,7 +316,8 @@ class Task extends DataClass implements Insertable<Task> {
           other.isArchived == this.isArchived &&
           other.sortOrder == this.sortOrder &&
           other.createdAt == this.createdAt &&
-          other.completedAt == this.completedAt);
+          other.completedAt == this.completedAt &&
+          other.focusSeconds == this.focusSeconds);
 }
 
 class TasksCompanion extends UpdateCompanion<Task> {
@@ -289,6 +328,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
   final Value<int> sortOrder;
   final Value<DateTime> createdAt;
   final Value<DateTime?> completedAt;
+  final Value<int> focusSeconds;
   const TasksCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
@@ -297,6 +337,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.sortOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.completedAt = const Value.absent(),
+    this.focusSeconds = const Value.absent(),
   });
   TasksCompanion.insert({
     this.id = const Value.absent(),
@@ -306,6 +347,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.sortOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.completedAt = const Value.absent(),
+    this.focusSeconds = const Value.absent(),
   }) : title = Value(title);
   static Insertable<Task> custom({
     Expression<int>? id,
@@ -315,6 +357,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Expression<int>? sortOrder,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? completedAt,
+    Expression<int>? focusSeconds,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -324,6 +367,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
       if (sortOrder != null) 'sort_order': sortOrder,
       if (createdAt != null) 'created_at': createdAt,
       if (completedAt != null) 'completed_at': completedAt,
+      if (focusSeconds != null) 'focus_seconds': focusSeconds,
     });
   }
 
@@ -334,7 +378,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
       Value<bool>? isArchived,
       Value<int>? sortOrder,
       Value<DateTime>? createdAt,
-      Value<DateTime?>? completedAt}) {
+      Value<DateTime?>? completedAt,
+      Value<int>? focusSeconds}) {
     return TasksCompanion(
       id: id ?? this.id,
       title: title ?? this.title,
@@ -343,6 +388,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
       sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
       completedAt: completedAt ?? this.completedAt,
+      focusSeconds: focusSeconds ?? this.focusSeconds,
     );
   }
 
@@ -370,6 +416,9 @@ class TasksCompanion extends UpdateCompanion<Task> {
     if (completedAt.present) {
       map['completed_at'] = Variable<DateTime>(completedAt.value);
     }
+    if (focusSeconds.present) {
+      map['focus_seconds'] = Variable<int>(focusSeconds.value);
+    }
     return map;
   }
 
@@ -382,7 +431,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
           ..write('isArchived: $isArchived, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
-          ..write('completedAt: $completedAt')
+          ..write('completedAt: $completedAt, ')
+          ..write('focusSeconds: $focusSeconds')
           ..write(')'))
         .toString();
   }
@@ -1545,6 +1595,7 @@ typedef $$TasksTableCreateCompanionBuilder = TasksCompanion Function({
   Value<int> sortOrder,
   Value<DateTime> createdAt,
   Value<DateTime?> completedAt,
+  Value<int> focusSeconds,
 });
 typedef $$TasksTableUpdateCompanionBuilder = TasksCompanion Function({
   Value<int> id,
@@ -1554,6 +1605,7 @@ typedef $$TasksTableUpdateCompanionBuilder = TasksCompanion Function({
   Value<int> sortOrder,
   Value<DateTime> createdAt,
   Value<DateTime?> completedAt,
+  Value<int> focusSeconds,
 });
 
 class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
@@ -1584,6 +1636,9 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<DateTime> get completedAt => $composableBuilder(
       column: $table.completedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get focusSeconds => $composableBuilder(
+      column: $table.focusSeconds, builder: (column) => ColumnFilters(column));
 }
 
 class $$TasksTableOrderingComposer
@@ -1615,6 +1670,10 @@ class $$TasksTableOrderingComposer
 
   ColumnOrderings<DateTime> get completedAt => $composableBuilder(
       column: $table.completedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get focusSeconds => $composableBuilder(
+      column: $table.focusSeconds,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$TasksTableAnnotationComposer
@@ -1646,6 +1705,9 @@ class $$TasksTableAnnotationComposer
 
   GeneratedColumn<DateTime> get completedAt => $composableBuilder(
       column: $table.completedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get focusSeconds => $composableBuilder(
+      column: $table.focusSeconds, builder: (column) => column);
 }
 
 class $$TasksTableTableManager extends RootTableManager<
@@ -1678,6 +1740,7 @@ class $$TasksTableTableManager extends RootTableManager<
             Value<int> sortOrder = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime?> completedAt = const Value.absent(),
+            Value<int> focusSeconds = const Value.absent(),
           }) =>
               TasksCompanion(
             id: id,
@@ -1687,6 +1750,7 @@ class $$TasksTableTableManager extends RootTableManager<
             sortOrder: sortOrder,
             createdAt: createdAt,
             completedAt: completedAt,
+            focusSeconds: focusSeconds,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -1696,6 +1760,7 @@ class $$TasksTableTableManager extends RootTableManager<
             Value<int> sortOrder = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime?> completedAt = const Value.absent(),
+            Value<int> focusSeconds = const Value.absent(),
           }) =>
               TasksCompanion.insert(
             id: id,
@@ -1705,6 +1770,7 @@ class $$TasksTableTableManager extends RootTableManager<
             sortOrder: sortOrder,
             createdAt: createdAt,
             completedAt: completedAt,
+            focusSeconds: focusSeconds,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (

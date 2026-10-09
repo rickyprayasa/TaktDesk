@@ -428,6 +428,7 @@ void main() {
         isArchived: false,
         sortOrder: 0,
         createdAt: DateTime(2026, 9, 15),
+        focusSeconds: 0,
       ),
       Task(
         id: 11,
@@ -436,6 +437,7 @@ void main() {
         isArchived: false,
         sortOrder: 1,
         createdAt: DateTime(2026, 9, 15),
+        focusSeconds: 0,
       ),
     ]);
     await tester.pump();

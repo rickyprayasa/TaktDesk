@@ -8,4 +8,7 @@ class Tasks extends Table {
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get completedAt => dateTime().nullable()();
+
+  /// Focus time spent on this slip: each focus session counts for the top open slip when it started (schema v11).
+  IntColumn get focusSeconds => integer().withDefault(const Constant(0))();
 }

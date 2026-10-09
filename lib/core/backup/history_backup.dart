@@ -84,6 +84,7 @@ class HistoryBackup {
             'sortOrder': t.sortOrder,
             'createdAt': _iso(t.createdAt),
             'completedAt': t.completedAt == null ? null : _iso(t.completedAt),
+            'focusSeconds': t.focusSeconds,
           },
       ],
     });
@@ -182,6 +183,9 @@ class HistoryBackup {
               sortOrder: Value(raw['sortOrder'] is int ? raw['sortOrder'] as int : 0),
               createdAt: Value(createdAt),
               completedAt: Value(_parseDate(raw['completedAt'])),
+              focusSeconds: Value(raw['focusSeconds'] is int && (raw['focusSeconds'] as int) > 0
+                  ? raw['focusSeconds'] as int
+                  : 0),
             ));
         if (!archived) activeCount++;
         tasksAdded++;
