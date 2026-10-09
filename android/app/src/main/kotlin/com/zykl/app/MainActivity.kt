@@ -71,11 +71,11 @@ class MainActivity : FlutterActivity() {
 
         /**
          * Values another app may pass in the `open_feature` extra of this exported
-         * launcher (our widgets send "tasks" / "dial"). Timer control such as
+         * launcher (our widgets send "tasks" / "dial", the launcher shortcuts "tasks" / "analytics"). Timer control such as
          * "toggleTimer" must come only from the non-exported WidgetActionReceiver
          * via [sendWidgetAction], never from an external intent.
          */
-        private val EXTERNAL_FEATURES = setOf("studio_pro", "tasks", "dial")
+        private val EXTERNAL_FEATURES = setOf("studio_pro", "tasks", "dial", "analytics")
 
         fun externalFeature(intent: Intent?): String? =
             intent?.getStringExtra("open_feature")?.takeIf { it in EXTERNAL_FEATURES }
@@ -157,6 +157,7 @@ class MainActivity : FlutterActivity() {
         super.onCreate(savedInstanceState)
         activeInstance = this
         notifyAllWidgets()
+        AppShortcuts.publish(this)
     }
 
     override fun onResume() {
@@ -169,7 +170,7 @@ class MainActivity : FlutterActivity() {
         effectPlayer.preload(FOLEY_ASSETS.values.toSet() + ALARM_ASSETS.values)
         super.configureFlutterEngine(flutterEngine)
         if (initialWidgetAction == null) {
-            initialWidgetAction = externalFeature(intent)
+            initialWidgetAction = externalFeature(intent) ?: AppShortcuts.action(this, intent)
         }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, FOCUS_CHANNEL).setMethodCallHandler { call, result ->
@@ -707,9 +708,10 @@ class MainActivity : FlutterActivity() {
         widgetChannel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "getInitialAction" -> {
-                    val action = initialWidgetAction ?: externalFeature(intent)
+                    val action = initialWidgetAction ?: externalFeature(intent) ?: AppShortcuts.action(this, intent)
                     initialWidgetAction = null
                     intent?.removeExtra("open_feature")
+                    AppShortcuts.clear(intent)
                     result.success(action)
                 }
                 "updateWidgetData" -> {
@@ -805,7 +807,8 @@ class MainActivity : FlutterActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        val action = externalFeature(intent)
+        val action = externalFeature(intent) ?: AppShortcuts.action(this, intent)
+        AppShortcuts.clear(intent)
         if (action != null) {
             widgetChannel?.invokeMethod("onWidgetAction", mapOf("action" to action))
         }

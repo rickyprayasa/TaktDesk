@@ -74,7 +74,7 @@ final appWidgetSyncProvider = Provider.autoDispose<void>((ref) {
         running ? timer.pause() : timer.start();
       case 'pauseTimer':
         if (running) timer.pause();
-      case 'resumeTimer':
+      case 'resumeTimer' || AppWidgetService.startFocusAction:
         if (!running) timer.start();
       case 'stopTimer':
         timer.reset();
@@ -95,6 +95,9 @@ final appWidgetSyncProvider = Provider.autoDispose<void>((ref) {
 
 class AppWidgetService {
   static const MethodChannel channel = MethodChannel('com.takt.desk/app_widget');
+
+  /// Launcher shortcut "Start focus" (AppShortcuts.ACTION_START_FOCUS, token-checked natively).
+  static const String startFocusAction = 'startFocus';
   static final StreamController<String> _actionController =
       StreamController<String>.broadcast();
   static final StreamController<({int taskId, bool isCompleted})> _taskToggleController =

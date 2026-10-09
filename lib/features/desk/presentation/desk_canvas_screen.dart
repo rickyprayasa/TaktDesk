@@ -12,6 +12,7 @@ import '../../../core/focus/focus_lock_controller.dart';
 import '../../../core/haptics/haptic_service.dart';
 import '../../../core/sensors/parallax_controller.dart';
 import '../../../core/services/app_widget_service.dart';
+import '../../analytics/presentation/widgets/focus_analytics_dialog.dart';
 import '../../settings/presentation/settings_controller.dart';
 import '../../settings/presentation/widgets/studio_pro_dialog.dart';
 import '../../tasks/presentation/receipt_runner_widget.dart';
@@ -214,6 +215,14 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
         _selectInstrument(1);
       } else if (initialAction == 'dial') {
         _selectInstrument(0);
+      } else if (initialAction == 'analytics') {
+        FocusAnalyticsDialog.show(context);
+      } else if (initialAction == AppWidgetService.startFocusAction) {
+        // Launcher shortcut "Start focus" on a cold start (a warm start arrives on the action stream).
+        _selectInstrument(0);
+        if (!ref.read(chronoDialControllerProvider).isRunning) {
+          ref.read(chronoDialControllerProvider.notifier).start();
+        }
       }
       _widgetActionSubscription = widgetService.onWidgetAction.listen((action) {
         if (!mounted) return;
@@ -221,8 +230,10 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
           showStudioProDialog(context, ref);
         } else if (action == 'tasks') {
           _selectInstrument(1);
-        } else if (action == 'dial') {
+        } else if (action == 'dial' || action == AppWidgetService.startFocusAction) {
           _selectInstrument(0);
+        } else if (action == 'analytics') {
+          FocusAnalyticsDialog.show(context);
         }
       });
     });

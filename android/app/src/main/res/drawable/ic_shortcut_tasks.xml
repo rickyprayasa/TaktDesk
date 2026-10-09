@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher shortcut icon: dark dial disc with an amber glyph. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="#1E2126"
+        android:pathData="M24,0A24,24 0,1,1 24,48A24,24 0,1,1 24,0Z"/>
+    <path
+        android:fillColor="#F2EFE9"
+        android:pathData="M16,13h16v22l-2,-1.5 -2,1.5 -2,-1.5 -2,1.5 -2,-1.5 -2,1.5 -2,-1.5 -2,1.5z"/>
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#1E2126"
+        android:strokeWidth="1.6"
+        android:pathData="M19,19h10M19,23h10M19,27h6"/>
+    <path
+        android:fillColor="#FF9E00"
+        android:pathData="M30,25.5l1.3,1.3 3,-3 1,1 -4,4 -2.3,-2.3z"/>
+</vector>

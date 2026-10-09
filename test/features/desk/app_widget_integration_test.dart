@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/core/database/app_database.dart';
 import 'package:takt_desk/core/focus/focus_lock_service.dart';
 import 'package:takt_desk/core/services/app_widget_service.dart';
+import 'package:takt_desk/features/analytics/presentation/widgets/focus_analytics_dialog.dart';
 import 'package:takt_desk/features/desk/presentation/desk_canvas_screen.dart';
 import 'package:takt_desk/features/desk/presentation/widgets/desk_telemetry_slip_widget.dart';
 import 'package:takt_desk/features/settings/presentation/settings_controller.dart';
@@ -484,5 +485,58 @@ void main() {
     expect(find.textContaining('STUDIO PRO'), findsWidgets);
 
     await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('launcher shortcut "Start focus" starts the timer on a cold start', (tester) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+      AppWidgetService.channel,
+      (MethodCall call) async => call.method == 'getInitialAction' ? AppWidgetService.startFocusAction : true,
+    );
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: createOverrides(),
+        child: const MaterialApp(
+          home: DeskCanvasScreen(gyroscopeStream: Stream.empty(), accelerometerStream: Stream.empty()),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    expect(chronoDialController.state.isRunning, isTrue);
+
+    chronoDialController.reset();
+    await tester.pumpWidget(const SizedBox());
+    // Unmount and flush drift stream cancel timer, or closing the test database waits forever.
+    await tester.pump(const Duration(milliseconds: 100));
+  });
+
+  testWidgets('launcher shortcut "Analytics" opens the focus analytics dialog', (tester) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+      AppWidgetService.channel,
+      (MethodCall call) async => call.method == 'getInitialAction' ? 'analytics' : true,
+    );
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: createOverrides(),
+        child: const MaterialApp(
+          home: DeskCanvasScreen(gyroscopeStream: Stream.empty(), accelerometerStream: Stream.empty()),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    expect(find.byType(FocusAnalyticsDialog), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    // Unmount and flush drift stream cancel timer, or closing the test database waits forever.
+    await tester.pump(const Duration(milliseconds: 100));
   });
 }
