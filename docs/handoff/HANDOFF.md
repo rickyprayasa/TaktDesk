@@ -28,6 +28,21 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-09 (i) — Live Update chip shows minutes; owner feedback on the dev APK  (status: committed; NOT built)
+
+Owner tested the dev APK (h): everything works, the Live Update shows in the phone's status island. Feedback:
+- **No number in the island** → fixed: on Android 16 the countdown notification now sets `setShortCriticalText("24m")`
+  (minutes left, ≤ 7 chars) and a `Notification.ProgressStyle` bar of the session for the expanded card. Built with
+  `Notification.Builder.recoverBuilder` over the compat notification (androidx.core 1.13 has neither); re-posted on
+  the existing minute tick in `startWidgetTick` (`refreshRunningNotification`). On a Pixel this replaces the live
+  seconds chronometer in the chip by minutes; the notification itself keeps the chronometer.
+- **Tap on the island should expand, not open the app**: not controllable by an app. The system / launcher decides
+  what a tap on the chip does (screen record is a system chip). On most skins a long-press or a swipe down on the
+  island expands it; the expanded card now has the progress bar and PAUSE / STOP.
+- **Nothing on the AOD**: apps cannot draw on the AOD. Android 16 shows Live Updates there only where the OEM
+  supports it (Pixel); other skins show at most the notification icon, depending on the AOD notification settings.
+- Device check after the next dev build: island shows "25m" → "24m" each minute; expanded card shows the bar.
+
 ## 2026-10-09 (h) — Group D: auto-start, QS tile, shortcuts, history files, focus per slip, English, widgets  (status: committed `7e2d320`..`0968694`; analyze 0, tests green; NOT built; needs a device check)
 
 Review (d) section D, in the owner's order, with two changes from the owner: auto-start is a setting, and the app is
