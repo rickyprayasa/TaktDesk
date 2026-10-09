@@ -91,7 +91,7 @@ class AppDatabase extends _$AppDatabase {
     return transaction(() async {
       final activeCount = await (select(tasks)..where((t) => t.isArchived.equals(false))).get();
       if (activeCount.length >= 5) {
-        throw Exception('Maksimal 5 tugas aktif per batch kerja');
+        throw Exception('At most 5 active tasks in the dispenser');
       }
       return into(tasks).insert(TasksCompanion.insert(
         title: cleanTitle,
