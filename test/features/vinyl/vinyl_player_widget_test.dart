@@ -72,7 +72,7 @@ void main() {
 
     // Verify CustomPaint with VinylDeckPainter
     final painterFinder = find.byWidgetPredicate(
-      (widget) => widget is CustomPaint && widget.painter is VinylDeckPainter,
+      (widget) => _isArmLayer(widget),
     );
     expect(painterFinder, findsOneWidget);
 
@@ -103,7 +103,7 @@ void main() {
 
     // Initial state: needle lifted
     var painterFinder = find.byWidgetPredicate(
-      (widget) => widget is CustomPaint && widget.painter is VinylDeckPainter,
+      (widget) => _isArmLayer(widget),
     );
     var customPaint = tester.widget<CustomPaint>(painterFinder);
     expect((customPaint.painter as VinylDeckPainter).needleOnRecord, isFalse);
@@ -114,7 +114,7 @@ void main() {
 
     // Needle is now dropped
     painterFinder = find.byWidgetPredicate(
-      (widget) => widget is CustomPaint && widget.painter is VinylDeckPainter,
+      (widget) => _isArmLayer(widget),
     );
     customPaint = tester.widget<CustomPaint>(painterFinder);
     expect((customPaint.painter as VinylDeckPainter).needleOnRecord, isTrue);
@@ -127,7 +127,7 @@ void main() {
 
     // Needle is now lifted
     painterFinder = find.byWidgetPredicate(
-      (widget) => widget is CustomPaint && widget.painter is VinylDeckPainter,
+      (widget) => _isArmLayer(widget),
     );
     customPaint = tester.widget<CustomPaint>(painterFinder);
     expect((customPaint.painter as VinylDeckPainter).needleOnRecord, isFalse);
@@ -193,17 +193,15 @@ void main() {
     );
 
     final painterFinder = find.byWidgetPredicate(
-      (widget) => widget is CustomPaint && widget.painter is VinylDeckPainter,
+      (widget) => _isArmLayer(widget),
     );
 
     // Initial angle when needle is up
-    var customPaint = tester.widget<CustomPaint>(painterFinder);
-    final initialAngle = (customPaint.painter as VinylDeckPainter).rotationAngle;
+    final initialAngle = _spinAngle(tester);
 
     // Pump frames - idle should NOT rotate
     await tester.pump(const Duration(milliseconds: 100));
-    customPaint = tester.widget<CustomPaint>(painterFinder);
-    expect((customPaint.painter as VinylDeckPainter).rotationAngle, equals(initialAngle));
+    expect(_spinAngle(tester), equals(initialAngle));
 
     // Tap to drop needle
     await tester.tap(painterFinder);
@@ -212,8 +210,7 @@ void main() {
     // Pump some frames while needle is on record
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pump(const Duration(milliseconds: 100));
-    customPaint = tester.widget<CustomPaint>(painterFinder);
-    final playingAngle = (customPaint.painter as VinylDeckPainter).rotationAngle;
+    final playingAngle = _spinAngle(tester);
     expect(playingAngle, isNot(equals(initialAngle)));
 
     // Tap to lift needle
@@ -222,8 +219,7 @@ void main() {
 
     // Pump more frames while lifted - angle should stay constant (stopped)
     await tester.pump(const Duration(milliseconds: 100));
-    customPaint = tester.widget<CustomPaint>(painterFinder);
-    final stoppedAngle = (customPaint.painter as VinylDeckPainter).rotationAngle;
+    final stoppedAngle = _spinAngle(tester);
     expect(stoppedAngle, equals(playingAngle));
 
     await tester.pumpWidget(const SizedBox());
@@ -241,10 +237,10 @@ void main() {
       ),
     );
     final painterFinder = find.byWidgetPredicate(
-      (widget) => widget is CustomPaint && widget.painter is VinylDeckPainter,
+      (widget) => _isArmLayer(widget),
     );
     double angle() =>
-        (tester.widget<CustomPaint>(painterFinder).painter as VinylDeckPainter).rotationAngle;
+        _spinAngle(tester);
 
     final before = angle();
     await tester.tap(painterFinder);
@@ -472,7 +468,7 @@ void main() {
 
       // Drop needle and verify colors change to filamentColor
       final painterFinder = find.byWidgetPredicate(
-        (widget) => widget is CustomPaint && widget.painter is VinylDeckPainter,
+        (widget) => _isArmLayer(widget),
       );
       await tester.tap(painterFinder);
       await tester.pump();
@@ -549,15 +545,15 @@ void main() {
       await tester.pump();
 
       final painterFinder = find.byWidgetPredicate(
-        (widget) => widget is CustomPaint && widget.painter is VinylDeckPainter,
+        (widget) => _isArmLayer(widget),
       );
       expect(painterFinder, findsOneWidget);
 
       var customPaint = tester.widget<CustomPaint>(painterFinder);
       var painter = customPaint.painter as VinylDeckPainter;
 
-      // Braun Classic defaults
-      expect(painter.labelColor, equals(HardwareEdition.braunClassic.accentColor));
+      // Braun Classic defaults (the label colour lives on the spinning disc layer)
+      expect(_discPainter(tester).labelColor, equals(HardwareEdition.braunClassic.accentColor));
       expect(painter.tonearmGradient, equals(HardwareEdition.braunClassic.plateGradientDark));
       expect(painter.armPivotBorderColor, equals(HardwareEdition.braunClassic.darkBorder));
 
@@ -568,7 +564,7 @@ void main() {
       customPaint = tester.widget<CustomPaint>(painterFinder);
       painter = customPaint.painter as VinylDeckPainter;
 
-      expect(painter.labelColor, equals(HardwareEdition.bauhausHeritage.accentColor));
+      expect(_discPainter(tester).labelColor, equals(HardwareEdition.bauhausHeritage.accentColor));
       expect(painter.tonearmGradient, equals(HardwareEdition.bauhausHeritage.plateGradientDark));
       expect(painter.armPivotBorderColor, equals(HardwareEdition.bauhausHeritage.darkBorder));
 
@@ -589,3 +585,19 @@ class _RecordingCanvas implements Canvas {
   dynamic noSuchMethod(Invocation invocation) => null;
 }
 
+/// The deck is three layers (base, spinning disc, tonearm); the tonearm layer carries the needle state.
+bool _isArmLayer(Widget widget) =>
+    widget is CustomPaint &&
+    widget.painter is VinylDeckPainter &&
+    (widget.painter as VinylDeckPainter).layer == VinylDeckLayer.arm;
+
+/// The record spins as a cached layer under a rotation transform; read its angle.
+double _spinAngle(WidgetTester tester) {
+  final m = tester.widget<Transform>(find.byKey(const ValueKey('vinyl_disc_spin'))).transform;
+  return math.atan2(m.entry(1, 0), m.entry(0, 0));
+}
+
+VinylDeckPainter _discPainter(WidgetTester tester) => tester
+    .widget<CustomPaint>(find.byWidgetPredicate((w) =>
+        w is CustomPaint && w.painter is VinylDeckPainter && (w.painter as VinylDeckPainter).layer == VinylDeckLayer.disc))
+    .painter as VinylDeckPainter;

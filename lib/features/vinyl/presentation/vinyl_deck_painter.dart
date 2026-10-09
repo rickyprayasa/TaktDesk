@@ -3,7 +3,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../app/theme/takt_colors.dart';
 
+/// Which part of the deck a [VinylDeckPainter] draws. The player paints [base] once, caches [disc] in its own
+/// layer and spins that layer with a transform (no repaint per frame), and repaints [arm] only while it moves.
+enum VinylDeckLayer { all, base, disc, arm }
+
 class VinylDeckPainter extends CustomPainter {
+  final VinylDeckLayer layer;
   final double rotationAngle;
   final bool needleOnRecord;
   final Color labelColor;
@@ -12,6 +17,7 @@ class VinylDeckPainter extends CustomPainter {
   final Color? armPivotBorderColor;
 
   VinylDeckPainter({
+    this.layer = VinylDeckLayer.all,
     required this.rotationAngle,
     required this.needleOnRecord,
     this.labelColor = TaktColors.mutedOchre,
@@ -30,63 +36,70 @@ class VinylDeckPainter extends CustomPainter {
     // ==========================================
     final platterRadius = radius + 5;
     final wellRadius = platterRadius + 3.0;
+    final drawBase = layer == VinylDeckLayer.all || layer == VinylDeckLayer.base;
+    final drawDisc = layer == VinylDeckLayer.all || layer == VinylDeckLayer.disc;
+    final drawArm = layer == VinylDeckLayer.all || layer == VinylDeckLayer.arm;
 
-    // Recessed circular well inner shadow fading inward
-    final innerStop = math.max(0.0, (platterRadius - 4.0) / wellRadius);
-    final wellShadowPaint = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          Colors.transparent,
-          Colors.black.withValues(alpha: 0.35),
-        ],
-        stops: [innerStop, 1.0],
-      ).createShader(Rect.fromCircle(center: center, radius: wellRadius));
-    canvas.drawCircle(center, wellRadius, wellShadowPaint);
+    if (drawBase) {
 
-    // Subtle well outer lip contour
-    final wellLipPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.35)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-    canvas.drawCircle(center, wellRadius, wellLipPaint);
+      // Recessed circular well inner shadow fading inward
+      final innerStop = math.max(0.0, (platterRadius - 4.0) / wellRadius);
+      final wellShadowPaint = Paint()
+        ..shader = RadialGradient(
+          colors: [
+            Colors.transparent,
+            Colors.black.withValues(alpha: 0.35),
+          ],
+          stops: [innerStop, 1.0],
+        ).createShader(Rect.fromCircle(center: center, radius: wellRadius));
+      canvas.drawCircle(center, wellRadius, wellShadowPaint);
 
-    // ==========================================
-    // 1. Turntable Platter with Stroboscope Rim
-    // ==========================================
-    // Platter ambient drop shadow onto turntable base
-    final platterShadow = Paint()
-      ..color = const Color(0x66000000)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8.0);
-    canvas.drawCircle(center + const Offset(0, 4), platterRadius, platterShadow);
+      // Subtle well outer lip contour
+      final wellLipPaint = Paint()
+        ..color = Colors.black.withValues(alpha: 0.35)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0;
+      canvas.drawCircle(center, wellRadius, wellLipPaint);
 
-    // Platter main body
-    final platterPaint = Paint()
-      ..shader = const RadialGradient(
-        colors: [
-          Color(0xFF25282E),
-          Color(0xFF1A1C20),
-          Color(0xFF121417),
-        ],
-        stops: [0.8, 0.96, 1.0],
-      ).createShader(Rect.fromCircle(center: center, radius: platterRadius));
-    canvas.drawCircle(center, platterRadius, platterPaint);
+      // ==========================================
+      // 1. Turntable Platter with Stroboscope Rim
+      // ==========================================
+      // Platter ambient drop shadow onto turntable base
+      final platterShadow = Paint()
+        ..color = const Color(0x66000000)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8.0);
+      canvas.drawCircle(center + const Offset(0, 4), platterRadius, platterShadow);
 
-    // Platter outer metallic bezel rim
-    final platterBezelPaint = Paint()
-      ..color = const Color(0xFF3E434C)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    canvas.drawCircle(center, platterRadius, platterBezelPaint);
+      // Platter main body
+      final platterPaint = Paint()
+        ..shader = const RadialGradient(
+          colors: [
+            Color(0xFF25282E),
+            Color(0xFF1A1C20),
+            Color(0xFF121417),
+          ],
+          stops: [0.8, 0.96, 1.0],
+        ).createShader(Rect.fromCircle(center: center, radius: platterRadius));
+      canvas.drawCircle(center, platterRadius, platterPaint);
 
-    // Stroboscope calibrated speed dots on platter rim (33 1/3 RPM strobe)
-    final strobePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.18)
-      ..style = PaintingStyle.fill;
-    const strobeCount = 54;
-    for (int i = 0; i < strobeCount; i++) {
-      final angle = (i * (2 * math.pi / strobeCount)) + rotationAngle;
-      final dotPos = center + Offset(math.cos(angle) * (platterRadius - 2), math.sin(angle) * (platterRadius - 2));
-      canvas.drawCircle(dotPos, 0.8, strobePaint);
+      // Platter outer metallic bezel rim
+      final platterBezelPaint = Paint()
+        ..color = const Color(0xFF3E434C)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5;
+      canvas.drawCircle(center, platterRadius, platterBezelPaint);
+    }
+
+    if (drawDisc) {
+      // Stroboscope calibrated speed dots on platter rim (33 1/3 RPM strobe)
+      final strobePaint = Paint()
+        ..color = Colors.white.withValues(alpha: 0.18)
+        ..style = PaintingStyle.fill;
+      const strobeCount = 54;
+      for (int i = 0; i < strobeCount; i++) {
+        final angle = (i * (2 * math.pi / strobeCount)) + rotationAngle;
+        final dotPos = center + Offset(math.cos(angle) * (platterRadius - 2), math.sin(angle) * (platterRadius - 2));
+        canvas.drawCircle(dotPos, 0.8, strobePaint);
     }
 
     // ==========================================
@@ -190,6 +203,9 @@ class VinylDeckPainter extends CustomPainter {
     canvas.drawCircle(Offset.zero, 3.5, spindlePaint);
 
     canvas.restore();
+    }
+
+    if (!drawArm) return;
 
     // ==========================================
     // 3. Tonearm Assembly with 3D Height Shadow
@@ -303,7 +319,9 @@ class VinylDeckPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant VinylDeckPainter oldDelegate) {
-    return oldDelegate.rotationAngle != rotationAngle ||
+    final spins = layer == VinylDeckLayer.all || layer == VinylDeckLayer.disc;
+    return oldDelegate.layer != layer ||
+        (spins && oldDelegate.rotationAngle != rotationAngle) ||
         oldDelegate.needleOnRecord != needleOnRecord ||
         oldDelegate.armProgress != armProgress ||
         oldDelegate.labelColor != labelColor ||

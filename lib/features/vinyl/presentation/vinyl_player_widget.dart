@@ -171,25 +171,58 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
               child: SizedBox(
                 width: 280,
                 height: 155,
-                child: AnimatedBuilder(
-                  animation: _armAnimation,
-                  builder: (context, _) {
-                    return ValueListenableBuilder<double>(
-                      valueListenable: _rotationNotifier,
-                      builder: (context, angle, _) {
-                        return CustomPaint(
+                // Three layers: the static deck is painted once, the record is painted once into its own
+                // layer and only rotated per frame (compositing, no repaint), the tonearm repaints while it moves.
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    RepaintBoundary(
+                      child: CustomPaint(
+                        painter: VinylDeckPainter(
+                          layer: VinylDeckLayer.base,
+                          rotationAngle: 0,
+                          needleOnRecord: state.needleOnRecord,
+                        ),
+                      ),
+                    ),
+                    RepaintBoundary(
+                      child: ValueListenableBuilder<double>(
+                        valueListenable: _rotationNotifier,
+                        builder: (context, angle, disc) => Transform.rotate(
+                          key: const ValueKey('vinyl_disc_spin'),
+                          angle: angle,
+                          // the record's centre: (0.44 w, 0.5 h) in the painter
+                          alignment: const Alignment(-0.12, 0),
+                          child: disc,
+                        ),
+                        child: RepaintBoundary(
+                          child: CustomPaint(
+                            painter: VinylDeckPainter(
+                              layer: VinylDeckLayer.disc,
+                              rotationAngle: 0,
+                              needleOnRecord: state.needleOnRecord,
+                              labelColor: themeState.accentColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    RepaintBoundary(
+                      child: AnimatedBuilder(
+                        animation: _armAnimation,
+                        builder: (context, _) => CustomPaint(
                           painter: VinylDeckPainter(
-                            rotationAngle: angle,
+                            layer: VinylDeckLayer.arm,
+                            rotationAngle: 0,
                             needleOnRecord: state.needleOnRecord,
                             armProgress: _armAnimation.value,
-                            labelColor: themeState.accentColor,
                             tonearmGradient: themeState.plateGradient,
                             armPivotBorderColor: themeState.borderColor,
                           ),
-                        );
-                      },
-                    );
-                  },
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
