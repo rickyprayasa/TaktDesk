@@ -399,10 +399,10 @@ class MediaNotificationService : Service() {
             "longbreak" -> "LONG BRK"
             else -> "FOCUS"
         }
+        // Minutes left (rounded up), not mm:ss: the timer's own notification already runs an exact system
+        // chronometer, so this one is re-posted once a minute instead of every second.
         val totalSecs = remainingSeconds.toInt().coerceAtLeast(0)
-        val mins = totalSecs / 60
-        val secs = totalSecs % 60
-        val timeStr = String.format("%02d:%02d", mins, secs)
+        val timeStr = "${(totalSecs + 59) / 60} MIN"
         val cycleStr = "CYCLE ${cycleCount.coerceIn(1, 4)}/4"
         return "ZYKL TP-01 // $phaseLabel $timeStr · $cycleStr"
     }

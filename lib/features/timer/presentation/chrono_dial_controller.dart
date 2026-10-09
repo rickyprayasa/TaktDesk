@@ -569,8 +569,12 @@ class ChronoDialController extends StateNotifier<TimerState> {
     final newSeconds = remainingSeconds ?? state.remainingSeconds.round();
     final newCycle = cycleCount ?? state.cycleCount;
 
+    // The vinyl notification shows minutes left (MediaNotificationService.kt), so only a new minute, phase or
+    // cycle is worth a re-post; this used to re-post that notification every second while a timer ran.
+    final lastSeconds = _mediaNotificationService?.lastRemainingSeconds;
     if (_mediaNotificationService?.lastPhase == newPhase &&
-        _mediaNotificationService?.lastRemainingSeconds == newSeconds &&
+        lastSeconds != null &&
+        (lastSeconds / 60).ceil() == (newSeconds / 60).ceil() &&
         _mediaNotificationService?.lastCycleCount == newCycle) {
       return;
     }
