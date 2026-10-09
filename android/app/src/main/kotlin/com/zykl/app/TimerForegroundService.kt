@@ -33,6 +33,10 @@ class TimerForegroundService : Service() {
         const val NOTIFICATION_ID = 1001
         const val ALERT_NOTIFICATION_ID = 1002
 
+        /** How long the service and CPU stay up for the finish chime: longest chime (zen gong, 4.2 s) plus MediaPlayer
+         *  prepare time and a margin. The chime's completion listener ends it earlier for the short ones. */
+        private const val COMPLETION_HOLD_MS = 6500L
+
         const val ACTION_START = "ACTION_START"
         const val ACTION_STOP = "ACTION_STOP"
         /** Fired by AlarmManager at the absolute end time (works in Doze / screen off). */
@@ -315,7 +319,7 @@ class TimerForegroundService : Service() {
             TaktAppWidgetProvider.updateAllWidgets(this)
         } catch (_: Throwable) {}
 
-        // 1. Acquire temporary 3.5-second wakelock to play bell sound
+        // 1. Keep the CPU awake for the whole chime (the longest, zen gong, is 4.2 s)
         acquireTransientWakeLock()
 
         // 2. Trigger dual-tap mechanical haptics
@@ -361,7 +365,9 @@ class TimerForegroundService : Service() {
             val fallbackTeardown = Runnable {
                 stopSelf()
             }
-            handler.postDelayed(fallbackTeardown, 3500)
+            // Safety net only: the completion listener below stops the service as soon as the chime ends.
+            // It must outlast the longest chime, or stopSelf() -> onDestroy() releases the player mid-ring.
+            handler.postDelayed(fallbackTeardown, COMPLETION_HOLD_MS)
 
             playSelectedAlarm(activeAlarmChimeId) {
                 handler.removeCallbacks(fallbackTeardown)
@@ -434,6 +440,7 @@ class TimerForegroundService : Service() {
                             .build()
                     )
                     setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                    setWakeMode(applicationContext, PowerManager.PARTIAL_WAKE_LOCK)
                     setOnCompletionListener {
                         it.release()
                         bellPlayer = null
@@ -481,7 +488,7 @@ class TimerForegroundService : Service() {
         try {
             val pm = getSystemService(Context.POWER_SERVICE) as? PowerManager
             wakeLock = pm?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "TaktDesk::CompletionWakeLock")
-            wakeLock?.acquire(3500)
+            wakeLock?.acquire(COMPLETION_HOLD_MS)
         } catch (_: Exception) {}
     }
 
