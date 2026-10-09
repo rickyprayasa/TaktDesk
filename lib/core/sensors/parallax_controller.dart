@@ -53,6 +53,10 @@ class ParallaxController extends StateNotifier<ParallaxState> {
   static const double _alpha = 0.08; // Low-pass filter smoothing coefficient (smooth dampening)
   static const double maxTiltRadians = 0.05; // ~2.8 degrees subtle tactile tilt (calm, non-dizzying)
   static const double deadband = 0.0001; // Deadband to suppress idle sensor noise
+  /// Smallest smoothed step worth a new state (~0.005°). Flat on a desk the accelerometer still jitters
+  /// ~0.0007 rad before smoothing (≈0.000056 after it), which used to rebuild the whole tilted desk on almost
+  /// every event. Converging moves stop within 0.001 rad of their target (0.08 × 0.001).
+  static const double stepDeadband = 0.00008;
 
   void updateSensorInput({required double rawX, required double rawY}) {
     final targetX = (rawX * 0.005).clamp(-maxTiltRadians, maxTiltRadians);
@@ -122,6 +126,9 @@ class ParallaxController extends StateNotifier<ParallaxState> {
 
     final smoothX = _alpha * targetX + (1 - _alpha) * state.tiltX;
     final smoothY = _alpha * targetY + (1 - _alpha) * state.tiltY;
+    if ((smoothX - state.tiltX).abs() < stepDeadband && (smoothY - state.tiltY).abs() < stepDeadband) {
+      return;
+    }
 
     _updateStateWithLight(smoothX, smoothY);
   }

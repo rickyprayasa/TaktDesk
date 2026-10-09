@@ -625,9 +625,10 @@ void main() {
       );
       final customPaint = tester.widget<CustomPaint>(glassPaintFinder);
       final painter = customPaint.foregroundPainter as GlassRimPainter;
-      expect(painter.lightX, equals(parallax.lightX));
-      expect(painter.lightY, equals(parallax.lightY));
-      expect(painter.intensity, equals(parallax.lightIntensity));
+      // Light is quantized to 0.02 steps in MaterialChassisBox (fewer rebuilds), so it is within 0.01.
+      expect(painter.lightX, closeTo(parallax.lightX, 0.01));
+      expect(painter.lightY, closeTo(parallax.lightY, 0.01));
+      expect(painter.intensity, closeTo(parallax.lightIntensity, 0.01));
 
       // Verify Transform rotation matches tilt
       final transformFinder = find.descendant(

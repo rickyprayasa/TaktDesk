@@ -82,20 +82,40 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
         chrono.importPendingNativeSessions();
         chrono.resyncWithNative();
       },
+      // No tilt while nobody can see the desk: the foreground timer service keeps the process alive, and
+      // the gyro + accelerometer used to keep streaming ~30 events/s in the background.
+      onHide: () => _setSensorsActive(false),
+      onShow: _syncSensors,
     );
   }
+
+  /// Real device sensors (no injected test streams).
+  bool get _usesDeviceSensors => widget.gyroscopeStream == null && widget.accelerometerStream == null;
 
   void _setSensorsActive(bool active) {
     if (active) {
       if (_sensorsPaused) {
-        _gyroscopeSubscription?.resume();
-        _accelerometerSubscription?.resume();
+        if (_usesDeviceSensors) {
+          _listenDeviceSensors();
+        } else {
+          _gyroscopeSubscription?.resume();
+          _accelerometerSubscription?.resume();
+        }
         _sensorsPaused = false;
       }
     } else {
       if (!_sensorsPaused) {
-        _gyroscopeSubscription?.pause();
-        _accelerometerSubscription?.pause();
+        if (_usesDeviceSensors) {
+          // Cancel, don't pause: pausing a sensors_plus broadcast stream only drops events while the
+          // Android sensor listener stays registered and keeps drawing power.
+          _gyroscopeSubscription?.cancel();
+          _accelerometerSubscription?.cancel();
+          _gyroscopeSubscription = null;
+          _accelerometerSubscription = null;
+        } else {
+          _gyroscopeSubscription?.pause();
+          _accelerometerSubscription?.pause();
+        }
         _sensorsPaused = true;
         // Deferred: may be called from didChangeDependencies (build phase),
         // where Riverpod forbids provider writes.
@@ -141,7 +161,13 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
       } catch (_) {}
     }
 
-    if (widget.gyroscopeStream == null && widget.accelerometerStream == null) {
+    if (_usesDeviceSensors) _listenDeviceSensors();
+
+    _syncSensors();
+  }
+
+  void _listenDeviceSensors() {
+    if (_gyroscopeSubscription == null) {
       try {
         _gyroscopeSubscription = gyroscopeEventStream(samplingPeriod: SensorInterval.uiInterval).listen(
           (event) {
@@ -155,7 +181,8 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
           cancelOnError: false,
         );
       } catch (_) {}
-
+    }
+    if (_accelerometerSubscription == null) {
       try {
         _accelerometerSubscription = accelerometerEventStream(samplingPeriod: SensorInterval.uiInterval).listen(
           (event) {
@@ -172,8 +199,6 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
         );
       } catch (_) {}
     }
-
-    _syncSensors();
   }
 
   void _initWidgetActions() {
@@ -347,6 +372,8 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
         body: Listener(
           behavior: HitTestBehavior.translucent,
           onPointerMove: (event) {
+            // Touch tilt follows the same opt-out as the sensors (parallax off, reduce motion, hidden).
+            if (_sensorsPaused) return;
             final size = MediaQuery.of(context).size;
             if (size.width > 0 && size.height > 0) {
               final normX = ((event.position.dx / size.width) - 0.5) * 2;
@@ -358,6 +385,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
             }
           },
           onPointerHover: (event) {
+            if (_sensorsPaused) return;
             final size = MediaQuery.of(context).size;
             if (size.width > 0 && size.height > 0) {
               final normX = ((event.position.dx / size.width) - 0.5) * 2;

@@ -95,7 +95,12 @@ class MaterialChassisBox extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeState = ref.watch(chassisThemeProvider);
-    final parallax = ref.watch(parallaxProvider);
+    // Watch only what this box draws: tilt when it has perspective (no box does today), light when it has a
+    // texture or glass rim, light quantized to 0.02 so tiny sensor steps don't rebuild every chassis on the desk.
+    final tilt = ref.watch(parallaxProvider.select((p) => enablePerspective ? (p.tiltX, p.tiltY) : (0.0, 0.0)));
+    final light = ref.watch(parallaxProvider.select((p) => (showTexture || showGlassRim)
+        ? (_quantize(p.lightX), _quantize(p.lightY), _quantize(p.lightIntensity))
+        : (-0.4, -0.6, 0.5)));
 
     Widget chassis = Container(
       width: width,
@@ -116,8 +121,8 @@ class MaterialChassisBox extends ConsumerWidget {
             blurRadius: 14,
             offset: enablePerspective
                 ? Offset(
-                    (-parallax.tiltX * 20.0).clamp(-12.0, 12.0),
-                    6.0 + (-parallax.tiltY * 20.0).clamp(-12.0, 12.0),
+                    (-tilt.$1 * 20.0).clamp(-12.0, 12.0),
+                    6.0 + (-tilt.$2 * 20.0).clamp(-12.0, 12.0),
                   )
                 : const Offset(0, 6),
           ),
@@ -128,8 +133,8 @@ class MaterialChassisBox extends ConsumerWidget {
             blurRadius: 4,
             offset: enablePerspective
                 ? Offset(
-                    (-parallax.tiltX * 6.0).clamp(-4.0, 4.0),
-                    1.0 + (-parallax.tiltY * 6.0).clamp(-4.0, 4.0),
+                    (-tilt.$1 * 6.0).clamp(-4.0, 4.0),
+                    1.0 + (-tilt.$2 * 6.0).clamp(-4.0, 4.0),
                   )
                 : const Offset(0, 1),
           ),
@@ -173,8 +178,8 @@ class MaterialChassisBox extends ConsumerWidget {
                   painter: MaterialSheenPainter(
                     textureType: themeState.textureType,
                     isDark: themeState.isDarkMode,
-                    lightX: parallax.lightX,
-                    lightY: parallax.lightY,
+                    lightX: light.$1,
+                    lightY: light.$2,
                     borderRadius: borderRadius,
                   ),
                 ),
@@ -185,9 +190,9 @@ class MaterialChassisBox extends ConsumerWidget {
               child: IgnorePointer(
                 child: CustomPaint(
                   foregroundPainter: GlassRimPainter(
-                    lightX: parallax.lightX,
-                    lightY: parallax.lightY,
-                    intensity: parallax.lightIntensity,
+                    lightX: light.$1,
+                    lightY: light.$2,
+                    intensity: light.$3,
                     borderRadius: borderRadius,
                     isDark: themeState.isDarkMode,
                   ),
@@ -231,8 +236,8 @@ class MaterialChassisBox extends ConsumerWidget {
         alignment: Alignment.center,
         transform: Matrix4.identity()
           ..setEntry(3, 2, 0.0012)
-          ..rotateX(-parallax.tiltY)
-          ..rotateY(parallax.tiltX),
+          ..rotateX(-tilt.$2)
+          ..rotateY(tilt.$1),
         child: chassis,
       );
     }
@@ -275,4 +280,6 @@ class MaterialChassisBox extends ConsumerWidget {
       ),
     );
   }
+
+  static double _quantize(double v) => (v * 50).roundToDouble() / 50;
 }
