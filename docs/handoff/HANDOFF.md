@@ -28,6 +28,45 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-09 (h) — Group D: auto-start, QS tile, shortcuts, history files, focus per slip, English, widgets  (status: committed `7e2d320`..`0968694`; analyze 0, tests green; NOT built; needs a device check)
+
+Review (d) section D, in the owner's order, with two changes from the owner: auto-start is a setting, and the app is
+English only (no localization). Kotlin compiles; `flutter analyze` 0; full `flutter test -j 1` green (497 passed,
+1 skipped). No APK/AAB built. Drift schema is now **v11** (v9 desk clock, v10 auto-start, v11 focus per slip).
+- **D1 auto-start** (`7e2d320`): setting AUTO-START NEXT PHASE (Pomodoro Interval Engine; `auto_start_next_phase`,
+  default off). At the end of a phase `start(auto: true)` (no button sound, the chime plays) restarts the native
+  countdown in place, no stop. The native alarm now always tells a living Flutter `nativePhaseFinished` (→
+  `resyncWithNative`), and with auto-start on (`EXTRA_AUTO_START_NEXT`) the service stays in the foreground until
+  Flutter's START arrives (`finishIfIdle` after the chime / 6.5 s otherwise) — a backgrounded app may not restart a
+  stopped FGS. App process gone: the phase ends in standby as before.
+- **D2 Quick Settings tile** (`775cf94`): `ZyklTileService` "ZYKL Focus" = the widget toggle
+  (`WidgetActionReceiver.toggleTimer`). Not an active tile: state + "FOCUS · N MIN" subtitle (API 29+) read from the
+  widget prefs when the shade opens.
+- **D3 launcher shortcuts** (`799ffd8`): dynamic (follow the dev-pro id): Start focus, Tasks, Analytics. Start focus
+  carries a per-install token (`AppShortcuts`, prefs `zykl_shortcuts`) because the launcher activity is exported and
+  external intents must not control the timer; Tasks/Analytics use `open_feature` ("analytics" added).
+- **D4 history files** (`4c64ac8`): Settings → Telemetry → HISTORY FILES: EXPORT CSV, BACKUP (JSON format 1:
+  sessions + slips incl. focusSeconds), RESTORE (merge: duplicates skipped, malformed ignored, foreign/newer files
+  refused, never more than 5 active slips). System file picker via `com.zykl.app/backup` (SAF, no permission).
+- **D7 focus per slip** (`3e9fe5b`): `tasks.focus_seconds`; each focus session counts for the top open slip when it
+  started (finish, or abandon ≥ 1 min), even if stamped/torn meanwhile. Slip header "#01 // NOW · 50 MIN", minutes in
+  the archive drawer. The dispenser refreshes on `AppDatabase.taskFocusChanges` (plain stream — drift `watch()` left
+  timers that hung widget tests).
+- **D5 English** (`7843c04`): a scan of every string in lib/, android/ and assets/ found one Indonesian string (the
+  5-task limit exception); now English. Nothing else was Indonesian.
+- **D6 widgets** (`0968694`): Material You corners (`@android:dimen/system_app_widget_background_radius` on 12+);
+  Console / Focus Strip / Analog Dial follow the app's light/dark mode and edition (`widgetThemeSyncProvider` →
+  `com.zykl.app/widget_theme` → `WidgetTheme` prefs; 12+ tints the chassis, older picks dark/light drawable);
+  dispenser stays paper. All widgets resizable (min 110 dp; strip/dispenser 180 dp wide); dial bitmap drawn at the
+  widget size (240–640 px) with the edition needle. Picker previews: `previewLayout` (12+) was already the live
+  layout; no `previewImage` for ≤ 11 (would need rendered PNGs).
+- Testing lesson: widget tests that touch a drift DB must end with `pumpWidget(SizedBox())` +
+  `pump(100 ms)`, or `db.close()` waits forever (cost two 10-min hangs today). Run new test files with `timeout`.
+- **Device checks**: auto-start on → focus ends, chime, break starts by itself (also with the screen off / app in
+  background); QS tile toggles and shows minutes; long-press icon → 3 shortcuts work (Start focus from cold start);
+  export CSV/backup to Downloads, restore on a clean install; run a focus with slips → "NOW · 25 MIN"; widgets in light
+  mode + another edition, resize Console/Dial bigger and smaller, corners match other widgets on Android 12+.
+
 ## 2026-10-09 (g) — Group C: Live Update on the lock screen, paused card, desk clock mode  (status: committed `916028d`, `9920ef5`; analyze 0, tests green; NOT built; needs a device check, ideally an Android 16 phone)
 
 Review (d) section C, options 1 and 2. Kotlin compiles; `flutter analyze` 0; full `flutter test -j 1` green (473 passed,
@@ -130,7 +169,7 @@ green (461 passed, 1 skipped). No APK/AAB built.
   → real pause, correct preset; daily goal 6 → LEDs fill by share; Reduce motion on (Settings → Accessibility) → no
   entry/switch/roll animations.
 
-## 2026-10-09 (d) — App review: bugs, battery, lock screen / AOD plan  (status: review; group A fixed in (e), group B in (f), group C (1, 2) in (g), D open)
+## 2026-10-09 (d) — App review: bugs, battery, lock screen / AOD plan  (status: review; group A fixed in (e), group B in (f), group C (1, 2) in (g), group D in (h))
 
 Read-only review (3 parallel code audits + spot checks by the agent). Verified items are marked (✓ checked in code).
 
