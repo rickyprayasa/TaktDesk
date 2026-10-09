@@ -170,7 +170,10 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
     if (widget.autoNavigate && mounted) {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 900),
+          // Reduce motion: cut straight to the desk instead of the 900 ms fade + scale.
+          transitionDuration: (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
+              ? Duration.zero
+              : const Duration(milliseconds: 900),
           pageBuilder: (context, animation, secondaryAnimation) => const DeskCanvasScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             final curved = CurvedAnimation(parent: animation, curve: Curves.easeInOutCubic);

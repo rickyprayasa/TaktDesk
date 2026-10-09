@@ -469,7 +469,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                                       Padding(
                                         padding: const EdgeInsets.symmetric(vertical: 24.0),
                                         child: AnimatedSwitcher(
-                                          duration: const Duration(milliseconds: 260),
+                                          duration: _reduceMotion ? Duration.zero : const Duration(milliseconds: 260),
                                           switchInCurve: Curves.easeOutCubic,
                                           switchOutCurve: Curves.easeInCubic,
                                           transitionBuilder: (child, animation) {

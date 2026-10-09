@@ -52,6 +52,15 @@ class _CrownPushButtonState extends State<CrownPushButton>
   bool _dragTriggered = false;
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reduce motion: the crown jumps between its rest / pressed / pulled positions.
+    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    _pressController.duration = reduce ? Duration.zero : const Duration(milliseconds: 140);
+    _pullController.duration = reduce ? Duration.zero : const Duration(milliseconds: 160);
+  }
+
+  @override
   void initState() {
     super.initState();
     _pressController = AnimationController(

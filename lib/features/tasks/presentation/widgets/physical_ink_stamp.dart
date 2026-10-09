@@ -52,6 +52,14 @@ class _PhysicalInkStampState extends State<PhysicalInkStamp>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reduce motion: the DONE stamp appears without the slam (scale 2 -> 1).
+    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    _controller.duration = reduce ? Duration.zero : const Duration(milliseconds: 320);
+  }
+
+  @override
   void didUpdateWidget(covariant PhysicalInkStamp oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isDone != oldWidget.isDone) {

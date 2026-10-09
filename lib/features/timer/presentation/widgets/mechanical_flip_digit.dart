@@ -27,7 +27,10 @@ class MechanicalFlipDigit extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             AnimatedSwitcher(
-              duration: const Duration(milliseconds: 230),
+              // Reduce motion: digits change in place, no drum roll.
+              duration: (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 230),
               layoutBuilder: (currentChild, previousChildren) {
                 return Stack(
                   alignment: Alignment.center,
