@@ -62,6 +62,9 @@ English only (no localization). Kotlin compiles; `flutter analyze` 0; full `flut
   layout; no `previewImage` for ≤ 11 (would need rendered PNGs).
 - Testing lesson: widget tests that touch a drift DB must end with `pumpWidget(SizedBox())` +
   `pump(100 ms)`, or `db.close()` waits forever (cost two 10-min hangs today). Run new test files with `timeout`.
+- **Dev APK built 2026-10-09 15:21** for the owner's phone check (no AAB): `build_outputs/zykl-developer-pro-universal.apk`
+  (66.8 MB, `com.zykl.app.devpro`, 1.0.3 / versionCode 4, debug key). Home-screen label is now **"ZYKL Dev"** (was
+  "ZYKL DEV PRO", cut off by launchers; build.gradle.kts). Built after the owner closed Chrome (3.8 GB free).
 - **Device checks**: auto-start on → focus ends, chime, break starts by itself (also with the screen off / app in
   background); QS tile toggles and shows minutes; long-press icon → 3 shortcuts work (Start focus from cold start);
   export CSV/backup to Downloads, restore on a clean install; run a focus with slips → "NOW · 25 MIN"; widgets in light
