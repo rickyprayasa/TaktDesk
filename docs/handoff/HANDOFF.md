@@ -28,6 +28,253 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-09 (c) — HD feature videos (Dispenser, Vinyl, Dial, Editions+Analytics) + Konten baru captions  (status: videos done; captions revised; film_capture/compose changes NOT committed, owner OK first)
+
+- **Lockdown feature video done** (owner go-ahead): the Claude-chat `feat_lockdown` test passed unchanged (DND pre-flight
+  does not get in the way under FilmFocusLockService; 5.25 s hold releases). `ZYKL_Feature_Lockdown_4x5.mp4` 17.1 s, one
+  LOCK shot 3.0–11.9. In Konten baru it posts as **B8 (Mon 19 Oct, "Meet Monastic Lockdown.")**: same caption (it already
+  described the 5-second hold), format Video, `08_Oct19_feature_lockdown.mp4`; the old PNG is in `_replaced_by_feature_videos/`.
+  Konten baru now has 6 HD feature videos: B4 Dial, B8 Lockdown, B11 Editions, B12 Analytics, B18 Vinyl, B25 Dispenser.
+- **Sound decision (owner A/B, 2026-10-09): no background music/bed in demo or feature videos**, only the app's own
+  sounds. Test files: `Konten baru/AB_test_backsound/` (A = as is, B = quiet piano bed from 0 s); A won.
+- **Owner follow-up (same day): Editions and Analytics split into two videos.** `feat_editions` now = equip Bauhaus
+  Heritage once through the gallery (how), then a dial montage while it runs: Raw Brass → Walnut → Titanium → British
+  Racing Green → Indigo, swapped in code via `deskPreferencesControllerProvider.notifier.setHardwareEdition` every 2.2 s
+  (26.0 s video; shots EDITIONS + one long DIAL hold). The first attempt (4× `_equip`) spent most of 31 s in the settings
+  sheet. New `feat_analytics`: desk plate → telemetry slip → Focus Analytics DAY / WEEK / MONTH (15.5 s; shots TELEMETRY +
+  STATS). In Konten baru: B11 = editions-only caption (366 chars); **B12 (Fri 23 Oct, Principle) now posts the analytics
+  video** with a privacy caption (331 chars; the old text said "No analytics", which clashed with the feature: now "no
+  tracking"); `12_Oct23_data_stays_here.png` moved to `_replaced_by_feature_videos/`.
+- **Videos** (all captured from the real Flutter widgets at 3× = 1152×2400, composed 1080×1350 @60 fps with the app's own
+  sounds on the exact frames): `promo/Konten/Konten 3/feature_videos/ZYKL_Feature_{Dispenser,Vinyl,Dial,Editions}_4x5.mp4`
+  (20.3 / 17.2 / 19.6 / 20.3 s). Lockdown is on hold (owner: not yet).
+- Capture recipe used (owner keeps Chrome open, so a tighter cap than run_content.sh's 4 GB; peak RSS was only ~0.7 GB):
+  `systemd-run --user --scope -p MemoryMax=3000M -p MemorySwapMax=256M -p CPUQuota=200% nice -n 19 flutter test
+  film_capture/content_clips_test.dart --plain-name "content feat_<x>" --dart-define=FILM_DIR=$HOME/.cache/zykl-film/content
+  --dart-define=FILM_PR=3 --dart-define=FILM_HIDE_DEV_TOOLS=true` (smoke first with FILM_PR=1 and content_smoke), ~3 min
+  each; then `compose.py feat_<x> --cues` → SHOTS → `--still` check → `--out`.
+- `content_clips_test.dart`: new `feat_dial` (presets 50/10 → 15/3 → 25/5, CUSTOM + crown 40/8, start) and
+  `feat_editions` (settings gallery → equip Mid-Century Walnut, desk plate → telemetry slip → analytics WEEK, MONTH).
+  `_seedWeek` dates history from the REAL `DateTime.now()`: the DB/analytics use `DateTime.now()` while FilmScene freezes
+  package:clock at 2 Oct 2026, so a clock-based seed showed an empty week on 9 Oct. `_period()` helper for the tabs.
+  The Claude-chat `feat_dispenser` / `feat_vinyl` tests ran unchanged and pass (tear swipe really archives the slip).
+- `compose.py`: SHOTS for all four (calm camera: few long holds) and regions `PLATTER` (turntable card) and `EDITIONS`
+  (settings carousel). Note: the mockup status bar draws "9:41" (iPhone-style) in every demo; left as is for consistency.
+- **Konten baru** (owner: base = the OLD 8 Oct docs, not Konten 3):
+  - `ZYKL/media/`: `04_Oct15_feature_dial.mp4`, `11_Oct22_feature_editions.mp4`, `18_Oct29_feature_vinyl.mp4`,
+    `25_Nov05_feature_dispenser.mp4`; replaced PNGs moved to `ZYKL/media/_replaced_by_feature_videos/`. Copies of the four
+    masters in `Konten baru/feature_videos/`.
+  - `Founder/images/`: 11 images replaced by the Konten 3 versions (ZYKL mark + @zykl.app, no personal name, owner's
+    earlier request); old ones in `Founder/images/_old_with_personal_name/`. f29–f35 (Konten 3 only) not added: the old
+    founder doc ends on 8 Nov.
+  - `ZYKL/zykl-threads-pack-3-ZYKL.docx`: Thursdays B4/B11/B18/B25 are now "Feature video" posts (captions 262/406/278/315
+    chars), calendar + weekly rhythm + intro updated, B19 "Android 7.0 and newer". `Founder/...FOUNDER.docx`: F17 (Wed
+    28 Oct) is now a behind-the-build post about the HD clips that teases B18 (387 chars). Originals in
+    `Konten baru/_arsip_sebelum_revisi_09okt/`. Edited by unzipping and rewriting run texts (script in the agent
+    scratchpad; docs were docx-js output, one run per paragraph). The old founder doc still has 5 yellow placeholder
+    lines (e.g. "[Day 14 done / Day N of 14]") the owner must fill; the root `zykl-threads-pack-3-brand-founder-en.docx` is
+    the even older combined draft and was not edited.
+
+## 2026-10-09 (b) — Website film updated to the 44 s remaster  (status: pushed `43dbc1e` + `158d8f2`, verified live)
+
+- Web cuts from the four remaster masters with `promo/Video Motion Remaster/source/web_cuts.sh` (same recipe as the v3
+  `composite.sh` web(): 720p/30 fps, CRF 27 ≈ 400 kbps, AAC 96k, poster at 00:14 = the "Pull the crown" scene) →
+  `zykl.app/public/video/zykl-promo-{dark,light}[-portrait].{mp4,-poster.jpg}`, 2.6–2.8 MB each, 44.01 s.
+- `FilmSection.tsx`: "40" → "44" in the header label, play button, aria labels and doc comment. `FILM_VERSION =
+  "?v=2026-10-09"` appended to the 8 video/poster URLs, because `/video/*` is cached 30 days under fixed names (returning
+  visitors would keep the 40 s cut and the dark/light twins could differ in length). **Bump it on every re-cut.**
+- Verified live: the four mp4s served by Cloudflare are byte-identical to the local cuts (44.01 s); the version string is
+  in the live page chunk (the poster is client-rendered, so it is not in the HTML).
+- **Range requests fixed (website `27f517a`, live).** Cause: Workers Static Assets ignore `Range` and always send the whole
+  file with 200 (on zykl.app and on workers.dev alike); iOS Safari needs 206 to play <video>. `wrangler.jsonc`
+  `run_worker_first` now also has `/video/*` and `/audio/*`; `worker/index.js` `serveMedia()` fetches the asset without
+  Range and slices one byte range (206 + Content-Range, 416 + `bytes */size`, multi-range → whole 200, HEAD/full 200 with
+  Content-Length + Accept-Ranges; 304/404 pass through). Do NOT `export` helpers from the Worker module (named exports are
+  read as entrypoints). Tested: 10 Node cases with a fake ASSETS binding; live curl 206/416 with bytes identical to the
+  local file, audio 206, `/` 200, `/get` 302; Chromium plays and seeks to 30 s in 0.8 s (206 in the network log).
+  Not tested on a real iPhone/Safari yet (owner).
+
+## 2026-10-09 — Threads Content Pack 3 (both accounts) + feature videos; HD Flutter feature capture prepared  (status: content delivered to `promo/Konten/Konten 3/`; capture scripts written but NEVER RUN, nothing committed)
+
+Done in a Claude cloud session (Cowork). It had no Flutter and no shell on this PC, so the agent only wrote files. Next agent: run, fix and commit.
+
+**Content pack (`promo/Konten/Konten 3/`, untracked like the other renders in `promo/Konten`; keep mp4/png out of git):**
+- `ZYKL/zykl-threads-pack-3-ZYKL.docx`: @zykl.app, 35 posts, 12 Oct–15 Nov 2026 (5 weeks, one a day). `ZYKL/media/` has
+  22 PNG (1080×1350), the 8 Konten 1 demo videos and 2 feature videos, all named in posting order `NN_MonDD_slug`.
+- `Founder/zykl-threads-pack-3-FOUNDER.docx`: @rickyprayasa, 35 posts, 12 Oct–15 Nov. `Founder/images/` has 18 PNG.
+  F29–F35 (9–15 Nov) are a Gen Z "My setup" week (studying, coding, admin, languages, writing, creative, reading).
+  Founder images carry the ZYKL mark and @zykl.app only, no personal name (owner request).
+- Every caption placeholder is filled from this log. Guesses the owner must check: tester/day counts (F8, F15, F22, F28),
+  morning routine (F5), RSQUARE one-liner (F12).
+- Price everywhere: "US$4.99, or Rp 69.000 in Indonesia". Old "BRAUN" labels in recordings were replaced by the current
+  "ZYKL TP-01" / "MODERNIST CLASSIC".
+- Sources to rebuild docx/images: `Konten 3/_source/` (see its README: `posts.js`, `brand5.js`, `build.js`, `img/gen.py`).
+- Stale files the owner should delete: `Konten 3/ZYKL/media/18_Oct29_record_spins.png`, `25_Nov05_torn_edge.png`,
+  `Konten 3/ZYKL/images/`, `Konten 3/images/`, `Konten 3/zykl-threads-pack-3-brand-founder-en.docx`.
+
+**Feature videos (new series: one feature per video, same look as the Konten 1 demos, Thursday slot on @zykl.app):**
+- Done from device screen recordings (lower quality, owner wants HD instead): B18 Thu 29 Oct `18_Oct29_feature_vinyl.mp4`
+  (`New Vinyl Dark.mp4`), B25 Thu 5 Nov `25_Nov05_feature_dispenser.mp4` (`Dispenser Light.mp4`). compose.py keys
+  `rec_vinyl` / `rec_dispenser`; frame prep in `Konten 3/_source/feature_video/`.
+- **HD from Flutter (NOT RUN YET):**
+  - `film_capture/content_clips_test.dart`: new tests `content feat_lockdown` (crown → LOCKDOWN → hold unlatch 5.25 s →
+    released), `content feat_dispenser` (light: print 3 tasks → stamp first → swipe tear), and `content feat_vinyl`
+    (Kyoto Bamboo → needle → Debussy, then platter).
+  - `film_capture/run_features.sh [lockdown dispenser vinyl]` runs `run_content.sh feat_<x>` (3×, cgroup) and then
+    `promo/Konten/demo/compose.py feat_<x>`. Output goes to `promo/Konten/Konten 3/feature_videos/ZYKL_Feature_<X>_4x5.mp4`.
+  - `compose.py`: `feat_*` entries have `shots=[]` (whole phone, no zoom). After the first capture, run
+    `compose.py feat_<x> --cues` and add SHOTS like the demos (regions DIAL / DIAL_LOCK / LOCK / SLIP / DISP / DECK).
+  - Untested guesses to check first: `find.bySemanticsLabel('Lift tonearm')` after the needle drop (vinyl), whether a
+    swipe on `AnimatedReceiptStrip` tears in the test (dispenser), and the Lockdown hold time.
+- `film_capture/film_scene.dart`: added `FilmScene.settle(seconds, {step})` (advance without recording) and
+  `FilmScene.still(path)`. `film_capture/stills_test.dart` + `run_stills.sh`: 22 HD stills (dial in all 12 editions,
+  dispenser, vinyl, lockdown) plus a JSON of component rects, for social images. Not run yet either.
+
+**Next steps:**
+1. `bash film_capture/run_features.sh lockdown` → fix any test failure → time SHOTS from `--cues` → re-compose.
+2. Then `dispenser` and `vinyl`. Replace the B18/B25 videos (same filenames) and put Lockdown in a Thursday slot
+   (`Konten 3/_source/brand5.js` → `FEATURES`, rebuild the ZYKL docx with `build.js`).
+3. `flutter analyze` and commit the `film_capture/` + `compose.py` changes (owner OK first).
+
+## 2026-10-08 (f) — Pricing: USD 4.99 base + Rp 69.000 Indonesia; website copy fixed  (status: owner set Play prices; website pushed `2ad3501`, verified live)
+
+- Problem (owner): with IDR 69,000 as the Play base price every other country was converted from rupiah (e.g. USD 3.86),
+  so the dollar price drifted down. Fix (owner did in Play Console → `studio_pro_lifetime` → Set prices): all regions
+  from **USD 4.99**, then **Indonesia overridden to IDR 69,000**. Prices only change again if someone presses "update
+  exchange rates".
+- Website (`zykl.app`, commit `2ad3501`, auto-deployed): every "Rp 69.000, about $4.99" → "US$4.99, or Rp 69.000 in
+  Indonesia" (HonestSpecs, FAQ, Terms, OwnershipFaq, changelog); JSON-LD has a USD 4.99 offer plus the IDR one
+  (`eligibleRegion: ID`). Android support corrected to **7.0–16** (app `minSdk` = 24 via `coerceAtLeast(24)`, target 36;
+  Play shows "API levels 24+"): HonestSpecs, FAQ, SpecsMatrix, PlayStoreCta, JSON-LD `operatingSystem`. The SpecsMatrix
+  note no longer claims testing on specific Android versions. "under 20 MB" kept: Play download is ~13 MB.
+- Not built locally (a promo render was using the RAM; files were parse-checked with the TypeScript parser instead);
+  Cloudflare built it fine, live HTML checked with curl. The site still shows `V1.0.0` on purpose until the public release.
+
+## 2026-10-08 (e) — Promo Remaster: 8 s Dial scene fixed, polish pass, new 44 s music  (status: 540p full preview + music c/d/e awaiting owner review; masters NOT rendered)
+
+Owner decision (2026-10-08): keep the film at **44 s** (not 40 s, so it isn't rushed); regenerate the music so nothing
+repeats. Supersedes the 10-05 "4 s Dial scene / 40 s" plan. All files are in `zykl.app/promo/` (git-ignored).
+- Found: `anim.js` had been edited on 10-05 (8 s `dialScene`, 12–20 s) but was never rendered and was broken: `#s4c` stayed
+  `display:none`, so the crown phone + copy were invisible for 12–17 s, and the analog phone sat LEFT (Lockdown is RIGHT →
+  jump). Backup of that state: `source/anim_2026-10-05_dial8s.backup.js`. No backup exists of the anim.js behind the
+  approved 10-02 Dark 16:9 (its MP4 is safe).
+- Rewrote `dialScene()`: crown phone LEFT (starts in a 1.42× macro on the crown, one ease-back 0.6–2.6 s), copy +
+  counters RIGHT; 4.25–5.65 s the phone glides LEFT → RIGHT with a sheen while crown → analog clips crossfade; analog =
+  the v3 S4 layout (phone x=134, ry −13, copy LEFT), which is exactly where Lockdown starts at 20 s. Portrait keeps the
+  phone in place (crossfade only) — 9:16 NOT checked yet.
+- Music: `promo/scripts/generate_zykl_promo_audio_v3_44s.py` (ElevenLabs `/music`, composition plan 11 × 4 s @ 120 BPM; the
+  Dial scene gets two distinct sections "Groove A Crown" / "Groove A Analog"). Output `scripts/zykl_promo_audio_v3_44s/
+  music_{a,b}.mp3` (take b fell back to the plain prompt after a timeout, so it is less grid-locked). Mix:
+  `source/mix3_44s.py SFX_DIR MUSIC.mp3 OUT.wav` = mix2 cues, +4 s after 15.9 s, plus a soft glide whoosh (16.25 s) and three
+  1 Hz escapement ticks (17.6/18.6/19.6 s) → `source/audio_remaster_44s_v3{a,b}.wav`. The old `audio_remaster_44s.wav`
+  (with the duplicated bars) is untouched.
+- Preview: `Video Motion Remaster/PREVIEW_Dial_10-22s_Dark_16x9_music_{a,b}.mp4`.
+- **Polish pass (owner: "masterpiece", 2026-10-08 afternoon)** after reviewing stills of the whole film:
+  zooms shrunk so the phone body never leaves the frame (lockdown 1.3 → 1.14, vinyl 1.25 → 1.12 in `sceneZooms`);
+  UNIT numbering now Dial 01 / Lockdown 02 / Dispenser 03 / Turntable 04 (`index.html` labels + `.numeral`);
+  small copy ≈1.4× for phone viewing (`.lab` 2.5rem, `.row` 2.6rem, `.rows`/`.ticker` 70rem wide, `.ename`, `.badgeM span`,
+  `.counter span`, `.slots span`). Backup: `source/index_2026-10-08_pre-polish.backup.html`. Verified with stills in
+  16:9 and 9:16 (portrait Dial scene = crossfade in place, looks fine).
+- **Music, round 2.** Owner picked take b for its audible clock tick, but b (loose prompt) had the hit at 4 s instead of
+  8 s and went silent at 40 s. The plan now asks for a clock tick on every beat for the whole piece, a quiet Lockdown
+  breakdown and "no silence before the end"; the generator retries the plan 3× and never falls back (`python3
+  generate_zykl_promo_audio_v3_44s.py c d e`). Measured (4 s RMS): **c** = cleanest arc (silent chaos, hit at 8 s, level
+  to 42 s); **e** = same with a louder second half; **d** = quiet until 12 s. Mixes: `source/audio_remaster_44s_v3{c,d,e}.wav`.
+  Agent recommendation: c.
+- Preview for the owner: `Video Motion Remaster/PREVIEW_Full_44s_540p_music_{c,d,e}.mp4` (960×540 render of the full
+  film, same layout as 1080p since everything scales with `R`).
+- Next after the owner picks a take: set that wav in `render_chunks.sh` (currently still `audio_remaster_44s.wav`!) →
+  Dark 16:9 → Light 16:9 → Dark 9:16 → Light 9:16, one at a time.
+- **Owner picked music take b** (`audio_remaster_44s_v3b.wav`; `render_chunks.sh` now muxes it). Owner flagged 3 clicks in
+  the Analog half with nothing being tapped: those were my 1 Hz `tick` cues → removed.
+- **Analog half now demos the presets** (owner idea): new capture `clip presets {dark,light}` in
+  `film_capture/clips_test.dart` (timer idle so the cassette keys are live: 25/5 → 50/10 → 15/3 → back to 25/5 for the
+  Lockdown hand-off), 156 frames, taps at frames 31/67/103; frames converted with `Video Motion v4/source/prep_frames.py`
+  (manifest backup `frames/manifest_2026-10-08.backup.js`). `anim.js`: `ph4` uses `presets`, `KN.presets` lands the taps at
+  17.45 / 18.25 / 19.05 s, and the DEEP FOCUS / SHORT REST / LONG RECOVERY rows switch with each press (short accent glow).
+  The mix has a soft `ui_click` (−13) on each of those three presses instead. (`anal` = analytics, not analog; unused.)
+- Preview: `PREVIEW_Dial_10-22s_Dark_16x9_v3b.mp4`. Masters still NOT rendered.
+- **Polish round 3 (owner OK'd all four suggestions, 2026-10-08; English only; keep the Google Play badge):**
+  1. Preset copy: label `UNIT 01 // PRESET CASSETTE`, headline "Classic. Monastic. / Sprint." (was "Analog hands. A calmer
+     rhythm.", which repeated "rhythm" after the crown line), first row `PRESET CLASSIC→MONASTIC→SPRINT→CLASSIC`
+     switching with the other rows (`PRESET_VALS`).
+  2. Hook: `chipT0()` lands six notifications in the first 0.3 s (film opens mid-chaos); the mix uses the same curve +
+     a buzz at 0.02 s.
+  3. ~~Vinyl sound moment~~ (music duck + app stylus + `vinyl_warm_tape.ogg` at the 26.27 s needle drop) was tried and
+     **rejected by the owner** ("breaks the promo mood"). Vinyl keeps the v2 `needle` cue at the scene start (24.18 s).
+  4. **Session order:** Dial 12–20 → Dispenser 20–24 → Vinyl 24–28 → Lockdown 28–32 → Editions → Ownership → Outro.
+     Done in `SEGS` (slot 4/5/6 = s5/s6/s4b) + the GRID visibility rule in `renderOld`; hero dial behind Lockdown now
+     fades in (`.16 * seg(t, 40, 40.8)`); UNIT numbers Dial 01 / Dispenser 02 / Turntable 03 / Lockdown 04; lockdown zoom
+     1.14 → 1.06 (the scene-out scale stacks on it and cropped the phone top).
+  New mix script `source/mix4_44s.py SFX_DIR APP_AUDIO_DIR MUSIC OUT` (explicit per-scene cues; mix3 is obsolete) →
+  `audio_remaster_44s_v4b.wav` (music b); `render_chunks.sh` muxes v4b. Backups of the pre-round-3 state:
+  `source/*_2026-10-08_presets.backup.*`. Verified with stills 16:9 + 9:16. Preview: `PREVIEW_Full_44s_540p_v4.mp4`.
+- **Owner approved the 540p preview (2026-10-08).** Old 10-02 masters moved to `Video Motion Remaster/previous_2026-10-02/`.
+  **Dark 16:9 master rendered 11:40** → `ZYKL_Promo_Remaster_44s_EN_Dark_16x9.mp4` (1920×1080, 60 fps, 2640 frames, 44.0 s,
+  12.7 Mbps, AAC from `audio_remaster_44s_v4b.wav`; seams at 11/22/33 s checked with a tblend frame-difference pass, no
+  freeze/jump). Awaiting owner review; then Light 16:9 → Dark 9:16 → Light 9:16, one at a time (`./render_chunks.sh <variant>`).
+  Note: the 540p preview looks soft on the phone UI; that is the preview resolution only (1080p is sharp).
+- **Owner approved Dark 16:9 ("Masterpiece!!", 2026-10-08) and asked for the rest.** Light stills checked first (the dim
+  phone in Ownership is the app's own modal scrim behind the light analytics dialog: correct). Old 10-02 chunk caches
+  were deleted (otherwise `render_chunks.sh` skips `.done` parts and reuses old picture), then Light 16:9 → Dark 9:16 →
+  Light 9:16 rendered back to back in one sequential loop (logs `~/.cache/zykl-film/render_remaster_<variant>.log`).
+  If interrupted: re-run `./render_chunks.sh <variant>` (resumes per chunk). Light masters are large (~140 Mbps at
+  crf 14 because of the grain on a light background); make a lighter delivery encode if needed.
+- **Owner review of the new masters found 3 bugs → ALL FOUR masters re-rendered** (Light 9:16 run was stopped; old
+  Light 16:9 / Dark 9:16 from this morning are superseded):
+  1. Portrait crown too small: `growPhone` caps portrait zoom at 1.18; it now takes a per-call cap and the crown macro is
+     2.1× in portrait (v=.28, eases back .9–2.6 s). 16:9 unchanged (1.42×).
+  2. Glitch at 27–28 s (all variants, incl. the approved Dark 16:9): Editions (`s7`) still crossfaded in at the end of
+     Vinyl, as in the v3 order. GRID rule now hides `s7` while `NT < 27.8`.
+  3. Portrait Editions labels overlapped the lower phones (labels were enlarged 1.4×) and then the footer HUD: phones 29 →
+     24 wide, rows y 81/146 → 77/143. Checked dark + light stills.
+  Queue: dark_16x9 → dark_9x16 → light_16x9 → light_9x16 (sequential).
+  4. Tear SFX (owner): it played at 21.95 s (the v3 overlay timing) but the slip only leaves the phone's dispenser at
+     ~23.1 s (clip frames 169–183 → 23.03–23.27 s; checked frame by frame). `mix4_44s.py` tear cue → 23.08 s; wav rebuilt
+     before the re-render queue reached its mux step, so all four masters carry it. Audio-only fixes never need a video
+     re-render: re-mux the chunk list in `~/.cache/zykl-film/render_remaster/<variant>/list.txt` with the new wav.
+  5. **My regression:** the portrait-editions edit appended a `//` comment mid-line and commented out the 16:9 `else`
+     branch, so in 16:9 all four Editions phones sat at (0,0). Fixed (comment on its own line); every changed line with a
+     trailing comment re-checked. Lesson: verify stills in BOTH orientations after any layout edit.
+  6. Boom (`hit`): owner wants it ON the white flash of the ZYKL reveal. Measured frame luma: flash peaks at **8.367 s**
+     (rises from 8.28); hit.mp3 peaks 0.015 s in → cue at **8.35 s** (onset measured at 8.36 s in the muxed master).
+     `riser` 4.85 s so it ends on it. (A first try at 8.8 s, aligned to the letters, was wrong.)
+  **Owner rule (2026-10-08): do NOT queue all renders; send review material first, render one variant on approval.**
+  State: Dark 9:16 master = final picture + current audio (remuxed). **Dark 16:9 re-rendered (chunks 22–44) 16:06**,
+  verified (2640 frames, seams, editions row, no bleed at 27.7–27.95, boom onset 8.36, tear 23.03–23.1); the PC hung once
+  mid-render (RAM: owner's Chrome + LibreOffice) and the orphaned chunk was killed and redone. Light 16:9 has chunks 0 and 11
+  done (correct), 22/33 pending. Light 9:16 not started. Review sheets: 14 stills per variant.
+  7. Owner: the big background dial was frozen during the Dial scene (12–20 s). `dialScene` lays the background out from
+     one frozen v3 time (`renderOld(warp(15.5))`), so the hero needle stopped. It now overrides `#dneedle` with the same
+     escapement (2 steps/s) continuing from v3 time 11.2: measured 404° at 11.9 and 12.0 s (no jump at the cut), 500° at
+     19.98 s, identical in 16:9 and 9:16. **Chunk 11–22 is stale in every variant**: `part_011` deleted from the caches of
+     dark_16x9, dark_9x16 and light_16x9 (Dark masters on disk still have the frozen needle until re-rendered).
+     **Both Dark masters re-rendered (chunk 11–22 only, ~4 min each, 16:18–16:27)** and verified: 2640 frames, seams,
+     needle visibly advancing at 12.2/15/17 s in both. Dark 16:9 + Dark 9:16 are now final pending owner review.
+     Remaining: Light 16:9 (chunks 11–44) and Light 9:16 (full), one at a time on the owner's OK.
+  8. **PAUSED 2026-10-08 16:50 at the owner's request (resume tomorrow).** Light 16:9 chunks 0, 11 and 22 are done
+     (`.done` markers; part_022 was finished after the queue was stopped, verified 660 frames, marker written by hand).
+     Resume, one variant at a time, after checking `free -m` (owner closes browsers first):
+     ```
+     cd "/home/tuneeca/RSQUARE/Android/zykl.app/promo/Video Motion Remaster/source"
+     ./render_chunks.sh light_16x9   # only chunk 33–44 left (~10 min), then it muxes the master
+     ./render_chunks.sh light_9x16   # full render
+     ```
+     Speed-up used with the browsers closed: raise the running chunk's cgroup with
+     `systemctl --user set-property --runtime <run-…scope> CPUQuota=380%` (find it with
+     `systemctl --user list-units --type=scope | grep run-`); render.mjs now encodes with 3 x264 threads
+     (`FF_THREADS` env overrides). Light renders ~1 fps at the default 150% quota vs ~2.7 fps for Dark.
+  9. **2026-10-09: all four masters DONE.** Owner found the mirror of bug 2: at 32 s (Lockdown → Editions) Vinyl (`s6`)
+     faded back in, because v3 time jumps back to 24.4 s where Vinyl's scene-out still runs. GRID rule now hides `s6`
+     while `NT >= 24`. To stop whack-a-mole, a **scene-bleed scan** renders t = 0…44 s every 0.05 s and flags any `.scene`
+     visible outside its slot ±0.45 s (session order s1,s2,s3,s4c|s4,s5,s6,s4b,s7,s8,s9): 960×540 and 540×960 both
+     **CLEAN** (script: `source/scan_scene_bleed.mjs DIR W H QUERY`; run it after ANY timeline/order change). Chunk 22–33 re-rendered for Dark
+     16:9, Dark 9:16, Light 16:9; Light 9:16 rendered fully after the fix. All four: 2640 frames, 44.0 s, 0 render
+     errors, 31.9/32.1/32.3 s frames checked. Gotcha: a `pgrep -f "<pattern>"` wait loop matches its own bash command
+     line and never ends; wait on a PID or a log line instead.
+- Next after owner OK: pick take a/b → point `render_chunks.sh` at that wav → render Dark 16:9 (≈30 min) → then the other
+  three variants one at a time (old Light 16:9 / Dark 9:16 from 10-02 are obsolete; Light 16:9 was 140 Mbps, check bitrate).
+
 ## 2026-10-08 (d) — v1.0.3 (versionCode 4) built and verified  (status: built + pushed with tag; owner uploads the AAB)
 
 - Commits `448fbf6` (countdown notification channel), `328f9ae` (deps), `c072e56` (`version: 1.0.3+4`), tag
