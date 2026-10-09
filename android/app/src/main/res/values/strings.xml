@@ -17,4 +17,7 @@
     <!-- Widget 4: Task Dispenser 4x2 -->
     <string name="widget_task_dispenser_label">ZYKL Task Dispenser</string>
     <string name="widget_task_dispenser_desc">Tactile printed thermal receipt with five active focus tasks</string>
+
+    <!-- Quick Settings tile -->
+    <string name="tile_label">ZYKL Focus</string>
 </resources>

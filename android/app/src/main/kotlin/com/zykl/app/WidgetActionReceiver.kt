@@ -20,6 +20,9 @@ class WidgetActionReceiver : BroadcastReceiver() {
         const val ACTION_NOTIF_STOP = "com.zykl.app.ACTION_NOTIF_STOP"
         const val EXTRA_TASK_INDEX = "EXTRA_TASK_INDEX"
         const val EXTRA_TASK_ID = "EXTRA_TASK_ID"
+
+        /** START / PAUSE from a widget or the Quick Settings tile. */
+        fun toggleTimer(context: Context) = WidgetActionReceiver().handleToggleTimer(context)
     }
 
     override fun onReceive(context: Context, intent: Intent) {

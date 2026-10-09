@@ -51,6 +51,17 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="User-started Pomodoro focus timer: shows the live countdown notification, keeps the home-screen widgets in sync, and rings the session-end alarm while the screen is off. Stops when the session ends or the user stops it." />
         </service>
+        <!-- Quick Settings tile: start / pause the focus timer from the notification shade. -->
+        <service
+            android:name=".ZyklTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_takt_timer"
+            android:label="@string/tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
         <service
             android:name=".MediaNotificationService"
             android:exported="false"
