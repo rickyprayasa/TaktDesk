@@ -74,6 +74,9 @@ class DeskPreferencesState {
   /// Completed focus cycles per day the user aims for (1–12, default 4).
   final int dailyGoalCycles;
 
+  /// Desk clock: keep the screen on while a timer runs, dimmed after a minute untouched.
+  final bool deskClockMode;
+
   const DeskPreferencesState({
     this.soundVolume = 0.8,
     this.foleyEnabled = true,
@@ -84,6 +87,7 @@ class DeskPreferencesState {
     this.alarmChimeId = 'braunBell',
     this.autoUnlockMonastic = false,
     this.dailyGoalCycles = 4,
+    this.deskClockMode = false,
   });
 
   DeskPreferencesState copyWith({
@@ -96,6 +100,7 @@ class DeskPreferencesState {
     String? alarmChimeId,
     bool? autoUnlockMonastic,
     int? dailyGoalCycles,
+    bool? deskClockMode,
   }) {
     return DeskPreferencesState(
       soundVolume: soundVolume ?? this.soundVolume,
@@ -107,6 +112,7 @@ class DeskPreferencesState {
       alarmChimeId: alarmChimeId ?? this.alarmChimeId,
       autoUnlockMonastic: autoUnlockMonastic ?? this.autoUnlockMonastic,
       dailyGoalCycles: dailyGoalCycles ?? this.dailyGoalCycles,
+      deskClockMode: deskClockMode ?? this.deskClockMode,
     );
   }
 
@@ -123,7 +129,8 @@ class DeskPreferencesState {
           isProSimulated == other.isProSimulated &&
           alarmChimeId == other.alarmChimeId &&
           autoUnlockMonastic == other.autoUnlockMonastic &&
-          dailyGoalCycles == other.dailyGoalCycles;
+          dailyGoalCycles == other.dailyGoalCycles &&
+          deskClockMode == other.deskClockMode;
 
   @override
   int get hashCode =>
@@ -135,7 +142,8 @@ class DeskPreferencesState {
       isProSimulated.hashCode ^
       alarmChimeId.hashCode ^
       autoUnlockMonastic.hashCode ^
-      dailyGoalCycles.hashCode;
+      dailyGoalCycles.hashCode ^
+      deskClockMode.hashCode;
 }
 
 class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
@@ -189,6 +197,7 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
         alarmChimeId: pref.alarmChimeId,
         autoUnlockMonastic: pref.autoUnlockMonastic,
         dailyGoalCycles: pref.dailyGoalCycles,
+        deskClockMode: pref.deskClockMode,
       );
       _audioService?.setVolume(pref.soundVolume);
       _audioService?.setFoleyEnabled(pref.foleyEnabled);
@@ -275,6 +284,11 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
   Future<void> setAutoUnlockMonastic(bool value) async {
     state = state.copyWith(autoUnlockMonastic: value);
     await _database?.updatePreferences(autoUnlockMonastic: value);
+  }
+
+  Future<void> setDeskClockMode(bool value) async {
+    state = state.copyWith(deskClockMode: value);
+    await _database?.updatePreferences(deskClockMode: value);
   }
 
   Future<void> clearAllSessions() async {

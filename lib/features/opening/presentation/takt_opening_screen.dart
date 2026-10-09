@@ -8,6 +8,7 @@ import '../../../../core/audio/audio_service.dart';
 import '../../../../core/audio/sound_effect.dart';
 import '../../../../core/haptics/haptic_service.dart';
 import '../../desk/presentation/desk_canvas_screen.dart';
+import '../../desk/presentation/desk_clock_host.dart';
 import '../../settings/presentation/settings_controller.dart';
 
 /// 4.2 s cinematic boot of the instrument (owner asked for a calmer opening
@@ -174,7 +175,8 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
           transitionDuration: (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
               ? Duration.zero
               : const Duration(milliseconds: 900),
-          pageBuilder: (context, animation, secondaryAnimation) => const DeskCanvasScreen(),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const DeskClockHost(child: DeskCanvasScreen()),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             final curved = CurvedAnimation(parent: animation, curve: Curves.easeInOutCubic);
             // The desk settles in as if the camera pulls back from the dial

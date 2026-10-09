@@ -15,4 +15,7 @@ class DeskPreferences extends Table {
 
   /// Completed focus cycles per day the user aims for (schema v8).
   IntColumn get dailyGoalCycles => integer().withDefault(const Constant(4))();
+
+  /// Keep the screen on (dimmed when idle) while a timer runs (schema v9).
+  BoolColumn get deskClockMode => boolean().withDefault(const Constant(false))();
 }

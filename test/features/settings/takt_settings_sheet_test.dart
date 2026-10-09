@@ -154,6 +154,44 @@ void main() {
       expect(container.read(deskPreferencesControllerProvider).hapticsEnabled, isFalse);
     });
 
+    testWidgets('Desk clock switch turns the mode on and off', (tester) async {
+      final controller = DeskPreferencesController(null, AudioService(isMock: true));
+      final container = ProviderContainer(
+        overrides: [
+          deskPreferencesControllerProvider.overrideWith((ref) => controller),
+          lifetimeFocusStatsProvider.overrideWith(
+            (ref) => Stream.value(const LifetimeFocusStats()),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: Scaffold(
+              body: TaktSettingsSheet(),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final finder = find.byKey(const ValueKey('desk_clock_mode_switch'));
+      expect(find.text('DESK CLOCK WHILE RUNNING'), findsOneWidget);
+      expect(container.read(deskPreferencesControllerProvider).deskClockMode, isFalse);
+
+      await tester.ensureVisible(finder);
+      await tester.tap(finder);
+      await tester.pump();
+      expect(container.read(deskPreferencesControllerProvider).deskClockMode, isTrue);
+
+      await tester.tap(finder);
+      await tester.pump();
+      expect(container.read(deskPreferencesControllerProvider).deskClockMode, isFalse);
+    });
+
     testWidgets('System clearance badge reports granted DND access from Android', (tester) async {
       const channel = MethodChannel('com.takt.desk/focus_lock');
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {

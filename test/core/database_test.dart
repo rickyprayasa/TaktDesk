@@ -172,6 +172,17 @@ void main() {
     expect(pref.hapticsEnabled, isFalse);
   });
 
+  test('deskClockMode defaults to off and persists (schema v9)', () async {
+    await db.updatePreferences(soundVolume: 0.7);
+    var pref = await db.watchPreferences().first;
+    expect(pref!.deskClockMode, isFalse);
+
+    await db.updatePreferences(deskClockMode: true);
+    pref = await db.watchPreferences().first;
+    expect(pref!.deskClockMode, isTrue);
+    expect(pref.soundVolume, 0.7);
+  });
+
   test('can persist and update selectedEdition and isProSimulated in preferences', () async {
     await db.into(db.deskPreferences).insert(
       const DeskPreferencesCompanion(),

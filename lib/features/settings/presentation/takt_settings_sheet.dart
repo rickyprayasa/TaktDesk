@@ -816,6 +816,56 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
             ],
           ),
           const SizedBox(height: 10),
+          // Desk clock toggle
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'DESK CLOCK WHILE RUNNING',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.0,
+                        color: primaryTextColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Keeps the screen on while the timer runs. After a minute untouched it dims and shifts a few pixels against burn-in. Best on a stand or charger.',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 9.0,
+                        color: secondaryTextColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Switch(
+                key: const ValueKey('desk_clock_mode_switch'),
+                value: prefs.deskClockMode,
+                activeThumbColor: TaktColors.filamentAmber,
+                activeTrackColor:
+                    TaktColors.filamentAmber.withValues(alpha: 0.5),
+                inactiveThumbColor:
+                    isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
+                inactiveTrackColor:
+                    isDark ? TaktColors.slateLight : TaktColors.paperBorder,
+                onChanged: (val) {
+                  ref
+                      .read(deskPreferencesControllerProvider.notifier)
+                      .setDeskClockMode(val);
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
 
           // Configure DND button
           InkWell(

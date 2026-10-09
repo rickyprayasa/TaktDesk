@@ -23,6 +23,9 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     companion object {
+        /** Window brightness of the dimmed desk clock (0..1): readable in a dark room, far below a typical setting. */
+        private const val DESK_CLOCK_DIM_BRIGHTNESS = 0.04f
+
         @Volatile
         var lastAlarmTimestamp: Long = 0L
 
@@ -89,6 +92,7 @@ class MainActivity : FlutterActivity() {
     }
 
     private val FOCUS_CHANNEL = "com.takt.desk/focus_lock"
+    private val DISPLAY_CHANNEL = "com.zykl.app/display"
     private val AUDIO_CHANNEL = "com.takt.desk/audio"
     private val TIMER_CHANNEL = "com.takt.desk/timer_service"
     private val WIDGET_CHANNEL = "com.takt.desk/app_widget"
@@ -99,6 +103,26 @@ class MainActivity : FlutterActivity() {
     private var masterVolume: Float = 0.8f
     private val effectPlayer: EffectSoundPlayer by lazy { EffectSoundPlayer(this) }
     private val screenWakeHandler = Handler(Looper.getMainLooper())
+
+    /** FLAG_KEEP_SCREEN_ON has two owners: Monastic Lockdown (plus its 15 s grace after release) and the desk clock
+     *  mode while a timer runs. The flag stays while either wants it. */
+    private var lockdownKeepsScreenOn = false
+    private var deskClockKeepsScreenOn = false
+
+    private fun applyKeepScreenOn() {
+        if (lockdownKeepsScreenOn || deskClockKeepsScreenOn) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
+
+    /** Desk clock dimming: a low window brightness override, or the user's own brightness again. */
+    private fun setDimmed(dimmed: Boolean) {
+        val params = window.attributes
+        params.screenBrightness = if (dimmed) DESK_CLOCK_DIM_BRIGHTNESS else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+        window.attributes = params
+    }
 
     private fun safeStopAndReset(player: MediaPlayer?) {
         try {
@@ -154,7 +178,8 @@ class MainActivity : FlutterActivity() {
                     try {
                         screenWakeHandler.removeCallbacksAndMessages(null)
                         // 1. Keep Screen Awake
-                        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                        lockdownKeepsScreenOn = true
+                        applyKeepScreenOn()
 
                         // 2. Hide System Bars (Immersive Sticky)
                         val controller = WindowCompat.getInsetsController(window, window.decorView)
@@ -208,7 +233,8 @@ class MainActivity : FlutterActivity() {
                         // 4. Keep screen awake for 15s so user can observe completed timer & hear alarm before timeout
                         screenWakeHandler.removeCallbacksAndMessages(null)
                         screenWakeHandler.postDelayed({
-                            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                            lockdownKeepsScreenOn = false
+                            applyKeepScreenOn()
                         }, 15000L)
 
                         result.success(true)
@@ -536,6 +562,22 @@ class MainActivity : FlutterActivity() {
                         ))
                     }
                 }
+                "showPausedNotification" -> {
+                    TimerNotifications.showPaused(
+                        this,
+                        (call.argument<Number>("remainingSeconds"))?.toDouble() ?: 0.0,
+                        (call.argument<Number>("targetMinutes"))?.toInt() ?: 25,
+                        call.argument<String>("phase") ?: "focus",
+                        (call.argument<Number>("cycleCount"))?.toInt() ?: 1,
+                        call.argument<String>("profileName") ?: "CLASSIC 25/5",
+                        call.argument<String>("alarmChimeId") ?: "braunBell"
+                    )
+                    result.success(true)
+                }
+                "clearPausedNotification" -> {
+                    TimerNotifications.cancelPaused(this)
+                    result.success(true)
+                }
                 "stopService" -> {
                     try {
                         val serviceIntent = Intent(this, TimerForegroundService::class.java).apply {
@@ -546,6 +588,21 @@ class MainActivity : FlutterActivity() {
                     } catch (e: Exception) {
                         result.success(false)
                     }
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, DISPLAY_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "setKeepScreenOn" -> {
+                    deskClockKeepsScreenOn = call.argument<Boolean>("enabled") == true
+                    applyKeepScreenOn()
+                    result.success(true)
+                }
+                "setDimmed" -> {
+                    setDimmed(call.argument<Boolean>("dimmed") == true)
+                    result.success(true)
                 }
                 else -> result.notImplemented()
             }
