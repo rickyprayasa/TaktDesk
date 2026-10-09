@@ -41,6 +41,8 @@ Owner tested the dev APK (h): everything works, the Live Update shows in the pho
   island expands it; the expanded card now has the progress bar and PAUSE / STOP.
 - **Nothing on the AOD**: apps cannot draw on the AOD. Android 16 shows Live Updates there only where the OEM
   supports it (Pixel); other skins show at most the notification icon, depending on the AOD notification settings.
+- **Dev APK rebuilt 15:58** (`build_outputs/zykl-developer-pro-universal.apk`, "ZYKL Dev", 66.8 MB; dex checked for
+  setShortCriticalText/ProgressStyle). Built with a 3.5 GB cap while one Chrome window was still open (3.1 GB free).
 - Device check after the next dev build: island shows "25m" → "24m" each minute; expanded card shows the bar.
 
 ## 2026-10-09 (h) — Group D: auto-start, QS tile, shortcuts, history files, focus per slip, English, widgets  (status: committed `7e2d320`..`0968694`; analyze 0, tests green; NOT built; needs a device check)
