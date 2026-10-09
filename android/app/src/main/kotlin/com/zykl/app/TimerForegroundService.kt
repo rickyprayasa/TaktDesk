@@ -100,6 +100,10 @@ class TimerForegroundService : Service() {
     /** End-time (epoch ms) of the last session already completed; makes completion idempotent. */
     private var lastCompletedEndAt: Long = 0L
     private var ongoingNotification: Notification? = null
+    /** The running countdown's builder, re-posted each minute with the minutes left (chip text + progress bar). */
+    private var ongoingBuilder: NotificationCompat.Builder? = null
+    private var ongoingEndAt: Long = 0L
+    private var ongoingTotalSeconds: Int = 0
     private var screenOnReceiver: BroadcastReceiver? = null
 
     /**
@@ -136,6 +140,7 @@ class TimerForegroundService : Service() {
                     }
                 } catch (_: Throwable) {}
                 firstRun = false
+                refreshRunningNotification()
 
                 if (remainingSecs > 0) {
                     // Next minute boundary of the remaining time (+20 ms so the minute has flipped).
@@ -262,7 +267,10 @@ class TimerForegroundService : Service() {
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
         TimerNotifications.addRunningActions(this, builder)
         TimerNotifications.requestPromotion(builder)
-        val notification = builder.build()
+        ongoingBuilder = builder
+        ongoingEndAt = targetTime
+        ongoingTotalSeconds = targetMinutes * 60
+        val notification = buildRunningNotification()
         ongoingNotification = notification
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -431,6 +439,42 @@ class TimerForegroundService : Service() {
         if (isCountingDown) return
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
+    }
+
+    /**
+     * The running countdown. On Android 16 it also carries the minutes left as the status-chip text ("24m": some
+     * launchers' islands show only that text, not the chronometer) and a progress bar of the session for the expanded
+     * Live Update card. Both are refreshed on the minute tick (startWidgetTick).
+     */
+    private fun buildRunningNotification(): Notification {
+        val compat = ongoingBuilder?.build() ?: throw IllegalStateException("no running notification")
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) return compat
+        return try {
+            val leftMillis = (ongoingEndAt - System.currentTimeMillis()).coerceAtLeast(0L)
+            val leftMinutes = ((leftMillis + 59_999L) / 60_000L).toInt()
+            val total = ongoingTotalSeconds.coerceAtLeast(1)
+            val elapsed = (total - (leftMillis / 1000L).toInt()).coerceIn(0, total)
+            Notification.Builder.recoverBuilder(this, compat)
+                .setShortCriticalText("${leftMinutes}m")
+                .setStyle(
+                    Notification.ProgressStyle()
+                        .setStyledByProgress(true)
+                        .setProgressSegments(listOf(Notification.ProgressStyle.Segment(total).setColor(TimerNotifications.ACCENT)))
+                        .setProgress(elapsed)
+                )
+                .build()
+        } catch (_: Exception) {
+            compat
+        }
+    }
+
+    private fun refreshRunningNotification() {
+        if (!isCountingDown || ongoingBuilder == null) return
+        val notification = buildRunningNotification()
+        ongoingNotification = notification
+        try {
+            (getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager)?.notify(NOTIFICATION_ID, notification)
+        } catch (_: SecurityException) {}
     }
 
     /** Stops the countdown and keeps it on the lock screen as a paused card (RESUME starts it again). */
