@@ -28,14 +28,106 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
-## 2026-10-09 (c) — HD feature videos (Dispenser, Vinyl, Dial, Editions+Analytics) + Konten baru captions  (status: videos done; captions revised; film_capture/compose changes NOT committed, owner OK first)
+## 2026-10-09 (e) — Bug group A fixed (alarm, widgets, tear line, reduce motion)  (status: code done, analyze 0, tests green; NOT built; needs a device check)
+
+Fixes for review (d) section A. Kotlin compiles (`compileDebugKotlin --offline`); `flutter analyze` 0; full `flutter test -j 1`
+green (461 passed, 1 skipped). No APK/AAB built.
+- **A1 alarm cut off** (`TimerForegroundService.kt`): one `COMPLETION_HOLD_MS = 6500` for the teardown safety net and the
+  completion wakelock (was 3500 ms < zen gong 4.2 s / tibetan bowl 3.6 s); the chime `MediaPlayer` now has
+  `setWakeMode(PARTIAL_WAKE_LOCK)`. The completion listener still stops the service as soon as a chime ends.
+- **A2 widget check-off**: `WidgetActionReceiver` writes `completed_at` in Unix seconds (`/ 1000`, Drift's default).
+  `AppWidgetService.onWidgetTaskToggle` (new stream with `taskId` + `isCompleted`) → `appWidgetSyncProvider` →
+  `ReceiptRunnerController.applyExternalCompletion(id, isDone)`: mirrors the check-off into the in-memory list (no stamp
+  sound) and rewrites it through Drift, so the active-task stream and the next widget sync agree instead of reverting.
+- **A3 widget timer**: with the app process alive (also backgrounded), the toggle only forwards `toggleTimer` to Flutter,
+  which starts with the real profile/chime/cycle and truly PAUSES (no more double toggle / reset). With the app gone, the
+  native start uses the app's last `profile_name` / `alarm_chime_id` / `cycle_count` (new widget prefs keys written by
+  `updateAllWidgetData`) instead of "CLASSIC 25/5" + braunBell + cycle 1; there it still stops (no Flutter state to pause
+  into) — the label still says PAUSE. Widgets get today's real cycle count + `dailyGoalCycles` as target; the 4 LEDs show
+  the share (`TaktAppWidgetProvider.litLeds`, goal 4 = one LED per cycle).
+- **A4 tear line**: `AnimatedReceiptStrip` paints only its own drag (`currentTearProgress` param removed); the provider
+  still receives the progress (tested), its per-frame cost is in group B.
+- **A5 reduce motion**: opening→desk route (900 ms → 0), instrument `AnimatedSwitcher`, flip digits, receipt extrusion
+  (decided in `didChangeDependencies`), crown press/pull and ink stamp durations → 0 when animations are disabled.
+- **A6**: manifest FGS subtype text now says "home-screen widgets" (if the Play Console special-use declaration quotes the
+  old text, update it there too). `isLockTaskPermitted` returning true is correct (plain screen pinning) → comment only.
+  The "paused" lock-screen notification is part of the C1 Live Updates work, not done here.
+- Tests: new `applyExternalCompletion` (state + no sound; persisted with a sane `completedAt`), `onWidgetTaskToggle`
+  parsing; payload tests updated for `profileName`/`alarmChimeId`/`cycleCount`; the old "quadrant" test now asserts the
+  real count (7 → 7) and the goal as target.
+- **Device checks**: background the app, finish a session with Zen Gong → full ring; check a slip on the Task Dispenser
+  widget with the app open and closed → stays checked, archive order sane; widget START/PAUSE with the app backgrounded
+  → real pause, correct preset; daily goal 6 → LEDs fill by share; Reduce motion on (Settings → Accessibility) → no
+  entry/switch/roll animations.
+
+## 2026-10-09 (d) — App review: bugs, battery, lock screen / AOD plan  (status: review; group A fixed in (e), B/C/D open)
+
+Read-only review (3 parallel code audits + spot checks by the agent). Verified items are marked (✓ checked in code).
+
+**A. Bugs (small, fix first)**
+1. ✓ Alarm cut off when the app is in the background: `TimerForegroundService.onTimerFinished` posts a 3500 ms
+   `stopSelf()` teardown (line ~364) and a 3500 ms wakelock; `onDestroy` releases the MediaPlayer. zen_gong 4.2 s and
+   tibetan_bowl 3.6 s get cut (tubular_chime 3.2 s is borderline). Fix: teardown/wakelock = chime length + ~1.5 s,
+   `MediaPlayer.setWakeMode(PARTIAL_WAKE_LOCK)`.
+2. ✓ Widget task check-off writes `completed_at = System.currentTimeMillis()` (`WidgetActionReceiver.kt:137`) but Drift
+   (default, no build.yaml) stores DateTime as Unix SECONDS → far-future dates, archive order broken. Also the
+   `toggleTask` message to Flutter has no Dart handler, so the in-app list stays stale and the next widget sync can undo
+   the check-off.
+3. Widget timer: "⏸ PAUSE" actually stops and resets (`WidgetActionReceiver.kt:401-416`); start hard-codes
+   "CLASSIC 25/5" + braunBell + cycle 1 (`:383-385`); possible double toggle with Flutter `toggleTimer`; cycle LEDs fixed
+   at 4 instead of `dailyGoalCycles`.
+4. Tear drag: every receipt strip paints the shared `currentTearProgress` (`animated_receipt_strip.dart:128-131`), so all
+   slips show the tear line while one is dragged.
+5. Reduce-motion gaps: desk entry transition, instrument AnimatedSwitcher, flip digits, receipt extrusion, crown/stamp.
+6. Pausing removes the countdown notification (nothing on the lock screen while paused); `isLockTaskPermitted` always
+   returns true; manifest FGS subtype text mentions "lock-screen widgets" (widgets are home_screen only).
+   Checked, NOT a bug: `isProSimulated` defaults to true in the DB, but release builds force PRO false
+   (`settings_controller.dart:167`).
+
+**B. Battery / performance**
+1. ✓ Dial hand Ticker repaints every frame while running (`chrono_dial_widget.dart:46-56` → painter `repaint:`), for a hand
+   that moves ~0.17 px/s (≈90k–180k frames per 25 min, 3 blurred strokes each). Repaint at 1 Hz instead.
+2. ✓ Gyro + accelerometer (~30 events/s, parallax on by default) never pause in the background (AppLifecycleListener has
+   only onResume, `desk_canvas_screen.dart:79-85`); deadband 0.0001 before the low-pass; touch-move parallax ignores the
+   opt-out (`:349-370`).
+3. Parallax watches the whole provider in `isometric_desk_layout`, `chrono_dial_widget`, every `MaterialChassisBox` →
+   desk transform + dial rebuild ~30×/s. Use `select`/listenables on small subtrees.
+4. Vinyl deck repaints the whole static scene (blurred shadows, gradients) every frame; only the disc rotates. Split
+   static painter + rotating cached disc layer.
+5. A media notification is re-posted every second while the timer runs, even without vinyl (`_syncMediaTelemetry` →
+   `MediaNotificationService ACTION_UPDATE_TIMER`); Dart 250 ms clock keeps running in the background.
+6. Widgets: 1 Hz Handler redraws a 320×320 bitmap + writes SharedPreferences every second, no screen-state check; use
+   `RemoteViews.setChronometer` (count-down) and minute-level dial updates. Console widget updated for nothing.
+7. `rsquare_logo.png` 2000×2000 decoded for a 22–36 px plaque (≈16 MB); add `cacheWidth` or ship a small asset.
+8. Opening ≈5.1 s on every cold start (product decision from 10-01 (f); could shorten after first launch).
+
+**C. Lock screen / "AOD" (owner question)** — third-party apps cannot draw on the system AOD itself. Realistic options:
+1. **Android 16 Live Updates** (recommended): promote the existing countdown notification (already ongoing, PUBLIC,
+   chronometer countdown, no custom view). Needs `POST_PROMOTED_NOTIFICATIONS`, `setRequestPromotedOngoing(true)`
+   (androidx.core ≥1.17; project has 1.13.1 → bump, or platform `Notification.Builder` behind SDK 36),
+   `setShortCriticalText`, channel not MIN. Shows as a status-bar chip and expanded on the lock screen (AOD on supported
+   devices). Add Pause/Stop actions and keep a "paused" notification. Older Android keeps today's notification.
+2. **Desk clock mode** (all Android versions): optional "keep screen on while running" with an OLED-dark, dimmed dial,
+   pixel shift against burn-in; best while charging. `setShowWhenLocked` only if the owner wants it over the keyguard.
+3. Optional: a `DreamService` (screen saver while charging/docked) showing the dial.
+4. Full-screen intent at the end of a session: Play restricts `USE_FULL_SCREEN_INTENT` to alarm/calling apps (Android
+   14+); treat as risky, not planned.
+
+**D. Feature gaps (nice to have)**: auto-start next phase; Quick Settings tile; launcher shortcuts; file export/backup of
+history (only clipboard today); Indonesian localization (strings hard-coded, mixed EN/ID); widgets: Material You
+corners/colors, light/dark + edition theming, real picker previews, `minResize*`; per-task time tracking.
+
+Suggested order: A1–A4 → B1–B3, B5–B6 → C1 + C2 → rest. Every fix needs `flutter analyze`, `flutter test -j 1` and a
+device check; no APK/AAB unless the owner asks.
+
+## 2026-10-09 (c) — HD feature videos (Dispenser, Vinyl, Dial, Editions+Analytics) + Konten baru captions  (status: videos done; captions revised; film_capture + compose committed `463e858`, `7ce1c1a`, `624ffbe`)
 
 - **Editions v2 (owner: show that the whole chassis changes, with a light pass):** gallery (Bauhaus) → dial montage
   Brass / Walnut / Indigo → Walnut (dark) on Dial, Tasks, Vinyl → real tap on the DARK/LIGHT pill → Bauhaus Heritage
   (light) on Vinyl, Tasks, Dial. Three slips are added in code before the first frame (`runner.addTask` via runAsync +
   `settle`) so the dispenser isn't empty. 31.7 s; shots EDITIONS, DIAL, then one steady `TOUR` (0.16–0.82) frame for both
   tours so the dispenser and turntable read large without the camera moving per tab. B11 caption updated (364 chars,
-  "restyles the whole instrument"). NOT committed yet (content_clips_test.dart, compose.py).
+  "restyles the whole instrument"). Committed `624ffbe`.
   **Exception to the no-music rule (owner, 2026-10-09): the Editions video only** gets a bed of ZYKL's own recording
   "Warm Tape & Felt Piano" (`assets/audio/vinyl_warm_tape.ogg`, -7 dB, 2 s fade in, 3 s fade out before the bell,
   loudnorm -16 LUFS), because that clip is almost silent otherwise. Muxed after compose with ffmpeg (no re-render);
