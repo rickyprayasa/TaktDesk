@@ -19,8 +19,7 @@ void main() {
       final logoFinder = find.byWidgetPredicate(
         (w) =>
             w is Image &&
-            w.image is AssetImage &&
-            (w.image as AssetImage).assetName == 'assets/images/rsquare_logo.png',
+            _assetName(w.image) == 'assets/images/rsquare_logo.png',
       );
       expect(logoFinder, findsOneWidget);
     });
@@ -79,4 +78,10 @@ void main() {
       expect(find.byType(RsquareHardwarePlaque), findsOneWidget);
     });
   });
+}
+
+/// The asset behind an Image.asset (a ResizeImage wraps it when cacheWidth is set).
+String? _assetName(ImageProvider image) {
+  final inner = image is ResizeImage ? image.imageProvider : image;
+  return inner is AssetImage ? inner.assetName : null;
 }

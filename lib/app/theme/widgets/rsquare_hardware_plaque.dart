@@ -90,6 +90,8 @@ class RsquareHardwarePlaque extends StatelessWidget {
             child: Image.asset(
               'assets/images/rsquare_logo.png',
               fit: BoxFit.contain,
+              // Decode at the plaque's size, not the source's (2000 px square).
+              cacheWidth: (size * MediaQuery.devicePixelRatioOf(context)).ceil(),
             ),
           ),
         ],

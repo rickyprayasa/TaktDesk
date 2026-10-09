@@ -33,7 +33,7 @@ void main() {
     expect(find.text('ZYKL STUDIO PRO'), findsOneWidget);
     expect(find.text('RSQUARE'), findsOneWidget);
     final logoFinder = find.byWidgetPredicate(
-      (w) => w is Image && w.image is AssetImage && (w.image as AssetImage).assetName == 'assets/images/rsquare_logo.png',
+      (w) => w is Image && _assetName(w.image) == 'assets/images/rsquare_logo.png',
     );
     expect(logoFinder, findsOneWidget);
     expect(find.textContaining('MID-CENTURY WALNUT'), findsOneWidget);
@@ -129,4 +129,10 @@ void main() {
     expect(find.text('Rp 129.000'), findsNothing);
     expect(find.textContaining('% OFF'), findsNothing);
   });
+}
+
+/// The asset behind an Image.asset (a ResizeImage wraps it when cacheWidth is set).
+String? _assetName(ImageProvider image) {
+  final inner = image is ResizeImage ? image.imageProvider : image;
+  return inner is AssetImage ? inner.assetName : null;
 }

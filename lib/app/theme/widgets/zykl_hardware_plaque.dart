@@ -78,6 +78,8 @@ class ZyklHardwarePlaque extends StatelessWidget {
             child: Image.asset(
               'assets/images/zykl_icon.png',
               fit: BoxFit.contain,
+              // Decode at the plaque's size, not the source's (512 px square).
+              cacheWidth: (size * MediaQuery.devicePixelRatioOf(context)).ceil(),
             ),
           ),
         ],

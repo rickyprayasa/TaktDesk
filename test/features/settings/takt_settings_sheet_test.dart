@@ -344,7 +344,7 @@ void main() {
       await tester.pump();
 
       final logoFinder = find.byWidgetPredicate(
-        (w) => w is Image && w.image is AssetImage && (w.image as AssetImage).assetName == 'assets/images/zykl_icon.png',
+        (w) => w is Image && _assetName(w.image) == 'assets/images/zykl_icon.png',
       );
       expect(logoFinder, findsOneWidget);
     });
@@ -1025,3 +1025,8 @@ void main() {
   });
 }
 
+/// The asset behind an Image.asset (a ResizeImage wraps it when cacheWidth is set).
+String? _assetName(ImageProvider image) {
+  final inner = image is ResizeImage ? image.imageProvider : image;
+  return inner is AssetImage ? inner.assetName : null;
+}
