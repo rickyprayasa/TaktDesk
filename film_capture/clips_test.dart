@@ -21,6 +21,7 @@ import 'package:takt_desk/features/desk/presentation/widgets/monastic_switch_wid
 import 'package:takt_desk/features/opening/presentation/takt_opening_screen.dart';
 import 'package:takt_desk/features/tasks/presentation/receipt_runner_controller.dart';
 import 'package:takt_desk/features/tasks/presentation/widgets/animated_receipt_strip.dart';
+import 'package:takt_desk/features/timer/domain/pomodoro_profile.dart';
 import 'package:takt_desk/features/timer/domain/timer_state.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_controller.dart';
 import 'package:takt_desk/features/vinyl/domain/vinyl_track.dart';
@@ -134,6 +135,19 @@ void main() {
       await s.act(vinyl.dropNeedle);
       expect(s.read(vinylProvider).needleOnRecord, isTrue);
       await s.hold(3.2);
+    }));
+
+    // Presets: the cassette keys switch the rhythm (timer idle, so the keys are live),
+    // 25/5 -> 50/10 -> 15/3 and back to 25/5 so the film flows into Lockdown (25 min).
+    testWidgets('clip presets $th', (t) => FilmScene.run(t, out: _out('presets', dark), dark: dark, script: (s) async {
+      s.read(chronoDialProvider.notifier).setProfile(PomodoroProfile.classic);
+      await s.hold(1.0);
+      for (final (label, focus) in [('50/10 MON', 50), ('15/3 SPR', 15), ('25/5 CLS', 25)]) {
+        await s.tapFinder(find.text(label));
+        expect(s.read(chronoDialProvider).targetMinutes, focus, reason: label);
+        await s.hold(1.1);
+      }
+      await s.hold(0.6);
     }));
 
     // Analytics: a week of real-looking history, goal met, 6-day streak.

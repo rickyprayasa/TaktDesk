@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 PR=3; DIR="$HOME/.cache/zykl-film/frames"
 if [ "${1:-}" = "--smoke" ]; then PR=1; DIR="$HOME/.cache/zykl-film/smoke"; shift; fi
 ALL=("opening dark" "opening light" "pomo dark" "pomo light" "crown dark" "crown light" "lock dark" "lock light"
-     "disp dark" "disp light" "vinyl dark" "vinyl light" "anal dark" "anal light"
+     "disp dark" "disp light" "vinyl dark" "vinyl light" "presets dark" "presets light" "anal dark" "anal light"
      "edition bauhaus" "edition walnut" "edition brass" "edition titanium")
 CLIPS=("$@"); [ ${#CLIPS[@]} -eq 0 ] && CLIPS=("${ALL[@]}")
 mkdir -p "$DIR"; fail=0

@@ -11,10 +11,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/app/theme/hardware_edition.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
+import 'package:takt_desk/core/database/app_database.dart';
 import 'package:takt_desk/core/focus/focus_lock_controller.dart';
+import 'package:takt_desk/features/analytics/presentation/widgets/focus_analytics_dialog.dart';
 import 'package:takt_desk/features/desk/presentation/widgets/emergency_unlatch_widget.dart';
 import 'package:takt_desk/features/desk/presentation/widgets/monastic_switch_widget.dart';
 import 'package:takt_desk/features/desk/presentation/widgets/settings_rivet_button.dart';
+import 'package:takt_desk/features/settings/presentation/settings_controller.dart';
 import 'package:takt_desk/features/tasks/presentation/receipt_runner_controller.dart';
 import 'package:takt_desk/features/tasks/presentation/widgets/animated_receipt_strip.dart';
 import 'package:takt_desk/features/timer/domain/pomodoro_profile.dart';
@@ -232,6 +235,41 @@ Future<void> _stampAll(FilmScene s) async {
   }
 }
 
+/// A week of real-looking history: goal met today, 7-day streak (same as clips_test 'clip anal').
+/// Dated from the REAL today, not the film clock: the analytics queries use DateTime.now(), while
+/// FilmScene freezes package:clock at 2 Oct 2026 (a film-clock seed showed an empty week on 9 Oct).
+Future<void> _seedWeek(AppDatabase db, DateTime _) async {
+  final now = DateTime.now();
+  final cyclesPerDay = [3, 4, 2, 5, 4, 3, 4]; // oldest -> today
+  for (var d = 0; d < cyclesPerDay.length; d++) {
+    final day = DateTime(now.year, now.month, now.day - (cyclesPerDay.length - 1 - d));
+    for (var c = 0; c < cyclesPerDay[d]; c++) {
+      await db.recordTimerSession(
+        targetMinutes: 25,
+        elapsedSeconds: 25 * 60,
+        isFinished: true,
+        startedAt: day.add(Duration(hours: 8 + c, minutes: 10)),
+      );
+    }
+  }
+  await db.recordTimerSession(
+    targetMinutes: 25,
+    elapsedSeconds: 9 * 60,
+    isFinished: false,
+    startedAt: DateTime(now.year, now.month, now.day - 2, 15),
+  );
+}
+
+/// Taps an analytics period tab ('DAY' / 'WEEK' / 'MONTH') inside the dialog.
+Future<void> _period(FilmScene s, String label) async {
+  final tab = find.descendant(of: find.byType(FocusAnalyticsDialog), matching: find.text(label));
+  s.camOn(tab, 1.4);
+  await s.hold(0.4);
+  await s.tapFinder(tab);
+  s.cam(null);
+  await s.hold(1.7);
+}
+
 Future<void> _toVinyl(FilmScene s) async {
   s.cam(null);
   await s.tab('VINYL');
@@ -416,5 +454,126 @@ void main() {
     await _stampAll(s);
     s.rec.chapter = '05|Start|When it rings, stop';
     await _startAndHold(s, 2.2);
+  }));
+
+  // ---- Feature clips: one feature per video (Threads "Feature video" slot) ----
+
+  // Feature — Monastic Lockdown: start, lock, hold the lever 5 s, released.
+  testWidgets('content feat_lockdown', (t) => FilmScene.run(t, out: '$_dir/feat_lockdown', dark: true, script: (s) async {
+    s.rec.chapter = '01|Start a session|Press the crown';
+    await s.hold(0.6);
+    await _startAndHold(s, 1.0);
+    s.rec.chapter = '02|Lock the phone|Apps and calls stay quiet';
+    final sw = find.byType(MonasticSwitchWidget);
+    s.camOn(sw, 1.6);
+    await s.hold(0.45);
+    await s.tapFinder(sw);
+    await s.hold(0.3);
+    expect(s.read(focusLockProvider).isLocked, isTrue, reason: 'locked');
+    s.cam(null);
+    await s.hold(1.6);
+    s.rec.chapter = '03|Want out?|Hold the lever for 5 seconds';
+    final un = find.byType(EmergencyUnlatchWidget);
+    s.camOn(un, 1.45);
+    await s.hold(0.5);
+    await s.pressHold(s.tester.getCenter(un), 5.25);
+    await s.hold(0.3);
+    expect(s.read(focusLockProvider).isLocked, isFalse, reason: 'released');
+    s.rec.chapter = '04|Released|Long enough to ask if you mean it';
+    s.cam(s.dialCenter, 1.3);
+    await s.hold(1.6);
+  }));
+
+  // Feature — Thermal Dispenser: print three slips, stamp one, tear it off.
+  testWidgets('content feat_dispenser', (t) => FilmScene.run(t, out: '$_dir/feat_dispenser', dark: false, script: (s) async {
+    await _toTasks(s);
+    s.rec.chapter = '01|Print a task|Up to 5 per slip';
+    for (final title in ['Finish the UI design', 'Reply to the studio', 'Read 20 pages']) {
+      await _addTask(s, title, cps: 18, settle: 0.6);
+    }
+    s.rec.chapter = '02|Stamp it|Double tap. DONE, in red ink';
+    await _stampFirst(s);
+    s.rec.chapter = '03|Tear it off|Filed to the archive';
+    final strip = s.tester.getRect(find.byType(AnimatedReceiptStrip).first);
+    s.cam(strip.center, 1.5);
+    await s.hold(0.4);
+    await s.drag(strip.center, strip.center + Offset(strip.width * 0.9, 0), 0.45);
+    await s.hold(1.0);
+    s.rec.chapter = '04|Keep going|The next task moves up';
+    s.camOn(find.byKey(const ValueKey('receipt_dispenser_chassis')), 1.3);
+    await s.hold(1.4);
+  }));
+
+  // Feature — Chrono Dial: the three presets, a custom rhythm set with the crown, then start.
+  testWidgets('content feat_dial', (t) => FilmScene.run(t, out: '$_dir/feat_dial', dark: true, script: (s) async {
+    s.rec.chapter = '01|Pick a rhythm|Classic, Monastic or Sprint';
+    await s.hold(0.6);
+    await _preset(s, '50/10 MON', PomodoroProfileType.monastic);
+    await _preset(s, '15/3 SPR', PomodoroProfileType.sprint);
+    await _preset(s, '25/5 CLS', PomodoroProfileType.classic);
+    s.rec.chapter = '02|Or set your own|Pull the crown, wind the dial';
+    await _crownTo(s, 40, 8);
+    s.rec.chapter = '03|Press the crown|The needle steps once a second';
+    await _startAndHold(s, 2.4);
+  }));
+
+  // Feature — Hardware Editions: equip one finish from the gallery (how), then a showcase of the dial in five
+  // more finishes while it runs (the look). The showcase swaps editions in code, as a montage under the dial shot.
+  testWidgets('content feat_editions', (t) => FilmScene.run(t, out: '$_dir/feat_editions', dark: true, script: (s) async {
+    s.rec.chapter = '01|12 material editions|Four free, eight with Studio PRO';
+    await s.hold(0.4);
+    await _startAndHold(s, 1.0);
+    s.rec.chapter = '02|Bauhaus Heritage|1925 · tubular chrome, primary colours';
+    await _equip(s, HardwareEditionType.bauhausHeritage);
+    s.cam(s.dialCenter, 1.35);
+    await s.hold(2.2);
+    for (final (type, chapter) in [
+      (HardwareEditionType.rawBrassPatina, '03|Raw Brass & Patina|1954 · a burnished marine chronometer'),
+      (HardwareEditionType.midCenturyWalnut, '04|Mid-Century Walnut|1958 · natural timber, satin gold'),
+      (HardwareEditionType.titaniumStealth, '05|Titanium Stealth|2026 · aerospace grade 5'),
+      (HardwareEditionType.britishRacingGreen, '06|British Racing Green|1962 · vintage spruce and gold'),
+      (HardwareEditionType.indigoAstronomical, '07|Indigo Astronomical|1974 · deep-sea navy and cyan'),
+    ]) {
+      s.rec.chapter = chapter;
+      await s.act(() => s.read(deskPreferencesControllerProvider.notifier).setHardwareEdition(type));
+      await s.hold(2.2);
+      expect(s.read(chassisThemeProvider).edition.type, type, reason: chapter);
+    }
+    s.cam(null);
+    await s.hold(1.2);
+  }));
+
+  // Feature — Focus Analytics: the desk plate, today's slip, then day / week / month on record.
+  testWidgets('content feat_analytics', (t) => FilmScene.run(t, out: '$_dir/feat_analytics', dark: true, seed: _seedWeek,
+      script: (s) async {
+    s.rec.chapter = '01|Tap the plate|Today at a glance';
+    await s.hold(0.6);
+    final plate = find.byKey(const ValueKey('desk_spec_plate_surface'));
+    s.camOn(plate, 1.5);
+    await s.hold(0.5);
+    await s.tapFinder(plate);
+    s.cam(null);
+    await s.hold(2.0);
+    s.rec.chapter = '02|Focus analytics|Every session stays on your phone';
+    await s.tapFinder(find.byKey(const ValueKey('telemetry_open_analytics_button')));
+    await s.hold(1.6);
+    expect(find.byType(FocusAnalyticsDialog), findsOneWidget, reason: 'analytics open');
+    s.rec.chapter = '03|Day, week, month|Your daily goal and your streak';
+    await _period(s, 'DAY');
+    await _period(s, 'WEEK');
+    await _period(s, 'MONTH');
+  }));
+
+  // Feature — Vinyl Soundscapes: an Atmosphere, then a Harmonic, platter spinning.
+  testWidgets('content feat_vinyl', (t) => FilmScene.run(t, out: '$_dir/feat_vinyl', dark: true, script: (s) async {
+    await _toVinyl(s);
+    s.rec.chapter = '01|Atmospheres|Rain, brown noise, a library, a stream';
+    await _loadRecord(s, _track('Kyoto Bamboo Stream'));
+    await _dropNeedle(s);
+    s.rec.chapter = '02|Harmonics|Piano, cello, guitar, Debussy';
+    await _loadRecord(s, _track('Debussy Clair de Lune'));
+    s.rec.chapter = '03|33⅓ RPM|It really spins';
+    s.camOn(find.bySemanticsLabel('Lift tonearm'), 1.3);
+    await s.hold(2.2);
   }));
 }

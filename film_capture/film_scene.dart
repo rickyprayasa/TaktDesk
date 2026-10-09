@@ -2,11 +2,14 @@
 // screen) under a fake clock, a recorder and a finger. Clip scripts only
 // describe *what happens*; this file owns timing and capture.
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:clock/clock.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -162,6 +165,28 @@ class FilmScene {
     _advance(kFrame);
     await tester.pump(kFrame);
     await rec.capture();
+  }
+
+  /// Advances app time without recording (for stills).
+  Future<void> settle(double seconds, {Duration step = kFrame}) async {
+    final n = (seconds * 1000000 / step.inMicroseconds).round();
+    for (var i = 0; i < n; i++) {
+      _advance(step);
+      await tester.pump(step);
+    }
+  }
+
+  /// Writes the whole screen as one PNG at [kPixelRatio] (for stills).
+  Future<void> still(String path) async {
+    final rb = boundary.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+    await tester.runAsync(() async {
+      final ui.Image img = await rb.toImage(pixelRatio: kPixelRatio);
+      final data = await img.toByteData(format: ui.ImageByteFormat.png);
+      img.dispose();
+      File(path)
+        ..parent.createSync(recursive: true)
+        ..writeAsBytesSync(data!.buffer.asUint8List());
+    });
   }
 
   Future<void> hold(double seconds) async {
