@@ -38,6 +38,13 @@ DIAL_LOCK = (0.24, 0.80)  # dial down to the MONASTIC LOCKDOWN button
 SLIP = (0.66, 0.98)     # print-task sheet: typed text + FEED PAPER
 DISP = (0.32, 0.72)     # dispenser with the printed slips (stamping)
 LOCK = (0.40, 0.98)     # lockdown: engaged dial console + hold-to-leave bar
+DRAWER = (0.38, 0.74)   # vinyl: record drawer card (centred high so the spec plate stays under the scrim)
+DECK = (0.24, 0.80)     # vinyl: turntable + drawer
+DISP_ARCH = (0.20, 0.70)  # dispenser with the archive drawer open (screen recording)
+TELEMETRY = (0.26, 0.72)  # desk telemetry slip (today's session log)
+STATS = (0.12, 0.62)    # focus analytics dialog: tabs, totals, goal + streak, chart
+EDITIONS = (0.04, 0.38)  # settings sheet: the hardware-editions carousel at the top
+PLATTER = (0.22, 0.50)  # vinyl: the turntable card only (needle, spinning record, track line)
 
 # Key moments only: (start s, end s or None = to the end, region), in capture
 # seconds (see --cues). Everything else is the whole phone, still.
@@ -58,6 +65,31 @@ CLIPS = {
                       shots=[(11.9, 13.4, SLIP), (18.2, None, DIAL)]),
     'admin': dict(kicker='[ FOCUS FOR ADMIN ]', l1='Boring admin?', l2='Make it 15 minutes.',
                   shots=[(10.3, 12.1, SLIP), (18.2, 21.7, DISP), (22.5, None, DIAL)]),
+    # rec_*: early feature clips made from device screen recordings (frames + touches.json, --src).
+    'rec_vinyl': dict(kicker='[ FEATURE // VINYL SOUNDSCAPES ]', l1='Pick a record.', l2='Drop the needle.',
+                       shots=[(2.2, 9.6, DRAWER), (10.4, None, DECK)]),
+    'rec_dispenser': dict(kicker='[ FEATURE // THERMAL DISPENSER ]', l1='Stamp it.', l2='Tear it off.',
+                           shots=[(2.3, None, DISP_ARCH)]),
+    # feat_*: HD feature clips captured from the Flutter widgets (content_clips_test.dart,
+    # film_capture/run_features.sh). Shots get timed from --cues after the first capture.
+    # HD capture 2026-10-09: start 2.0, LOCKDOWN tap 3.5 (engaged), hold the unlatch 5.9-11.0, released 11.0.
+    'feat_lockdown': dict(kicker='[ FEATURE // MONASTIC LOCKDOWN ]', l1='Lock the phone.', l2='Hold 5 seconds to leave.',
+                          shots=[(3.0, 11.9, LOCK)]),
+    # HD capture 2026-10-09: typing 0.6-11.0 (3 tasks), stamp 11.5, tear drag 13.4-13.8, archived ~14.6 (--cues).
+    'feat_dispenser': dict(kicker='[ FEATURE // THERMAL DISPENSER ]', l1='Stamp it.', l2='Tear it off.',
+                           shots=[(0.9, 3.4, SLIP), (11.0, 14.9, DISP)]),
+    # HD capture 2026-10-09: timer starts 1.8, gallery 2.8-7.6 (Bauhaus equipped ~5.2), dial montage 9.8-20.8 (5 more finishes).
+    'feat_editions': dict(kicker='[ FEATURE // HARDWARE EDITIONS ]', l1='Twelve finishes.', l2='One instrument.',
+                          shots=[(3.4, 6.6, EDITIONS), (7.4, 20.8, DIAL)]),
+    # HD capture 2026-10-09: plate tap 0.6, telemetry slip 1.2-3.2, analytics open 3.2, DAY 4.9, WEEK 7.1, MONTH 9.3.
+    'feat_analytics': dict(kicker='[ FEATURE // FOCUS ANALYTICS ]', l1='Your week,', l2='on record.',
+                           shots=[(1.3, 3.0, TELEMETRY), (4.6, None, STATS)]),
+    # HD capture 2026-10-09: presets 0.6-3.1, CUSTOM 4.4, crown pull 5.4, wind 6.4-11.9, start 12.7 (--cues).
+    'feat_dial': dict(kicker='[ FEATURE // CHRONO DIAL ]', l1='Pick a rhythm.', l2='Or set your own.',
+                      shots=[(0.5, 11.6, DIAL)]),
+    # HD capture 2026-10-09: drawer browse 1.5-4.1 (Kyoto loaded), needle 5.5, Harmonics 7.2-10.2 (Debussy), spin 11.0+.
+    'feat_vinyl': dict(kicker='[ FEATURE // VINYL SOUNDSCAPES ]', l1='Pick a record.', l2='Drop the needle.',
+                       shots=[(1.4, 4.4, DRAWER), (4.9, 6.9, PLATTER), (11.0, None, PLATTER)]),
 }
 
 # Real app mapping (MainActivity.FOLEY_ASSETS). springButton / stepperPrint have
