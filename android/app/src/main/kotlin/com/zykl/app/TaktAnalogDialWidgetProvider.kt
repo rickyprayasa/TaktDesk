@@ -21,6 +21,16 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    /** Resized on the home screen: redraw the dial at the new size. */
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: android.os.Bundle
+    ) {
+        updateAppWidget(context, appWidgetManager, appWidgetId)
+    }
+
     companion object {
         @JvmStatic
         fun updateAllWidgets(context: Context) {
@@ -41,9 +51,19 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
             val targetMinutes = prefs.getInt(TaktAppWidgetProvider.KEY_TARGET_MINUTES, 25).coerceAtLeast(1)
 
             val views = RemoteViews(context.packageName, R.layout.takt_appwidget_analog_dial_2x2)
+            val theme = WidgetTheme.load(context)
+            theme.apply(
+                views, R.id.widget_root,
+                textIds = intArrayOf(R.id.theme_text_1),
+                mutedIds = intArrayOf(R.id.theme_muted_1, R.id.theme_muted_2),
+                accentIds = intArrayOf(R.id.widget_status_text),
+                dividerIds = intArrayOf(R.id.theme_divider_1, R.id.theme_divider_2),
+            )
 
-            // Draw crisp circular bitmap (320x320 px)
-            val dialBitmap = renderAnalogDial(status, remainingSeconds, targetMinutes, isPro)
+            // Crisp circular bitmap sized to the widget (it can be resized from 2x2 up)
+            val dialBitmap = renderAnalogDial(
+                status, remainingSeconds, targetMinutes, isPro, theme, dialSizePx(context, appWidgetManager, appWidgetId)
+            )
             views.setImageViewBitmap(R.id.widget_dial_image, dialBitmap)
 
             // Update bottom status telemetry
@@ -86,26 +106,39 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
 
+        /** Bitmap edge in px for the widget's current size: the smaller side in dp × density, 240..640. */
+        private fun dialSizePx(context: Context, manager: AppWidgetManager, appWidgetId: Int): Int {
+            val options = manager.getAppWidgetOptions(appWidgetId)
+            val maxW = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, 0)
+            val maxH = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0)
+            val dp = if (maxW > 0 && maxH > 0) minOf(maxW, maxH) else 160
+            return (dp * context.resources.displayMetrics.density).toInt().coerceIn(240, 640)
+        }
+
+        /** The dial is drawn on a 320-unit canvas scaled to [sizePx]; bezel, needle and readout follow [theme]. */
         @JvmStatic
         fun renderAnalogDial(
             status: String,
             remainingSeconds: Int,
             targetMinutes: Int,
-            isPro: Boolean = true
+            isPro: Boolean = true,
+            theme: WidgetTheme = WidgetTheme.DEFAULT,
+            sizePx: Int = 320
         ): Bitmap {
-            val size = 320
-            val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+            val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bitmap)
+            canvas.scale(sizePx / 320f, sizePx / 320f)
+            val size = 320
             val center = size / 2f
             val radius = size * 0.48f
 
             // Paints
             val bezelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = Color.parseColor("#1C1E22")
+                color = if (theme.dark) Color.parseColor("#1C1E22") else theme.border
                 style = Paint.Style.FILL
             }
             val bezelStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = Color.parseColor("#2A2C30")
+                color = if (theme.dark) Color.parseColor("#2A2C30") else theme.chassis
                 style = Paint.Style.STROKE
                 strokeWidth = 2.5f
             }
@@ -133,14 +166,14 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
                 letterSpacing = 0.08f
             }
             val subTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = if (status == "FOCUS") Color.parseColor("#FF9E00") else Color.parseColor("#73716B")
+                color = if (status == "FOCUS") theme.needle else Color.parseColor("#73716B")
                 textSize = 12f
                 typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
                 textAlign = Paint.Align.CENTER
                 letterSpacing = 0.06f
             }
             val needlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = Color.parseColor("#FF9E00") // Signature filament amber
+                color = theme.needle // the edition's needle (signature amber by default)
                 strokeWidth = 3.6f
                 style = Paint.Style.STROKE
                 strokeCap = Paint.Cap.ROUND
@@ -150,7 +183,7 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
                 style = Paint.Style.FILL
             }
             val centerPipPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = Color.parseColor("#FF9E00")
+                color = theme.needle
                 style = Paint.Style.FILL
             }
 

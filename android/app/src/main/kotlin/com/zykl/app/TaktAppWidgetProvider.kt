@@ -65,6 +65,13 @@ class TaktAppWidgetProvider : AppWidgetProvider() {
             val status = prefs.getString(KEY_STATUS, "STANDBY") ?: "STANDBY"
 
             val views = RemoteViews(context.packageName, R.layout.takt_appwidget_2x2)
+            WidgetTheme.load(context).apply(
+                views, R.id.widget_root,
+                textIds = intArrayOf(R.id.theme_text_1, R.id.widget_cycles_text),
+                mutedIds = intArrayOf(R.id.theme_muted_1, R.id.widget_minutes_text, R.id.theme_muted_2),
+                accentIds = intArrayOf(R.id.widget_status_text),
+                dividerIds = intArrayOf(R.id.theme_divider_1, R.id.theme_divider_2),
+            )
 
             // Update text telemetries
             views.setTextViewText(R.id.widget_cycles_text, "TODAY: $cycles / $target CYCLES")

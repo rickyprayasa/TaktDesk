@@ -98,6 +98,7 @@ class MainActivity : FlutterActivity() {
     private val FOCUS_CHANNEL = "com.takt.desk/focus_lock"
     private val DISPLAY_CHANNEL = "com.zykl.app/display"
     private val BACKUP_CHANNEL = "com.zykl.app/backup"
+    private val WIDGET_THEME_CHANNEL = "com.zykl.app/widget_theme"
 
     /** Waiting system file picker (backup export / restore) and what to write once a file is chosen. */
     private var pendingFileResult: MethodChannel.Result? = null
@@ -659,6 +660,28 @@ class MainActivity : FlutterActivity() {
                 pendingFileContent = null
                 result.error("NO_PICKER", e.message, null)
             }
+        }
+
+        // Widget colours follow the app's light/dark mode and hardware edition (own channel: sent only on change).
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, WIDGET_THEME_CHANNEL).setMethodCallHandler { call, result ->
+            if (call.method != "updateWidgetTheme") {
+                result.notImplemented()
+                return@setMethodCallHandler
+            }
+            // Light/dark mode or edition changed in the app: recolour the chassis widgets.
+            fun color(key: String, fallback: Int) = (call.argument<Number>(key))?.toInt() ?: fallback
+            val d = WidgetTheme.DEFAULT
+            WidgetTheme.save(this, WidgetTheme(
+                dark = call.argument<Boolean>("dark") ?: d.dark,
+                chassis = color("chassis", d.chassis),
+                text = color("text", d.text),
+                muted = color("muted", d.muted),
+                accent = color("accent", d.accent),
+                needle = color("needle", d.needle),
+                border = color("border", d.border),
+            ))
+            notifyAllWidgets()
+            result.success(true)
         }
 
         val mediaChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.zykl.app/media_notification")

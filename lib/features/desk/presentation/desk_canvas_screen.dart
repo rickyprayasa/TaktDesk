@@ -12,6 +12,7 @@ import '../../../core/focus/focus_lock_controller.dart';
 import '../../../core/haptics/haptic_service.dart';
 import '../../../core/sensors/parallax_controller.dart';
 import '../../../core/services/app_widget_service.dart';
+import '../../../core/services/widget_theme_sync.dart';
 import '../../analytics/presentation/widgets/focus_analytics_dialog.dart';
 import '../../settings/presentation/settings_controller.dart';
 import '../../settings/presentation/widgets/studio_pro_dialog.dart';
@@ -365,6 +366,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
     final focusState = ref.watch(focusLockProvider);
     ref.watch(appWidgetSyncProvider);
     ref.watch(pausedTimerNotificationSyncProvider);
+    ref.watch(widgetThemeSyncProvider);
 
     ref.listen<bool>(
       deskPreferencesControllerProvider.select((p) => p.parallaxEnabled),

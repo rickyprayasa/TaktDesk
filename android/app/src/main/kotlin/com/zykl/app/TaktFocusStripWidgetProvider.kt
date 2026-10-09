@@ -37,6 +37,12 @@ class TaktFocusStripWidgetProvider : AppWidgetProvider() {
             val remainingSeconds = prefs.getInt(TaktAppWidgetProvider.KEY_REMAINING_SECONDS, 0)
 
             val views = RemoteViews(context.packageName, R.layout.takt_appwidget_focus_strip_4x1)
+            WidgetTheme.load(context).apply(
+                views, R.id.widget_root,
+                textIds = intArrayOf(R.id.widget_status_text, R.id.widget_status_chrono),
+                mutedIds = intArrayOf(R.id.theme_muted_1, R.id.widget_cycles_text),
+                accentIds = intArrayOf(R.id.widget_action_btn),
+            )
 
             // Running: "FOCUS // " + a Chronometer the launcher counts down itself (no per-second updates).
             val endElapsed = prefs.getLong(TaktAppWidgetProvider.KEY_END_ELAPSED, 0L)

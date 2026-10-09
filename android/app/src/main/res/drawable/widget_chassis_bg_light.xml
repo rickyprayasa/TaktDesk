@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Light chassis for Android 11 and older (12+ tints widget_chassis_bg with the edition's colour instead). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#DDD9CE" />
+    <stroke
+        android:width="1.5dp"
+        android:color="#C4C0B4" />
+    <corners android:radius="@dimen/widget_corner_radius" />
+</shape>

@@ -21,6 +21,7 @@
             android:gravity="center_vertical">
 
             <TextView
+        android:id="@+id/theme_text_1"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -32,6 +33,7 @@
                 android:fontFamily="monospace" />
 
             <TextView
+        android:id="@+id/theme_muted_1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="CHRONOMETER"
@@ -43,6 +45,7 @@
     </FrameLayout>
 
     <FrameLayout
+        android:id="@+id/theme_divider_1"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginTop="5dp"
@@ -61,6 +64,7 @@
         android:contentDescription="Analog chronometer face" />
 
     <FrameLayout
+        android:id="@+id/theme_divider_2"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginTop="6dp"
@@ -87,6 +91,7 @@
             android:fontFamily="monospace" />
 
         <TextView
+        android:id="@+id/theme_muted_2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="OPEN ↗"
