@@ -28,6 +28,22 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-09 (j) — v1.0.4 (versionCode 5) AAB built  (status: built + tagged `v1.0.4`; owner uploads to Play)
+
+Owner approved the dev APK (island now expands with the progress bar and shows the minutes) and asked for the Play
+update. `pubspec.yaml` 1.0.4+5 (`d2bfb44`). Built 16:11 with `scripts/build_test_apks.sh aab` (3.8 GB free):
+`build_outputs/zykl-playstore-release.aab` (65.8 MB), `com.zykl.app`, 1.0.4 / versionCode 5, jarsigner verified,
+signed with the upload key `27:5B:8E:D7…` (CN=RSQUARE, OU=ZYKL). Contains groups B, C, D and (i). Drift schema v11
+migrates from any earlier install. Play Console: Android 16 Live Updates need no declaration
+(POST_PROMOTED_NOTIFICATIONS is a normal permission); no new sensitive permission.
+
+Release notes (en-US):
+> Your timer now lives on the lock screen: on Android 16 it shows as a Live Update in the status bar, with the
+> minutes left and a progress bar. Pause, resume or stop from the notification. New: auto-start the next phase,
+> a Quick Settings tile, app shortcuts, desk clock mode, focus time per task slip, CSV export and backup/restore of
+> your history. Widgets follow your theme and edition, and can be resized. Smoother dial and vinyl, and better battery
+> life.
+
 ## 2026-10-09 (i) — Live Update chip shows minutes; owner feedback on the dev APK  (status: committed; NOT built)
 
 Owner tested the dev APK (h): everything works, the Live Update shows in the phone's status island. Feedback:
