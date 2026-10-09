@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'chrono_dial_controller.dart';
 import 'chrono_dial_painter.dart';
@@ -22,15 +21,13 @@ class ChronoDialWidget extends ConsumerStatefulWidget {
   ConsumerState<ChronoDialWidget> createState() => _ChronoDialWidgetState();
 }
 
-class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
-    with SingleTickerProviderStateMixin {
-  // Visual only: the controller owns the countdown (1 update/s). This ticker
-  // just glides the needle between those updates; each update re-syncs it.
-  late final Ticker _ticker;
+class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget> {
+  // The hand is a minute hand (one turn per 60 min, ~0.1° per second), so it follows the controller's
+  // once-a-second update. A per-frame ticker used to glide it, repainting 60-120 times a second for motion
+  // nobody can see.
   final ValueNotifier<double> _remainingSecondsNotifier = ValueNotifier<double>(0.0);
   // Whole seconds shown on the counter; only changes once per second
   final ValueNotifier<int> _displaySecondNotifier = ValueNotifier<int>(0);
-  Duration? _lastElapsed;
 
   void _syncDisplaySecond() =>
       _displaySecondNotifier.value = _remainingSecondsNotifier.value.floor();
@@ -42,28 +39,10 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
     _remainingSecondsNotifier.value = initialState.remainingSeconds;
     _syncDisplaySecond();
     _remainingSecondsNotifier.addListener(_syncDisplaySecond);
-
-    _ticker = createTicker((elapsed) {
-      if (!mounted) return;
-      if (_lastElapsed != null) {
-        final delta = (elapsed - _lastElapsed!).inMicroseconds / 1000000.0;
-        // Never run more than a second ahead of the controller's value
-        final floor = (ref.read(chronoDialProvider).remainingSeconds - 1.0).clamp(0.0, 90 * 60.0);
-        _remainingSecondsNotifier.value =
-            (_remainingSecondsNotifier.value - delta).clamp(floor, 90 * 60.0);
-      }
-      _lastElapsed = elapsed;
-    });
-
-    if (initialState.isRunning) {
-      _lastElapsed = null;
-      _ticker.start();
-    }
   }
 
   @override
   void dispose() {
-    _ticker.dispose();
     _remainingSecondsNotifier.removeListener(_syncDisplaySecond);
     _remainingSecondsNotifier.dispose();
     _displaySecondNotifier.dispose();
@@ -138,33 +117,15 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
 
   @override
   Widget build(BuildContext context) {
-    // Start/stop of the countdown and the background service live in the
-    // controller; here we only drive the needle animation.
-    ref.listen<bool>(
-      chronoDialProvider.select((s) => s.isRunning),
-      (previous, isRunning) {
-        _lastElapsed = null;
-        _remainingSecondsNotifier.value = ref.read(chronoDialProvider).remainingSeconds;
-        if (isRunning && !_ticker.isActive) {
-          _ticker.start();
-        } else if (!isRunning && _ticker.isActive) {
-          _ticker.stop();
-        }
-      },
-    );
-
+    // The countdown and the background service live in the controller; the hand and the counter follow
+    // its remainingSeconds (one update per second while running, or on every dial turn while setting).
     ref.listen<double>(
       chronoDialProvider.select((s) => s.remainingSeconds),
-      (previous, nextRemaining) {
-        _remainingSecondsNotifier.value = nextRemaining;
-        // The update already includes the time up to now; don't subtract it again next frame
-        _lastElapsed = null;
-      },
+      (previous, nextRemaining) => _remainingSecondsNotifier.value = nextRemaining,
     );
 
     final state = ref.watch(chronoDialProvider);
     final themeState = ref.watch(chassisThemeProvider);
-    final parallax = ref.watch(parallaxProvider);
     final remainingMinutes = (state.remainingSeconds / 60).floor();
     final remainingSeconds = (state.remainingSeconds % 60).floor();
     const dialDimensions = Size(264, 264);
@@ -218,12 +179,9 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
       mainAxisSize: MainAxisSize.min,
       children: [
         // 1. Main Dial Canvas with 12 o'clock Crown Push-Button directly seated on bezel
-        Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.identity()
-            ..setEntry(3, 2, 0.0012)
-            ..rotateX(-parallax.tiltY)
-            ..rotateY(parallax.tiltX),
+        // Tilt and its shadow are two small consumers: a tilt change (up to ~30/s with parallax on) repaints
+        // them only, instead of rebuilding the whole dial and the preset console under it.
+        _DialTilt(
           child: SizedBox(
             width: dialDimensions.width,
             height: dialDimensions.height + 24,
@@ -231,27 +189,16 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
               alignment: Alignment.topCenter,
               clipBehavior: Clip.none,
               children: [
+                Positioned(
+                  top: 24,
+                  child: _DialTiltShadow(size: dialDimensions, isDarkMode: themeState.isDarkMode),
+                ),
                 // Main Dial Canvas with Unobstructed Analog Face
                 Positioned(
                   top: 24,
-                  child: Container(
+                  child: SizedBox(
                     width: dialDimensions.width,
                     height: dialDimensions.height,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: themeState.isDarkMode
-                              ? Colors.black.withValues(alpha: 0.16)
-                              : const Color(0x0D000000),
-                          blurRadius: 5.0,
-                          offset: Offset(
-                            (-parallax.tiltX * 30.0).clamp(-3.0, 3.0),
-                            2.0 + (-parallax.tiltY * 30.0).clamp(-3.0, 3.0),
-                          ),
-                        ),
-                      ],
-                    ),
                     child: Semantics(
                       container: true,
                       button: true,
@@ -367,6 +314,56 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget>
         // 3. Simple Monastic Focus Lockdown Toggle (below Preset Selector)
         const MonasticSwitchWidget(),
       ],
+    );
+  }
+}
+
+/// Perspective tilt of the dial, from the parallax tilt only.
+class _DialTilt extends ConsumerWidget {
+  final Widget child;
+  const _DialTilt({required this.child});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tilt = ref.watch(parallaxProvider.select((p) => (p.tiltX, p.tiltY)));
+    return Transform(
+      alignment: Alignment.center,
+      transform: Matrix4.identity()
+        ..setEntry(3, 2, 0.0012)
+        ..rotateX(-tilt.$2)
+        ..rotateY(tilt.$1),
+      child: child,
+    );
+  }
+}
+
+/// The dial's soft drop shadow, shifted against the tilt (painted under the dial face).
+class _DialTiltShadow extends ConsumerWidget {
+  final Size size;
+  final bool isDarkMode;
+  const _DialTiltShadow({required this.size, required this.isDarkMode});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tilt = ref.watch(parallaxProvider.select((p) => (p.tiltX, p.tiltY)));
+    return SizedBox(
+      width: size.width,
+      height: size.height,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: isDarkMode ? Colors.black.withValues(alpha: 0.16) : const Color(0x0D000000),
+              blurRadius: 5.0,
+              offset: Offset(
+                (-tilt.$1 * 30.0).clamp(-3.0, 3.0),
+                2.0 + (-tilt.$2 * 30.0).clamp(-3.0, 3.0),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
