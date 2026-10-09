@@ -30,6 +30,17 @@
 
 ## 2026-10-09 (c) — HD feature videos (Dispenser, Vinyl, Dial, Editions+Analytics) + Konten baru captions  (status: videos done; captions revised; film_capture/compose changes NOT committed, owner OK first)
 
+- **Editions v2 (owner: show that the whole chassis changes, with a light pass):** gallery (Bauhaus) → dial montage
+  Brass / Walnut / Indigo → Walnut (dark) on Dial, Tasks, Vinyl → real tap on the DARK/LIGHT pill → Bauhaus Heritage
+  (light) on Vinyl, Tasks, Dial. Three slips are added in code before the first frame (`runner.addTask` via runAsync +
+  `settle`) so the dispenser isn't empty. 31.7 s; shots EDITIONS, DIAL, then one steady `TOUR` (0.16–0.82) frame for both
+  tours so the dispenser and turntable read large without the camera moving per tab. B11 caption updated (364 chars,
+  "restyles the whole instrument"). NOT committed yet (content_clips_test.dart, compose.py).
+  **Exception to the no-music rule (owner, 2026-10-09): the Editions video only** gets a bed of ZYKL's own recording
+  "Warm Tape & Felt Piano" (`assets/audio/vinyl_warm_tape.ogg`, -7 dB, 2 s fade in, 3 s fade out before the bell,
+  loudnorm -16 LUFS), because that clip is almost silent otherwise. Muxed after compose with ffmpeg (no re-render);
+  the silent cut is kept as `Konten baru/feature_videos/ZYKL_Feature_Editions_4x5_no_music.mp4`. All other demo/feature
+  videos stay without music; never add a bed to a clip that already plays a vinyl soundscape. B11 tip names the track.
 - **Lockdown feature video done** (owner go-ahead): the Claude-chat `feat_lockdown` test passed unchanged (DND pre-flight
   does not get in the way under FilmFocusLockService; 5.25 s hold releases). `ZYKL_Feature_Lockdown_4x5.mp4` 17.1 s, one
   LOCK shot 3.0–11.9. In Konten baru it posts as **B8 (Mon 19 Oct, "Meet Monastic Lockdown.")**: same caption (it already

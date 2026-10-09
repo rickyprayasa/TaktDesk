@@ -43,6 +43,7 @@ DECK = (0.24, 0.80)     # vinyl: turntable + drawer
 DISP_ARCH = (0.20, 0.70)  # dispenser with the archive drawer open (screen recording)
 TELEMETRY = (0.26, 0.72)  # desk telemetry slip (today's session log)
 STATS = (0.12, 0.62)    # focus analytics dialog: tabs, totals, goal + streak, chart
+TOUR = (0.16, 0.82)     # one steady frame for the dial / dispenser / turntable while the tabs change
 EDITIONS = (0.04, 0.38)  # settings sheet: the hardware-editions carousel at the top
 PLATTER = (0.22, 0.50)  # vinyl: the turntable card only (needle, spinning record, track line)
 
@@ -78,9 +79,10 @@ CLIPS = {
     # HD capture 2026-10-09: typing 0.6-11.0 (3 tasks), stamp 11.5, tear drag 13.4-13.8, archived ~14.6 (--cues).
     'feat_dispenser': dict(kicker='[ FEATURE // THERMAL DISPENSER ]', l1='Stamp it.', l2='Tear it off.',
                            shots=[(0.9, 3.4, SLIP), (11.0, 14.9, DISP)]),
-    # HD capture 2026-10-09: timer starts 1.8, gallery 2.8-7.6 (Bauhaus equipped ~5.2), dial montage 9.8-20.8 (5 more finishes).
+    # HD capture 2026-10-09: gallery 2.8-7.6 (Bauhaus ~5.2), dial montage 9.6-15.6, Walnut tour (dial/tasks/vinyl)
+    # 15.6-21.8, light Bauhaus tour (vinyl/tasks/dial) 21.8-27.7. Tours share one steady TOUR frame.
     'feat_editions': dict(kicker='[ FEATURE // HARDWARE EDITIONS ]', l1='Twelve finishes.', l2='One instrument.',
-                          shots=[(3.4, 6.6, EDITIONS), (7.4, 20.8, DIAL)]),
+                          shots=[(3.4, 6.6, EDITIONS), (7.4, 15.4, DIAL), (15.9, None, TOUR)]),
     # HD capture 2026-10-09: plate tap 0.6, telemetry slip 1.2-3.2, analytics open 3.2, DAY 4.9, WEEK 7.1, MONTH 9.3.
     'feat_analytics': dict(kicker='[ FEATURE // FOCUS ANALYTICS ]', l1='Your week,', l2='on record.',
                            shots=[(1.3, 3.0, TELEMETRY), (4.6, None, STATS)]),

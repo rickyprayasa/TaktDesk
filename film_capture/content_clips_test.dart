@@ -517,30 +517,59 @@ void main() {
     await _startAndHold(s, 2.4);
   }));
 
-  // Feature — Hardware Editions: equip one finish from the gallery (how), then a showcase of the dial in five
-  // more finishes while it runs (the look). The showcase swaps editions in code, as a montage under the dial shot.
+  // Feature — Hardware Editions: equip one finish from the gallery (how), a dial montage while it runs (the range),
+  // then one dark and one light finish across all three instruments (the whole chassis changes). The montage and the
+  // later swaps set the edition in code; the theme switch is a real tap on the DARK/LIGHT pill.
   testWidgets('content feat_editions', (t) => FilmScene.run(t, out: '$_dir/feat_editions', dark: true, script: (s) async {
+    final runner = s.read(receiptRunnerProvider.notifier);
+    for (final title in ['Finish the UI design', 'Reply to the studio', 'Read 20 pages']) {
+      await s.act(() => s.tester.runAsync(() => runner.addTask(title)));
+    }
+    await s.settle(0.5);
+    expect(s.read(receiptRunnerProvider).tasks.length, 3, reason: 'slips for the dispenser shots');
+    Future<void> equip(HardwareEditionType type) =>
+        s.act(() => s.read(deskPreferencesControllerProvider.notifier).setHardwareEdition(type));
+
     s.rec.chapter = '01|12 material editions|Four free, eight with Studio PRO';
     await s.hold(0.4);
     await _startAndHold(s, 1.0);
     s.rec.chapter = '02|Bauhaus Heritage|1925 · tubular chrome, primary colours';
     await _equip(s, HardwareEditionType.bauhausHeritage);
     s.cam(s.dialCenter, 1.35);
-    await s.hold(2.2);
+    await s.hold(2.0);
     for (final (type, chapter) in [
       (HardwareEditionType.rawBrassPatina, '03|Raw Brass & Patina|1954 · a burnished marine chronometer'),
       (HardwareEditionType.midCenturyWalnut, '04|Mid-Century Walnut|1958 · natural timber, satin gold'),
-      (HardwareEditionType.titaniumStealth, '05|Titanium Stealth|2026 · aerospace grade 5'),
-      (HardwareEditionType.britishRacingGreen, '06|British Racing Green|1962 · vintage spruce and gold'),
-      (HardwareEditionType.indigoAstronomical, '07|Indigo Astronomical|1974 · deep-sea navy and cyan'),
+      (HardwareEditionType.indigoAstronomical, '05|Indigo Astronomical|1974 · deep-sea navy and cyan'),
     ]) {
       s.rec.chapter = chapter;
-      await s.act(() => s.read(deskPreferencesControllerProvider.notifier).setHardwareEdition(type));
-      await s.hold(2.2);
+      await equip(type);
+      await s.hold(2.0);
       expect(s.read(chassisThemeProvider).edition.type, type, reason: chapter);
     }
+
+    // The whole instrument: Walnut on the dial, the dispenser and the turntable.
+    s.rec.chapter = '06|The whole instrument changes|Mid-Century Walnut: dial, slips, turntable';
+    await equip(HardwareEditionType.midCenturyWalnut);
     s.cam(null);
-    await s.hold(1.2);
+    await s.hold(1.8);
+    await _toTasks(s);
+    await s.hold(1.5);
+    await _toVinyl(s);
+    await s.hold(1.6);
+
+    // Same tour in a light finish, back the other way.
+    s.rec.chapter = '07|Light or dark|Bauhaus Heritage in daylight';
+    await s.tapFinder(find.text('DARK'));
+    await s.act(() => s.tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 120))));
+    await equip(HardwareEditionType.bauhausHeritage);
+    await s.hold(1.6);
+    expect(s.read(chassisThemeProvider).isDarkMode, isFalse, reason: 'light chassis');
+    await _toTasks(s);
+    await s.hold(1.5);
+    s.cam(null);
+    await s.tab('DIAL');
+    await s.hold(2.0);
   }));
 
   // Feature — Focus Analytics: the desk plate, today's slip, then day / week / month on record.
