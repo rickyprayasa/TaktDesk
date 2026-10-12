@@ -28,6 +28,15 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-12 (c) — Custom-set crown sound; status LED  (status: committed `8c7dce9`, LED commit; tests green (503); NOT built)
+
+- Owner on the dev APK (b): crown taps in the custom set (focus → short → long) still played the dial tick; now every
+  step plays the crown push (`advanceCalibrationStage`).
+- Owner: the dot beside "ZYKL" looked decorative, and the opening had one above the dial. New
+  `widgets/timer_status_led.dart` (portrait + landscape): off on standby, amber while focus runs or lockdown holds,
+  green during a break. Opening power LED removed (`opening_micro_led` gone; the chassis warm-up glow stays).
+- Device check: start → LED amber, break → green, stop/pause → dark; opening shows no dot.
+
 ## 2026-10-12 (b) — Crown sounds v2: real CC0 recordings, crown pull  (status: committed `b0e1677`; tests green (501); NOT built)
 
 Owner: v1 (entry below) too loud and unnatural; wants a pull-crown sound too. Owner chose CC0 recordings from
