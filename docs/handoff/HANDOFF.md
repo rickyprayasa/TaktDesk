@@ -38,6 +38,10 @@ Fix (zykl.app repo): `public/_headers` `/*.txt` → `X-Robots-Tag: noindex`; `/c
 worker `/get` targets `/coming-soon`. Verified live ~70 s after the push. Owner: open the "Duplicate…" row to see the
 example URLs and press "Validate fix"; redirect rows need no action. Remove the coming-soon noindex is not needed when
 Play goes live (/get then points to Play).
+Follow-up: the example URLs were /about and /privacy (crawled Oct 10). Their canonical has been correct since 09-29;
+they still inherited og:url = home. `9edcd22` adds `src/lib/seo.ts` `pageOpenGraph()` on privacy, terms, changelog,
+coming-soon (verified live). Owner: URL Inspection → Test live URL → Request indexing for /about and /privacy, then
+Validate fix.
 
 ## 2026-10-12 (d) — v1.0.5 (versionCode 6) AAB built  (status: built + tagged `v1.0.5`; owner uploads to Play)
 
