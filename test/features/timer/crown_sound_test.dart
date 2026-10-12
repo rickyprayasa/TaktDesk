@@ -49,6 +49,16 @@ void main() {
     expect(audio.played, [SoundEffect.crownPull, SoundEffect.springButton]);
   });
 
+  test('every crown press in the custom set (focus, short break, long break) plays the crown push', () {
+    controller.enterCustomCalibration();
+    audio.played.clear();
+    controller.advanceCalibrationStage();
+    controller.advanceCalibrationStage();
+    controller.advanceCalibrationStage();
+    expect(audio.played, [SoundEffect.springButton, SoundEffect.springButton, SoundEffect.springButton]);
+    expect(controller.state.setupStage, ChronoSetupStage.none);
+  });
+
   test('pressing the crown to start and to pause plays the crown push', () {
     controller.start();
     controller.pause();

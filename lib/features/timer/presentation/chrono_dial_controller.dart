@@ -99,8 +99,9 @@ class ChronoDialController extends StateNotifier<TimerState> {
           remainingSeconds: nextMins * 60.0,
           lastTickMinute: nextMins,
         );
-        HapticService.dialTick();
-        _audioService?.playFoley(SoundEffect.dialClick);
+        // Every step of the custom set is a press of the crown.
+        HapticService.mechanicalPress();
+        _audioService?.playFoley(SoundEffect.springButton);
         break;
       case ChronoSetupStage.shortBreak:
         final nextMins = state.customProfile.longBreakMinutes;
@@ -110,8 +111,9 @@ class ChronoDialController extends StateNotifier<TimerState> {
           remainingSeconds: nextMins * 60.0,
           lastTickMinute: nextMins,
         );
-        HapticService.dialTick();
-        _audioService?.playFoley(SoundEffect.dialClick);
+        // Every step of the custom set is a press of the crown.
+        HapticService.mechanicalPress();
+        _audioService?.playFoley(SoundEffect.springButton);
         break;
       case ChronoSetupStage.longBreak:
         final focusMins = state.customProfile.focusMinutes;
