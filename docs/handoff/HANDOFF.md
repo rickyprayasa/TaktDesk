@@ -28,6 +28,17 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-12 (d) — v1.0.5 (versionCode 6) AAB built  (status: built + tagged `v1.0.5`; owner uploads to Play)
+
+Owner approved the dev APK with the crown sounds and the status LED. `pubspec.yaml` 1.0.5+6. Built 11:06 with a 3.5 GB
+cap (2.9 GB free): `build_outputs/zykl-playstore-release.aab` (65.8 MB), `com.zykl.app`, 1.0.5 / vc 6, jarsigner
+verified, upload key `27:5B:8E:D7…` (CN=RSQUARE, OU=ZYKL). Adds (b) and (c) on top of v1.0.4.
+
+Release notes (en-US):
+> A more mechanical dial: winding the hand now clicks like a real watch crown, and pulling and pressing the crown
+> sound like a Swiss stopwatch. The LED beside ZYKL now shows the timer state: amber while you focus, green on a
+> break, dark on standby.
+
 ## 2026-10-12 (c) — Custom-set crown sound; status LED  (status: committed `8c7dce9`, LED commit; tests green (503); NOT built)
 
 - Owner on the dev APK (b): crown taps in the custom set (focus → short → long) still played the dial tick; now every
