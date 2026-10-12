@@ -43,6 +43,12 @@ void main() {
     expect(controller.state.setupStage, ChronoSetupStage.focus);
   });
 
+  test('pulling the crown out plays the crown pull, pushing it back plays the push', () {
+    controller.enterCustomCalibration();
+    controller.cancelCalibration();
+    expect(audio.played, [SoundEffect.crownPull, SoundEffect.springButton]);
+  });
+
   test('pressing the crown to start and to pause plays the crown push', () {
     controller.start();
     controller.pause();

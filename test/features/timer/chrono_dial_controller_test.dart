@@ -348,7 +348,7 @@ void main() {
           expect(controller.state.profile.type, equals(PomodoroProfileType.custom));
           expect(controller.state.targetMinutes, equals(controller.state.customProfile.focusMinutes));
           expect(controller.state.remainingSeconds, equals(controller.state.customProfile.focusMinutes * 60.0));
-          expect(mockAudio.playedEffects, contains(SoundEffect.drawerLatch));
+          expect(mockAudio.playedEffects, contains(SoundEffect.crownPull));
         },
       );
 

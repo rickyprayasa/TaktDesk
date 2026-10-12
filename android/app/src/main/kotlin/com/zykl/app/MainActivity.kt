@@ -56,9 +56,9 @@ class MainActivity : FlutterActivity() {
             "stylusDrop" to "foley_stylus_drop.wav",
             "stylusStop" to "foley_stylus_stop.wav",
             "dialClick" to "foley_dial_click.wav",
-            // Crown: winding ratchet per minute step, and the push (start / pause / set) with its spring return.
-            "crownWind" to "foley_crown_wind.wav",
+            // Crown (CC0 field recordings, see assets/audio/CREDITS.md): push (start / pause / set) and pull out.
             "springButton" to "foley_crown_press.wav",
+            "crownPull" to "foley_crown_pull.wav",
             "paperTear" to "foley_paper_tear.wav",
             "inkStamp" to "foley_ink_stamp.wav",
             "switchClick" to "foley_switch_click.wav",
@@ -67,6 +67,11 @@ class MainActivity : FlutterActivity() {
             "drawerLatch" to "foley_drawer_latch.wav",
             "discLoad" to "foley_disc_load.wav",
         ).mapValues { AUDIO_DIR + it.value }
+
+        /** Effects with several takes, one picked at random per play so fast repeats don't sound looped. */
+        val FOLEY_VARIANTS: Map<String, List<String>> = mapOf(
+            "crownWind" to listOf("foley_crown_wind_a.wav", "foley_crown_wind_b.wav", "foley_crown_wind_c.wav"),
+        ).mapValues { (_, files) -> files.map { AUDIO_DIR + it } }
 
         val ALARM_ASSETS: Map<String, String> = mapOf(
             "braunBell" to "alarm_braun_bell.wav",
@@ -180,7 +185,7 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
-        effectPlayer.preload(FOLEY_ASSETS.values.toSet() + ALARM_ASSETS.values)
+        effectPlayer.preload(FOLEY_ASSETS.values.toSet() + FOLEY_VARIANTS.values.flatten() + ALARM_ASSETS.values)
         super.configureFlutterEngine(flutterEngine)
         if (initialWidgetAction == null) {
             initialWidgetAction = externalFeature(intent) ?: AppShortcuts.action(this, intent)
@@ -481,7 +486,8 @@ class MainActivity : FlutterActivity() {
                 }
                 "playFoley" -> {
                     try {
-                        val asset = FOLEY_ASSETS[call.argument<String>("effect")]
+                        val effect = call.argument<String>("effect")
+                        val asset = FOLEY_VARIANTS[effect]?.random() ?: FOLEY_ASSETS[effect]
                         if (asset != null) effectPlayer.playFoley(asset)
                         result.success(true)
                     } catch (e: Exception) {

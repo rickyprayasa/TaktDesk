@@ -55,7 +55,10 @@ void main() {
         'foley_stylus_stop.wav',
         'foley_dial_click.wav',
         'foley_switch_click.wav',
-        'foley_crown_wind.wav',
+        'foley_crown_wind_a.wav',
+        'foley_crown_wind_b.wav',
+        'foley_crown_wind_c.wav',
+        'foley_crown_pull.wav',
         'foley_crown_press.wav',
       ];
       for (final foley in foleys) {

@@ -1,7 +1,9 @@
 enum SoundEffect {
   dialClick,
-  /// Ratchet detent while the hand is wound by hand, one per minute step.
+  /// Ratchet detent while the hand is wound by hand, one per minute step (natively one of three takes).
   crownWind,
+  /// The crown pulled out to set a custom rhythm.
+  crownPull,
   springButton,
   stepperPrint,
   paperTear,
