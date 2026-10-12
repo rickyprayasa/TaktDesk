@@ -28,6 +28,17 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-12 (e) — Website: Search Console "Duplicate without user-selected canonical" / "Page with redirect"  (status: website pushed `b823196`, verified live)
+
+Search Console mail (Oct 12): Duplicate without user-selected canonical (2), Page with redirect (2), Crawled – not
+indexed (1). All sitemap pages are fine (200, own canonical, index). Causes found: the static export serves Next.js RSC
+payloads (`/about.txt`, `/index.txt` …, 200 text/plain, no canonical); `/coming-soon` was indexable; `/get` → `/coming-soon/`
+→ 307 `/coming-soon` (two hops). Redirects of `http://` and `www.` are expected.
+Fix (zykl.app repo): `public/_headers` `/*.txt` → `X-Robots-Tag: noindex`; `/coming-soon` `robots: noindex, follow`;
+worker `/get` targets `/coming-soon`. Verified live ~70 s after the push. Owner: open the "Duplicate…" row to see the
+example URLs and press "Validate fix"; redirect rows need no action. Remove the coming-soon noindex is not needed when
+Play goes live (/get then points to Play).
+
 ## 2026-10-12 (d) — v1.0.5 (versionCode 6) AAB built  (status: built + tagged `v1.0.5`; owner uploads to Play)
 
 Owner approved the dev APK with the crown sounds and the status LED. `pubspec.yaml` 1.0.5+6. Built 11:06 with a 3.5 GB
