@@ -28,6 +28,23 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-12 — Crown sounds: winding ratchet and crown push  (status: committed `709336d`; analyze 0, tests green (500); NOT built)
+
+Owner asked for a sound while winding the hand by hand and when pressing the crown to start, for a more mechanical
+dial. Found: `SoundEffect.springButton` (crown start/pause/set, lockdown lever) had no entry in
+`MainActivity.FOLEY_ASSETS`, so the crown push was silent; winding (`setTargetMinutes`) only buzzed.
+- New `assets/audio/foley_crown_wind.wav` (40 ms) and `foley_crown_press.wav` (170 ms), cut with ffmpeg from the
+  app's own original field recordings recovered from git: escapement tick `1bd8534:foley_dial_click.wav`, tactile
+  switch `1bd8534:foley_switch_click.wav`, latch `e3b3316:foley_drawer_latch.wav`. Wind = tick pitched ×1.35 + pawl
+  echo at 11 ms (−10 dB), peak −5 dB. Press = switch ×0.9 + latch ×0.7 low-passed (−8 dB) + spring return ×1.2 at
+  92 ms (−9 dB). Not AI-generated. 
+- `SoundEffect.crownWind` (new) plays once per minute the hand moves (`_windTick`; also stops the haptic firing on
+  every pan event in calibration). `springButton` → `foley_crown_press.wav`.
+- Spotted, NOT changed: since `711a2c9` `foley_dial_click.wav`, `foley_switch_click.wav` and `foley_drawer_latch.wav`
+  are byte-identical (the latch sound); the original tick and switch recordings exist in `1bd8534`. `stepperPrint`
+  (printing a slip) also has no native asset, so it is silent. Ask the owner before changing either.
+- Device check: wind the dial (preset and calibration) → fine ratchet per minute; crown tap → press + spring return.
+
 ## 2026-10-09 (j) — v1.0.4 (versionCode 5) AAB built  (status: built + tagged `v1.0.4`; owner uploads to Play)
 
 Owner approved the dev APK (island now expands with the progress bar and shows the minutes) and asked for the Play
