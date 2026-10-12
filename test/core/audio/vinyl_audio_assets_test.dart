@@ -55,6 +55,8 @@ void main() {
         'foley_stylus_stop.wav',
         'foley_dial_click.wav',
         'foley_switch_click.wav',
+        'foley_crown_wind.wav',
+        'foley_crown_press.wav',
       ];
       for (final foley in foleys) {
         final data = await rootBundle.load('assets/audio/$foley');

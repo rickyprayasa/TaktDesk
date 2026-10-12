@@ -56,6 +56,9 @@ class MainActivity : FlutterActivity() {
             "stylusDrop" to "foley_stylus_drop.wav",
             "stylusStop" to "foley_stylus_stop.wav",
             "dialClick" to "foley_dial_click.wav",
+            // Crown: winding ratchet per minute step, and the push (start / pause / set) with its spring return.
+            "crownWind" to "foley_crown_wind.wav",
+            "springButton" to "foley_crown_press.wav",
             "paperTear" to "foley_paper_tear.wav",
             "inkStamp" to "foley_ink_stamp.wav",
             "switchClick" to "foley_switch_click.wav",

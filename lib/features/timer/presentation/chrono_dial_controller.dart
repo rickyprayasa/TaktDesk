@@ -171,6 +171,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
           updated = state.customProfile;
           break;
       }
+      final changed = activeVal != state.targetMinutes;
       state = state.copyWith(
         customProfile: updated,
         profile: updated,
@@ -178,17 +179,24 @@ class ChronoDialController extends StateNotifier<TimerState> {
         remainingSeconds: activeVal * 60.0,
         lastTickMinute: activeVal,
       );
-      HapticService.dialTick();
+      if (changed) _windTick();
       return;
     }
 
     final clamped = minutes.clamp(1, 90);
+    final changed = clamped != state.targetMinutes;
     state = state.copyWith(
       targetMinutes: clamped,
       remainingSeconds: clamped * 60.0,
       lastTickMinute: clamped,
     );
+    if (changed) _windTick();
+  }
+
+  /// One ratchet detent per minute the hand is wound by (the pan reports far more often than that).
+  void _windTick() {
     HapticService.dialTick();
+    _audioService?.playFoley(SoundEffect.crownWind);
   }
 
   void updateCustomDurations({
