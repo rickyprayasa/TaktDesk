@@ -28,6 +28,7 @@ import 'widgets/desk_spec_plate_widget.dart';
 import 'widgets/emergency_unlatch_widget.dart';
 import 'widgets/master_console_landscape_layout.dart';
 import 'widgets/settings_rivet_button.dart';
+import 'widgets/timer_status_led.dart';
 
 class DeskCanvasScreen extends ConsumerStatefulWidget {
   final Stream<GyroscopeEvent>? gyroscopeStream;
@@ -457,26 +458,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                                                   Row(
                                                     mainAxisSize: MainAxisSize.min,
                                                     children: [
-                                                      Container(
-                                                        width: 6,
-                                                        height: 6,
-                                                        margin: const EdgeInsets.only(right: 8),
-                                                        decoration: BoxDecoration(
-                                                          shape: BoxShape.circle,
-                                                          color: focusState.isLocked
-                                                              ? TaktColors.filamentAmber
-                                                              : TaktColors.patinaOlive,
-                                                          boxShadow: [
-                                                            BoxShadow(
-                                                              color: (focusState.isLocked
-                                                                      ? TaktColors.filamentAmber
-                                                                      : TaktColors.patinaOlive)
-                                                                  .withValues(alpha: 0.6),
-                                                              blurRadius: 4,
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
+                                                      const TimerStatusLed(),
                                                       Text(
                                                         'ZYKL',
                                                         style: TaktTypography.controlLabel.copyWith(

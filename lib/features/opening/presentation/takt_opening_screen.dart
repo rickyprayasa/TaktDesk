@@ -14,7 +14,7 @@ import '../../settings/presentation/settings_controller.dart';
 /// 4.2 s cinematic boot of the instrument (owner asked for a calmer opening
 /// than the original 1.8 s). Tap anywhere to skip.
 ///
-///      0 –  700 ms  power LED warms up in the edition's filament colour
+///      0 –  700 ms  the chassis warms up in the edition's filament colour
 ///    250 – 1500 ms  light sweeps across the bezel
 ///    400 – 1700 ms  face fades in, ticks draw in clockwise
 ///   1100 – 2900 ms  needle winds one full turn and seats on 25 with a spring overshoot;
@@ -248,8 +248,6 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
                       mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _buildTopMicroLed(isDark, filament),
-                        const SizedBox(height: 18),
                         Transform.scale(
                           scale: 0.92 + 0.08 * _face.value,
                           child: Opacity(
@@ -299,28 +297,6 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
           ),
         );
       },
-    );
-  }
-
-  Widget _buildTopMicroLed(bool isDark, Color filament) {
-    final glow = _led.value;
-    return Container(
-      key: const ValueKey('opening_micro_led'),
-      width: 7,
-      height: 7,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Color.lerp(isDark ? const Color(0xFF2B2E34) : const Color(0xFFBBB6AC), filament, glow),
-        boxShadow: glow > 0.1
-            ? [
-                BoxShadow(
-                  color: filament.withValues(alpha: 0.75 * glow),
-                  blurRadius: 10.0 * glow,
-                  spreadRadius: 1.8 * glow,
-                ),
-              ]
-            : null,
-      ),
     );
   }
 

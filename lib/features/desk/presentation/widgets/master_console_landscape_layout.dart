@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/theme/takt_colors.dart';
 import '../../../../app/theme/takt_typography.dart';
 import '../../../../app/theme/theme_controller.dart';
-import '../../../../core/focus/focus_lock_controller.dart';
 import '../../../../core/haptics/haptic_service.dart';
 import '../../../tasks/presentation/receipt_runner_widget.dart';
 import '../../../timer/presentation/chrono_dial_widget.dart';
@@ -12,6 +11,7 @@ import 'chassis_theme_switch.dart';
 import 'desk_spec_plate_widget.dart';
 import 'emergency_unlatch_widget.dart';
 import 'settings_rivet_button.dart';
+import 'timer_status_led.dart';
 
 /// MasterConsoleLandscapeLayout renders an expansive dual-pane Braun Studio console
 /// on tablets and landscape displays.
@@ -95,7 +95,6 @@ class _MasterConsoleLandscapeLayoutState
   @override
   Widget build(BuildContext context) {
     final theme = ref.watch(chassisThemeProvider);
-    final focusState = ref.watch(focusLockProvider);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -114,26 +113,7 @@ class _MasterConsoleLandscapeLayoutState
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
-                          width: 7,
-                          height: 7,
-                          margin: const EdgeInsets.only(right: 8),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: focusState.isLocked
-                                ? TaktColors.filamentAmber
-                                : TaktColors.patinaOlive,
-                            boxShadow: [
-                              BoxShadow(
-                                color: (focusState.isLocked
-                                        ? TaktColors.filamentAmber
-                                        : TaktColors.patinaOlive)
-                                    .withValues(alpha: 0.6),
-                                blurRadius: 4,
-                              ),
-                            ],
-                          ),
-                        ),
+                        const TimerStatusLed(size: 7),
                         Text(
                           'ZYKL',
                           style: TaktTypography.controlLabel.copyWith(

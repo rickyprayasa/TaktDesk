@@ -5,7 +5,7 @@ import 'package:takt_desk/features/desk/presentation/desk_canvas_screen.dart';
 import 'package:takt_desk/features/opening/presentation/takt_opening_screen.dart';
 
 void main() {
-  testWidgets('TaktOpeningScreen renders initial ignition phase with micro-LED, Pomodoro clock dial, and bold ZYKL branding without developer logo', (tester) async {
+  testWidgets('TaktOpeningScreen renders initial ignition phase with Pomodoro clock dial, and bold ZYKL branding without developer logo', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
@@ -16,7 +16,8 @@ void main() {
 
     // Initial frame
     expect(find.byType(TaktOpeningScreen), findsOneWidget);
-    expect(find.byKey(const ValueKey('opening_micro_led')), findsOneWidget);
+    // No power LED on the opening: the only LED is the desk's timer status LED.
+    expect(find.byKey(const ValueKey('opening_micro_led')), findsNothing);
     expect(find.byKey(const ValueKey('opening_dial_canvas')), findsOneWidget);
 
     // Assert prominent ZYKL identity and Pomodoro system subtitle
