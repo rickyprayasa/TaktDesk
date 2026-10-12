@@ -28,6 +28,20 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-12 (b) — Crown sounds v2: real CC0 recordings, crown pull  (status: committed `b0e1677`; tests green (501); NOT built)
+
+Owner: v1 (entry below) too loud and unnatural; wants a pull-crown sound too. Owner chose CC0 recordings from
+Freesound and approved downloading two HQ previews (sources and cut points in `assets/audio/CREDITS.md`):
+475185 "Stopwatch start - stop" (mycompasstv, Meylan Type 200A) and 847217 "Antique Pocket Watch Ticking and Winding"
+(apintofmild). Only trimmed, high-passed 120 Hz, levelled; no pitch shift.
+- `foley_crown_press.wav` (springButton) = stopwatch press incl. finger touch, peak −5 dB, 190 ms.
+- `foley_crown_pull.wav` (new `SoundEffect.crownPull`, played by `enterCustomCalibration`, was `drawerLatch`) = the
+  stopwatch's crown release, peak −8 dB.
+- `foley_crown_wind_[abc].wav` = three pocket-watch winding clicks, peaks −16…−17 dB (v1 was −5 dB); native
+  `MainActivity.FOLEY_VARIANTS` plays a random take per step (preloaded with the rest). `foley_crown_wind.wav` removed.
+- The CC0 previews are 192 kbps MP3 (Freesound originals need a login); fine for these short clicks.
+- Device check: pull crown → soft click out; wind → quiet, varied ratchet; push / start / pause → stopwatch press.
+
 ## 2026-10-12 — Crown sounds: winding ratchet and crown push  (status: committed `709336d`; analyze 0, tests green (500); NOT built)
 
 Owner asked for a sound while winding the hand by hand and when pressing the crown to start, for a more mechanical
