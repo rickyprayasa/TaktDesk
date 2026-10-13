@@ -26,6 +26,10 @@ class ChronoDialController extends StateNotifier<TimerState> {
   /// The slip this focus session counts for (top open slip when it started); resolved from the database.
   Future<int?>? _sessionTaskId;
 
+  /// Id of the native countdown started last (sent with start, echoed by the native status), so a late status or
+  /// "phase finished" about a previous phase is never applied to the one running now.
+  int? _nativeSessionId;
+
   /// The countdown is driven here, not by the dial widget, so it keeps running
   /// while the dial is off screen (portrait TASKS/VINYL tabs, home screen
   /// widget). Wall-clock deltas also catch up after the app was suspended.
@@ -281,6 +285,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
     }
     _focusLockController?.noteTimerActivity();
     _startClock();
+    _nativeSessionId = DateTime.now().microsecondsSinceEpoch;
     _backgroundService?.start(
       remainingSeconds: state.remainingSeconds,
       targetMinutes: state.targetMinutes,
@@ -289,6 +294,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
       profileName: state.profile.label,
       alarmChimeId: _preferencesController?.state.alarmChimeId ?? 'braunBell',
       autoStartNext: _autoStartNext,
+      sessionId: _nativeSessionId,
     );
   }
 
@@ -443,6 +449,9 @@ class ChronoDialController extends StateNotifier<TimerState> {
     if (service == null || !state.isRunning) return;
     final native = await service.status();
     if (native == null || !state.isRunning) return;
+    // A status about another countdown: the previous phase (its START for the next one is still on its way) or a
+    // session started from a widget. Acting on it would end the phase that just began.
+    if (native.sessionId != null && _nativeSessionId != null && native.sessionId != _nativeSessionId) return;
     _flushClock();
     if (native.remainingSeconds <= 0) {
       tick(state.remainingSeconds, ringAlarm: false);
@@ -517,7 +526,10 @@ class ChronoDialController extends StateNotifier<TimerState> {
         isRunning: false,
       );
       _stopClock();
-      if (_autoStartNext) {
+      if (!ringAlarm && !_autoStartNext) {
+        // Native ended this phase (and is ringing its chime): it stops itself once the chime is done. Stopping it
+        // here released the chime player mid-ring.
+      } else if (_autoStartNext) {
         // Straight into the next phase. start() restarts the native countdown in place instead of stop + start, so
         // the service never leaves the foreground (a backgrounded app may not bring it back).
         start(auto: true);

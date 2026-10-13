@@ -25,6 +25,7 @@ class _FakeBackground extends TimerBackgroundService {
     required String profileName,
     String alarmChimeId = 'braunBell',
     bool autoStartNext = false,
+    int? sessionId,
   }) async =>
       true;
 

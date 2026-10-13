@@ -51,6 +51,9 @@ class TimerForegroundService : Service() {
         const val EXTRA_END_AT_EPOCH = "EXTRA_END_AT_EPOCH"
         /** The user's "auto-start next phase": Flutter starts the next phase as soon as this one ends. */
         const val EXTRA_AUTO_START_NEXT = "EXTRA_AUTO_START_NEXT"
+        /** Identifies one countdown (sent by Flutter with START, generated here otherwise). Echoed in the status
+         *  query and carried by the completion alarm, so a late answer about a previous phase is recognised. */
+        const val EXTRA_SESSION_ID = "EXTRA_SESSION_ID"
         private const val REQUEST_COMPLETE = 2001
         const val ACTION_REFRESH_NOTIFICATION = "ACTION_REFRESH_NOTIFICATION"
 
@@ -65,6 +68,11 @@ class TimerForegroundService : Service() {
 
         @Volatile
         var isCountingDown: Boolean = false
+            private set
+
+        /** Session id of the latest countdown (kept after it finishes, like [deadlineElapsed]); 0 = none yet. */
+        @Volatile
+        var activeSessionId: Long = 0L
             private set
 
         /** Focus sessions that finished while Flutter was not running (app closed). */
@@ -193,6 +201,8 @@ class TimerForegroundService : Service() {
                 val profileName = intent.getStringExtra(EXTRA_PROFILE_NAME) ?: "CLASSIC 25/5"
                 val alarmChimeId = intent.getStringExtra(EXTRA_ALARM_CHIME_ID) ?: "braunBell"
                 activeAutoStartNext = intent.getBooleanExtra(EXTRA_AUTO_START_NEXT, false)
+                activeSessionId = intent.getLongExtra(EXTRA_SESSION_ID, 0L)
+                    .takeIf { it != 0L } ?: SystemClock.elapsedRealtimeNanos()
 
                 startCountdown(remainingSeconds, targetMinutes, phase, cycleCount, profileName, alarmChimeId)
             }
@@ -211,6 +221,12 @@ class TimerForegroundService : Service() {
                 }
             }
             ACTION_COMPLETE -> {
+                // A completion alarm of an earlier phase that arrives after the next phase started (auto-start, or
+                // Dart finished first) must not end the new countdown.
+                val sessionId = intent.getLongExtra(EXTRA_SESSION_ID, 0L)
+                if (isCountingDown && sessionId != 0L && sessionId != activeSessionId) {
+                    return START_NOT_STICKY
+                }
                 activeAlarmChimeId = intent.getStringExtra(EXTRA_ALARM_CHIME_ID) ?: activeAlarmChimeId
                 activeTargetMinutes = intent.getIntExtra(EXTRA_TARGET_MINUTES, activeTargetMinutes)
                 val endAt = intent.getLongExtra(EXTRA_END_AT_EPOCH, 0L)
@@ -306,6 +322,7 @@ class TimerForegroundService : Service() {
             putExtra(EXTRA_PHASE, phase)
             putExtra(EXTRA_ALARM_CHIME_ID, chimeId)
             putExtra(EXTRA_TARGET_MINUTES, activeTargetMinutes)
+            putExtra(EXTRA_SESSION_ID, activeSessionId)
         }
         return PendingIntent.getService(
             this,
@@ -498,7 +515,9 @@ class TimerForegroundService : Service() {
         cancelExactCompletion()
         stopWidgetTick()
         stopForeground(STOP_FOREGROUND_REMOVE)
-        stopSelf()
+        // Never cut the finish chime: Flutter stops the service right after a phase ends, often while the chime that
+        // phase started is still ringing. The chime's completion (or the hold timeout) ends the service instead.
+        if (bellPlayer == null) stopSelf()
 
         val prefs = getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
         val targetMinutes = prefs.getInt(TaktAppWidgetProvider.KEY_TARGET_MINUTES, 25)

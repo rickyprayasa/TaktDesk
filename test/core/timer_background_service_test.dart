@@ -150,4 +150,24 @@ void main() {
       completes,
     );
   });
+
+  test('start passes the session id; status reads it back', () async {
+    await service.start(
+      remainingSeconds: 60,
+      targetMinutes: 1,
+      phase: PomodoroPhase.focus,
+      cycleCount: 1,
+      profileName: 'X',
+      sessionId: 1791800000000000,
+    );
+    expect(log.single.arguments['sessionId'], 1791800000000000);
+
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(TimerBackgroundService.channel, (call) async {
+      return {'remainingMillis': 1500, 'running': true, 'sessionId': 1791800000000000};
+    });
+    final status = await service.status();
+    expect(status!.sessionId, 1791800000000000);
+    expect(status.remainingSeconds, 1.5);
+  });
 }

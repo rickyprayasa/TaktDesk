@@ -20,6 +20,7 @@ class TimerBackgroundService {
     required String profileName,
     String alarmChimeId = 'braunBell',
     bool autoStartNext = false,
+    int? sessionId,
   }) async {
     try {
       final res = await channel.invokeMethod<bool>('startService', {
@@ -30,6 +31,7 @@ class TimerBackgroundService {
         'profileName': profileName,
         'alarmChimeId': alarmChimeId,
         'autoStartNext': autoStartNext,
+        if (sessionId != null) 'sessionId': sessionId,
       });
       return res ?? false;
     } catch (_) {
@@ -47,9 +49,11 @@ class TimerBackgroundService {
       if (res == null) return null;
       final millis = res['remainingMillis'];
       if (millis is! num) return null;
+      final sessionId = res['sessionId'];
       return NativeTimerStatus(
         remainingSeconds: millis / 1000.0,
         running: res['running'] == true,
+        sessionId: sessionId is int && sessionId != 0 ? sessionId : null,
       );
     } catch (_) {
       return null;
@@ -118,5 +122,8 @@ class NativeTimerStatus {
   final double remainingSeconds;
   final bool running;
 
-  const NativeTimerStatus({required this.remainingSeconds, required this.running});
+  /// The countdown this status describes (the id sent with start), null when unknown.
+  final int? sessionId;
+
+  const NativeTimerStatus({required this.remainingSeconds, required this.running, this.sessionId});
 }

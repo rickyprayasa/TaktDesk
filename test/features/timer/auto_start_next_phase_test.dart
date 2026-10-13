@@ -21,6 +21,7 @@ class _Audio extends AudioService {
 class _Background extends TimerBackgroundService {
   final List<String> calls = [];
   final List<bool> autoFlags = [];
+  int? lastSessionId;
   NativeTimerStatus? next;
 
   @override
@@ -32,9 +33,11 @@ class _Background extends TimerBackgroundService {
     required String profileName,
     String alarmChimeId = 'braunBell',
     bool autoStartNext = false,
+    int? sessionId,
   }) async {
     calls.add('start:${phase.name}:$targetMinutes');
     autoFlags.add(autoStartNext);
+    lastSessionId = sessionId;
     return true;
   }
 
@@ -103,5 +106,30 @@ void main() {
     expect(controller.state.phase, PomodoroPhase.shortBreak);
     expect(controller.state.isRunning, isTrue);
     expect(audio.chimes, isEmpty, reason: 'native already rang');
+  });
+
+  test('a phase the native alarm ended is not stopped from Dart (that cut the chime), auto-start off', () async {
+    controller.start();
+    background.next = NativeTimerStatus(remainingSeconds: -1, running: false, sessionId: background.lastSessionId);
+    await controller.resyncWithNative();
+    expect(controller.state.phase, PomodoroPhase.shortBreak);
+    expect(controller.state.isRunning, isFalse);
+    expect(background.calls, ['start:focus:25'], reason: 'no stop: native ends itself after the chime');
+  });
+
+  test('a late status about the previous phase does not end the phase that just started', () async {
+    await prefs.setAutoStartNextPhase(true);
+    controller.start();
+    final focusSession = background.lastSessionId;
+    controller.tick(25 * 60); // Dart's own clock ends focus first and auto-starts the break
+    expect(controller.state.phase, PomodoroPhase.shortBreak);
+    expect(background.lastSessionId, isNot(focusSession));
+
+    // nativePhaseFinished for the focus phase arrives before the service handled the break's START.
+    background.next = NativeTimerStatus(remainingSeconds: -0.5, running: false, sessionId: focusSession);
+    await controller.resyncWithNative();
+    expect(controller.state.phase, PomodoroPhase.shortBreak, reason: 'the break must not be skipped');
+    expect(controller.state.isRunning, isTrue);
+    expect(controller.state.remainingSeconds, closeTo(5 * 60, 1));
   });
 }

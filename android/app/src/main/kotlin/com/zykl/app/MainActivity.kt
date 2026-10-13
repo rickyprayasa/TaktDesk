@@ -26,6 +26,11 @@ class MainActivity : FlutterActivity() {
         /** Window brightness of the dimmed desk clock (0..1): readable in a dark room, far below a typical setting. */
         private const val DESK_CLOCK_DIM_BRIGHTNESS = 0.04f
 
+        /** Lockdown's Do Not Disturb claim: set by enableFocusLock, cleared when DND is restored. */
+        private const val LOCKDOWN_PREFS = "zykl_lockdown"
+        private const val KEY_DND_APPLIED = "dnd_applied"
+        private const val KEY_DND_PREVIOUS = "dnd_previous_filter"
+
         @Volatile
         var lastAlarmTimestamp: Long = 0L
 
@@ -116,7 +121,6 @@ class MainActivity : FlutterActivity() {
     private val WIDGET_CHANNEL = "com.takt.desk/app_widget"
     private var widgetChannel: MethodChannel? = null
     private var initialWidgetAction: String? = null
-    private var previousInterruptionFilter: Int? = null
     private var soundscapePlayer: MediaPlayer? = null
     private var masterVolume: Float = 0.8f
     private val effectPlayer: EffectSoundPlayer by lazy { EffectSoundPlayer(this) }
@@ -132,6 +136,32 @@ class MainActivity : FlutterActivity() {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         } else {
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
+
+    private fun lockdownPrefs() = getSharedPreferences(LOCKDOWN_PREFS, Context.MODE_PRIVATE)
+
+    /**
+     * Puts Do Not Disturb back to what it was before Monastic Lockdown and forgets the claim. The claim is kept in
+     * prefs, not only in memory, so a lockdown that never reached disableFocusLock (process killed, app swiped away
+     * after unpinning) is undone on the next start instead of leaving calls silenced. Left alone when the user has
+     * changed DND themselves since.
+     */
+    private fun restoreLockdownDnd() {
+        val prefs = lockdownPrefs()
+        if (!prefs.getBoolean(KEY_DND_APPLIED, false)) return
+        val previous = prefs.getInt(KEY_DND_PREVIOUS, NotificationManager.INTERRUPTION_FILTER_ALL)
+        prefs.edit().clear().apply()
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
+        try {
+            val notifManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+            if (notifManager.isNotificationPolicyAccessGranted &&
+                notifManager.currentInterruptionFilter == NotificationManager.INTERRUPTION_FILTER_ALARMS
+            ) {
+                notifManager.setInterruptionFilter(previous)
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("MainActivity", "DND restore failed: ${e.message}")
         }
     }
 
@@ -173,6 +203,8 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // A fresh activity has no lockdown: undo DND left on by one that ended with the app killed or swiped away.
+        restoreLockdownDnd()
         activeInstance = this
         notifyAllWidgets()
         AppShortcuts.publish(this)
@@ -211,7 +243,13 @@ class MainActivity : FlutterActivity() {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             val notifManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                             if (notifManager != null && notifManager.isNotificationPolicyAccessGranted) {
-                                previousInterruptionFilter = notifManager.currentInterruptionFilter
+                                val prefs = lockdownPrefs()
+                                if (!prefs.getBoolean(KEY_DND_APPLIED, false)) {
+                                    prefs.edit()
+                                        .putBoolean(KEY_DND_APPLIED, true)
+                                        .putInt(KEY_DND_PREVIOUS, notifManager.currentInterruptionFilter)
+                                        .apply()
+                                }
                                 notifManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS)
                             }
                         }
@@ -242,14 +280,7 @@ class MainActivity : FlutterActivity() {
                         controller.show(WindowInsetsCompat.Type.systemBars())
 
                         // 3. Restore Do Not Disturb
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            val notifManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-                            if (notifManager != null && notifManager.isNotificationPolicyAccessGranted) {
-                                val restoreFilter = previousInterruptionFilter ?: NotificationManager.INTERRUPTION_FILTER_ALL
-                                notifManager.setInterruptionFilter(restoreFilter)
-                                previousInterruptionFilter = null
-                            }
-                        }
+                        restoreLockdownDnd()
 
                         // 4. Keep screen awake for 15s so user can observe completed timer & hear alarm before timeout
                         screenWakeHandler.removeCallbacksAndMessages(null)
@@ -551,6 +582,9 @@ class MainActivity : FlutterActivity() {
                         val serviceIntent = Intent(this, TimerForegroundService::class.java).apply {
                             action = TimerForegroundService.ACTION_START
                             putExtra(TimerForegroundService.EXTRA_AUTO_START_NEXT, autoStartNext)
+                            (call.argument<Number>("sessionId"))?.toLong()?.let {
+                                putExtra(TimerForegroundService.EXTRA_SESSION_ID, it)
+                            }
                             putExtra(TimerForegroundService.EXTRA_REMAINING_SECONDS, remainingSeconds)
                             putExtra(TimerForegroundService.EXTRA_TARGET_MINUTES, targetMinutes)
                             putExtra(TimerForegroundService.EXTRA_PHASE, phase)
@@ -582,7 +616,8 @@ class MainActivity : FlutterActivity() {
                     } else {
                         result.success(mapOf(
                             "remainingMillis" to (deadline - SystemClock.elapsedRealtime()),
-                            "running" to TimerForegroundService.isCountingDown
+                            "running" to TimerForegroundService.isCountingDown,
+                            "sessionId" to TimerForegroundService.activeSessionId,
                         ))
                     }
                 }
@@ -952,6 +987,8 @@ class MainActivity : FlutterActivity() {
         if (activeInstance == this) {
             activeInstance = null
         }
+        // The lockdown ends with this activity (its Flutter state goes with it), so its DND does too.
+        restoreLockdownDnd()
         screenWakeHandler.removeCallbacksAndMessages(null)
         MediaNotificationService.mediaControlListener = null
         safeRelease(soundscapePlayer)

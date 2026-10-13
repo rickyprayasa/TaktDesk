@@ -21,6 +21,7 @@ class _RecordingBackground extends TimerBackgroundService {
     required String profileName,
     String alarmChimeId = 'braunBell',
     bool autoStartNext = false,
+    int? sessionId,
   }) async {
     calls.add('start');
     return true;
