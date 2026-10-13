@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import '../../features/settings/presentation/settings_controller.dart';
@@ -64,7 +64,19 @@ class ProPurchaseController extends StateNotifier<ProPurchaseState> {
   StreamSubscription<List<PurchaseDetails>>? _sub;
   ProductDetails? _product;
 
-  ProPurchaseController(this._store, this._onEntitlement) : super(const ProPurchaseState());
+  ProPurchaseController(
+    this._store,
+    this._onEntitlement, {
+    this.restoreSettle = const Duration(milliseconds: 800),
+    this.resumeRetryEvery = const Duration(minutes: 5),
+  }) : super(const ProPurchaseState());
+
+  /// How long a user-asked restore waits for Play's answer before saying nothing was found.
+  final Duration restoreSettle;
+
+  /// At most one silent ownership check per this interval when the app comes back to the foreground.
+  final Duration resumeRetryEvery;
+  DateTime? _lastResumeCheck;
 
   Future<void> init() async {
     final store = _store;
@@ -72,6 +84,13 @@ class ProPurchaseController extends StateNotifier<ProPurchaseState> {
     _sub = store.purchaseStream.listen(_onPurchases, onError: (Object e) {
       debugPrint('ZYKL billing: purchase stream error: $e');
     });
+    await _connect();
+  }
+
+  /// Availability, product and a silent restore: at launch, and again when Play was unreachable then.
+  Future<void> _connect() async {
+    final store = _store;
+    if (store == null) return;
     try {
       if (!await store.isAvailable()) {
         if (mounted) state = state.copyWith(status: ProPurchaseStatus.unavailable);
@@ -115,7 +134,7 @@ class ProPurchaseController extends StateNotifier<ProPurchaseState> {
     }
   }
 
-  /// "Restore purchase": asks Play again (new phone, reinstall).
+  /// "Restore purchase": asks Play again (new phone, reinstall). Says so when Play has no purchase for this account.
   Future<void> restore() async {
     final store = _store;
     if (store == null) return;
@@ -125,6 +144,31 @@ class ProPurchaseController extends StateNotifier<ProPurchaseState> {
     } catch (e) {
       debugPrint('ZYKL billing: restore failed: $e');
       if (mounted) state = state.copyWith(message: 'Google Play is not reachable right now.');
+      return;
+    }
+    await Future<void>.delayed(restoreSettle);
+    if (mounted && !state.isOwned && state.status != ProPurchaseStatus.pending && state.message == null) {
+      state = state.copyWith(message: 'No Studio PRO purchase found on this Google account.');
+    }
+  }
+
+  /// Back in the foreground and not PRO: check again quietly (Play unreachable at launch, a purchase made on
+  /// another device, a pending payment that cleared). Throttled.
+  Future<void> recheckOnResume() async {
+    final store = _store;
+    if (store == null || !mounted || state.isOwned || state.status == ProPurchaseStatus.purchasing) return;
+    final now = DateTime.now();
+    final last = _lastResumeCheck;
+    if (last != null && now.difference(last) < resumeRetryEvery) return;
+    _lastResumeCheck = now;
+    if (state.status == ProPurchaseStatus.unavailable) {
+      await _connect();
+      return;
+    }
+    try {
+      await store.restore();
+    } catch (e) {
+      debugPrint('ZYKL billing: resume check failed: $e');
     }
   }
 
@@ -208,5 +252,11 @@ final proPurchaseProvider = StateNotifierProvider<ProPurchaseController, ProPurc
     }
   });
   controller.init();
+  try {
+    final lifecycle = AppLifecycleListener(onResume: controller.recheckOnResume);
+    ref.onDispose(lifecycle.dispose);
+  } catch (_) {
+    // No widgets binding (plain unit tests).
+  }
   return controller;
 });

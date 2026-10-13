@@ -210,4 +210,55 @@ void main() {
     expect(sim.state.status, ProPurchaseStatus.unavailable);
     sim.dispose();
   });
+
+  group('restore feedback and resume recheck', () {
+    late _FakeStore s;
+    late List<bool> owned;
+    late ProPurchaseController c;
+
+    setUp(() {
+      s = _FakeStore();
+      owned = [];
+      c = ProPurchaseController(s, (o) async => owned.add(o),
+          restoreSettle: Duration.zero, resumeRetryEvery: const Duration(minutes: 5));
+    });
+
+    tearDown(() => c.dispose());
+
+    test('RESTORE says so when Play has no purchase for this account', () async {
+      await c.init();
+      await c.restore();
+      expect(c.state.isOwned, isFalse);
+      expect(c.state.message, 'No Studio PRO purchase found on this Google account.');
+    });
+
+    test('RESTORE that finds the purchase unlocks without the "not found" message', () async {
+      s.ownedOnRestore = true;
+      await c.init();
+      await c.restore();
+      expect(c.state.isOwned, isTrue);
+      expect(c.state.message, isNull);
+    });
+
+    test('Play unreachable at launch: coming back to the app retries and unlocks a paid purchase', () async {
+      s.available = false;
+      await c.init();
+      expect(c.state.status, ProPurchaseStatus.unavailable);
+      s.available = true;
+      s.ownedOnRestore = true;
+      await c.recheckOnResume();
+      await _settle();
+      expect(c.state.isOwned, isTrue);
+      expect(owned, [true]);
+    });
+
+    test('the resume recheck is throttled', () async {
+      s.available = false;
+      await c.init();
+      await c.recheckOnResume();
+      s.available = true;
+      await c.recheckOnResume(); // within 5 minutes: skipped
+      expect(c.state.status, ProPurchaseStatus.unavailable);
+    });
+  });
 }
