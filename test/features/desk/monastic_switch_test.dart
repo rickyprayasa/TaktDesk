@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:takt_desk/app/theme/takt_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/app/theme/hardware_edition.dart';
@@ -272,9 +273,9 @@ void main() {
     final monasticText = tester.widget<Text>(find.text('MONASTIC'));
     expect(monasticText.style?.color, equals(themeState.chassisTextColor.withValues(alpha: 0.6)));
 
-    // Verify LOCKDOWN text uses chassisTextColor
+    // Verify LOCKDOWN text uses chassisTextColor (0.72: 0.4 read at about 2.3:1 in light mode)
     final lockdownText = tester.widget<Text>(find.text('LOCKDOWN'));
-    expect(lockdownText.style?.color, equals(themeState.chassisTextColor.withValues(alpha: 0.4)));
+    expect(lockdownText.style?.color, equals(themeState.chassisTextColor.withValues(alpha: 0.72)));
 
     // Engage lock
     await container.read(focusLockProvider.notifier).engageLock();
@@ -284,7 +285,7 @@ void main() {
     expect(lockedMonasticText.style?.color, equals(themeState.chassisTextColor));
 
     final lockedEngagedText = tester.widget<Text>(find.text('ENGAGED'));
-    expect(lockedEngagedText.style?.color, equals(themeState.filamentColor));
+    expect(lockedEngagedText.style?.color, equals(TaktColors.readableAccent(themeState.filamentColor, onDark: themeState.hasDarkChassis)));
 
     final lockedContainer = tester.widget<Container>(
       find.descendant(of: gestureFinder, matching: find.byType(Container)).first,

@@ -441,8 +441,9 @@ void main() {
     final inactiveSegmentText = tester.widget<Text>(find.text('50/10 MON'));
     expect(inactiveSegmentText.style?.color, equals(const Color(0xFF1B1E23).withValues(alpha: 0.70)));
 
+    // Light chassis: the filament darkened to a readable ink of the same hue.
     final activeSegmentText = tester.widget<Text>(find.text('25/5 CLS'));
-    expect(activeSegmentText.style?.color, equals(themeState.filamentColor));
+    expect(activeSegmentText.style?.color, equals(TaktColors.readableAccent(themeState.filamentColor, onDark: false)));
 
     // ChronoDialPainter receives textureType matching active edition (braunClassic -> matteAbsGrain)
     var customPaint = tester.widget<CustomPaint>(dialFinder);

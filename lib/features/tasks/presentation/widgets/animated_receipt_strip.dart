@@ -34,8 +34,7 @@ class AnimatedReceiptStrip extends StatefulWidget {
   State<AnimatedReceiptStrip> createState() => _AnimatedReceiptStripState();
 }
 
-class _AnimatedReceiptStripState extends State<AnimatedReceiptStrip>
-    with SingleTickerProviderStateMixin {
+class _AnimatedReceiptStripState extends State<AnimatedReceiptStrip> with SingleTickerProviderStateMixin {
   late final AnimationController _extrusionController;
   late final Animation<Offset> _slideAnimation;
   late final Animation<double> _fadeAnimation;
@@ -65,7 +64,6 @@ class _AnimatedReceiptStripState extends State<AnimatedReceiptStrip>
         curve: Curves.easeIn,
       ),
     );
-
   }
 
   bool _extrusionStarted = false;
@@ -132,62 +130,68 @@ class _AnimatedReceiptStripState extends State<AnimatedReceiptStrip>
               hint: 'Double tap to stamp as done. Swipe to tear off.',
               onTap: widget.onStampToggle,
               child: GestureDetector(
-              onDoubleTap: widget.onStampToggle,
-              child: Container(
-                margin: const EdgeInsets.symmetric(vertical: 4),
-                decoration: const BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0x38000000),
-                      offset: Offset(0, 3),
-                      blurRadius: 4,
-                    ),
-                  ],
-                ),
-                child: CustomPaint(
-                  // Only this strip's own drag: a shared progress made every slip show the tear line.
-                  painter: ReceiptRunnerPainter(tearProgress: _localTearProgress),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Receipt Micro Header with Quick Tear Action
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '#${(widget.index + 1).toString().padLeft(2, '0')} // '
-                              '${widget.isCurrent ? 'NOW' : 'ZYKL'}'
-                              '${widget.focusMinutes > 0 ? ' · ${widget.focusMinutes} MIN' : ''}',
-                              style: TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.w600,
-                                color: TaktColors.thermalCarbon.withValues(alpha: 0.55),
-                                letterSpacing: 0.5,
+                onDoubleTap: widget.onStampToggle,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: const BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0x38000000),
+                        offset: Offset(0, 3),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: CustomPaint(
+                    // Only this strip's own drag: a shared progress made every slip show the tear line.
+                    painter: ReceiptRunnerPainter(tearProgress: _localTearProgress),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Receipt Micro Header with Quick Tear Action
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '#${(widget.index + 1).toString().padLeft(2, '0')} // '
+                                '${widget.isCurrent ? 'NOW' : 'ZYKL'}'
+                                '${widget.focusMinutes > 0 ? ' · ${widget.focusMinutes} MIN' : ''}',
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: TaktColors.thermalCarbon.withValues(alpha: 0.55),
+                                  letterSpacing: 0.5,
+                                ),
                               ),
-                            ),
-                            InkWell(
-                              onTap: widget.onTorn,
-                              borderRadius: BorderRadius.circular(4),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
-                                child: Text(
-                                  'TEAR ✕',
-                                  style: TextStyle(
-                                    fontFamily: 'monospace',
-                                    fontSize: 8.0,
-                                    fontWeight: FontWeight.w700,
-                                    color: TaktColors.thermalCarbon.withValues(alpha: 0.45),
-                                    letterSpacing: 0.8,
+                              Semantics(
+                                button: true,
+                                label: 'Tear off this slip',
+                                excludeSemantics: true,
+                                child: InkWell(
+                                  onTap: widget.onTorn,
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: Padding(
+                                    // Taller touch target (the label is 8 pt; it was ~14 px tall).
+                                    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                                    child: Text(
+                                      'TEAR ✕',
+                                      style: TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 8.0,
+                                        fontWeight: FontWeight.w700,
+                                        color: TaktColors.thermalCarbon.withValues(alpha: 0.45),
+                                        letterSpacing: 0.8,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
                           const SizedBox(height: 4),
                           // Task Content & Rubber Stamp Mark
                           Row(
@@ -200,9 +204,7 @@ class _AnimatedReceiptStripState extends State<AnimatedReceiptStrip>
                                     color: widget.task.isDone
                                         ? TaktColors.thermalCarbon.withValues(alpha: 0.60)
                                         : TaktColors.thermalCarbon,
-                                    decoration: widget.task.isDone
-                                        ? TextDecoration.lineThrough
-                                        : null,
+                                    decoration: widget.task.isDone ? TextDecoration.lineThrough : null,
                                     decorationColor: TaktColors.thermalCarbon,
                                     decorationThickness: 1.6,
                                   ),
@@ -222,9 +224,9 @@ class _AnimatedReceiptStripState extends State<AnimatedReceiptStrip>
                 ),
               ),
             ),
-            ),
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
 }

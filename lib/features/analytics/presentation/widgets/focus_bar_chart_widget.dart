@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../app/theme/takt_colors.dart';
 import '../../domain/focus_analytics_models.dart';
+import '../../../../app/motion.dart';
 
 /// Industrial Dieter Rams-styled histogram presenting focus duration distribution.
 class FocusBarChartWidget extends StatelessWidget {
@@ -113,7 +114,7 @@ class FocusBarChartWidget extends StatelessWidget {
                       alignment: Alignment.bottomCenter,
                       child: TweenAnimationBuilder<double>(
                         tween: Tween<double>(begin: 0.0, end: factor),
-                        duration: const Duration(milliseconds: 350),
+                        duration: motion(context, const Duration(milliseconds: 350)),
                         curve: Curves.easeOutCubic,
                         builder: (context, val, _) {
                           return FractionallySizedBox(

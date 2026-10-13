@@ -4,6 +4,7 @@ import '../../../../app/theme/takt_colors.dart';
 import '../../../../app/theme/theme_controller.dart';
 import '../../../../core/haptics/haptic_service.dart';
 import '../../../settings/presentation/settings_controller.dart';
+import '../../../../app/motion.dart';
 
 /// Physical mechanical rocker / slider switch to toggle chassis finish (Braun Dark vs Light).
 class ChassisThemeSwitch extends ConsumerWidget {
@@ -46,7 +47,7 @@ class ChassisThemeSwitch extends ConsumerWidget {
             children: [
               // Sliding Rocker Thumb
               AnimatedContainer(
-                duration: const Duration(milliseconds: 240),
+                duration: motion(context, const Duration(milliseconds: 240)),
                 curve: Curves.easeOutCubic,
                 width: 14,
                 height: 14,

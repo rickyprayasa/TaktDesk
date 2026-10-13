@@ -367,7 +367,7 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
     required Color themeTextColor,
   }) {
     final textColor = isActive
-        ? activeColor
+        ? TaktColors.readableAccent(activeColor, onDark: isDark)
         : (isRunning
             ? themeTextColor.withValues(alpha: 0.35)
             : themeTextColor.withValues(alpha: 0.70));

@@ -52,11 +52,8 @@ class _HardwareEditionsSectionState
       if (newIndex >= 0 &&
           newIndex != _currentPage &&
           _pageController.hasClients) {
-        _pageController.animateToPage(
-          newIndex,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
+        turnToPage(context, _pageController, newIndex,
+            duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
       }
     }
   }

@@ -5,6 +5,7 @@ import 'package:takt_desk/app/theme/theme_controller.dart';
 import 'package:takt_desk/app/theme/takt_colors.dart';
 import 'package:takt_desk/core/focus/focus_lock_controller.dart';
 import 'package:takt_desk/core/focus/focus_lock_service.dart';
+import '../../../../app/motion.dart';
 
 enum _SilenceChoice { grantAccess, lockWithoutSilence }
 
@@ -108,7 +109,7 @@ class _MonasticSwitchWidgetState extends ConsumerState<MonasticSwitchWidget> {
             children: [
               // Sleek LED status indicator
               AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
+                duration: motion(context, const Duration(milliseconds: 250)),
                 width: 6,
                 height: 6,
                 decoration: BoxDecoration(
@@ -143,8 +144,8 @@ class _MonasticSwitchWidgetState extends ConsumerState<MonasticSwitchWidget> {
                 isLocked ? 'ENGAGED' : 'LOCKDOWN',
                 style: TaktTypography.labelSmall.copyWith(
                   color: isLocked
-                      ? themeState.filamentColor
-                      : themeState.chassisTextColor.withValues(alpha: 0.4),
+                      ? TaktColors.readableAccent(themeState.filamentColor, onDark: themeState.hasDarkChassis)
+                      : themeState.chassisTextColor.withValues(alpha: 0.72),
                   fontSize: 9,
                   letterSpacing: 1.0,
                   fontWeight: FontWeight.w600,

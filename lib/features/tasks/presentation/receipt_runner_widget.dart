@@ -69,7 +69,9 @@ class ReceiptRunnerWidget extends ConsumerWidget {
                 index: index,
                 isCurrent: task.id == state.currentTaskId,
                 focusMinutes: state.focusMinutesOf(task.id),
-                onTearUpdate: (p) => controller.updateTearProgress(p),
+                // Each strip draws its own tear line. Publishing the drag progress to the provider rebuilt the whole
+                // dispenser (every strip and the archive) on each frame of a tear, and nothing read it.
+                onTearUpdate: (_) {},
                 onTorn: () => controller.tearTask(task.id),
                 onStampToggle: () => controller.stampDone(task.id),
               );

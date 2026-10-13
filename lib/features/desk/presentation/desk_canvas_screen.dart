@@ -287,7 +287,11 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
         mainAxisSize: MainAxisSize.min,
         children: List.generate(labels.length, (index) {
           final isSelected = _selectedInstrumentIndex == index;
-          return InkWell(
+          // Exposed as a selected tab to screen readers (the look alone said which one was active).
+          return Semantics(
+            selected: isSelected,
+            button: true,
+            child: InkWell(
             onTap: () => _selectInstrument(index),
             borderRadius: BorderRadius.circular(16),
             child: Container(
@@ -319,6 +323,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
                 ),
               ),
             ),
+          ),
           );
         }),
       ),

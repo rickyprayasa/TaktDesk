@@ -9,6 +9,7 @@ import '../../../../app/theme/theme_controller.dart';
 import '../../../../core/audio/audio_service.dart';
 import '../../../../core/audio/sound_effect.dart';
 import '../../../../core/haptics/haptic_service.dart';
+import '../../../../app/motion.dart';
 
 /// Industrial Slide-Out Modular Brass Archive Drawer attached to the bottom of the Thermal Task Runner.
 class ArchiveDrawerWidget extends ConsumerStatefulWidget {
@@ -224,7 +225,7 @@ class _ArchiveDrawerWidgetState extends ConsumerState<ArchiveDrawerWidget> {
           ),
           // 2. Sliding Drawer Contents
           AnimatedSize(
-            duration: const Duration(milliseconds: 280),
+            duration: motion(context, const Duration(milliseconds: 280)),
             curve: Curves.easeOutCubic,
             child: isOpen
                 ? Container(
@@ -398,7 +399,8 @@ class _ArchiveDrawerWidgetState extends ConsumerState<ArchiveDrawerWidget> {
             onTap: () => controller.deleteArchivedTask(task.id),
             borderRadius: BorderRadius.circular(3),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+              // Wider touch target (was ~18 x 16) without making the archive row taller.
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
               child: Icon(
                 Icons.close,
                 size: 12,

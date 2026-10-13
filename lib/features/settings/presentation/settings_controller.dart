@@ -224,11 +224,13 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
     }
   }
 
-  Future<void> setVolume(double val) async {
+  /// [persist] false while the slider is being dragged: the sound follows every step, the database write waits for
+  /// the drag to end (it wrote on every step before).
+  Future<void> setVolume(double val, {bool persist = true}) async {
     final clamped = val.clamp(0.0, 1.0);
     state = state.copyWith(soundVolume: clamped);
     _audioService?.setVolume(clamped);
-    await _database?.updatePreferences(soundVolume: clamped);
+    if (persist) await _database?.updatePreferences(soundVolume: clamped);
   }
 
   Future<void> setFoleyEnabled(bool val) async {

@@ -17,6 +17,14 @@ class TaktColors {
   /// Amber text colour for the current surface: glowing filament on dark,
   /// printed ink on light.
   static Color amberText(bool isDark) => isDark ? filamentAmber : amberInk;
+
+  /// An edition's accent as text: as is on a dark chassis, darkened on a light one (light filaments such as #D99B59
+  /// or steel #B0B4BC read at about 2:1 on bone; this keeps the hue and reaches about 4.5:1).
+  static Color readableAccent(Color accent, {required bool onDark}) {
+    if (onDark) return accent;
+    final hsl = HSLColor.fromColor(accent);
+    return hsl.lightness <= 0.32 ? accent : hsl.withLightness(0.32).toColor();
+  }
   static const Color patinaOlive = Color(0xFF4D5D4B);
 
   // Surface variations for depth

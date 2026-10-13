@@ -19,6 +19,7 @@ import '../../analytics/presentation/widgets/focus_analytics_dialog.dart';
 import 'settings_controller.dart';
 import 'widgets/feedback_dialog.dart';
 import 'widgets/studio_pro_dialog.dart';
+import '../../../app/motion.dart';
 
 part 'settings_sections/alarm_acoustics_section.dart';
 part 'settings_sections/hardware_editions_section.dart';
@@ -168,7 +169,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                           padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                           physics: const BouncingScrollPhysics(),
                           child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
+                            duration: motion(context, const Duration(milliseconds: 200)),
                             child: KeyedSubtree(
                               key: ValueKey(_selectedTabIndex),
                               child: _buildActiveTabContent(
@@ -369,7 +370,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
                 });
               },
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
+                duration: motion(context, const Duration(milliseconds: 150)),
                 curve: Curves.easeOutCubic,
                 padding: const EdgeInsets.symmetric(vertical: 7),
                 decoration: BoxDecoration(
@@ -581,7 +582,7 @@ class _TaktSettingsSheetState extends ConsumerState<TaktSettingsSheet> {
               onChanged: (val) {
                 ref
                     .read(deskPreferencesControllerProvider.notifier)
-                    .setVolume(val);
+                    .setVolume(val, persist: false);
               },
               onChangeEnd: (val) {
                 ref

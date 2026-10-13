@@ -953,7 +953,13 @@ class MainActivity : FlutterActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode != REQUEST_SAVE_FILE && requestCode != REQUEST_OPEN_FILE) return
-        val result = pendingFileResult ?: return
+        val result = pendingFileResult
+        if (result == null) {
+            // The process was killed while the picker was open: the content to save is gone, so don't leave the empty
+            // file the picker created (the user saves again from Settings).
+            if (requestCode == REQUEST_SAVE_FILE && resultCode == RESULT_OK) data?.data?.let { deleteQuietly(it) }
+            return
+        }
         val content = pendingFileContent
         pendingFileResult = null
         pendingFileContent = null
@@ -966,8 +972,13 @@ class MainActivity : FlutterActivity() {
         Thread {
             try {
                 if (requestCode == REQUEST_SAVE_FILE) {
-                    contentResolver.openOutputStream(uri, "wt")?.use { it.write(content ?: ByteArray(0)) }
-                        ?: throw IllegalStateException("Cannot write the chosen file")
+                    try {
+                        contentResolver.openOutputStream(uri, "wt")?.use { it.write(content ?: ByteArray(0)) }
+                            ?: throw IllegalStateException("Cannot write the chosen file")
+                    } catch (e: Exception) {
+                        deleteQuietly(uri) // no half-written or empty backup left behind
+                        throw e
+                    }
                     main.post { result.success(true) }
                 } else {
                     val bytes = contentResolver.openInputStream(uri)?.use { input ->
@@ -988,6 +999,12 @@ class MainActivity : FlutterActivity() {
                 main.post { result.error("IO", e.message, null) }
             }
         }.start()
+    }
+
+    private fun deleteQuietly(uri: android.net.Uri) {
+        try {
+            android.provider.DocumentsContract.deleteDocument(contentResolver, uri)
+        } catch (_: Exception) {}
     }
 
     override fun onNewIntent(intent: Intent) {

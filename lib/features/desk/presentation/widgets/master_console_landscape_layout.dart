@@ -12,6 +12,7 @@ import 'desk_spec_plate_widget.dart';
 import 'emergency_unlatch_widget.dart';
 import 'settings_rivet_button.dart';
 import 'timer_status_led.dart';
+import '../../../../app/motion.dart';
 
 /// MasterConsoleLandscapeLayout renders an expansive dual-pane Braun Studio console
 /// on tablets and landscape displays.
@@ -81,7 +82,7 @@ class _MasterConsoleLandscapeLayoutState
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                   color: isSelected
                       ? (theme.isDarkMode ? TaktColors.filamentAmber : const Color(0xFF141517))
-                      : (theme.isDarkMode ? Colors.white54 : Colors.black45),
+                      : (theme.isDarkMode ? Colors.white60 : const Color(0xFF374151)),
                   letterSpacing: 1.0,
                 ),
               ),
@@ -214,7 +215,7 @@ class _MasterConsoleLandscapeLayoutState
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   child: AnimatedSwitcher(
-                                    duration: const Duration(milliseconds: 250),
+                                    duration: motion(context, const Duration(milliseconds: 250)),
                                     child: _selectedModuleIndex == 0
                                         ? const Center(
                                             key: ValueKey('landscape_dispenser_module'),

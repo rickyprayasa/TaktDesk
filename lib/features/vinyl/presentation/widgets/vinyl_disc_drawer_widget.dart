@@ -9,6 +9,7 @@ import '../../../settings/presentation/settings_controller.dart';
 import '../../../settings/presentation/widgets/studio_pro_dialog.dart';
 import '../../domain/vinyl_track.dart';
 import '../vinyl_controller.dart';
+import '../../../../app/motion.dart';
 
 /// Industrial Slide-Out Unified Disc Drawer attached to the bottom of the BRAUN TP-1 Turntable.
 ///
@@ -72,11 +73,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
     setState(() {
       _currentPage1 = page;
     });
-    _pageController1.animateToPage(
-      page,
-      duration: const Duration(milliseconds: 240),
-      curve: Curves.easeOutCubic,
-    );
+    turnToPage(context, _pageController1, page, duration: const Duration(milliseconds: 240));
   }
 
   void _goToPage2(int page) {
@@ -85,11 +82,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
     setState(() {
       _currentPage2 = page;
     });
-    _pageController2.animateToPage(
-      page,
-      duration: const Duration(milliseconds: 240),
-      curve: Curves.easeOutCubic,
-    );
+    turnToPage(context, _pageController2, page, duration: const Duration(milliseconds: 240));
   }
 
   void _toggleDrawer([int? drawerNumber]) {
@@ -166,6 +159,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
           // 1. Brushed Metal Handle Bar (Dieter Rams Single Unified Chassis Plate)
           Semantics(
             button: true,
+            expanded: _isOpen,
             label: 'Toggle record drawer',
             child: InkWell(
               key: const ValueKey('vinyl_drawer_1_handle'),
@@ -223,7 +217,7 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
 
           // 2. Expandable Sliding Interior Bay (Fixed height, mutually exclusive 6-disc view)
           AnimatedSize(
-            duration: const Duration(milliseconds: 280),
+            duration: motion(context, const Duration(milliseconds: 280)),
             curve: Curves.easeInOutCubic,
             child: _isOpen
                 ? Container(
@@ -309,10 +303,12 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                                             : null),
                                     borderRadius: BorderRadius.circular(3),
                                     child: Padding(
-                                      padding: const EdgeInsets.all(1),
+                                      // ~29 dp touch target (was ~17).
+                                      padding: const EdgeInsets.all(7),
                                       child: Icon(
                                         Icons.chevron_left,
                                         size: 15,
+                                        semanticLabel: 'Previous record',
                                         color: ((_activeDrawer == 1
                                                     ? _currentPage1
                                                     : _currentPage2) >
@@ -338,10 +334,11 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
                                             : null),
                                     borderRadius: BorderRadius.circular(3),
                                     child: Padding(
-                                      padding: const EdgeInsets.all(1),
+                                      padding: const EdgeInsets.all(7),
                                       child: Icon(
                                         Icons.chevron_right,
                                         size: 15,
+                                        semanticLabel: 'Next record',
                                         color: ((_activeDrawer == 1
                                                     ? _currentPage1
                                                     : _currentPage2) <
