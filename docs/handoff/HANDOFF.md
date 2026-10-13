@@ -28,7 +28,28 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
-## 2026-10-13 (b) — Second app review (4 parallel read-only audits)  (status: review; nothing fixed yet)
+## 2026-10-13 (c) — Priority 1 fixes from review (b)  (status: committed `2d349ed`, `324b4e6`, `60ac46c` + lockdown `83270ee`; analyze 0, tests 510; NOT built)
+
+- **P1-1 chime cut off** (regression 7e2d320, in the 1.0.4/1.0.5 AABs): Dart no longer calls `stop()` when native
+  ended the phase (`tick(ringAlarm:false)` with auto-start off); `stopCountdown()` skips `stopSelf()` while
+  `bellPlayer` plays — the chime's completion / `COMPLETION_HOLD_MS` ends the service (`finishIfIdle`).
+- **P1-4 auto-start race / stale completion**: session id. Dart `start()` sends `sessionId` (µs epoch);
+  `TimerForegroundService.activeSessionId` (generated natively for widget/tile starts) is echoed by
+  `getRemainingMillis` and carried by the completion alarm (`EXTRA_SESSION_ID`). `resyncWithNative` ignores a status
+  of another session; `ACTION_COMPLETE` of an older session is ignored while a countdown runs.
+- **P1-2 PRO edition reset**: `DeskPreferencesController._editionAwaitingPro` keeps the refused premium edition; applied
+  by `setProSimulated(true)` (the Play restore), so it is no longer overwritten with Braun Classic.
+- **P1-3 billing stuck**: productless results (cancel / error / `itemAlreadyOwned`) return to idle; already-owned
+  triggers `restore()`.
+- **P1-5 DND left on**: lockdown keeps `dnd_applied` + previous filter in prefs `zykl_lockdown`; `restoreLockdownDnd()`
+  on unlock, `onDestroy` and `onCreate`; only reverts if DND is still "Alarms only" (user changes are respected).
+- Tests: productless purchase (3), PRO edition restore, chime/no-stop + stale-status race, session id round trip.
+- **Device checks**: lock the phone in a focus session (auto-start off) → full chime at the end; auto-start on with
+  the screen on → focus → break → focus with no skipped break; Play build with a PRO edition → relaunch keeps it;
+  cancel the Play sheet → BUY usable again; lockdown with DND access → unpin + swipe away → reopen: DND back to before.
+- Next: release 1.0.6 (P1-1 is in shipped builds), then P2 from review (b).
+
+## 2026-10-13 (b) — Second app review (4 parallel read-only audits)  (status: review; P1 fixed in (c), P2/P3 open)
 
 Verified by hand: P1-1, P1-2, P1-3, P2 vinyl-resume, P2 drawer index, P2 sortOrder. The rest are traced by the audits.
 
