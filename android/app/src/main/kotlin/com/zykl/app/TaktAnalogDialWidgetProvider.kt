@@ -46,7 +46,7 @@ class TaktAnalogDialWidgetProvider : AppWidgetProvider() {
         fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
             val prefs = context.getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
             val isPro = prefs.getBoolean(TaktAppWidgetProvider.KEY_IS_PRO, false)
-            val status = prefs.getString(TaktAppWidgetProvider.KEY_STATUS, "STANDBY") ?: "STANDBY"
+            val status = TaktAppWidgetProvider.liveStatus(prefs)
             val remainingSeconds = prefs.getInt(TaktAppWidgetProvider.KEY_REMAINING_SECONDS, 0).coerceAtLeast(0)
             val targetMinutes = prefs.getInt(TaktAppWidgetProvider.KEY_TARGET_MINUTES, 25).coerceAtLeast(1)
 

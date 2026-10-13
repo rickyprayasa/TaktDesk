@@ -37,6 +37,32 @@ class TaktAppWidgetProvider : AppWidgetProvider() {
         /** SystemClock.elapsedRealtime() at which the running phase ends (0 = not running). Drives the Focus Strip
          *  Chronometer, which counts down by itself, so widgets need no per-second updates. */
         const val KEY_END_ELAPSED = "end_elapsed_realtime"
+        /** Local day (yyyyMMdd) the daily counters were written for; other days read as 0. */
+        const val KEY_STATS_DAY = "stats_day"
+
+        fun todayKey(): Int {
+            val c = java.util.Calendar.getInstance()
+            return c.get(java.util.Calendar.YEAR) * 10000 + (c.get(java.util.Calendar.MONTH) + 1) * 100 +
+                c.get(java.util.Calendar.DAY_OF_MONTH)
+        }
+
+        /** Today's completed cycles: 0 once the counters belong to an earlier day (app not opened since midnight). */
+        fun cyclesToday(prefs: android.content.SharedPreferences): Int =
+            if (prefs.getInt(KEY_STATS_DAY, 0) == todayKey()) prefs.getInt(KEY_CYCLES_COMPLETED, 0) else 0
+
+        fun minutesToday(prefs: android.content.SharedPreferences): Int =
+            if (prefs.getInt(KEY_STATS_DAY, 0) == todayKey()) prefs.getInt(KEY_MINUTES_FOCUSED, 0) else 0
+
+        /**
+         * The status to show. FOCUS / BREAK only while the countdown service really runs in this process: after a
+         * reboot, force-stop or update mid-session the saved status (and end time) would otherwise show a phantom
+         * countdown, and the widget toggle would "stop" a session that no longer exists.
+         */
+        fun liveStatus(prefs: android.content.SharedPreferences): String {
+            val status = prefs.getString(KEY_STATUS, "STANDBY") ?: "STANDBY"
+            val running = status == "FOCUS" || status == "BREAK"
+            return if (running && !TimerForegroundService.isCountingDown) "STANDBY" else status
+        }
 
         /** How many of the 4 LEDs to light: today's cycles as a share of the daily goal (goal 4 = one LED each). */
         fun litLeds(cycles: Int, target: Int): Int =
@@ -59,10 +85,10 @@ class TaktAppWidgetProvider : AppWidgetProvider() {
             appWidgetId: Int
         ) {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            val cycles = prefs.getInt(KEY_CYCLES_COMPLETED, 0)
+            val cycles = cyclesToday(prefs)
             val target = prefs.getInt(KEY_CYCLES_TARGET, 4)
-            val minutes = prefs.getInt(KEY_MINUTES_FOCUSED, 0)
-            val status = prefs.getString(KEY_STATUS, "STANDBY") ?: "STANDBY"
+            val minutes = minutesToday(prefs)
+            val status = liveStatus(prefs)
 
             val views = RemoteViews(context.packageName, R.layout.takt_appwidget_2x2)
             WidgetTheme.load(context).apply(

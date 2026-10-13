@@ -46,7 +46,7 @@ class WidgetActionReceiver : BroadcastReceiver() {
             return
         }
         val prefs = context.getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
-        val currentStatus = prefs.getString(TaktAppWidgetProvider.KEY_STATUS, "STANDBY") ?: "STANDBY"
+        val currentStatus = TaktAppWidgetProvider.liveStatus(prefs)
         val targetMinutes = prefs.getInt(TaktAppWidgetProvider.KEY_TARGET_MINUTES, 25).coerceAtLeast(1)
 
         if (currentStatus == "STANDBY") {

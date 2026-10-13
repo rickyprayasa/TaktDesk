@@ -4,7 +4,7 @@
     android:minHeight="140dp"
     android:targetCellWidth="2"
     android:targetCellHeight="2"
-    android:updatePeriodMillis="0"
+    android:updatePeriodMillis="3600000"
     android:initialLayout="@layout/takt_appwidget_2x2"
     android:resizeMode="horizontal|vertical"
     android:minResizeWidth="110dp"

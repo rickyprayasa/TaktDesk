@@ -29,7 +29,7 @@ class ZyklTileService : TileService() {
     private fun prefs() = getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
 
     private fun isRunning(): Boolean {
-        val status = prefs().getString(TaktAppWidgetProvider.KEY_STATUS, "STANDBY") ?: "STANDBY"
+        val status = TaktAppWidgetProvider.liveStatus(prefs())
         return status == "FOCUS" || status == "BREAK"
     }
 
@@ -41,7 +41,7 @@ class ZyklTileService : TileService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val endElapsed = prefs.getLong(TaktAppWidgetProvider.KEY_END_ELAPSED, 0L)
             val leftMillis = endElapsed - SystemClock.elapsedRealtime()
-            val status = prefs.getString(TaktAppWidgetProvider.KEY_STATUS, "FOCUS") ?: "FOCUS"
+            val status = TaktAppWidgetProvider.liveStatus(prefs).takeIf { it != "STANDBY" } ?: "FOCUS"
             tile.subtitle = when {
                 running && leftMillis > 0 -> "$status · ${(leftMillis + 59_999) / 60_000} MIN"
                 running -> "STARTING"

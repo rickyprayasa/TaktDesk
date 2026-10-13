@@ -185,10 +185,12 @@ class AppDatabase extends _$AppDatabase {
     ));
   }
 
-  Stream<List<TimerSession>> watchTodayTimerSessions() {
-    final now = DateTime.now();
-    final startOfDay = DateTime(now.year, now.month, now.day);
-    final endOfDay = DateTime(now.year, now.month, now.day + 1);
+  /// Sessions started on [day] (local date; today when null). The bounds are fixed when the stream is created, so
+  /// callers that live across midnight pass the day explicitly (currentDayProvider).
+  Stream<List<TimerSession>> watchTodayTimerSessions({DateTime? day}) {
+    final d = day ?? DateTime.now();
+    final startOfDay = DateTime(d.year, d.month, d.day);
+    final endOfDay = DateTime(d.year, d.month, d.day + 1);
     return (select(timerSessions)
           ..where((t) =>
               t.startedAt.isBiggerOrEqualValue(startOfDay) &

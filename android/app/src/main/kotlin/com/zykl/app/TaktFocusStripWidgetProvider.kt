@@ -31,9 +31,9 @@ class TaktFocusStripWidgetProvider : AppWidgetProvider() {
         @JvmStatic
         fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
             val prefs = context.getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
-            val cycles = prefs.getInt(TaktAppWidgetProvider.KEY_CYCLES_COMPLETED, 0)
+            val cycles = TaktAppWidgetProvider.cyclesToday(prefs)
             val target = prefs.getInt(TaktAppWidgetProvider.KEY_CYCLES_TARGET, 4)
-            val status = prefs.getString(TaktAppWidgetProvider.KEY_STATUS, "STANDBY") ?: "STANDBY"
+            val status = TaktAppWidgetProvider.liveStatus(prefs)
             val remainingSeconds = prefs.getInt(TaktAppWidgetProvider.KEY_REMAINING_SECONDS, 0)
 
             val views = RemoteViews(context.packageName, R.layout.takt_appwidget_focus_strip_4x1)

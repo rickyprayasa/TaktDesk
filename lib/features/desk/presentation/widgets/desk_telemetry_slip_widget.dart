@@ -8,13 +8,16 @@ import '../../../../core/audio/audio_service.dart';
 import '../../../../core/audio/sound_effect.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/haptics/haptic_service.dart';
+import '../../../../core/time/current_day.dart';
 import '../../domain/telemetry_log_formatter.dart';
 import '../../../analytics/presentation/widgets/focus_analytics_dialog.dart';
 export 'desk_telemetry_dialog.dart';
 
 /// Stream provider for observing today's focus timer sessions.
 final todayTimerSessionsStreamProvider = StreamProvider<List<TimerSession>>((ref) {
-  return ref.watch(appDatabaseProvider).watchTodayTimerSessions();
+  // Rebuilt with new bounds at midnight; before, the slip kept showing yesterday until the app restarted.
+  final day = ref.watch(currentDayProvider);
+  return ref.watch(appDatabaseProvider).watchTodayTimerSessions(day: day);
 });
 
 /// Tactile thermal paper receipt slip widget displaying dot-matrix focus telemetry.

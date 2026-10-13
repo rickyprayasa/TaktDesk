@@ -6,6 +6,7 @@ import '../../../core/audio/audio_service.dart';
 import '../../../core/config/app_security_config.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/haptics/haptic_service.dart';
+import '../../../core/time/current_day.dart';
 import '../../analytics/domain/focus_session_rules.dart';
 import '../../vinyl/presentation/vinyl_controller.dart';
 
@@ -332,11 +333,13 @@ final deskPreferencesControllerProvider =
 
 final todayFocusStatsProvider = StreamProvider<TodayFocusStats>((ref) {
   final db = ref.watch(appDatabaseProvider);
+  // Recomputed at midnight too (not only when the database changes), so the plate, goal LEDs and widgets roll over.
+  final day = ref.watch(currentDayProvider);
   // All sessions (not only today's) so the streak can look back.
   return db.watchAllTimerSessions().map((sessions) {
     final now = DateTime.now();
-    final startOfDay = DateTime(now.year, now.month, now.day);
-    final endOfDay = DateTime(now.year, now.month, now.day + 1);
+    final startOfDay = day;
+    final endOfDay = DateTime(day.year, day.month, day.day + 1);
     final today = sessions.where((s) => !s.startedAt.isBefore(startOfDay) && s.startedAt.isBefore(endOfDay));
     final completed = today.where((s) => s.isCompletedCycle).length;
     final totalSeconds = today.fold<int>(0, (sum, s) => sum + s.elapsedSeconds);

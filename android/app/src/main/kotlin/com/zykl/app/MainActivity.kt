@@ -852,6 +852,7 @@ class MainActivity : FlutterActivity() {
                             .putInt(TaktAppWidgetProvider.KEY_CYCLES_COMPLETED, cycles)
                             .putInt(TaktAppWidgetProvider.KEY_CYCLES_TARGET, target)
                             .putInt(TaktAppWidgetProvider.KEY_MINUTES_FOCUSED, minutes)
+                            .putInt(TaktAppWidgetProvider.KEY_STATS_DAY, TaktAppWidgetProvider.todayKey())
                             .putString(TaktAppWidgetProvider.KEY_STATUS, status)
                             .apply()
 
@@ -884,6 +885,7 @@ class MainActivity : FlutterActivity() {
                             .putInt(TaktAppWidgetProvider.KEY_CYCLES_COMPLETED, cycles)
                             .putInt(TaktAppWidgetProvider.KEY_CYCLES_TARGET, target)
                             .putInt(TaktAppWidgetProvider.KEY_MINUTES_FOCUSED, minutes)
+                            .putInt(TaktAppWidgetProvider.KEY_STATS_DAY, TaktAppWidgetProvider.todayKey())
                             .putString(TaktAppWidgetProvider.KEY_STATUS, status)
                             .putInt(TaktAppWidgetProvider.KEY_REMAINING_SECONDS, remainingSeconds)
                             .putInt(TaktAppWidgetProvider.KEY_TARGET_MINUTES, targetMinutes)
