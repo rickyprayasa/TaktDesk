@@ -169,6 +169,10 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
     ready = init();
   }
 
+  /// A saved PRO edition that could not be applied at launch because Play had not confirmed PRO yet (release builds
+  /// start locked). Applied when ownership is restored, instead of saving the fallback edition over it.
+  String? _editionAwaitingPro;
+
   /// Completes once the saved preferences (theme, edition, haptics, sound) are
   /// applied. The opening screen waits on this so it never shows the wrong
   /// finish or fires haptics the user switched off.
@@ -194,6 +198,7 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
       final effectiveEdition = applied
           ? pref.selectedEdition
           : (_themeController?.state.edition.type.name ?? HardwareEditionType.braunClassic.name);
+      _editionAwaitingPro = applied ? null : pref.selectedEdition;
 
       state = state.copyWith(
         soundVolume: pref.soundVolume,
@@ -263,6 +268,12 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
     _themeController?.setProUnlocked(value);
     if (!value) {
       _vinylController?.revertIfProRevoked();
+    }
+    final awaiting = _editionAwaitingPro;
+    _editionAwaitingPro = null;
+    if (value && awaiting != null) {
+      // Play just confirmed PRO: bring back the edition the user had chosen.
+      _themeController?.setHardwareEdition(HardwareEdition.fromString(awaiting).type);
     }
     final activeEdition = _themeController?.state.edition.type.name ?? state.selectedEdition;
     state = state.copyWith(

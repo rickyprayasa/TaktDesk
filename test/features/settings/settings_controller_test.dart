@@ -377,6 +377,32 @@ void main() {
     expect(persisted.isProSimulated, isFalse);
   });
 
+  test('a PRO edition saved before a locked start comes back once Play confirms PRO, and is not overwritten', () async {
+    // Release builds start locked: the saved premium edition is refused until the Play restore confirms ownership.
+    await db.updatePreferences(selectedEdition: 'midCenturyWalnut', isProSimulated: false);
+    final themeController = ThemeController()..setProUnlocked(false);
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        audioServiceProvider.overrideWithValue(audioService),
+        chassisThemeProvider.overrideWith((ref) => themeController),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(deskPreferencesControllerProvider.notifier);
+    await controller.ready;
+    expect(themeController.state.edition.type, HardwareEditionType.braunClassic);
+
+    await controller.setProSimulated(true); // what the Play restore does
+
+    expect(themeController.state.edition.type, HardwareEditionType.midCenturyWalnut);
+    expect(container.read(deskPreferencesControllerProvider).selectedEdition, 'midCenturyWalnut');
+    final persisted = await db.watchPreferences().first;
+    expect(persisted!.selectedEdition, 'midCenturyWalnut');
+    expect(persisted.isProSimulated, isTrue);
+  });
+
   test('restoring SQLite state with premium edition but isProSimulated false falls back to braunClassic', () async {
     await db.updatePreferences(
       selectedEdition: 'titaniumStealth',
