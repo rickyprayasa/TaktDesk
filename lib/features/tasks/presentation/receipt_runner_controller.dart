@@ -108,7 +108,14 @@ class ReceiptRunnerController extends StateNotifier<ReceiptRunnerState> {
     } catch (_) {}
   }
 
-  Future<void> loadFromDatabase() async {
+  /// Everything again from the database: after a restore wrote slips behind the dispenser's back.
+  Future<void> reloadFromDatabase() async {
+    await loadFromDatabase(reload: true);
+    await loadArchivedTasks();
+    await refreshFocusTimes();
+  }
+
+  Future<void> loadFromDatabase({bool reload = false}) async {
     final db = _database;
     if (db == null) return;
     try {
@@ -119,7 +126,7 @@ class ReceiptRunnerController extends StateNotifier<ReceiptRunnerState> {
               (t) => OrderingTerm(expression: t.id),
             ]))
           .get();
-      if (active.isNotEmpty) {
+      if (active.isNotEmpty || reload) {
         state = state.copyWith(
           tasks: active
               .map((t) => ReceiptTask(

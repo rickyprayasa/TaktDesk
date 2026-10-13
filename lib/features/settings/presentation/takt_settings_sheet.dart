@@ -11,6 +11,7 @@ import '../../../core/config/app_security_config.dart';
 import '../../../core/focus/focus_lock_service.dart';
 import '../../../core/haptics/haptic_service.dart';
 import '../../../core/services/url_service.dart';
+import '../../tasks/presentation/receipt_runner_controller.dart';
 import '../../timer/domain/alarm_chime.dart';
 import '../../timer/domain/pomodoro_profile.dart';
 import '../../timer/presentation/chrono_dial_controller.dart';

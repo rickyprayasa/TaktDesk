@@ -105,6 +105,9 @@ class _HistoryFilesControlsState extends ConsumerState<_HistoryFilesControls> {
             _button('RESTORE', const ValueKey('history_restore'), () => _run((b) async {
                   final r = await b.pickAndRestore();
                   if (r == null) return null;
+                  // The dispenser keeps its slips in memory: show the restored ones (and let it count them, or a new
+                  // slip would be refused by the database and lost).
+                  if (r.tasksAdded > 0) await ref.read(receiptRunnerProvider.notifier).reloadFromDatabase();
                   final skipped = r.sessionsSkipped + r.tasksSkipped;
                   return 'Restored ${r.sessionsAdded} sessions and ${r.tasksAdded} slips'
                       '${skipped > 0 ? ' ($skipped already here or skipped)' : ''}.';

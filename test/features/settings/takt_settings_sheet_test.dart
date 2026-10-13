@@ -10,6 +10,7 @@ import 'package:takt_desk/core/backup/history_backup.dart';
 import 'package:takt_desk/core/database/app_database.dart';
 import 'package:takt_desk/features/settings/presentation/settings_controller.dart';
 import 'package:takt_desk/features/settings/presentation/takt_settings_sheet.dart';
+import 'package:takt_desk/features/tasks/presentation/receipt_runner_controller.dart';
 import 'package:takt_desk/features/timer/domain/pomodoro_profile.dart';
 import 'package:takt_desk/features/timer/presentation/chrono_dial_controller.dart';
 
@@ -229,7 +230,11 @@ void main() {
       final db = AppDatabase.forTesting(NativeDatabase.memory());
       addTearDown(db.close);
       final backup = _FakeHistoryBackup(db);
-      await tester.pumpWidget(buildSheet(overrides: [historyBackupProvider.overrideWithValue(backup)]));
+      final runner = _ReloadRecordingRunner();
+      await tester.pumpWidget(buildSheet(overrides: [
+        historyBackupProvider.overrideWithValue(backup),
+        receiptRunnerProvider.overrideWith((ref) => runner),
+      ]));
       await tester.pump();
 
       final restore = find.byKey(const ValueKey('history_restore'));
@@ -241,6 +246,7 @@ void main() {
       await tester.tap(restore);
       await tester.pump();
       expect(find.text('Restored 12 sessions and 3 slips (2 already here or skipped).'), findsOneWidget);
+      expect(runner.reloads, 1, reason: 'the dispenser shows (and counts) the restored slips');
     });
 
     testWidgets('System clearance badge reports granted DND access from Android', (tester) async {
@@ -1129,4 +1135,11 @@ class _FakeHistoryBackup extends HistoryBackup {
   @override
   Future<RestoreResult?> pickAndRestore() async =>
       const RestoreResult(sessionsAdded: 12, sessionsSkipped: 2, tasksAdded: 3, tasksSkipped: 0);
+}
+
+class _ReloadRecordingRunner extends ReceiptRunnerController {
+  int reloads = 0;
+
+  @override
+  Future<void> reloadFromDatabase() async => reloads++;
 }

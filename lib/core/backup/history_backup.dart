@@ -180,7 +180,10 @@ class HistoryBackup {
               title: title,
               isCompleted: Value(raw['isCompleted'] == true),
               isArchived: Value(archived),
-              sortOrder: Value(raw['sortOrder'] is int ? raw['sortOrder'] as int : 0),
+              // Active slips go after the ones already in the dispenser (backup order kept among themselves).
+              sortOrder: Value(archived
+                  ? (raw['sortOrder'] is int ? raw['sortOrder'] as int : 0)
+                  : await _db.nextTaskSortOrder()),
               createdAt: Value(createdAt),
               completedAt: Value(_parseDate(raw['completedAt'])),
               focusSeconds: Value(raw['focusSeconds'] is int && (raw['focusSeconds'] as int) > 0

@@ -89,15 +89,27 @@ class AppDatabase extends _$AppDatabase {
       throw ArgumentError('Task title cannot be blank');
     }
     return transaction(() async {
-      final activeCount = await (select(tasks)..where((t) => t.isArchived.equals(false))).get();
-      if (activeCount.length >= 5) {
+      final active = await (select(tasks)..where((t) => t.isArchived.equals(false))).get();
+      if (active.length >= 5) {
         throw Exception('At most 5 active tasks in the dispenser');
       }
       return into(tasks).insert(TasksCompanion.insert(
         title: cleanTitle,
-        sortOrder: Value(activeCount.length),
+        sortOrder: Value(await nextTaskSortOrder()),
       ));
     });
+  }
+
+  /// Sort position for a slip printed now: after every active slip. The active count collided once slips above had
+  /// been torn off (a new slip sorted before older ones), so focus time went to a slip other than the one on top.
+  Future<int> nextTaskSortOrder() async {
+    final maxOrder = tasks.sortOrder.max();
+    final row = await (selectOnly(tasks)
+          ..addColumns([maxOrder])
+          ..where(tasks.isArchived.equals(false)))
+        .getSingle();
+    final current = row.read(maxOrder);
+    return current == null ? 0 : current + 1;
   }
 
   /// The slip a focus session works on: the top open (not stamped) slip in the dispenser, null when there is none.

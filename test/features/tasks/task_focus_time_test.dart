@@ -87,6 +87,18 @@ void main() {
       expect(await focusOf(first), 600, reason: 'under a minute is not recorded');
     });
 
+    test('a slip printed after others were torn off goes to the end, so NOW and the credited slip agree', () async {
+      final a = await db.addTask('A');
+      final b = await db.addTask('B');
+      final c = await db.addTask('C');
+      await db.archiveTask(a);
+      await db.archiveTask(b);
+      final d = await db.addTask('D');
+      expect(await db.currentFocusTaskId(), c, reason: 'C is on top, D was printed after it');
+      final order = (await db.watchActiveTasks().first).map((t) => t.id).toList();
+      expect(order, [c, d]);
+    });
+
     test('the dispenser follows the focus time from the database', () async {
       final id = await db.addTask('Outline');
       final runner = ReceiptRunnerController(null, db);
