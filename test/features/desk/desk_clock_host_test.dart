@@ -131,4 +131,25 @@ void main() {
     dial.setRunning(false);
     await tester.pump();
   });
+
+  testWidgets('no dimming while a sheet or page is open over the desk; dims once it closes', (tester) async {
+    await prefs.setDeskClockMode(true);
+    await pumpHost(tester);
+    dial.setRunning(true);
+    await tester.pump();
+
+    final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+    navigator.push(MaterialPageRoute<void>(builder: (_) => const Scaffold(body: Text('SETTINGS'))));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 130));
+    expect(calls, isNot(contains('setDimmed:true')), reason: 'the user is working in another route');
+
+    navigator.pop();
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 61));
+    expect(calls.last, 'setDimmed:true');
+
+    dial.setRunning(false);
+    await tester.pump();
+  });
 }

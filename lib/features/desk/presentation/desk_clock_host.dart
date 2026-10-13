@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -58,13 +59,20 @@ class _DeskClockHostState extends ConsumerState<DeskClockHost> {
     _display = ref.read(displayServiceProvider);
     // Coming back to the app (or turning the screen on) always starts bright.
     _lifecycle = AppLifecycleListener(onResume: _wake);
+    // Any touch in the app counts, also in Settings, the task sheet or a dialog (separate routes above the desk).
+    GestureBinding.instance.pointerRouter.addGlobalRoute(_onAnyPointer);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _sync();
     });
   }
 
+  void _onAnyPointer(PointerEvent event) {
+    if (event is PointerDownEvent) _wake();
+  }
+
   @override
   void dispose() {
+    GestureBinding.instance.pointerRouter.removeGlobalRoute(_onAnyPointer);
     _lifecycle.dispose();
     _idleTimer?.cancel();
     _shiftTimer?.cancel();
@@ -93,7 +101,14 @@ class _DeskClockHostState extends ConsumerState<DeskClockHost> {
 
   void _restartIdle() {
     _idleTimer?.cancel();
-    _idleTimer = Timer(widget.idleDelay, () => _setDimmed(true));
+    _idleTimer = Timer(widget.idleDelay, () {
+      // Someone is in a sheet or dialog over the desk (Settings, typing a slip): not idle, wait another round.
+      if (mounted && ModalRoute.of(context)?.isCurrent == false) {
+        _restartIdle();
+        return;
+      }
+      _setDimmed(true);
+    });
   }
 
   void _wake() {
@@ -121,39 +136,34 @@ class _DeskClockHostState extends ConsumerState<DeskClockHost> {
   Widget build(BuildContext context) {
     ref.listen(deskPreferencesControllerProvider.select((p) => p.deskClockMode), (_, __) => _sync());
     ref.listen(chronoDialControllerProvider.select((s) => s.isRunning), (_, __) => _sync());
-    final fade = MediaQuery.maybeDisableAnimationsOf(context) == true
-        ? Duration.zero
-        : const Duration(milliseconds: 600);
+    final fade =
+        MediaQuery.maybeDisableAnimationsOf(context) == true ? Duration.zero : const Duration(milliseconds: 600);
 
-    return Listener(
-      behavior: HitTestBehavior.translucent,
-      onPointerDown: (_) => _wake(),
-      child: Stack(
-        fit: StackFit.passthrough,
-        children: [
-          Transform.translate(
-            offset: _dimmed ? DeskClockHost.shifts[_shiftStep] : Offset.zero,
-            child: widget.child,
-          ),
-          if (_active)
-            Positioned.fill(
-              child: IgnorePointer(
-                ignoring: !_dimmed,
-                // Swallows the waking touch so it does not reach the desk below.
-                child: GestureDetector(
-                  key: const ValueKey('desk_clock_veil'),
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {},
-                  child: AnimatedOpacity(
-                    opacity: _dimmed ? 1 : 0,
-                    duration: fade,
-                    child: const ColoredBox(color: Color.fromRGBO(0, 0, 0, DeskClockHost.veilOpacity)),
-                  ),
+    return Stack(
+      fit: StackFit.passthrough,
+      children: [
+        Transform.translate(
+          offset: _dimmed ? DeskClockHost.shifts[_shiftStep] : Offset.zero,
+          child: widget.child,
+        ),
+        if (_active)
+          Positioned.fill(
+            child: IgnorePointer(
+              ignoring: !_dimmed,
+              // Swallows the waking touch so it does not reach the desk below.
+              child: GestureDetector(
+                key: const ValueKey('desk_clock_veil'),
+                behavior: HitTestBehavior.opaque,
+                onTap: () {},
+                child: AnimatedOpacity(
+                  opacity: _dimmed ? 1 : 0,
+                  duration: fade,
+                  child: const ColoredBox(color: Color.fromRGBO(0, 0, 0, DeskClockHost.veilOpacity)),
                 ),
               ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
