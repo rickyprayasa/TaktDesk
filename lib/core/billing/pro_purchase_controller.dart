@@ -130,6 +130,12 @@ class ProPurchaseController extends StateNotifier<ProPurchaseState> {
 
   Future<void> _onPurchases(List<PurchaseDetails> purchases) async {
     for (final p in purchases) {
+      if (p.productID.isEmpty) {
+        // in_app_purchase_android reports a cancelled, failed or "already owned" purchase flow with no product at
+        // all; skipping it left the dialog stuck in `purchasing` with BUY and RESTORE disabled.
+        _onFlowEndedWithoutPurchase(p);
+        continue;
+      }
       if (p.productID != kStudioProProductId) continue;
       switch (p.status) {
         case PurchaseStatus.purchased:
@@ -162,6 +168,22 @@ class ProPurchaseController extends StateNotifier<ProPurchaseState> {
         }
       }
     }
+  }
+
+  void _onFlowEndedWithoutPurchase(PurchaseDetails p) {
+    if (!mounted || state.status != ProPurchaseStatus.purchasing) return;
+    if (p.status == PurchaseStatus.canceled) {
+      state = state.copyWith(status: ProPurchaseStatus.idle);
+      return;
+    }
+    if ((p.error?.message ?? '').contains('itemAlreadyOwned')) {
+      // Bought before (other phone, reinstall): fetch it instead of failing.
+      state = state.copyWith(status: ProPurchaseStatus.idle, message: 'You already own Studio PRO. Restoring it…');
+      restore();
+      return;
+    }
+    debugPrint('ZYKL billing: purchase flow ended without a purchase: ${p.status} ${p.error}');
+    state = state.copyWith(status: ProPurchaseStatus.idle, message: 'The payment did not go through.');
   }
 
   @override

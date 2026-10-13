@@ -151,6 +151,49 @@ void main() {
     expect(entitlements, isEmpty);
   });
 
+  PurchaseDetails productless(PurchaseStatus status, {String? errorMessage}) {
+    // What in_app_purchase_android sends when the purchase flow ends without a purchase.
+    return PurchaseDetails(
+      productID: '',
+      purchaseID: '',
+      verificationData: PurchaseVerificationData(localVerificationData: '', serverVerificationData: '', source: 'test'),
+      transactionDate: null,
+      status: status,
+    )..error = errorMessage == null
+        ? null
+        : IAPError(source: 'google_play', code: 'purchase_error', message: errorMessage);
+  }
+
+  test('a cancel reported without a product (real Play) returns to idle', () async {
+    await controller.init();
+    await controller.buy();
+    expect(controller.state.isBusy, isTrue);
+    store.controller.add([productless(PurchaseStatus.canceled)]);
+    await _settle();
+    expect(controller.state.status, ProPurchaseStatus.idle);
+    expect(controller.state.isBusy, isFalse);
+  });
+
+  test('a failed purchase without a product returns to idle with a message', () async {
+    await controller.init();
+    await controller.buy();
+    store.controller.add([productless(PurchaseStatus.error, errorMessage: 'BillingResponse.error')]);
+    await _settle();
+    expect(controller.state.status, ProPurchaseStatus.idle);
+    expect(controller.state.message, 'The payment did not go through.');
+  });
+
+  test('"already owned" restores the purchase instead of failing', () async {
+    store.ownedOnRestore = true;
+    await controller.init();
+    await controller.buy();
+    store.controller.add([productless(PurchaseStatus.error, errorMessage: 'BillingResponse.itemAlreadyOwned')]);
+    await _settle();
+    await _settle();
+    expect(controller.state.isOwned, isTrue);
+    expect(entitlements, [true]);
+  });
+
   test('store unavailable shows a message on buy', () async {
     store.available = false;
     await controller.init();
