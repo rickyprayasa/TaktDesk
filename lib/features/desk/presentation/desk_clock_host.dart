@@ -125,6 +125,7 @@ class _DeskClockHostState extends ConsumerState<DeskClockHost> {
       _shiftStep = 0;
     });
     _display.setDimmed(dimmed);
+    ref.read(deskClockDimmedProvider.notifier).state = dimmed;
     if (dimmed) {
       _shiftTimer = Timer.periodic(widget.shiftEvery, (_) {
         if (mounted) setState(() => _shiftStep = (_shiftStep + 1) % DeskClockHost.shifts.length);

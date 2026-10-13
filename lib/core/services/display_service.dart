@@ -5,6 +5,9 @@ final displayServiceProvider = Provider<DisplayService>((ref) {
   return const DisplayService();
 });
 
+/// True while desk clock mode has dimmed the screen: per-frame decoration (the spinning platter) can rest.
+final deskClockDimmedProvider = StateProvider<bool>((ref) => false);
+
 /// The app window's screen-on flag and brightness override (desk clock mode). Android only; no-ops elsewhere.
 class DisplayService {
   static const MethodChannel channel = MethodChannel('com.zykl.app/display');

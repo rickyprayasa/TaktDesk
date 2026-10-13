@@ -18,7 +18,9 @@ class IsometricDeskLayout extends ConsumerWidget {
         ..rotateX(-tilt.$2 * 0.25)
         ..rotateY(tilt.$1 * 0.25),
       alignment: Alignment.center,
-      child: child,
+      // The desk is painted once into its own layer; a tilt step only re-composites it with the new matrix instead
+      // of repainting the chassis shadows, sheens and rivets (~30 steps a second handheld).
+      child: RepaintBoundary(child: child),
     );
   }
 }

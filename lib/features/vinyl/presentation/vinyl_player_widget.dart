@@ -8,6 +8,7 @@ import '../../../app/theme/takt_typography.dart';
 import '../../../app/theme/theme_controller.dart';
 import '../../../app/theme/widgets/material_chassis_box.dart';
 import 'widgets/vinyl_disc_drawer_widget.dart';
+import '../../../core/services/display_service.dart';
 
 class VinylPlayerWidget extends ConsumerStatefulWidget {
   const VinylPlayerWidget({super.key});
@@ -57,6 +58,9 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
   /// and strobe still show the playing state) and no per-frame ticker runs.
   bool _reduceMotion = false;
 
+  /// Desk clock has dimmed the screen: the platter rests (nobody is watching it spin, the ticker ran all night).
+  bool _deskDimmed = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -65,7 +69,7 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
   }
 
   void _syncPlatter(bool needleOnRecord) {
-    final shouldSpin = needleOnRecord && !_reduceMotion;
+    final shouldSpin = needleOnRecord && !_reduceMotion && !_deskDimmed;
     if (shouldSpin && !_ticker.isActive) {
       _lastElapsed = Duration.zero;
       _ticker.start();
@@ -84,6 +88,10 @@ class _VinylPlayerWidgetState extends ConsumerState<VinylPlayerWidget>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<bool>(deskClockDimmedProvider, (_, dimmed) {
+      _deskDimmed = dimmed;
+      _syncPlatter(ref.read(vinylProvider).needleOnRecord);
+    });
     ref.listen<bool>(
       vinylProvider.select((s) => s.needleOnRecord),
       (previous, needleOnRecord) {

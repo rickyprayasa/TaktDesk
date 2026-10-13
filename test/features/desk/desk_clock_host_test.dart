@@ -87,6 +87,8 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     expect(calls.last, 'setDimmed:true');
     expect(shiftOf(tester), Offset.zero);
+    final container = ProviderScope.containerOf(tester.element(find.byType(DeskClockHost)));
+    expect(container.read(deskClockDimmedProvider), isTrue, reason: 'the platter can rest');
 
     await tester.pump(const Duration(seconds: 60));
     expect(shiftOf(tester), DeskClockHost.shifts[1]);
