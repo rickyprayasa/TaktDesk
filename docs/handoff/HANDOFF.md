@@ -9,7 +9,7 @@
 - Website repo (separate): `/home/tuneeca/RSQUARE/Android/zykl.app` (Next.js on Cloudflare Worker).
 - Native Android code: `android/app/src/main/kotlin/com/zykl/app/` (MainActivity = audio/focus/widget channels,
   TimerForegroundService = background countdown + completion, MediaNotificationService = vinyl notification).
-- Verify with: `flutter analyze` → 0 issues; `flutter test -j 1` → all pass (536 at last full run);
+- Verify with: `flutter analyze` → 0 issues; `flutter test -j 1` → all pass (544 at last full run);
   Kotlin: `cd android && ./gradlew :app:compileDebugKotlin --offline -q`.
 - Run heavy jobs (build/render/test) one at a time with `nice`. Do NOT build APK/AAB unless the user asks —
   the user reviews on the Linux emulator first. Release outputs go to `build_outputs/` (git-ignored).
@@ -27,6 +27,23 @@
 - **Do not build APK/AAB unless the owner asks in that message** (owner reviews code changes on Linux first).
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
+
+## 2026-10-13 (e) — Play rating prompt, TOP SLIPS, website copy  (status: app committed `bbbcb41`, `b917fcb`, tests 544 green; website committed `4901da5` NOT pushed; NOT built)
+
+- `bbbcb41` **Play In-App Review** (`in_app_review` 2.0.12 → Play `review` 2.0.2 + `play-services-base`): requested once per
+  install, 3 s after a focus phase runs to its end, once 10 cycles are done (`completedCycleCount()`), app on screen and
+  not in lockdown (`lib/core/review/review_prompter.dart`, `reviewPromptSyncProvider` watched by the desk,
+  `ChronoDialController.focusCompleted`). **Schema v13**: `desk_preferences.reviewAskedAt`. Sideloaded dev APKs: Play
+  usually shows nothing (only Play-installed builds get the sheet; internal app sharing / internal testing to test).
+- `b917fcb` **TOP SLIPS** in Focus Analytics (every period): top 3 slips by focus time with their share of the period;
+  sessions of deleted slips pooled as "DELETED SLIPS"; titles reload when the dialog opens. `_periodRange()` now shared
+  by day/week bounds and TOP SLIPS.
+- Website (`zykl.app` `4901da5`, **not pushed — push = production**): Terms + FAQ say focus analytics is free and Studio
+  PRO adds the year heatmap; new FAQ_05 (analytics); Privacy: the one-time rating card, backup exclusions, export;
+  HonestSpecs rows Analytics + Your history; changelog highlights; Terms/Privacy dated 13 Oct 2026. `next build` OK.
+- Open: About page says "NO STREAKS, NO BADGES" but the app shows a FOCUS STREAK (pre-existing; owner to decide wording).
+  FAQ "download under 20 MB": re-check the Play download size after the 1.0.6 AAB (Play services base added).
+  Play Console Data safety: no change expected (Play's own review flow), owner to confirm.
 
 ## 2026-10-13 (d) — P2 / P3 from review (b) + the suggestions  (status: committed `052e3ab`..`ef8adef`; analyze 0, tests 536 green, Kotlin compiles; NOT built; needs a device check)
 
