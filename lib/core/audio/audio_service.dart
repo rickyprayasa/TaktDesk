@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../app_visibility.dart';
 import 'sound_effect.dart';
 
 final audioServiceProvider = Provider<AudioService>((ref) {
@@ -43,7 +44,7 @@ class AudioService {
   }
 
   void playFoley(SoundEffect effect) {
-    if (!_initialized || !_foleyEnabled) return;
+    if (!_initialized || !_foleyEnabled || !appIsVisible) return;
     if (!isMock) {
       channel.invokeMethod('playFoley', {'effect': effect.name}).catchError((_) {});
     }

@@ -36,15 +36,17 @@ class _VinylDiscDrawerWidgetState extends ConsumerState<VinylDiscDrawerWidget> {
   @override
   void initState() {
     super.initState();
+    // Open on the drawer and page of the selected record (each drawer holds VinylTrack.drawer1Presets.length).
     final initialIndex = ref.read(vinylProvider).selectedTrackIndex;
-    if (initialIndex < 6) {
+    final perDrawer = VinylTrack.drawer1Presets.length;
+    if (initialIndex < perDrawer) {
       _activeDrawer = 1;
-      _currentPage1 = initialIndex.clamp(0, 5);
+      _currentPage1 = initialIndex.clamp(0, perDrawer - 1);
       _currentPage2 = 0;
     } else {
       _activeDrawer = 2;
       _currentPage1 = 0;
-      _currentPage2 = (initialIndex - 6).clamp(0, 5);
+      _currentPage2 = (initialIndex - perDrawer).clamp(0, VinylTrack.drawer2Presets.length - 1);
     }
 
     _pageController1 = PageController(

@@ -56,7 +56,7 @@ class EffectSoundPlayer(private val context: Context) {
     }
 
     @Synchronized
-    fun playFoley(assetPath: String) = play(assetPath, 1f, isPreview = false)
+    fun playFoley(assetPath: String, volume: Float = 1f) = play(assetPath, volume.coerceIn(0f, 1f), isPreview = false)
 
     /** Auditions a chime: replaces any preview still ringing. */
     @Synchronized

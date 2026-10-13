@@ -121,6 +121,25 @@ void main() {
       expect(find.text('DEEP BROWN NOISE'), findsOneWidget);
     });
 
+    testWidgets('reopens on the drawer and page of the record on the platter (10 discs per drawer)', (tester) async {
+      // Track 7 is in drawer 1 (0..9); the old 6-per-drawer maths opened drawer 2 on the wrong disc.
+      await tester.pumpWidget(buildTestApp(isProSimulated: true, initialTrackIndex: 7));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('vinyl_drawer_1_handle')));
+      await tester.pumpAndSettle();
+      expect(find.text('[ 08 / 10 ]'), findsOneWidget);
+      expect(find.byKey(const ValueKey('record_sleeve_7')), findsOneWidget);
+    });
+
+    testWidgets('a record from drawer 2 reopens drawer 2 on its own page', (tester) async {
+      await tester.pumpWidget(buildTestApp(isProSimulated: true, initialTrackIndex: 13));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('vinyl_drawer_1_handle')));
+      await tester.pumpAndSettle();
+      expect(find.text('[ 04 / 10 ]'), findsOneWidget);
+      expect(find.byKey(const ValueKey('record_sleeve_13')), findsOneWidget);
+    });
+
     testWidgets('switching to Drawer 2 displays 10 sleeves (10..19) in the same compact bay', (tester) async {
       final mockAudio = MockAudioService();
       await tester.pumpWidget(buildTestApp(audioService: mockAudio));

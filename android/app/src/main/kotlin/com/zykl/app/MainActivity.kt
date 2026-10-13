@@ -123,6 +123,7 @@ class MainActivity : FlutterActivity() {
     private var initialWidgetAction: String? = null
     private var soundscapePlayer: MediaPlayer? = null
     private var masterVolume: Float = 0.8f
+    private var alarmPlayer: MediaPlayer? = null
     private val effectPlayer: EffectSoundPlayer by lazy { EffectSoundPlayer(this) }
     private val screenWakeHandler = Handler(Looper.getMainLooper())
 
@@ -521,7 +522,8 @@ class MainActivity : FlutterActivity() {
                     try {
                         val effect = call.argument<String>("effect")
                         val asset = FOLEY_VARIANTS[effect]?.random() ?: FOLEY_ASSETS[effect]
-                        if (asset != null) effectPlayer.playFoley(asset)
+                        // Foley follows MASTER VOLUME like the soundscape and the chime preview.
+                        if (asset != null) effectPlayer.playFoley(asset, masterVolume)
                         result.success(true)
                     } catch (e: Exception) {
                         result.success(false)
@@ -543,8 +545,11 @@ class MainActivity : FlutterActivity() {
                             result.success(true)
                             return@setMethodCallHandler
                         }
+                        // Held in a field: a local MediaPlayer can be garbage-collected mid-ring (zen gong is 4.2 s).
+                        alarmPlayer?.release()
+                        alarmPlayer = null
                         context.assets.openFd(chimeAsset).use { fd ->
-                            MediaPlayer().apply {
+                            alarmPlayer = MediaPlayer().apply {
                                 setAudioAttributes(
                                     AudioAttributes.Builder()
                                         .setUsage(AudioAttributes.USAGE_ALARM)
@@ -552,8 +557,10 @@ class MainActivity : FlutterActivity() {
                                         .build()
                                 )
                                 setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
-                                setOnCompletionListener { mp -> mp.release() }
-                                setOnErrorListener { mp, _, _ -> mp.release(); true }
+                                setOnCompletionListener { mp -> mp.release(); if (alarmPlayer === mp) alarmPlayer = null }
+                                setOnErrorListener { mp, _, _ ->
+                                    mp.release(); if (alarmPlayer === mp) alarmPlayer = null; true
+                                }
                                 prepare()
                                 start()
                             }
@@ -993,6 +1000,11 @@ class MainActivity : FlutterActivity() {
         MediaNotificationService.mediaControlListener = null
         safeRelease(soundscapePlayer)
         soundscapePlayer = null
+        // The soundscape lives in this activity, so its media notification goes too (before, on Android 7-11 back-exit
+        // left a "playing" notification with dead buttons, still holding audio focus).
+        try {
+            stopService(Intent(this, MediaNotificationService::class.java))
+        } catch (_: Exception) {}
         effectPlayer.release()
         super.onDestroy()
     }

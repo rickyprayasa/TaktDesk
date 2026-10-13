@@ -5,8 +5,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.content.res.AssetFileDescriptor
 import android.graphics.Bitmap
@@ -23,6 +25,7 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.media.app.NotificationCompat.MediaStyle
 
 class MediaNotificationService : Service() {
@@ -64,6 +67,9 @@ class MediaNotificationService : Service() {
     private var currentTrackName: String = "LO-FI RAIN"
     private var isPlaying: Boolean = false
     private var resumeOnFocusGain: Boolean = false
+    /** Paused by a call or another app's short sound: Flutter echoes the pause back (ACTION_UPDATE_PLAYBACK), which
+     *  must not cancel the resume when focus returns. */
+    private var pausedByTransientLoss: Boolean = false
     private var currentVolume: Float = 0.8f
     private var currentPhase: String = "focus"
     private var currentRemainingSeconds: Double = 1500.0
@@ -74,6 +80,7 @@ class MediaNotificationService : Service() {
         when (focusChange) {
             AudioManager.AUDIOFOCUS_LOSS -> {
                 resumeOnFocusGain = false
+                pausedByTransientLoss = false
                 if (isPlaying) {
                     isPlaying = false
                     handleMediaControl("pause")
@@ -85,6 +92,7 @@ class MediaNotificationService : Service() {
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
                 if (isPlaying) {
                     resumeOnFocusGain = true
+                    pausedByTransientLoss = true
                     isPlaying = false
                     handleMediaControl("pause")
                     pauseAudio()
@@ -97,6 +105,7 @@ class MediaNotificationService : Service() {
             }
             AudioManager.AUDIOFOCUS_GAIN -> {
                 setAudioVolume(currentVolume)
+                pausedByTransientLoss = false
                 if (resumeOnFocusGain) {
                     resumeOnFocusGain = false
                     isPlaying = true
@@ -116,6 +125,9 @@ class MediaNotificationService : Service() {
         audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
         createNotificationChannels()
         initMediaSession()
+        ContextCompat.registerReceiver(
+            this, noisyReceiver, IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY), ContextCompat.RECEIVER_NOT_EXPORTED
+        )
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -128,7 +140,7 @@ class MediaNotificationService : Service() {
                             playAudioTrack(currentTrackIndex, currentVolume)
                         }
                     } else {
-                        isPlaying = false
+                        refuseToPlay()
                     }
                 }
                 updatePlaybackState()
@@ -157,10 +169,11 @@ class MediaNotificationService : Service() {
                             }
                         }
                     } else {
-                        isPlaying = false
+                        refuseToPlay()
                     }
                 } else {
-                    resumeOnFocusGain = false
+                    // Flutter's echo of a pause made here for a call keeps the resume armed.
+                    if (!pausedByTransientLoss) resumeOnFocusGain = false
                     pauseAudio()
                 }
                 updatePlaybackState()
@@ -181,6 +194,7 @@ class MediaNotificationService : Service() {
                 handleMediaControl("next")
             }
             ACTION_PLAY_PAUSE -> {
+                pausedByTransientLoss = false
                 if (isPlaying) {
                     isPlaying = false
                     resumeOnFocusGain = false
@@ -286,6 +300,30 @@ class MediaNotificationService : Service() {
                 }
             })
             isActive = true
+        }
+    }
+
+    /**
+     * Audio focus refused (a phone or VoIP call is on): the soundscape must not play into it. Flutter already started
+     * it, so tell Flutter to lift the needle, which stops it.
+     */
+    private fun refuseToPlay() {
+        isPlaying = false
+        resumeOnFocusGain = false
+        handleMediaControl("pause")
+    }
+
+    /** Headphones unplugged / Bluetooth gone: pause instead of carrying on through the speaker. */
+    private val noisyReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action != AudioManager.ACTION_AUDIO_BECOMING_NOISY || !isPlaying) return
+            isPlaying = false
+            resumeOnFocusGain = false
+            pausedByTransientLoss = false
+            handleMediaControl("pause")
+            pauseAudio()
+            updatePlaybackState()
+            updateNotification()
         }
     }
 
@@ -639,6 +677,7 @@ class MediaNotificationService : Service() {
     }
 
     override fun onDestroy() {
+        try { unregisterReceiver(noisyReceiver) } catch (_: Exception) {}
         abandonAudioFocus()
         releaseAudio()
         stopForeground(STOP_FOREGROUND_REMOVE)
