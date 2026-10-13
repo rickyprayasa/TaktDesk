@@ -58,10 +58,10 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
     DateTime nextDate;
     switch (state.period) {
       case FocusAnalyticsPeriod.day:
-        nextDate = state.selectedDate.subtract(const Duration(days: 1));
+        nextDate = _shiftDays(state.selectedDate, -1);
         break;
       case FocusAnalyticsPeriod.week:
-        nextDate = state.selectedDate.subtract(const Duration(days: 7));
+        nextDate = _shiftDays(state.selectedDate, -7);
         break;
       case FocusAnalyticsPeriod.month:
         final month = state.selectedDate.month == 1 ? 12 : state.selectedDate.month - 1;
@@ -80,10 +80,10 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
     DateTime nextDate;
     switch (state.period) {
       case FocusAnalyticsPeriod.day:
-        nextDate = state.selectedDate.add(const Duration(days: 1));
+        nextDate = _shiftDays(state.selectedDate, 1);
         break;
       case FocusAnalyticsPeriod.week:
-        nextDate = state.selectedDate.add(const Duration(days: 7));
+        nextDate = _shiftDays(state.selectedDate, 7);
         break;
       case FocusAnalyticsPeriod.month:
         final month = state.selectedDate.month == 12 ? 1 : state.selectedDate.month + 1;
@@ -142,6 +142,10 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
 
   /// Days of [start, end) that have already begun, so averages for the period
   /// in progress are not diluted by days that haven't happened yet.
+  /// Calendar days, not 24 h steps: Duration(days: 1) is 23 or 25 h around a DST change, which moved day and week
+  /// bounds by an hour (a session at 23:30 fell out of its day) and could skip a week when paging.
+  static DateTime _shiftDays(DateTime d, int days) => DateTime(d.year, d.month, d.day + days);
+
   static int _elapsedDays(DateTime start, DateTime end, DateTime today) {
     final startOfToday = DateTime(today.year, today.month, today.day);
     if (!startOfToday.isAfter(start) && !_sameDay(start, startOfToday)) return 0; // future period
@@ -171,7 +175,7 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
     List<TimerSession> allSessions,
   ) {
     final startOfDay = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
+    final endOfDay = _shiftDays(startOfDay, 1);
 
     final daySessions = allSessions.where((s) =>
         s.startedAt.isAfter(startOfDay.subtract(const Duration(microseconds: 1))) &&
@@ -181,12 +185,14 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
     final compRate = totalCount > 0 ? (completed / totalCount) : 0.0;
 
     // 6 4-hour bins: 00h, 04h, 08h, 12h, 16h, 20h
-    final binMinutes = List<int>.filled(6, 0);
+    final binSeconds = List<int>.filled(6, 0);
     for (final s in daySessions) {
       final hour = s.startedAt.hour;
       final binIndex = (hour ~/ 4).clamp(0, 5);
-      binMinutes[binIndex] += (s.elapsedSeconds / 60).round();
+      binSeconds[binIndex] += s.elapsedSeconds;
     }
+    // Rounded per bar, not per session: ten 90 s sessions are 15 m, not 20 m (the total said 15).
+    final binMinutes = [for (final secs in binSeconds) (secs / 60).round()];
 
     final currentHourBin = (today.hour ~/ 4).clamp(0, 5);
     final isToday = selectedDate.year == today.year &&
@@ -234,20 +240,20 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
     DateTime today,
     List<TimerSession> allSessions,
   ) {
-    final monday = DateTime(selectedDate.year, selectedDate.month, selectedDate.day)
-        .subtract(Duration(days: selectedDate.weekday - 1));
-    final sunday = monday.add(const Duration(days: 6));
-    final endOfWeek = DateTime(sunday.year, sunday.month, sunday.day).add(const Duration(days: 1));
+    final monday = _shiftDays(selectedDate, -(selectedDate.weekday - 1));
+    final sunday = _shiftDays(monday, 6);
+    final endOfWeek = _shiftDays(monday, 7);
 
     final weekSessions = allSessions.where((s) =>
         s.startedAt.isAfter(monday.subtract(const Duration(microseconds: 1))) &&
         s.startedAt.isBefore(endOfWeek)).toList();
 
-    final dayMinutes = List<int>.filled(7, 0);
+    final daySeconds = List<int>.filled(7, 0);
     for (final s in weekSessions) {
       final dayIndex = (s.startedAt.weekday - 1).clamp(0, 6);
-      dayMinutes[dayIndex] += (s.elapsedSeconds / 60).round();
+      daySeconds[dayIndex] += s.elapsedSeconds;
     }
+    final dayMinutes = [for (final secs in daySeconds) (secs / 60).round()];
 
     final (totalMins, completed, totalCount) = _totals(weekSessions);
     final compRate = totalCount > 0 ? (completed / totalCount) : 0.0;
@@ -321,10 +327,11 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
       final to = i == 3 ? daysInMonth : (from + bucketLen - 1).clamp(1, daysInMonth);
       return '$from–$to';
     });
-    final weekMinutes = List<int>.filled(4, 0);
+    final weekSeconds = List<int>.filled(4, 0);
     for (final s in monthSessions) {
-      weekMinutes[bucketOf(s.startedAt.day)] += (s.elapsedSeconds / 60).round();
+      weekSeconds[bucketOf(s.startedAt.day)] += s.elapsedSeconds;
     }
+    final weekMinutes = [for (final secs in weekSeconds) (secs / 60).round()];
 
     final (totalMins, completed, totalCount) = _totals(monthSessions);
     final compRate = totalCount > 0 ? (completed / totalCount) : 0.0;
