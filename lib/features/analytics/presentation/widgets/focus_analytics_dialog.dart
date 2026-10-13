@@ -17,6 +17,10 @@ class FocusAnalyticsDialog extends ConsumerWidget {
   const FocusAnalyticsDialog({super.key});
 
   static Future<void> show(BuildContext context) {
+    // Slip titles may have changed (renamed, deleted) since the last session was recorded.
+    ProviderScope.containerOf(context, listen: false)
+        .read(focusAnalyticsControllerProvider.notifier)
+        .reloadSlipTitles();
     return showDialog<void>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.70),
@@ -373,6 +377,16 @@ class FocusAnalyticsDialog extends ConsumerWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
+              _TopSlipsPanel(
+                slips: state.topSlips,
+                totalMinutes: state.totalMinutes,
+                isDark: isDark,
+                panelBg: panelBg,
+                borderColor: borderColor,
+                primaryTextColor: primaryTextColor,
+                secondaryTextColor: secondaryTextColor,
+              ),
             ],
           ),
         ),
@@ -463,6 +477,124 @@ class _LockedYearHeatmap extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+/// The slips that took the most focus in the period, with their share of the period's focus time.
+class _TopSlipsPanel extends StatelessWidget {
+  final List<FocusSlipShare> slips;
+  final int totalMinutes;
+  final bool isDark;
+  final Color panelBg;
+  final Color borderColor;
+  final Color primaryTextColor;
+  final Color secondaryTextColor;
+
+  const _TopSlipsPanel({
+    required this.slips,
+    required this.totalMinutes,
+    required this.isDark,
+    required this.panelBg,
+    required this.borderColor,
+    required this.primaryTextColor,
+    required this.secondaryTextColor,
+  });
+
+  static String _duration(int minutes) {
+    final h = minutes ~/ 60, m = minutes % 60;
+    if (h == 0) return '${m}m';
+    return m == 0 ? '${h}h' : '${h}h ${m}m';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final labelStyle = TextStyle(
+      fontFamily: 'monospace',
+      fontSize: 7.5,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.6,
+      color: secondaryTextColor,
+    );
+    final track = isDark ? const Color(0xFF2A2E34) : const Color(0xFFCFCBC1);
+    return Container(
+      key: const ValueKey('analytics_top_slips'),
+      padding: const EdgeInsets.fromLTRB(12, 9, 12, 10),
+      decoration: BoxDecoration(
+        color: panelBg,
+        borderRadius: BorderRadius.circular(6.0),
+        border: Border.all(color: borderColor, width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('TOP SLIPS', style: labelStyle),
+          const SizedBox(height: 6),
+          if (slips.isEmpty)
+            Text(
+              'Focus counts for the slip marked NOW in the dispenser.',
+              key: const ValueKey('analytics_top_slips_empty'),
+              style: labelStyle.copyWith(fontSize: 8.5, letterSpacing: 0.2),
+            )
+          else
+            for (var i = 0; i < slips.length; i++) ...[
+              if (i > 0) const SizedBox(height: 7),
+              Semantics(
+                label: '${slips[i].title}: ${_duration(slips[i].minutes)}',
+                excludeSemantics: true,
+                child: Column(
+                  key: ValueKey('analytics_top_slip_$i'),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            slips[i].title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: i == 0 ? FontWeight.w700 : FontWeight.w500,
+                              color: primaryTextColor,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          totalMinutes > 0
+                              ? '${_duration(slips[i].minutes)} · ${(slips[i].minutes * 100 / totalMinutes).round()}%'
+                              : _duration(slips[i].minutes),
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: i == 0 ? TaktColors.amberText(isDark) : primaryTextColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    // Share of the period's focus time.
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(1.5),
+                      child: LinearProgressIndicator(
+                        value: totalMinutes > 0 ? (slips[i].minutes / totalMinutes).clamp(0.0, 1.0) : 0.0,
+                        minHeight: 4,
+                        backgroundColor: track,
+                        valueColor: AlwaysStoppedAnimation(
+                          i == 0
+                              ? TaktColors.filamentAmber
+                              : (isDark ? TaktColors.warmBone : const Color(0xFF4A4D53)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+        ],
+      ),
     );
   }
 }

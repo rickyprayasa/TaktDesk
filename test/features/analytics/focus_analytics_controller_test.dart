@@ -114,6 +114,39 @@ void main() {
     expect(container.read(focusAnalyticsControllerProvider).dateRangeLabel, '$y');
   });
 
+  test('TOP SLIPS: the slips that took the most focus in the period, deleted ones pooled', () async {
+    final notifier = container.read(focusAnalyticsControllerProvider.notifier);
+    final today = DateTime.now();
+    final day = DateTime(today.year, today.month, today.day, 9);
+    final draft = await db.addTask('Draft chapter 3');
+    final reply = await db.addTask('Reply to Ana');
+    final gone = await db.addTask('Old slip');
+    final outside = await db.addTask('Last year');
+    Future<void> rec(int seconds, int? taskId, {DateTime? at}) => db.recordTimerSession(
+        targetMinutes: 25, elapsedSeconds: seconds, isFinished: true, startedAt: at ?? day, taskId: taskId);
+    await rec(1500, draft);
+    await rec(1500, draft);
+    await rec(600, reply);
+    await rec(900, gone);
+    await rec(1500, null); // no slip
+    await rec(1500, outside, at: DateTime(today.year - 1, 6, 1, 9));
+    await db.deleteTask(gone);
+    await notifier.reloadSlipTitles();
+    await pumpEventQueue();
+
+    notifier.setPeriod(FocusAnalyticsPeriod.day);
+    final state = container.read(focusAnalyticsControllerProvider);
+    expect(state.topSlips, const [
+      FocusSlipShare(title: 'Draft chapter 3', minutes: 50),
+      FocusSlipShare(title: 'DELETED SLIPS', minutes: 15),
+      FocusSlipShare(title: 'Reply to Ana', minutes: 10),
+    ]);
+    expect(state.totalMinutes, 100, reason: 'the share is of all focus, slip or not');
+
+    notifier.previousPeriod(); // yesterday: nothing
+    expect(container.read(focusAnalyticsControllerProvider).topSlips, isEmpty);
+  });
+
   test('FocusAnalyticsController handles day and month period switching and navigation', () async {
     final notifier = container.read(focusAnalyticsControllerProvider.notifier);
 

@@ -46,6 +46,25 @@ class FocusBarData {
       'FocusBarData($label: ${valueMinutes}m, high=$isHighlighted, today=$isToday)';
 }
 
+/// A slip and the focus minutes it took in the period (TOP SLIPS).
+@immutable
+class FocusSlipShare {
+  final String title;
+  final int minutes;
+
+  const FocusSlipShare({required this.title, required this.minutes});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is FocusSlipShare && title == other.title && minutes == other.minutes;
+
+  @override
+  int get hashCode => Object.hash(title, minutes);
+
+  @override
+  String toString() => 'FocusSlipShare($title: ${minutes}m)';
+}
+
 /// Immutable aggregated snapshot of focus telemetry over a selected period.
 @immutable
 class FocusAnalyticsState {
@@ -73,6 +92,9 @@ class FocusAnalyticsState {
   /// YEAR only: today's index in [heatmapMinutes], -1 when another year is shown.
   final int heatmapTodayIndex;
 
+  /// The slips that took the most focus in the period, most first (at most 3).
+  final List<FocusSlipShare> topSlips;
+
   const FocusAnalyticsState({
     required this.period,
     required this.selectedDate,
@@ -89,6 +111,7 @@ class FocusAnalyticsState {
     this.todayCycles = 0,
     this.heatmapMinutes = const [],
     this.heatmapTodayIndex = -1,
+    this.topSlips = const [],
   });
 
   FocusAnalyticsState copyWith({
@@ -107,6 +130,7 @@ class FocusAnalyticsState {
     int? todayCycles,
     List<int>? heatmapMinutes,
     int? heatmapTodayIndex,
+    List<FocusSlipShare>? topSlips,
   }) {
     return FocusAnalyticsState(
       period: period ?? this.period,
@@ -124,6 +148,7 @@ class FocusAnalyticsState {
       todayCycles: todayCycles ?? this.todayCycles,
       heatmapMinutes: heatmapMinutes ?? this.heatmapMinutes,
       heatmapTodayIndex: heatmapTodayIndex ?? this.heatmapTodayIndex,
+      topSlips: topSlips ?? this.topSlips,
     );
   }
 
@@ -146,7 +171,8 @@ class FocusAnalyticsState {
           bestStreak == other.bestStreak &&
           todayCycles == other.todayCycles &&
           listEquals(heatmapMinutes, other.heatmapMinutes) &&
-          heatmapTodayIndex == other.heatmapTodayIndex;
+          heatmapTodayIndex == other.heatmapTodayIndex &&
+          listEquals(topSlips, other.topSlips);
 
   @override
   int get hashCode => Object.hash(
@@ -165,5 +191,6 @@ class FocusAnalyticsState {
         todayCycles,
         Object.hashAll(heatmapMinutes),
         heatmapTodayIndex,
+        Object.hashAll(topSlips),
       );
 }

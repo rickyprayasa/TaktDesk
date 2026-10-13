@@ -34,12 +34,39 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
   final int dayStartHour;
   final bool weekStartsOnSunday;
 
+  /// Slip titles by id, for TOP SLIPS (a slip deleted since is missing).
+  Map<int, String> _taskTitles = const {};
+
   void _initStream() {
-    _subscription = _db.watchAllTimerSessions().listen((sessions) {
+    _subscription = _db.watchAllTimerSessions().listen((sessions) async {
       _cachedSessions = sessions;
-      _recompute();
+      await _loadSlipTitles();
+      if (mounted) _recompute();
     });
   }
+
+  Future<void> _loadSlipTitles() async {
+    try {
+      _taskTitles = {for (final t in await _db.select(_db.tasks).get()) t.id: t.title};
+    } catch (_) {
+      // Keep the titles we had (the database may be closing).
+    }
+  }
+
+  /// Slips can be renamed or deleted without a new session: the dialog refreshes the titles when it opens.
+  Future<void> reloadSlipTitles() async {
+    await _loadSlipTitles();
+    if (mounted) _recompute();
+  }
+
+  FocusAnalyticsState _compute(FocusAnalyticsPeriod period, DateTime selectedDate) => _computeState(
+        period: period,
+        selectedDate: selectedDate,
+        sessions: _cachedSessions,
+        dayStartHour: dayStartHour,
+        weekStartsOnSunday: weekStartsOnSunday,
+        taskTitles: _taskTitles,
+      );
 
   @override
   void dispose() {
@@ -49,13 +76,7 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
 
   void setPeriod(FocusAnalyticsPeriod period) {
     if (state.period == period) return;
-    state = _computeState(
-      period: period,
-      selectedDate: state.selectedDate,
-      sessions: _cachedSessions,
-      dayStartHour: dayStartHour,
-      weekStartsOnSunday: weekStartsOnSunday,
-    );
+    state = _compute(period, state.selectedDate);
   }
 
   void previousPeriod() {
@@ -76,13 +97,7 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
         nextDate = DateTime(state.selectedDate.year - 1, 1, 1);
         break;
     }
-    state = _computeState(
-      period: state.period,
-      selectedDate: nextDate,
-      sessions: _cachedSessions,
-      dayStartHour: dayStartHour,
-      weekStartsOnSunday: weekStartsOnSunday,
-    );
+    state = _compute(state.period, nextDate);
   }
 
   void nextPeriod() {
@@ -103,33 +118,15 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
         nextDate = DateTime(state.selectedDate.year + 1, 1, 1);
         break;
     }
-    state = _computeState(
-      period: state.period,
-      selectedDate: nextDate,
-      sessions: _cachedSessions,
-      dayStartHour: dayStartHour,
-      weekStartsOnSunday: weekStartsOnSunday,
-    );
+    state = _compute(state.period, nextDate);
   }
 
   void resetToToday() {
-    state = _computeState(
-      period: state.period,
-      selectedDate: DateTime.now(),
-      sessions: _cachedSessions,
-      dayStartHour: dayStartHour,
-      weekStartsOnSunday: weekStartsOnSunday,
-    );
+    state = _compute(state.period, DateTime.now());
   }
 
   void _recompute() {
-    state = _computeState(
-      period: state.period,
-      selectedDate: state.selectedDate,
-      sessions: _cachedSessions,
-      dayStartHour: dayStartHour,
-      weekStartsOnSunday: weekStartsOnSunday,
-    );
+    state = _compute(state.period, state.selectedDate);
   }
 
   static FocusAnalyticsState _computeState({
@@ -138,6 +135,7 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
     required List<TimerSession> sessions,
     int dayStartHour = 0,
     bool weekStartsOnSunday = false,
+    Map<int, String> taskTitles = const {},
   }) {
     // Days start at [dayStartHour]: every bucket below works on times moved back by that many hours, so a 01:30
     // session lands on the previous day everywhere (day, week, month, today's cycles).
@@ -161,12 +159,61 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
     final todayCycles = sessions
         .where((s) => s.isCompletedCycle && !s.startedAt.isBefore(startOfToday) && _sameDay(s.startedAt, today))
         .length;
+    final (periodStart, periodEnd) = _periodRange(period, selectedDate, weekStartsOnSunday: weekStartsOnSunday);
     return base.copyWith(
       currentStreak: streak.current,
       bestStreak: streak.best,
       todayCycles: todayCycles,
+      topSlips: _topSlips(
+        sessions.where((s) => !s.startedAt.isBefore(periodStart) && s.startedAt.isBefore(periodEnd)),
+        taskTitles,
+      ),
     );
   }
+
+  static const int topSlipCount = 3;
+
+  /// The slips that took the most focus in the period (sessions remember their slip since schema v12). Sessions of
+  /// slips deleted since are pooled as "DELETED SLIPS".
+  static List<FocusSlipShare> _topSlips(Iterable<TimerSession> sessions, Map<int, String> taskTitles) {
+    const deleted = -1;
+    final seconds = <int, int>{};
+    for (final s in sessions) {
+      final id = s.taskId;
+      if (id == null) continue;
+      final key = taskTitles.containsKey(id) ? id : deleted;
+      seconds[key] = (seconds[key] ?? 0) + s.elapsedSeconds;
+    }
+    String titleOf(int key) => key == deleted ? 'DELETED SLIPS' : taskTitles[key]!;
+    final ranked = seconds.entries.where((e) => (e.value / 60).round() > 0).toList()
+      ..sort((a, b) => b.value != a.value ? b.value.compareTo(a.value) : titleOf(a.key).compareTo(titleOf(b.key)));
+    return [
+      for (final e in ranked.take(topSlipCount)) FocusSlipShare(title: titleOf(e.key), minutes: (e.value / 60).round()),
+    ];
+  }
+
+  /// [start, end) of the period that holds [selectedDate], in calendar days.
+  static (DateTime, DateTime) _periodRange(
+    FocusAnalyticsPeriod period,
+    DateTime selectedDate, {
+    bool weekStartsOnSunday = false,
+  }) {
+    final day = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+    switch (period) {
+      case FocusAnalyticsPeriod.day:
+        return (day, _shiftDays(day, 1));
+      case FocusAnalyticsPeriod.week:
+        final first = _shiftDays(day, -_weekIndexOf(day, weekStartsOnSunday));
+        return (first, _shiftDays(first, 7));
+      case FocusAnalyticsPeriod.month:
+        return (DateTime(day.year, day.month, 1), DateTime(day.year, day.month + 1, 1));
+      case FocusAnalyticsPeriod.year:
+        return (DateTime(day.year, 1, 1), DateTime(day.year + 1, 1, 1));
+    }
+  }
+
+  /// Position in the week: Monday- or Sunday-first.
+  static int _weekIndexOf(DateTime d, bool weekStartsOnSunday) => weekStartsOnSunday ? d.weekday % 7 : d.weekday - 1;
 
   static bool _sameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
 
@@ -205,8 +252,7 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
     List<TimerSession> allSessions, {
     int dayStartHour = 0,
   }) {
-    final startOfDay = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
-    final endOfDay = _shiftDays(startOfDay, 1);
+    final (startOfDay, endOfDay) = _periodRange(FocusAnalyticsPeriod.day, selectedDate);
 
     final daySessions = allSessions.where((s) =>
         s.startedAt.isAfter(startOfDay.subtract(const Duration(microseconds: 1))) &&
@@ -273,10 +319,11 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
     List<TimerSession> allSessions, {
     bool weekStartsOnSunday = false,
   }) {
-    // Position in the week: Monday- or Sunday-first.
-    int dayIndexOf(DateTime d) => weekStartsOnSunday ? d.weekday % 7 : d.weekday - 1;
+    int dayIndexOf(DateTime d) => _weekIndexOf(d, weekStartsOnSunday);
     final names = weekStartsOnSunday ? const ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] : _weekdayNames;
-    final monday = _shiftDays(selectedDate, -dayIndexOf(selectedDate)); // first day of the week
+    // First day of the week (Monday, or Sunday with WEEK STARTS ON SUNDAY).
+    final (monday, _) =
+        _periodRange(FocusAnalyticsPeriod.week, selectedDate, weekStartsOnSunday: weekStartsOnSunday);
     final sunday = _shiftDays(monday, 6); // last day of the week
     final endOfWeek = _shiftDays(monday, 7);
 

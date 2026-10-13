@@ -132,6 +132,51 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
   });
 
+  Future<void> openDialog(WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [appDatabaseProvider.overrideWithValue(db)],
+        child: MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () => FocusAnalyticsDialog.show(context),
+                child: const Text('OPEN ANALYTICS'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('OPEN ANALYTICS'));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('TOP SLIPS without slip sessions says how focus gets counted', (tester) async {
+    await openDialog(tester);
+    expect(find.byKey(const ValueKey('analytics_top_slips_empty')), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(milliseconds: 100));
+  });
+
+  testWidgets('TOP SLIPS lists the slips of the period with their share of the focus', (tester) async {
+    final slip = await db.addTask('Draft chapter 3');
+    await db.recordTimerSession(
+        targetMinutes: 25, elapsedSeconds: 1500, isFinished: true, startedAt: DateTime.now(), taskId: slip);
+    await db.recordTimerSession(targetMinutes: 25, elapsedSeconds: 1500, isFinished: true, startedAt: DateTime.now());
+    await openDialog(tester);
+
+    final row = find.byKey(const ValueKey('analytics_top_slip_0'));
+    await tester.ensureVisible(row);
+    expect(find.descendant(of: row, matching: find.text('Draft chapter 3')), findsOneWidget);
+    expect(find.descendant(of: row, matching: find.text('25m · 50%')), findsOneWidget);
+    expect(find.byKey(const ValueKey('analytics_top_slip_1')), findsNothing);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(milliseconds: 100));
+  });
+
   testWidgets('YEAR without PRO: a dimmed sample and an unlock that opens Studio PRO', (tester) async {
     await openYear(tester, pro: false);
 
