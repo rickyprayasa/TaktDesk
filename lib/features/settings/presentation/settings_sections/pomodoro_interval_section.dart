@@ -26,6 +26,8 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
     final isRunning = timerState.isRunning;
     final prefsGoal = ref.watch(deskPreferencesControllerProvider.select((p) => p.dailyGoalCycles));
     final autoStart = ref.watch(deskPreferencesControllerProvider.select((p) => p.autoStartNextPhase));
+    final dayStart = ref.watch(deskPreferencesControllerProvider.select((p) => p.dayStartHour));
+    final weekSunday = ref.watch(deskPreferencesControllerProvider.select((p) => p.weekStartsOnSunday));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -246,6 +248,36 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
                 secondaryTextColor: secondaryTextColor,
                 borderColor: borderColor,
               ),
+              const SizedBox(height: 10),
+
+              // Day start: stats, streak and analytics roll over at this hour (night owls).
+              _stepperRow(
+                isDark: isDark,
+                title: 'DAY STARTS AT',
+                subtitle: 'Focus before this hour counts for the day before',
+                value: '${dayStart.toString().padLeft(2, '0')}:00',
+                valueKey: const ValueKey('day_start_value'),
+                minusKey: const ValueKey('day_start_minus'),
+                plusKey: const ValueKey('day_start_plus'),
+                canDecrement: dayStart > 0,
+                canIncrement: dayStart < DeskPreferencesController.maxDayStartHour,
+                onDecrement: () =>
+                    ref.read(deskPreferencesControllerProvider.notifier).setDayStartHour(dayStart - 1),
+                onIncrement: () =>
+                    ref.read(deskPreferencesControllerProvider.notifier).setDayStartHour(dayStart + 1),
+                primaryTextColor: primaryTextColor,
+                secondaryTextColor: secondaryTextColor,
+                borderColor: borderColor,
+              ),
+              const SizedBox(height: 12),
+
+              _settingSwitchRow(
+                title: 'WEEK STARTS ON SUNDAY',
+                subtitle: 'Analytics weeks run Sunday to Saturday.',
+                value: weekSunday,
+                switchKey: const ValueKey('week_starts_sunday_switch'),
+                onChanged: (val) => ref.read(deskPreferencesControllerProvider.notifier).setWeekStartsOnSunday(val),
+              ),
               const SizedBox(height: 12),
 
               // Auto-start: the break follows the focus (and the focus the break) without pressing START.
@@ -292,6 +324,51 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
               ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _settingSwitchRow({
+    required String title,
+    required String subtitle,
+    required bool value,
+    required Key switchKey,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.0,
+                  color: primaryTextColor,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: TextStyle(fontFamily: 'monospace', fontSize: 9.0, color: secondaryTextColor),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Switch(
+          key: switchKey,
+          value: value,
+          activeThumbColor: TaktColors.filamentAmber,
+          activeTrackColor: TaktColors.filamentAmber.withValues(alpha: 0.5),
+          inactiveThumbColor: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
+          inactiveTrackColor: isDark ? TaktColors.slateLight : TaktColors.paperBorder,
+          onChanged: onChanged,
         ),
       ],
     );

@@ -207,6 +207,8 @@ void main() {
       expect(controller.state.remainingSeconds, 300.0);
       expect(controller.state.isRunning, isFalse);
 
+      // The row is written once the slip it counted for is known (one database round trip).
+      await Future<void>.delayed(const Duration(milliseconds: 20));
       final sessions = await db.select(db.timerSessions).get();
       expect(sessions.length, 1);
       expect(sessions.first.targetMinutes, 25);

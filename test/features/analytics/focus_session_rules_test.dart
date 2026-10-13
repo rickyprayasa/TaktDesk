@@ -16,6 +16,7 @@ TimerSession _s(DateTime startedAt, {bool finished = true, bool lockdown = false
     );
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('FocusSessionRules', () {
     test('lockdown-only sessions are focus time but never cycles', () {
       final now = DateTime(2026, 10, 1, 10);

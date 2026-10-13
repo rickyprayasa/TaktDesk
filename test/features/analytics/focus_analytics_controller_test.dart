@@ -6,6 +6,7 @@ import 'package:takt_desk/features/analytics/domain/focus_analytics_models.dart'
 import 'package:takt_desk/features/analytics/presentation/focus_analytics_controller.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late AppDatabase db;
   late ProviderContainer container;
 

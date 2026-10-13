@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -40,6 +41,22 @@ void main() {
       await settle();
       expect(await focusOf(first), 1500);
       expect(await focusOf(second), 0);
+    });
+
+    test('the recorded session points at the slip it was focused on', () async {
+      final first = await db.addTask('Outline');
+      timer.start();
+      await settle();
+      timer.tick(25 * 60);
+      await settle();
+      await db.toggleTaskCompleted(first, true); // no open slip left
+      timer.startFocus();
+      await settle();
+      timer.tick(600);
+      timer.reset();
+      await settle();
+      final sessions = await (db.select(db.timerSessions)..orderBy([(s) => OrderingTerm(expression: s.id)])).get();
+      expect(sessions.map((s) => s.taskId), [first, null]);
     });
 
     test('stamped slips are passed over; a breaks never counts', () async {

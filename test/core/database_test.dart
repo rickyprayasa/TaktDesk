@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:takt_desk/core/database/app_database.dart';
@@ -188,6 +189,20 @@ void main() {
     expect((await db.watchPreferences().first)!.autoStartNextPhase, isFalse);
     await db.updatePreferences(autoStartNextPhase: true);
     expect((await db.watchPreferences().first)!.autoStartNextPhase, isTrue);
+  });
+
+  test('schema v12: day start, week start and the session task persist', () async {
+    await db.updatePreferences(dayStartHour: 4, weekStartsOnSunday: true);
+    final pref = await db.watchPreferences().first;
+    expect(pref!.dayStartHour, 4);
+    expect(pref.weekStartsOnSunday, isTrue);
+    final id = await db.into(db.timerSessions).insert(TimerSessionsCompanion.insert(
+          targetMinutes: 25,
+          elapsedSeconds: 1500,
+          taskId: const Value(7),
+        ));
+    final row = await (db.select(db.timerSessions)..where((t) => t.id.equals(id))).getSingle();
+    expect(row.taskId, 7);
   });
 
   test('can persist and update selectedEdition and isProSimulated in preferences', () async {

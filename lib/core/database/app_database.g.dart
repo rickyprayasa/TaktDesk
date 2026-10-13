@@ -499,6 +499,11 @@ class $TimerSessionsTable extends TimerSessions
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'CHECK ("is_lockdown_only" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _taskIdMeta = const VerificationMeta('taskId');
+  @override
+  late final GeneratedColumn<int> taskId = GeneratedColumn<int>(
+      'task_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -507,7 +512,8 @@ class $TimerSessionsTable extends TimerSessions
         isFinished,
         startedAt,
         finishedAt,
-        isLockdownOnly
+        isLockdownOnly,
+        taskId
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -560,6 +566,10 @@ class $TimerSessionsTable extends TimerSessions
           isLockdownOnly.isAcceptableOrUnknown(
               data['is_lockdown_only']!, _isLockdownOnlyMeta));
     }
+    if (data.containsKey('task_id')) {
+      context.handle(_taskIdMeta,
+          taskId.isAcceptableOrUnknown(data['task_id']!, _taskIdMeta));
+    }
     return context;
   }
 
@@ -583,6 +593,8 @@ class $TimerSessionsTable extends TimerSessions
           .read(DriftSqlType.dateTime, data['${effectivePrefix}finished_at']),
       isLockdownOnly: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}is_lockdown_only'])!,
+      taskId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}task_id']),
     );
   }
 
@@ -603,6 +615,9 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
   /// Monastic Lockdown used WITHOUT a running timer (schema v8). Counts as focus
   /// minutes but not as a Pomodoro cycle, and is excluded from completion rate.
   final bool isLockdownOnly;
+
+  /// The task slip the session counted for (top open slip when it started), null for none (schema v12).
+  final int? taskId;
   const TimerSession(
       {required this.id,
       required this.targetMinutes,
@@ -610,7 +625,8 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
       required this.isFinished,
       required this.startedAt,
       this.finishedAt,
-      required this.isLockdownOnly});
+      required this.isLockdownOnly,
+      this.taskId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -623,6 +639,9 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
       map['finished_at'] = Variable<DateTime>(finishedAt);
     }
     map['is_lockdown_only'] = Variable<bool>(isLockdownOnly);
+    if (!nullToAbsent || taskId != null) {
+      map['task_id'] = Variable<int>(taskId);
+    }
     return map;
   }
 
@@ -637,6 +656,8 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
           ? const Value.absent()
           : Value(finishedAt),
       isLockdownOnly: Value(isLockdownOnly),
+      taskId:
+          taskId == null && nullToAbsent ? const Value.absent() : Value(taskId),
     );
   }
 
@@ -651,6 +672,7 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
       startedAt: serializer.fromJson<DateTime>(json['startedAt']),
       finishedAt: serializer.fromJson<DateTime?>(json['finishedAt']),
       isLockdownOnly: serializer.fromJson<bool>(json['isLockdownOnly']),
+      taskId: serializer.fromJson<int?>(json['taskId']),
     );
   }
   @override
@@ -664,6 +686,7 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
       'startedAt': serializer.toJson<DateTime>(startedAt),
       'finishedAt': serializer.toJson<DateTime?>(finishedAt),
       'isLockdownOnly': serializer.toJson<bool>(isLockdownOnly),
+      'taskId': serializer.toJson<int?>(taskId),
     };
   }
 
@@ -674,7 +697,8 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
           bool? isFinished,
           DateTime? startedAt,
           Value<DateTime?> finishedAt = const Value.absent(),
-          bool? isLockdownOnly}) =>
+          bool? isLockdownOnly,
+          Value<int?> taskId = const Value.absent()}) =>
       TimerSession(
         id: id ?? this.id,
         targetMinutes: targetMinutes ?? this.targetMinutes,
@@ -683,6 +707,7 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
         startedAt: startedAt ?? this.startedAt,
         finishedAt: finishedAt.present ? finishedAt.value : this.finishedAt,
         isLockdownOnly: isLockdownOnly ?? this.isLockdownOnly,
+        taskId: taskId.present ? taskId.value : this.taskId,
       );
   TimerSession copyWithCompanion(TimerSessionsCompanion data) {
     return TimerSession(
@@ -701,6 +726,7 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
       isLockdownOnly: data.isLockdownOnly.present
           ? data.isLockdownOnly.value
           : this.isLockdownOnly,
+      taskId: data.taskId.present ? data.taskId.value : this.taskId,
     );
   }
 
@@ -713,14 +739,15 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
           ..write('isFinished: $isFinished, ')
           ..write('startedAt: $startedAt, ')
           ..write('finishedAt: $finishedAt, ')
-          ..write('isLockdownOnly: $isLockdownOnly')
+          ..write('isLockdownOnly: $isLockdownOnly, ')
+          ..write('taskId: $taskId')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(id, targetMinutes, elapsedSeconds, isFinished,
-      startedAt, finishedAt, isLockdownOnly);
+      startedAt, finishedAt, isLockdownOnly, taskId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -731,7 +758,8 @@ class TimerSession extends DataClass implements Insertable<TimerSession> {
           other.isFinished == this.isFinished &&
           other.startedAt == this.startedAt &&
           other.finishedAt == this.finishedAt &&
-          other.isLockdownOnly == this.isLockdownOnly);
+          other.isLockdownOnly == this.isLockdownOnly &&
+          other.taskId == this.taskId);
 }
 
 class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
@@ -742,6 +770,7 @@ class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
   final Value<DateTime> startedAt;
   final Value<DateTime?> finishedAt;
   final Value<bool> isLockdownOnly;
+  final Value<int?> taskId;
   const TimerSessionsCompanion({
     this.id = const Value.absent(),
     this.targetMinutes = const Value.absent(),
@@ -750,6 +779,7 @@ class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
     this.startedAt = const Value.absent(),
     this.finishedAt = const Value.absent(),
     this.isLockdownOnly = const Value.absent(),
+    this.taskId = const Value.absent(),
   });
   TimerSessionsCompanion.insert({
     this.id = const Value.absent(),
@@ -759,6 +789,7 @@ class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
     this.startedAt = const Value.absent(),
     this.finishedAt = const Value.absent(),
     this.isLockdownOnly = const Value.absent(),
+    this.taskId = const Value.absent(),
   })  : targetMinutes = Value(targetMinutes),
         elapsedSeconds = Value(elapsedSeconds);
   static Insertable<TimerSession> custom({
@@ -769,6 +800,7 @@ class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
     Expression<DateTime>? startedAt,
     Expression<DateTime>? finishedAt,
     Expression<bool>? isLockdownOnly,
+    Expression<int>? taskId,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -778,6 +810,7 @@ class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
       if (startedAt != null) 'started_at': startedAt,
       if (finishedAt != null) 'finished_at': finishedAt,
       if (isLockdownOnly != null) 'is_lockdown_only': isLockdownOnly,
+      if (taskId != null) 'task_id': taskId,
     });
   }
 
@@ -788,7 +821,8 @@ class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
       Value<bool>? isFinished,
       Value<DateTime>? startedAt,
       Value<DateTime?>? finishedAt,
-      Value<bool>? isLockdownOnly}) {
+      Value<bool>? isLockdownOnly,
+      Value<int?>? taskId}) {
     return TimerSessionsCompanion(
       id: id ?? this.id,
       targetMinutes: targetMinutes ?? this.targetMinutes,
@@ -797,6 +831,7 @@ class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
       startedAt: startedAt ?? this.startedAt,
       finishedAt: finishedAt ?? this.finishedAt,
       isLockdownOnly: isLockdownOnly ?? this.isLockdownOnly,
+      taskId: taskId ?? this.taskId,
     );
   }
 
@@ -824,6 +859,9 @@ class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
     if (isLockdownOnly.present) {
       map['is_lockdown_only'] = Variable<bool>(isLockdownOnly.value);
     }
+    if (taskId.present) {
+      map['task_id'] = Variable<int>(taskId.value);
+    }
     return map;
   }
 
@@ -836,7 +874,8 @@ class TimerSessionsCompanion extends UpdateCompanion<TimerSession> {
           ..write('isFinished: $isFinished, ')
           ..write('startedAt: $startedAt, ')
           ..write('finishedAt: $finishedAt, ')
-          ..write('isLockdownOnly: $isLockdownOnly')
+          ..write('isLockdownOnly: $isLockdownOnly, ')
+          ..write('taskId: $taskId')
           ..write(')'))
         .toString();
   }
@@ -977,6 +1016,24 @@ class $DeskPreferencesTable extends DeskPreferences
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'CHECK ("auto_start_next_phase" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _dayStartHourMeta =
+      const VerificationMeta('dayStartHour');
+  @override
+  late final GeneratedColumn<int> dayStartHour = GeneratedColumn<int>(
+      'day_start_hour', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _weekStartsOnSundayMeta =
+      const VerificationMeta('weekStartsOnSunday');
+  @override
+  late final GeneratedColumn<bool> weekStartsOnSunday = GeneratedColumn<bool>(
+      'week_starts_on_sunday', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("week_starts_on_sunday" IN (0, 1))'),
+      defaultValue: const Constant(false));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -992,7 +1049,9 @@ class $DeskPreferencesTable extends DeskPreferences
         isDarkMode,
         dailyGoalCycles,
         deskClockMode,
-        autoStartNextPhase
+        autoStartNextPhase,
+        dayStartHour,
+        weekStartsOnSunday
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1086,6 +1145,18 @@ class $DeskPreferencesTable extends DeskPreferences
           autoStartNextPhase.isAcceptableOrUnknown(
               data['auto_start_next_phase']!, _autoStartNextPhaseMeta));
     }
+    if (data.containsKey('day_start_hour')) {
+      context.handle(
+          _dayStartHourMeta,
+          dayStartHour.isAcceptableOrUnknown(
+              data['day_start_hour']!, _dayStartHourMeta));
+    }
+    if (data.containsKey('week_starts_on_sunday')) {
+      context.handle(
+          _weekStartsOnSundayMeta,
+          weekStartsOnSunday.isAcceptableOrUnknown(
+              data['week_starts_on_sunday']!, _weekStartsOnSundayMeta));
+    }
     return context;
   }
 
@@ -1124,6 +1195,10 @@ class $DeskPreferencesTable extends DeskPreferences
           .read(DriftSqlType.bool, data['${effectivePrefix}desk_clock_mode'])!,
       autoStartNextPhase: attachedDatabase.typeMapping.read(
           DriftSqlType.bool, data['${effectivePrefix}auto_start_next_phase'])!,
+      dayStartHour: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}day_start_hour'])!,
+      weekStartsOnSunday: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}week_starts_on_sunday'])!,
     );
   }
 
@@ -1154,6 +1229,13 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
 
   /// Start the next phase (break after focus, focus after break) as soon as one ends (schema v10).
   final bool autoStartNextPhase;
+
+  /// Hour (0..6) at which a new day starts for stats, streaks and analytics, for people who focus past midnight
+  /// (schema v12).
+  final int dayStartHour;
+
+  /// Analytics weeks run Sunday..Saturday instead of Monday..Sunday (schema v12).
+  final bool weekStartsOnSunday;
   const DeskPreference(
       {required this.id,
       required this.soundVolume,
@@ -1168,7 +1250,9 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       required this.isDarkMode,
       required this.dailyGoalCycles,
       required this.deskClockMode,
-      required this.autoStartNextPhase});
+      required this.autoStartNextPhase,
+      required this.dayStartHour,
+      required this.weekStartsOnSunday});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1186,6 +1270,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
     map['daily_goal_cycles'] = Variable<int>(dailyGoalCycles);
     map['desk_clock_mode'] = Variable<bool>(deskClockMode);
     map['auto_start_next_phase'] = Variable<bool>(autoStartNextPhase);
+    map['day_start_hour'] = Variable<int>(dayStartHour);
+    map['week_starts_on_sunday'] = Variable<bool>(weekStartsOnSunday);
     return map;
   }
 
@@ -1205,6 +1291,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       dailyGoalCycles: Value(dailyGoalCycles),
       deskClockMode: Value(deskClockMode),
       autoStartNextPhase: Value(autoStartNextPhase),
+      dayStartHour: Value(dayStartHour),
+      weekStartsOnSunday: Value(weekStartsOnSunday),
     );
   }
 
@@ -1227,6 +1315,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       dailyGoalCycles: serializer.fromJson<int>(json['dailyGoalCycles']),
       deskClockMode: serializer.fromJson<bool>(json['deskClockMode']),
       autoStartNextPhase: serializer.fromJson<bool>(json['autoStartNextPhase']),
+      dayStartHour: serializer.fromJson<int>(json['dayStartHour']),
+      weekStartsOnSunday: serializer.fromJson<bool>(json['weekStartsOnSunday']),
     );
   }
   @override
@@ -1248,6 +1338,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       'dailyGoalCycles': serializer.toJson<int>(dailyGoalCycles),
       'deskClockMode': serializer.toJson<bool>(deskClockMode),
       'autoStartNextPhase': serializer.toJson<bool>(autoStartNextPhase),
+      'dayStartHour': serializer.toJson<int>(dayStartHour),
+      'weekStartsOnSunday': serializer.toJson<bool>(weekStartsOnSunday),
     };
   }
 
@@ -1265,7 +1357,9 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           bool? isDarkMode,
           int? dailyGoalCycles,
           bool? deskClockMode,
-          bool? autoStartNextPhase}) =>
+          bool? autoStartNextPhase,
+          int? dayStartHour,
+          bool? weekStartsOnSunday}) =>
       DeskPreference(
         id: id ?? this.id,
         soundVolume: soundVolume ?? this.soundVolume,
@@ -1282,6 +1376,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
         dailyGoalCycles: dailyGoalCycles ?? this.dailyGoalCycles,
         deskClockMode: deskClockMode ?? this.deskClockMode,
         autoStartNextPhase: autoStartNextPhase ?? this.autoStartNextPhase,
+        dayStartHour: dayStartHour ?? this.dayStartHour,
+        weekStartsOnSunday: weekStartsOnSunday ?? this.weekStartsOnSunday,
       );
   DeskPreference copyWithCompanion(DeskPreferencesCompanion data) {
     return DeskPreference(
@@ -1323,6 +1419,12 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       autoStartNextPhase: data.autoStartNextPhase.present
           ? data.autoStartNextPhase.value
           : this.autoStartNextPhase,
+      dayStartHour: data.dayStartHour.present
+          ? data.dayStartHour.value
+          : this.dayStartHour,
+      weekStartsOnSunday: data.weekStartsOnSunday.present
+          ? data.weekStartsOnSunday.value
+          : this.weekStartsOnSunday,
     );
   }
 
@@ -1342,7 +1444,9 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           ..write('isDarkMode: $isDarkMode, ')
           ..write('dailyGoalCycles: $dailyGoalCycles, ')
           ..write('deskClockMode: $deskClockMode, ')
-          ..write('autoStartNextPhase: $autoStartNextPhase')
+          ..write('autoStartNextPhase: $autoStartNextPhase, ')
+          ..write('dayStartHour: $dayStartHour, ')
+          ..write('weekStartsOnSunday: $weekStartsOnSunday')
           ..write(')'))
         .toString();
   }
@@ -1362,7 +1466,9 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       isDarkMode,
       dailyGoalCycles,
       deskClockMode,
-      autoStartNextPhase);
+      autoStartNextPhase,
+      dayStartHour,
+      weekStartsOnSunday);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1380,7 +1486,9 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           other.isDarkMode == this.isDarkMode &&
           other.dailyGoalCycles == this.dailyGoalCycles &&
           other.deskClockMode == this.deskClockMode &&
-          other.autoStartNextPhase == this.autoStartNextPhase);
+          other.autoStartNextPhase == this.autoStartNextPhase &&
+          other.dayStartHour == this.dayStartHour &&
+          other.weekStartsOnSunday == this.weekStartsOnSunday);
 }
 
 class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
@@ -1398,6 +1506,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
   final Value<int> dailyGoalCycles;
   final Value<bool> deskClockMode;
   final Value<bool> autoStartNextPhase;
+  final Value<int> dayStartHour;
+  final Value<bool> weekStartsOnSunday;
   const DeskPreferencesCompanion({
     this.id = const Value.absent(),
     this.soundVolume = const Value.absent(),
@@ -1413,6 +1523,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     this.dailyGoalCycles = const Value.absent(),
     this.deskClockMode = const Value.absent(),
     this.autoStartNextPhase = const Value.absent(),
+    this.dayStartHour = const Value.absent(),
+    this.weekStartsOnSunday = const Value.absent(),
   });
   DeskPreferencesCompanion.insert({
     this.id = const Value.absent(),
@@ -1429,6 +1541,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     this.dailyGoalCycles = const Value.absent(),
     this.deskClockMode = const Value.absent(),
     this.autoStartNextPhase = const Value.absent(),
+    this.dayStartHour = const Value.absent(),
+    this.weekStartsOnSunday = const Value.absent(),
   });
   static Insertable<DeskPreference> custom({
     Expression<int>? id,
@@ -1445,6 +1559,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     Expression<int>? dailyGoalCycles,
     Expression<bool>? deskClockMode,
     Expression<bool>? autoStartNextPhase,
+    Expression<int>? dayStartHour,
+    Expression<bool>? weekStartsOnSunday,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1464,6 +1580,9 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       if (deskClockMode != null) 'desk_clock_mode': deskClockMode,
       if (autoStartNextPhase != null)
         'auto_start_next_phase': autoStartNextPhase,
+      if (dayStartHour != null) 'day_start_hour': dayStartHour,
+      if (weekStartsOnSunday != null)
+        'week_starts_on_sunday': weekStartsOnSunday,
     });
   }
 
@@ -1481,7 +1600,9 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       Value<bool>? isDarkMode,
       Value<int>? dailyGoalCycles,
       Value<bool>? deskClockMode,
-      Value<bool>? autoStartNextPhase}) {
+      Value<bool>? autoStartNextPhase,
+      Value<int>? dayStartHour,
+      Value<bool>? weekStartsOnSunday}) {
     return DeskPreferencesCompanion(
       id: id ?? this.id,
       soundVolume: soundVolume ?? this.soundVolume,
@@ -1498,6 +1619,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       dailyGoalCycles: dailyGoalCycles ?? this.dailyGoalCycles,
       deskClockMode: deskClockMode ?? this.deskClockMode,
       autoStartNextPhase: autoStartNextPhase ?? this.autoStartNextPhase,
+      dayStartHour: dayStartHour ?? this.dayStartHour,
+      weekStartsOnSunday: weekStartsOnSunday ?? this.weekStartsOnSunday,
     );
   }
 
@@ -1547,6 +1670,12 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     if (autoStartNextPhase.present) {
       map['auto_start_next_phase'] = Variable<bool>(autoStartNextPhase.value);
     }
+    if (dayStartHour.present) {
+      map['day_start_hour'] = Variable<int>(dayStartHour.value);
+    }
+    if (weekStartsOnSunday.present) {
+      map['week_starts_on_sunday'] = Variable<bool>(weekStartsOnSunday.value);
+    }
     return map;
   }
 
@@ -1566,7 +1695,9 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
           ..write('isDarkMode: $isDarkMode, ')
           ..write('dailyGoalCycles: $dailyGoalCycles, ')
           ..write('deskClockMode: $deskClockMode, ')
-          ..write('autoStartNextPhase: $autoStartNextPhase')
+          ..write('autoStartNextPhase: $autoStartNextPhase, ')
+          ..write('dayStartHour: $dayStartHour, ')
+          ..write('weekStartsOnSunday: $weekStartsOnSunday')
           ..write(')'))
         .toString();
   }
@@ -1804,6 +1935,7 @@ typedef $$TimerSessionsTableCreateCompanionBuilder = TimerSessionsCompanion
   Value<DateTime> startedAt,
   Value<DateTime?> finishedAt,
   Value<bool> isLockdownOnly,
+  Value<int?> taskId,
 });
 typedef $$TimerSessionsTableUpdateCompanionBuilder = TimerSessionsCompanion
     Function({
@@ -1814,6 +1946,7 @@ typedef $$TimerSessionsTableUpdateCompanionBuilder = TimerSessionsCompanion
   Value<DateTime> startedAt,
   Value<DateTime?> finishedAt,
   Value<bool> isLockdownOnly,
+  Value<int?> taskId,
 });
 
 class $$TimerSessionsTableFilterComposer
@@ -1847,6 +1980,9 @@ class $$TimerSessionsTableFilterComposer
   ColumnFilters<bool> get isLockdownOnly => $composableBuilder(
       column: $table.isLockdownOnly,
       builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get taskId => $composableBuilder(
+      column: $table.taskId, builder: (column) => ColumnFilters(column));
 }
 
 class $$TimerSessionsTableOrderingComposer
@@ -1881,6 +2017,9 @@ class $$TimerSessionsTableOrderingComposer
   ColumnOrderings<bool> get isLockdownOnly => $composableBuilder(
       column: $table.isLockdownOnly,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get taskId => $composableBuilder(
+      column: $table.taskId, builder: (column) => ColumnOrderings(column));
 }
 
 class $$TimerSessionsTableAnnotationComposer
@@ -1912,6 +2051,9 @@ class $$TimerSessionsTableAnnotationComposer
 
   GeneratedColumn<bool> get isLockdownOnly => $composableBuilder(
       column: $table.isLockdownOnly, builder: (column) => column);
+
+  GeneratedColumn<int> get taskId =>
+      $composableBuilder(column: $table.taskId, builder: (column) => column);
 }
 
 class $$TimerSessionsTableTableManager extends RootTableManager<
@@ -1947,6 +2089,7 @@ class $$TimerSessionsTableTableManager extends RootTableManager<
             Value<DateTime> startedAt = const Value.absent(),
             Value<DateTime?> finishedAt = const Value.absent(),
             Value<bool> isLockdownOnly = const Value.absent(),
+            Value<int?> taskId = const Value.absent(),
           }) =>
               TimerSessionsCompanion(
             id: id,
@@ -1956,6 +2099,7 @@ class $$TimerSessionsTableTableManager extends RootTableManager<
             startedAt: startedAt,
             finishedAt: finishedAt,
             isLockdownOnly: isLockdownOnly,
+            taskId: taskId,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -1965,6 +2109,7 @@ class $$TimerSessionsTableTableManager extends RootTableManager<
             Value<DateTime> startedAt = const Value.absent(),
             Value<DateTime?> finishedAt = const Value.absent(),
             Value<bool> isLockdownOnly = const Value.absent(),
+            Value<int?> taskId = const Value.absent(),
           }) =>
               TimerSessionsCompanion.insert(
             id: id,
@@ -1974,6 +2119,7 @@ class $$TimerSessionsTableTableManager extends RootTableManager<
             startedAt: startedAt,
             finishedAt: finishedAt,
             isLockdownOnly: isLockdownOnly,
+            taskId: taskId,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (
@@ -2017,6 +2163,8 @@ typedef $$DeskPreferencesTableCreateCompanionBuilder = DeskPreferencesCompanion
   Value<int> dailyGoalCycles,
   Value<bool> deskClockMode,
   Value<bool> autoStartNextPhase,
+  Value<int> dayStartHour,
+  Value<bool> weekStartsOnSunday,
 });
 typedef $$DeskPreferencesTableUpdateCompanionBuilder = DeskPreferencesCompanion
     Function({
@@ -2034,6 +2182,8 @@ typedef $$DeskPreferencesTableUpdateCompanionBuilder = DeskPreferencesCompanion
   Value<int> dailyGoalCycles,
   Value<bool> deskClockMode,
   Value<bool> autoStartNextPhase,
+  Value<int> dayStartHour,
+  Value<bool> weekStartsOnSunday,
 });
 
 class $$DeskPreferencesTableFilterComposer
@@ -2093,6 +2243,13 @@ class $$DeskPreferencesTableFilterComposer
 
   ColumnFilters<bool> get autoStartNextPhase => $composableBuilder(
       column: $table.autoStartNextPhase,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get dayStartHour => $composableBuilder(
+      column: $table.dayStartHour, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get weekStartsOnSunday => $composableBuilder(
+      column: $table.weekStartsOnSunday,
       builder: (column) => ColumnFilters(column));
 }
 
@@ -2157,6 +2314,14 @@ class $$DeskPreferencesTableOrderingComposer
   ColumnOrderings<bool> get autoStartNextPhase => $composableBuilder(
       column: $table.autoStartNextPhase,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get dayStartHour => $composableBuilder(
+      column: $table.dayStartHour,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get weekStartsOnSunday => $composableBuilder(
+      column: $table.weekStartsOnSunday,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$DeskPreferencesTableAnnotationComposer
@@ -2209,6 +2374,12 @@ class $$DeskPreferencesTableAnnotationComposer
 
   GeneratedColumn<bool> get autoStartNextPhase => $composableBuilder(
       column: $table.autoStartNextPhase, builder: (column) => column);
+
+  GeneratedColumn<int> get dayStartHour => $composableBuilder(
+      column: $table.dayStartHour, builder: (column) => column);
+
+  GeneratedColumn<bool> get weekStartsOnSunday => $composableBuilder(
+      column: $table.weekStartsOnSunday, builder: (column) => column);
 }
 
 class $$DeskPreferencesTableTableManager extends RootTableManager<
@@ -2252,6 +2423,8 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             Value<int> dailyGoalCycles = const Value.absent(),
             Value<bool> deskClockMode = const Value.absent(),
             Value<bool> autoStartNextPhase = const Value.absent(),
+            Value<int> dayStartHour = const Value.absent(),
+            Value<bool> weekStartsOnSunday = const Value.absent(),
           }) =>
               DeskPreferencesCompanion(
             id: id,
@@ -2268,6 +2441,8 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             dailyGoalCycles: dailyGoalCycles,
             deskClockMode: deskClockMode,
             autoStartNextPhase: autoStartNextPhase,
+            dayStartHour: dayStartHour,
+            weekStartsOnSunday: weekStartsOnSunday,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -2284,6 +2459,8 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             Value<int> dailyGoalCycles = const Value.absent(),
             Value<bool> deskClockMode = const Value.absent(),
             Value<bool> autoStartNextPhase = const Value.absent(),
+            Value<int> dayStartHour = const Value.absent(),
+            Value<bool> weekStartsOnSunday = const Value.absent(),
           }) =>
               DeskPreferencesCompanion.insert(
             id: id,
@@ -2300,6 +2477,8 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             dailyGoalCycles: dailyGoalCycles,
             deskClockMode: deskClockMode,
             autoStartNextPhase: autoStartNextPhase,
+            dayStartHour: dayStartHour,
+            weekStartsOnSunday: weekStartsOnSunday,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (

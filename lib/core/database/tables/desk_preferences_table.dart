@@ -21,4 +21,11 @@ class DeskPreferences extends Table {
 
   /// Start the next phase (break after focus, focus after break) as soon as one ends (schema v10).
   BoolColumn get autoStartNextPhase => boolean().withDefault(const Constant(false))();
+
+  /// Hour (0..6) at which a new day starts for stats, streaks and analytics, for people who focus past midnight
+  /// (schema v12).
+  IntColumn get dayStartHour => integer().withDefault(const Constant(0))();
+
+  /// Analytics weeks run Sunday..Saturday instead of Monday..Sunday (schema v12).
+  BoolColumn get weekStartsOnSunday => boolean().withDefault(const Constant(false))();
 }

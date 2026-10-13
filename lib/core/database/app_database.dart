@@ -36,7 +36,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -69,6 +69,11 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 11) {
             await m.addColumn(tasks, tasks.focusSeconds);
+          }
+          if (from < 12) {
+            await m.addColumn(deskPreferences, deskPreferences.dayStartHour);
+            await m.addColumn(deskPreferences, deskPreferences.weekStartsOnSunday);
+            await m.addColumn(timerSessions, timerSessions.taskId);
           }
         },
       );
@@ -183,6 +188,7 @@ class AppDatabase extends _$AppDatabase {
     bool? completed,
     bool isLockdownOnly = false,
     required DateTime startedAt,
+    int? taskId,
   }) {
     final actualElapsed = elapsedSeconds ?? durationSeconds ?? 0;
     final actualFinished = completed ?? isFinished;
@@ -194,15 +200,16 @@ class AppDatabase extends _$AppDatabase {
       startedAt: Value(startedAt),
       finishedAt: Value(DateTime.now()),
       isLockdownOnly: Value(isLockdownOnly),
+      taskId: Value(taskId),
     ));
   }
 
   /// Sessions started on [day] (local date; today when null). The bounds are fixed when the stream is created, so
   /// callers that live across midnight pass the day explicitly (currentDayProvider).
-  Stream<List<TimerSession>> watchTodayTimerSessions({DateTime? day}) {
+  Stream<List<TimerSession>> watchTodayTimerSessions({DateTime? day, int dayStartHour = 0}) {
     final d = day ?? DateTime.now();
-    final startOfDay = DateTime(d.year, d.month, d.day);
-    final endOfDay = DateTime(d.year, d.month, d.day + 1);
+    final startOfDay = DateTime(d.year, d.month, d.day, dayStartHour);
+    final endOfDay = DateTime(d.year, d.month, d.day + 1, dayStartHour);
     return (select(timerSessions)
           ..where((t) =>
               t.startedAt.isBiggerOrEqualValue(startOfDay) &
@@ -243,6 +250,8 @@ class AppDatabase extends _$AppDatabase {
     int? dailyGoalCycles,
     bool? deskClockMode,
     bool? autoStartNextPhase,
+    int? dayStartHour,
+    bool? weekStartsOnSunday,
   }) {
     return transaction(() async {
       final existing = await (select(deskPreferences)..limit(1)).getSingleOrNull();
@@ -262,6 +271,8 @@ class AppDatabase extends _$AppDatabase {
         dailyGoalCycles: dailyGoalCycles != null ? Value(dailyGoalCycles) : const Value.absent(),
         deskClockMode: deskClockMode != null ? Value(deskClockMode) : const Value.absent(),
         autoStartNextPhase: autoStartNextPhase != null ? Value(autoStartNextPhase) : const Value.absent(),
+        dayStartHour: dayStartHour != null ? Value(dayStartHour) : const Value.absent(),
+        weekStartsOnSunday: weekStartsOnSunday != null ? Value(weekStartsOnSunday) : const Value.absent(),
       );
 
       if (existing == null) {
@@ -286,6 +297,8 @@ class AppDatabase extends _$AppDatabase {
     int? dailyGoalCycles,
     bool? deskClockMode,
     bool? autoStartNextPhase,
+    int? dayStartHour,
+    bool? weekStartsOnSunday,
   }) =>
       updateDeskPreferences(
         soundVolume: soundVolume,
@@ -301,6 +314,8 @@ class AppDatabase extends _$AppDatabase {
         dailyGoalCycles: dailyGoalCycles,
         deskClockMode: deskClockMode,
         autoStartNextPhase: autoStartNextPhase,
+        dayStartHour: dayStartHour,
+        weekStartsOnSunday: weekStartsOnSunday,
       );
 }
 

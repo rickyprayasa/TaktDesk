@@ -226,6 +226,49 @@ void main() {
       expect(container.read(deskPreferencesControllerProvider).autoStartNextPhase, isTrue);
     });
 
+    testWidgets('Day start stepper stays within 00:00..06:00; the Sunday switch flips the week', (tester) async {
+      final controller = DeskPreferencesController(null, AudioService(isMock: true));
+      final container = ProviderContainer(
+        overrides: [
+          deskPreferencesControllerProvider.overrideWith((ref) => controller),
+          lifetimeFocusStatsProvider.overrideWith(
+            (ref) => Stream.value(const LifetimeFocusStats()),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(home: Scaffold(body: TaktSettingsSheet())),
+        ),
+      );
+      await tester.pump();
+
+      String value() => tester.widget<Text>(find.byKey(const ValueKey('day_start_value'))).data!;
+      final plus = find.byKey(const ValueKey('day_start_plus'));
+      final minus = find.byKey(const ValueKey('day_start_minus'));
+      await tester.scrollUntilVisible(plus, 200, scrollable: find.byType(Scrollable).first);
+      expect(value(), '00:00');
+      await tester.tap(minus);
+      await tester.pump();
+      expect(container.read(deskPreferencesControllerProvider).dayStartHour, 0);
+      for (var i = 0; i < 8; i++) {
+        await tester.tap(plus);
+        await tester.pump();
+      }
+      expect(container.read(deskPreferencesControllerProvider).dayStartHour, DeskPreferencesController.maxDayStartHour);
+      expect(value(), '06:00');
+
+      final sunday = find.byKey(const ValueKey('week_starts_sunday_switch'));
+      await tester.scrollUntilVisible(sunday, 200, scrollable: find.byType(Scrollable).first);
+      expect(container.read(deskPreferencesControllerProvider).weekStartsOnSunday, isFalse);
+      await tester.tap(sunday);
+      await tester.pump();
+      expect(container.read(deskPreferencesControllerProvider).weekStartsOnSunday, isTrue);
+    });
+
     testWidgets('History files: restore reports what was added, export cancel says nothing', (tester) async {
       final db = AppDatabase.forTesting(NativeDatabase.memory());
       addTearDown(db.close);

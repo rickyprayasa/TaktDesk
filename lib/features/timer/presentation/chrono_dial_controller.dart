@@ -352,26 +352,38 @@ class ChronoDialController extends StateNotifier<TimerState> {
     if (startedAt == null || state.phase != PomodoroPhase.focus || _database == null) return;
     final focusedSeconds = (state.targetMinutes * 60.0 - state.remainingSeconds).round();
     if (focusedSeconds < 60) return;
-    _creditTask(taskId, focusedSeconds);
-    _database.recordTimerSession(
+    _recordFocus(
       targetMinutes: state.targetMinutes,
-      elapsedSeconds: focusedSeconds,
-      isFinished: false,
+      seconds: focusedSeconds,
+      finished: false,
       startedAt: startedAt,
-    ).catchError((Object e) {
-      debugPrint('ZYKL: failed to record abandoned session: $e');
-      return -1;
-    });
+      taskId: taskId,
+    );
   }
 
-  /// Adds the focused time to the session's slip, if one was on top when it started.
-  void _creditTask(Future<int?>? taskId, int seconds) {
+  /// Records a focus session with the slip it counted for (top open slip when it started) and adds the time to that
+  /// slip. The slip id is resolved from the database first, so the session row carries it (CSV, backup).
+  void _recordFocus({
+    required int targetMinutes,
+    required int seconds,
+    required bool finished,
+    required DateTime startedAt,
+    Future<int?>? taskId,
+  }) {
     final db = _database;
-    if (taskId == null || db == null) return;
-    taskId.then((id) {
-      if (id != null) return db.addTaskFocus(id, seconds);
+    if (db == null) return;
+    (taskId ?? Future<int?>.value(null)).catchError((Object _) => null).then((id) {
+      if (id != null) db.addTaskFocus(id, seconds);
+      return db.recordTimerSession(
+        targetMinutes: targetMinutes,
+        elapsedSeconds: seconds,
+        isFinished: finished,
+        startedAt: startedAt,
+        taskId: id,
+      );
     }).catchError((Object e) {
-      debugPrint('ZYKL: failed to add focus time to the slip: $e');
+      debugPrint('ZYKL: failed to record focus session: $e');
+      return -1;
     });
   }
 
@@ -513,16 +525,13 @@ class ChronoDialController extends StateNotifier<TimerState> {
       final elapsed = targetMins * 60;
 
       if (state.phase == PomodoroPhase.focus && _database != null) {
-        _database.recordTimerSession(
+        _recordFocus(
           targetMinutes: targetMins,
-          elapsedSeconds: elapsed,
-          isFinished: true,
+          seconds: elapsed,
+          finished: true,
           startedAt: startedAt,
-        ).catchError((Object e) {
-          debugPrint('ZYKL: failed to record focus session: $e');
-          return -1;
-        });
-        _creditTask(_sessionTaskId, elapsed);
+          taskId: _sessionTaskId,
+        );
       }
       _sessionStartedAt = null;
       _sessionTaskId = null;

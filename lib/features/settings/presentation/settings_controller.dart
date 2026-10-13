@@ -81,6 +81,12 @@ class DeskPreferencesState {
   /// Start the next phase on its own when one ends.
   final bool autoStartNextPhase;
 
+  /// Hour (0..6) a new day starts at for stats, streaks and analytics.
+  final int dayStartHour;
+
+  /// Analytics weeks start on Sunday instead of Monday.
+  final bool weekStartsOnSunday;
+
   const DeskPreferencesState({
     this.soundVolume = 0.8,
     this.foleyEnabled = true,
@@ -93,6 +99,8 @@ class DeskPreferencesState {
     this.dailyGoalCycles = 4,
     this.deskClockMode = false,
     this.autoStartNextPhase = false,
+    this.dayStartHour = 0,
+    this.weekStartsOnSunday = false,
   });
 
   DeskPreferencesState copyWith({
@@ -107,6 +115,8 @@ class DeskPreferencesState {
     int? dailyGoalCycles,
     bool? deskClockMode,
     bool? autoStartNextPhase,
+    int? dayStartHour,
+    bool? weekStartsOnSunday,
   }) {
     return DeskPreferencesState(
       soundVolume: soundVolume ?? this.soundVolume,
@@ -120,6 +130,8 @@ class DeskPreferencesState {
       dailyGoalCycles: dailyGoalCycles ?? this.dailyGoalCycles,
       deskClockMode: deskClockMode ?? this.deskClockMode,
       autoStartNextPhase: autoStartNextPhase ?? this.autoStartNextPhase,
+      dayStartHour: dayStartHour ?? this.dayStartHour,
+      weekStartsOnSunday: weekStartsOnSunday ?? this.weekStartsOnSunday,
     );
   }
 
@@ -138,7 +150,9 @@ class DeskPreferencesState {
           autoUnlockMonastic == other.autoUnlockMonastic &&
           dailyGoalCycles == other.dailyGoalCycles &&
           deskClockMode == other.deskClockMode &&
-          autoStartNextPhase == other.autoStartNextPhase;
+          autoStartNextPhase == other.autoStartNextPhase &&
+          dayStartHour == other.dayStartHour &&
+          weekStartsOnSunday == other.weekStartsOnSunday;
 
   @override
   int get hashCode =>
@@ -152,7 +166,9 @@ class DeskPreferencesState {
       autoUnlockMonastic.hashCode ^
       dailyGoalCycles.hashCode ^
       deskClockMode.hashCode ^
-      autoStartNextPhase.hashCode;
+      autoStartNextPhase.hashCode ^
+      dayStartHour.hashCode ^
+      weekStartsOnSunday.hashCode;
 }
 
 class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
@@ -213,6 +229,8 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
         dailyGoalCycles: pref.dailyGoalCycles,
         deskClockMode: pref.deskClockMode,
         autoStartNextPhase: pref.autoStartNextPhase,
+        dayStartHour: pref.dayStartHour,
+        weekStartsOnSunday: pref.weekStartsOnSunday,
       );
       _audioService?.setVolume(pref.soundVolume);
       _audioService?.setFoleyEnabled(pref.foleyEnabled);
@@ -314,6 +332,20 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
     await _database?.updatePreferences(deskClockMode: value);
   }
 
+  static const int maxDayStartHour = 6;
+
+  Future<void> setDayStartHour(int hour) async {
+    final clamped = hour.clamp(0, maxDayStartHour);
+    if (clamped == state.dayStartHour) return;
+    state = state.copyWith(dayStartHour: clamped);
+    await _database?.updatePreferences(dayStartHour: clamped);
+  }
+
+  Future<void> setWeekStartsOnSunday(bool value) async {
+    state = state.copyWith(weekStartsOnSunday: value);
+    await _database?.updatePreferences(weekStartsOnSunday: value);
+  }
+
   Future<void> setAutoStartNextPhase(bool value) async {
     state = state.copyWith(autoStartNextPhase: value);
     await _database?.updatePreferences(autoStartNextPhase: value);
@@ -337,18 +369,19 @@ final todayFocusStatsProvider = StreamProvider<TodayFocusStats>((ref) {
   final db = ref.watch(appDatabaseProvider);
   // Recomputed at midnight too (not only when the database changes), so the plate, goal LEDs and widgets roll over.
   final day = ref.watch(currentDayProvider);
+  final startHour = ref.watch(deskPreferencesControllerProvider.select((p) => p.dayStartHour));
   // All sessions (not only today's) so the streak can look back.
   return db.watchAllTimerSessions().map((sessions) {
     final now = DateTime.now();
-    final startOfDay = day;
-    final endOfDay = DateTime(day.year, day.month, day.day + 1);
+    final startOfDay = dayStartOf(day, startHour);
+    final endOfDay = dayStartOf(DateTime(day.year, day.month, day.day + 1), startHour);
     final today = sessions.where((s) => !s.startedAt.isBefore(startOfDay) && s.startedAt.isBefore(endOfDay));
     final completed = today.where((s) => s.isCompletedCycle).length;
     final totalSeconds = today.fold<int>(0, (sum, s) => sum + s.elapsedSeconds);
     return TodayFocusStats(
       completedCount: completed,
       totalMinutes: (totalSeconds / 60).round(),
-      streakDays: FocusStreak.compute(sessions, now).current,
+      streakDays: FocusStreak.compute(sessions, now, dayStartHour: startHour).current,
     );
   });
 });

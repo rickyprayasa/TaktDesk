@@ -1,4 +1,5 @@
 import '../../../core/database/app_database.dart';
+import '../../../core/time/current_day.dart';
 
 /// Single source of truth for how a recorded session counts. Every screen
 /// (analytics, the desk "TODAY" plate, lifetime stats) must use these rules so
@@ -14,7 +15,6 @@ extension FocusSessionRules on TimerSession {
   bool get isCompletedCycle => isTimerSession && isFinished;
 }
 
-DateTime _day(DateTime d) => DateTime(d.year, d.month, d.day);
 
 /// Consecutive days with at least one completed cycle.
 class FocusStreak {
@@ -26,10 +26,11 @@ class FocusStreak {
 
   const FocusStreak({this.current = 0, this.best = 0, this.todayCounted = false});
 
-  static FocusStreak compute(Iterable<TimerSession> sessions, DateTime now) {
+  /// [dayStartHour]: days change at that hour (a 01:00 cycle with a 4 am start counts for the day before).
+  static FocusStreak compute(Iterable<TimerSession> sessions, DateTime now, {int dayStartHour = 0}) {
     final days = <DateTime>{
       for (final s in sessions)
-        if (s.isCompletedCycle) _day(s.startedAt),
+        if (s.isCompletedCycle) logicalDay(s.startedAt, dayStartHour),
     };
     if (days.isEmpty) return const FocusStreak();
 
@@ -45,7 +46,7 @@ class FocusStreak {
       if (run > best) best = run;
     }
 
-    final today = _day(now);
+    final today = logicalDay(now, dayStartHour);
     final todayCounted = days.contains(today);
     var cursor = todayCounted ? today : DateTime(today.year, today.month, today.day - 1);
     var current = 0;

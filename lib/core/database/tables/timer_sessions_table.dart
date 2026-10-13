@@ -11,4 +11,7 @@ class TimerSessions extends Table {
   /// Monastic Lockdown used WITHOUT a running timer (schema v8). Counts as focus
   /// minutes but not as a Pomodoro cycle, and is excluded from completion rate.
   BoolColumn get isLockdownOnly => boolean().withDefault(const Constant(false))();
+
+  /// The task slip the session counted for (top open slip when it started), null for none (schema v12).
+  IntColumn get taskId => integer().nullable()();
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../domain/focus_analytics_models.dart';
 import '../domain/focus_session_rules.dart';
+import '../../settings/presentation/settings_controller.dart';
 
 const List<String> _monthNames = [
   'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
@@ -18,19 +19,20 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
   StreamSubscription<List<TimerSession>>? _subscription;
   List<TimerSession> _cachedSessions = [];
 
-  FocusAnalyticsController(this._db)
-      : super(_initialState()) {
+  FocusAnalyticsController(this._db, {this.dayStartHour = 0, this.weekStartsOnSunday = false})
+      : super(_computeState(
+          period: FocusAnalyticsPeriod.week,
+          selectedDate: DateTime.now(),
+          sessions: const [],
+          dayStartHour: dayStartHour,
+          weekStartsOnSunday: weekStartsOnSunday,
+        )) {
     _initStream();
   }
 
-  static FocusAnalyticsState _initialState() {
-    final now = DateTime.now();
-    return _computeState(
-      period: FocusAnalyticsPeriod.week,
-      selectedDate: now,
-      sessions: const [],
-    );
-  }
+  /// Settings → DAY STARTS AT / WEEK STARTS.
+  final int dayStartHour;
+  final bool weekStartsOnSunday;
 
   void _initStream() {
     _subscription = _db.watchAllTimerSessions().listen((sessions) {
@@ -51,6 +53,8 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
       period: period,
       selectedDate: state.selectedDate,
       sessions: _cachedSessions,
+      dayStartHour: dayStartHour,
+      weekStartsOnSunday: weekStartsOnSunday,
     );
   }
 
@@ -73,6 +77,8 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
       period: state.period,
       selectedDate: nextDate,
       sessions: _cachedSessions,
+      dayStartHour: dayStartHour,
+      weekStartsOnSunday: weekStartsOnSunday,
     );
   }
 
@@ -95,6 +101,8 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
       period: state.period,
       selectedDate: nextDate,
       sessions: _cachedSessions,
+      dayStartHour: dayStartHour,
+      weekStartsOnSunday: weekStartsOnSunday,
     );
   }
 
@@ -103,6 +111,8 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
       period: state.period,
       selectedDate: DateTime.now(),
       sessions: _cachedSessions,
+      dayStartHour: dayStartHour,
+      weekStartsOnSunday: weekStartsOnSunday,
     );
   }
 
@@ -111,6 +121,8 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
       period: state.period,
       selectedDate: state.selectedDate,
       sessions: _cachedSessions,
+      dayStartHour: dayStartHour,
+      weekStartsOnSunday: weekStartsOnSunday,
     );
   }
 
@@ -118,15 +130,26 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
     required FocusAnalyticsPeriod period,
     required DateTime selectedDate,
     required List<TimerSession> sessions,
+    int dayStartHour = 0,
+    bool weekStartsOnSunday = false,
   }) {
-    final today = DateTime.now();
+    // Days start at [dayStartHour]: every bucket below works on times moved back by that many hours, so a 01:30
+    // session lands on the previous day everywhere (day, week, month, today's cycles).
+    DateTime shift(DateTime t) =>
+        dayStartHour == 0 ? t : DateTime(t.year, t.month, t.day, t.hour - dayStartHour, t.minute, t.second);
+    final rawSessions = sessions;
+    if (dayStartHour != 0) {
+      sessions = [for (final s in sessions) s.copyWith(startedAt: shift(s.startedAt))];
+    }
+    final today = shift(DateTime.now());
 
     final base = switch (period) {
-      FocusAnalyticsPeriod.day => _computeDayState(selectedDate, today, sessions),
-      FocusAnalyticsPeriod.week => _computeWeekState(selectedDate, today, sessions),
+      FocusAnalyticsPeriod.day => _computeDayState(selectedDate, today, sessions, dayStartHour: dayStartHour),
+      FocusAnalyticsPeriod.week =>
+        _computeWeekState(selectedDate, today, sessions, weekStartsOnSunday: weekStartsOnSunday),
       FocusAnalyticsPeriod.month => _computeMonthState(selectedDate, today, sessions),
     };
-    final streak = FocusStreak.compute(sessions, today);
+    final streak = FocusStreak.compute(rawSessions, DateTime.now(), dayStartHour: dayStartHour);
     final startOfToday = DateTime(today.year, today.month, today.day);
     final todayCycles = sessions
         .where((s) => s.isCompletedCycle && !s.startedAt.isBefore(startOfToday) && _sameDay(s.startedAt, today))
@@ -172,8 +195,9 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
   static FocusAnalyticsState _computeDayState(
     DateTime selectedDate,
     DateTime today,
-    List<TimerSession> allSessions,
-  ) {
+    List<TimerSession> allSessions, {
+    int dayStartHour = 0,
+  }) {
     final startOfDay = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
     final endOfDay = _shiftDays(startOfDay, 1);
 
@@ -200,7 +224,8 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
         selectedDate.day == today.day;
 
     final bars = <FocusBarData>[];
-    const binLabels = ['00h', '04h', '08h', '12h', '16h', '20h'];
+    // Bins are 4 h of the (shifted) day; label them with the real clock hour.
+    final binLabels = [for (var i = 0; i < 6; i++) '${((i * 4 + dayStartHour) % 24).toString().padLeft(2, '0')}h'];
     for (int i = 0; i < 6; i++) {
       bars.add(FocusBarData(
         label: binLabels[i],
@@ -238,10 +263,14 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
   static FocusAnalyticsState _computeWeekState(
     DateTime selectedDate,
     DateTime today,
-    List<TimerSession> allSessions,
-  ) {
-    final monday = _shiftDays(selectedDate, -(selectedDate.weekday - 1));
-    final sunday = _shiftDays(monday, 6);
+    List<TimerSession> allSessions, {
+    bool weekStartsOnSunday = false,
+  }) {
+    // Position in the week: Monday- or Sunday-first.
+    int dayIndexOf(DateTime d) => weekStartsOnSunday ? d.weekday % 7 : d.weekday - 1;
+    final names = weekStartsOnSunday ? const ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] : _weekdayNames;
+    final monday = _shiftDays(selectedDate, -dayIndexOf(selectedDate)); // first day of the week
+    final sunday = _shiftDays(monday, 6); // last day of the week
     final endOfWeek = _shiftDays(monday, 7);
 
     final weekSessions = allSessions.where((s) =>
@@ -250,7 +279,7 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
 
     final daySeconds = List<int>.filled(7, 0);
     for (final s in weekSessions) {
-      final dayIndex = (s.startedAt.weekday - 1).clamp(0, 6);
+      final dayIndex = dayIndexOf(s.startedAt).clamp(0, 6);
       daySeconds[dayIndex] += s.elapsedSeconds;
     }
     final dayMinutes = [for (final secs in daySeconds) (secs / 60).round()];
@@ -270,7 +299,7 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
     }
 
     final bestDayStr = bestDayIndex >= 0
-        ? '${_weekdayNames[bestDayIndex]} · ${maxDayMins}m'
+        ? '${names[bestDayIndex]} · ${maxDayMins}m'
         : '—';
 
     final isSameWeekAsToday = today.isAfter(monday.subtract(const Duration(microseconds: 1))) &&
@@ -279,10 +308,10 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
     final bars = <FocusBarData>[];
     for (int i = 0; i < 7; i++) {
       bars.add(FocusBarData(
-        label: _weekdayNames[i],
+        label: names[i],
         valueMinutes: dayMinutes[i],
         isHighlighted: dayMinutes[i] > 0 && dayMinutes[i] == maxDayMins,
-        isToday: isSameWeekAsToday && (today.weekday - 1) == i,
+        isToday: isSameWeekAsToday && dayIndexOf(today) == i,
       ));
     }
 
@@ -381,5 +410,6 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
 final focusAnalyticsControllerProvider =
     StateNotifierProvider<FocusAnalyticsController, FocusAnalyticsState>((ref) {
   final db = ref.watch(appDatabaseProvider);
-  return FocusAnalyticsController(db);
+  final calendar = ref.watch(deskPreferencesControllerProvider.select((p) => (p.dayStartHour, p.weekStartsOnSunday)));
+  return FocusAnalyticsController(db, dayStartHour: calendar.$1, weekStartsOnSunday: calendar.$2);
 });

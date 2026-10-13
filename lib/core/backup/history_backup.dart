@@ -57,9 +57,13 @@ class HistoryBackup {
   Future<List<Task>> _tasks() =>
       (_db.select(_db.tasks)..orderBy([(t) => OrderingTerm(expression: t.createdAt)])).get();
 
+  /// The slip a session was focused on, by id (sessions only keep the id; ids differ between phones).
+  static Map<int, Task> _byId(List<Task> tasks) => {for (final t in tasks) t.id: t};
+
   Future<String> buildJson({DateTime? now}) async {
     final sessions = await _sessions();
     final tasks = await _tasks();
+    final taskById = _byId(tasks);
     return const JsonEncoder.withIndent('  ').convert({
       'app': 'ZYKL',
       'format': formatVersion,
@@ -73,6 +77,8 @@ class HistoryBackup {
             'isLockdownOnly': s.isLockdownOnly,
             'startedAt': _iso(s.startedAt),
             'finishedAt': s.finishedAt == null ? null : _iso(s.finishedAt),
+            // A slip is identified across phones by its title and creation time, like the restore's duplicate check.
+            if (taskById[s.taskId] case final t?) 'task': {'title': t.title, 'createdAt': _iso(t.createdAt)},
           },
       ],
       'tasks': [
@@ -90,9 +96,16 @@ class HistoryBackup {
     });
   }
 
-  /// One row per session, times in UTC (ISO 8601), for spreadsheets.
+  /// RFC 4180 quoting for a free-text field (slip titles may hold commas or quotes).
+  static String _csvField(String v) =>
+      v.contains(RegExp(r'[",\r\n]')) ? '"${v.replaceAll('"', '""')}"' : v;
+
+  /// One row per session, times in UTC (ISO 8601), for spreadsheets. `task` is the slip the session was focused on.
   Future<String> buildCsv() async {
-    final rows = <String>['started_at,finished_at,target_minutes,elapsed_seconds,focused_minutes,finished,lockdown_only'];
+    final taskById = _byId(await _tasks());
+    final rows = <String>[
+      'started_at,finished_at,target_minutes,elapsed_seconds,focused_minutes,finished,lockdown_only,task',
+    ];
     for (final s in await _sessions()) {
       rows.add([
         _iso(s.startedAt),
@@ -102,6 +115,7 @@ class HistoryBackup {
         (s.elapsedSeconds / 60).toStringAsFixed(1),
         s.isFinished,
         s.isLockdownOnly,
+        _csvField(taskById[s.taskId]?.title ?? ''),
       ].join(','));
     }
     return '${rows.join('\n')}\n';
@@ -110,6 +124,14 @@ class HistoryBackup {
   static DateTime? _parseDate(Object? v) => v is String && v.isNotEmpty ? DateTime.tryParse(v)?.toLocal() : null;
 
   static int _seconds(DateTime d) => d.millisecondsSinceEpoch ~/ 1000;
+
+  /// The local id of a session's slip reference ({title, createdAt}); null when absent or that slip isn't here.
+  static int? _taskRef(Object? ref, Map<String, int> taskIdByKey) {
+    if (ref is! Map || ref['title'] is! String) return null;
+    final createdAt = _parseDate(ref['createdAt']);
+    if (createdAt == null) return null;
+    return taskIdByKey['${(ref['title'] as String).trim()}|${_seconds(createdAt)}'];
+  }
 
   Future<RestoreResult> restoreJson(String text) async {
     final Object? root;
@@ -129,6 +151,42 @@ class HistoryBackup {
 
     return _db.transaction(() async {
       var sessionsAdded = 0, sessionsSkipped = 0, tasksAdded = 0, tasksSkipped = 0;
+
+      // Slips first, so a session can point at the slip it was focused on (ids are new on this phone).
+      final existingTasks = await _tasks();
+      final taskIdByKey = {for (final t in existingTasks) '${t.title}|${_seconds(t.createdAt)}': t.id};
+      var activeCount = existingTasks.where((t) => !t.isArchived).length;
+      for (final raw in tasksIn) {
+        final title = raw is Map && raw['title'] is String ? (raw['title'] as String).trim() : '';
+        final createdAt = raw is Map ? _parseDate(raw['createdAt']) : null;
+        if (raw is! Map || title.isEmpty || title.length > 140 || createdAt == null) {
+          tasksSkipped++;
+          continue;
+        }
+        final archived = raw['isArchived'] == true;
+        // The dispenser holds five active slips; a restore never pushes past that.
+        final key = '$title|${_seconds(createdAt)}';
+        if (taskIdByKey.containsKey(key) || (!archived && activeCount >= maxActiveTasks)) {
+          tasksSkipped++;
+          continue;
+        }
+        taskIdByKey[key] = await _db.into(_db.tasks).insert(TasksCompanion.insert(
+              title: title,
+              isCompleted: Value(raw['isCompleted'] == true),
+              isArchived: Value(archived),
+              // Active slips go after the ones already in the dispenser (backup order kept among themselves).
+              sortOrder: Value(archived
+                  ? (raw['sortOrder'] is int ? raw['sortOrder'] as int : 0)
+                  : await _db.nextTaskSortOrder()),
+              createdAt: Value(createdAt),
+              completedAt: Value(_parseDate(raw['completedAt'])),
+              focusSeconds: Value(raw['focusSeconds'] is int && (raw['focusSeconds'] as int) > 0
+                  ? raw['focusSeconds'] as int
+                  : 0),
+            ));
+        if (!archived) activeCount++;
+        tasksAdded++;
+      }
 
       final sessionKeys = {
         for (final s in await _sessions())
@@ -156,42 +214,9 @@ class HistoryBackup {
               isLockdownOnly: Value(lockdownOnly),
               startedAt: Value(startedAt),
               finishedAt: Value(_parseDate(raw['finishedAt'])),
+              taskId: Value(_taskRef(raw['task'], taskIdByKey)),
             ));
         sessionsAdded++;
-      }
-
-      final existingTasks = await _tasks();
-      final taskKeys = {for (final t in existingTasks) '${t.title}|${_seconds(t.createdAt)}'};
-      var activeCount = existingTasks.where((t) => !t.isArchived).length;
-      for (final raw in tasksIn) {
-        final title = raw is Map && raw['title'] is String ? (raw['title'] as String).trim() : '';
-        final createdAt = raw is Map ? _parseDate(raw['createdAt']) : null;
-        if (raw is! Map || title.isEmpty || title.length > 140 || createdAt == null) {
-          tasksSkipped++;
-          continue;
-        }
-        final archived = raw['isArchived'] == true;
-        // The dispenser holds five active slips; a restore never pushes past that.
-        if (!taskKeys.add('$title|${_seconds(createdAt)}') || (!archived && activeCount >= maxActiveTasks)) {
-          tasksSkipped++;
-          continue;
-        }
-        await _db.into(_db.tasks).insert(TasksCompanion.insert(
-              title: title,
-              isCompleted: Value(raw['isCompleted'] == true),
-              isArchived: Value(archived),
-              // Active slips go after the ones already in the dispenser (backup order kept among themselves).
-              sortOrder: Value(archived
-                  ? (raw['sortOrder'] is int ? raw['sortOrder'] as int : 0)
-                  : await _db.nextTaskSortOrder()),
-              createdAt: Value(createdAt),
-              completedAt: Value(_parseDate(raw['completedAt'])),
-              focusSeconds: Value(raw['focusSeconds'] is int && (raw['focusSeconds'] as int) > 0
-                  ? raw['focusSeconds'] as int
-                  : 0),
-            ));
-        if (!archived) activeCount++;
-        tasksAdded++;
       }
 
       return RestoreResult(

@@ -16,12 +16,22 @@ void main() {
   final start = DateTime(2026, 10, 8, 9, 30);
 
   Future<void> seed(AppDatabase db) async {
+    final draftId = await db.into(db.tasks).insert(TasksCompanion.insert(
+          title: 'Draft, chapter 3',
+          isCompleted: const Value(true),
+          isArchived: const Value(true),
+          createdAt: Value(start),
+          completedAt: Value(start.add(const Duration(minutes: 40))),
+          focusSeconds: const Value(3000),
+        ));
+    await db.into(db.tasks).insert(TasksCompanion.insert(title: 'Reply to "Ana"', createdAt: Value(start)));
     await db.into(db.timerSessions).insert(TimerSessionsCompanion.insert(
           targetMinutes: 25,
           elapsedSeconds: 1500,
           isFinished: const Value(true),
           startedAt: Value(start),
           finishedAt: Value(start.add(const Duration(minutes: 25))),
+          taskId: Value(draftId),
         ));
     await db.into(db.timerSessions).insert(TimerSessionsCompanion.insert(
           targetMinutes: 50,
@@ -34,15 +44,6 @@ void main() {
           isLockdownOnly: const Value(true),
           startedAt: Value(start.add(const Duration(hours: 4))),
         ));
-    await db.into(db.tasks).insert(TasksCompanion.insert(
-          title: 'Draft, chapter 3',
-          isCompleted: const Value(true),
-          isArchived: const Value(true),
-          createdAt: Value(start),
-          completedAt: Value(start.add(const Duration(minutes: 40))),
-          focusSeconds: const Value(3000),
-        ));
-    await db.into(db.tasks).insert(TasksCompanion.insert(title: 'Reply to "Ana"', createdAt: Value(start)));
   }
 
   setUp(() {
@@ -77,6 +78,9 @@ void main() {
 
     final tasks = await target.select(target.tasks).get();
     expect(tasks.map((t) => t.title), containsAll(['Draft, chapter 3', 'Reply to "Ana"']));
+    // The session keeps its slip, under the slip's new id on this phone.
+    expect(sessions.first.taskId, tasks.firstWhere((t) => t.title == 'Draft, chapter 3').id);
+    expect(sessions[1].taskId, isNull);
     expect(tasks.firstWhere((t) => t.isArchived).completedAt, start.add(const Duration(minutes: 40)));
     expect(tasks.firstWhere((t) => t.isArchived).focusSeconds, 3000);
   });
@@ -142,11 +146,53 @@ void main() {
   test('CSV has one row per session, oldest first', () async {
     await seed(source);
     final lines = const LineSplitter().convert(await HistoryBackup(source).buildCsv());
-    expect(lines.first, 'started_at,finished_at,target_minutes,elapsed_seconds,focused_minutes,finished,lockdown_only');
+    expect(lines.first, 'started_at,finished_at,target_minutes,elapsed_seconds,focused_minutes,finished,lockdown_only,task');
     expect(lines, hasLength(4));
-    expect(lines[1], '${start.toUtc().toIso8601String()},${start.add(const Duration(minutes: 25)).toUtc().toIso8601String()},25,1500,25.0,true,false');
-    expect(lines[2].endsWith(',50,900,15.0,false,false'), isTrue);
-    expect(lines[3].endsWith(',30,1800,30.0,false,true'), isTrue);
+    expect(lines[1], '${start.toUtc().toIso8601String()},${start.add(const Duration(minutes: 25)).toUtc().toIso8601String()},25,1500,25.0,true,false,"Draft, chapter 3"');
+    expect(lines[2].endsWith(',50,900,15.0,false,false,'), isTrue);
+    expect(lines[3].endsWith(',30,1800,30.0,false,true,'), isTrue);
+  });
+
+  test('CSV quotes slip titles with quotes; a deleted slip leaves the column empty', () async {
+    final ana = await source.into(source.tasks).insert(TasksCompanion.insert(title: 'Reply to "Ana"'));
+    final gone = await source.into(source.tasks).insert(TasksCompanion.insert(title: 'Gone'));
+    await source.recordTimerSession(
+        targetMinutes: 25, elapsedSeconds: 60, startedAt: start, taskId: ana);
+    await source.recordTimerSession(
+        targetMinutes: 25, elapsedSeconds: 60, startedAt: start.add(const Duration(hours: 1)), taskId: gone);
+    await source.deleteTask(gone);
+    final lines = const LineSplitter().convert(await HistoryBackup(source).buildCsv());
+    expect(lines[1].endsWith(',"Reply to ""Ana"""'), isTrue, reason: lines[1]);
+    expect(lines[2].endsWith(','), isTrue);
+    final json = jsonDecode(await HistoryBackup(source).buildJson()) as Map;
+    expect((json['sessions'] as List).first['task'], containsPair('title', 'Reply to "Ana"'));
+    expect(((json['sessions'] as List).last as Map).containsKey('task'), isFalse);
+  });
+
+  test('a session pointing at a slip the backup did not restore stays unlinked', () async {
+    final json = jsonEncode({
+      'app': 'ZYKL',
+      'format': 1,
+      'sessions': [
+        {
+          'targetMinutes': 25,
+          'elapsedSeconds': 1500,
+          'startedAt': start.toUtc().toIso8601String(),
+          'task': {'title': 'Not in this file', 'createdAt': start.toUtc().toIso8601String()},
+        },
+        {
+          'targetMinutes': 25,
+          'elapsedSeconds': 1400,
+          'startedAt': start.toUtc().toIso8601String(),
+          'task': 'junk',
+        },
+      ],
+      'tasks': [],
+    });
+    final result = await HistoryBackup(target).restoreJson(json);
+    expect(result.sessionsAdded, 2);
+    final sessions = await target.select(target.timerSessions).get();
+    expect(sessions.map((s) => s.taskId), [null, null]);
   });
 
   group('file picker channel', () {
