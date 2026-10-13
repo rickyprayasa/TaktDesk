@@ -205,12 +205,14 @@ class MainActivity : FlutterActivity() {
                         controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                         controller.hide(WindowInsetsCompat.Type.systemBars())
 
-                        // 3. Do Not Disturb (silence all notifications & phone calls if permitted)
+                        // 3. Do Not Disturb (silence notifications & phone calls if permitted). "Alarms only", not
+                        //    FILTER_NONE: total silence also muted media, so the vinyl soundscape, the foley and the
+                        //    end-of-session chime went quiet the moment lockdown started.
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             val notifManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                             if (notifManager != null && notifManager.isNotificationPolicyAccessGranted) {
                                 previousInterruptionFilter = notifManager.currentInterruptionFilter
-                                notifManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE)
+                                notifManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS)
                             }
                         }
 
