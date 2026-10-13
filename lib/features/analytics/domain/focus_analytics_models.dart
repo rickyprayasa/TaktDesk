@@ -4,7 +4,8 @@ import 'package:flutter/foundation.dart';
 enum FocusAnalyticsPeriod {
   day('DAY', 'D'),
   week('WEEK', 'W'),
-  month('MONTH', 'M');
+  month('MONTH', 'M'),
+  year('YEAR', 'Y');
 
   final String label;
   final String telemetryCode;
@@ -66,6 +67,12 @@ class FocusAnalyticsState {
   /// Completed cycles today (for the daily goal meter; independent of period).
   final int todayCycles;
 
+  /// YEAR only: focus minutes per day of the selected year (index 0 = 1 January), for the heatmap.
+  final List<int> heatmapMinutes;
+
+  /// YEAR only: today's index in [heatmapMinutes], -1 when another year is shown.
+  final int heatmapTodayIndex;
+
   const FocusAnalyticsState({
     required this.period,
     required this.selectedDate,
@@ -80,6 +87,8 @@ class FocusAnalyticsState {
     this.currentStreak = 0,
     this.bestStreak = 0,
     this.todayCycles = 0,
+    this.heatmapMinutes = const [],
+    this.heatmapTodayIndex = -1,
   });
 
   FocusAnalyticsState copyWith({
@@ -96,6 +105,8 @@ class FocusAnalyticsState {
     int? currentStreak,
     int? bestStreak,
     int? todayCycles,
+    List<int>? heatmapMinutes,
+    int? heatmapTodayIndex,
   }) {
     return FocusAnalyticsState(
       period: period ?? this.period,
@@ -111,6 +122,8 @@ class FocusAnalyticsState {
       currentStreak: currentStreak ?? this.currentStreak,
       bestStreak: bestStreak ?? this.bestStreak,
       todayCycles: todayCycles ?? this.todayCycles,
+      heatmapMinutes: heatmapMinutes ?? this.heatmapMinutes,
+      heatmapTodayIndex: heatmapTodayIndex ?? this.heatmapTodayIndex,
     );
   }
 
@@ -131,7 +144,9 @@ class FocusAnalyticsState {
           listEquals(bars, other.bars) &&
           currentStreak == other.currentStreak &&
           bestStreak == other.bestStreak &&
-          todayCycles == other.todayCycles;
+          todayCycles == other.todayCycles &&
+          listEquals(heatmapMinutes, other.heatmapMinutes) &&
+          heatmapTodayIndex == other.heatmapTodayIndex;
 
   @override
   int get hashCode => Object.hash(
@@ -148,5 +163,7 @@ class FocusAnalyticsState {
         currentStreak,
         bestStreak,
         todayCycles,
+        Object.hashAll(heatmapMinutes),
+        heatmapTodayIndex,
       );
 }

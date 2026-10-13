@@ -18,6 +18,7 @@ void showStudioProDialog(
   HardwareEdition? edition,
   VinylTrack? vinylTrack,
   VinylTrack? track,
+  String? feature,
   bool? isDark,
   Color? primaryTextColor,
   Color? secondaryTextColor,
@@ -31,7 +32,9 @@ void showStudioProDialog(
 
   final subtitleText = targetTrack != null
       ? 'UNLOCK ${targetTrack.name.toUpperCase()} & ALL STUDIO PRO RECORDS'
-      : 'UNLOCK STUDIO PRO CLEARANCE';
+      : feature != null
+          ? 'UNLOCK THE ${feature.toUpperCase()} & STUDIO PRO'
+          : 'UNLOCK STUDIO PRO CLEARANCE';
 
   // Keep in sync with the website (Terms, FAQ, HonestSpecs): PRO is a single
   // payment for every edition and soundscape, including everything added in
@@ -40,7 +43,9 @@ void showStudioProDialog(
       ? 'One payment unlocks every Studio PRO hardware edition, including every new edition added in future updates.'
       : targetTrack != null
           ? 'One payment unlocks ${targetTrack.name} and every Studio PRO soundscape, including every new soundscape added in future updates.'
-          : 'One payment unlocks every Studio PRO hardware edition and soundscape, including everything added in future updates.';
+          : feature != null
+              ? 'One payment unlocks the $feature and every Studio PRO hardware edition and soundscape, including everything added in future updates.'
+              : 'One payment unlocks every Studio PRO hardware edition and soundscape, including everything added in future updates.';
 
   showDialog<void>(
     context: context,

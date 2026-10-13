@@ -72,6 +72,9 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
         final year = state.selectedDate.month == 1 ? state.selectedDate.year - 1 : state.selectedDate.year;
         nextDate = DateTime(year, month, 1);
         break;
+      case FocusAnalyticsPeriod.year:
+        nextDate = DateTime(state.selectedDate.year - 1, 1, 1);
+        break;
     }
     state = _computeState(
       period: state.period,
@@ -95,6 +98,9 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
         final month = state.selectedDate.month == 12 ? 1 : state.selectedDate.month + 1;
         final year = state.selectedDate.month == 12 ? state.selectedDate.year + 1 : state.selectedDate.year;
         nextDate = DateTime(year, month, 1);
+        break;
+      case FocusAnalyticsPeriod.year:
+        nextDate = DateTime(state.selectedDate.year + 1, 1, 1);
         break;
     }
     state = _computeState(
@@ -148,6 +154,7 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
       FocusAnalyticsPeriod.week =>
         _computeWeekState(selectedDate, today, sessions, weekStartsOnSunday: weekStartsOnSunday),
       FocusAnalyticsPeriod.month => _computeMonthState(selectedDate, today, sessions),
+      FocusAnalyticsPeriod.year => _computeYearState(selectedDate, today, sessions),
     };
     final streak = FocusStreak.compute(rawSessions, DateTime.now(), dayStartHour: dayStartHour);
     final startOfToday = DateTime(today.year, today.month, today.day);
@@ -403,6 +410,68 @@ class FocusAnalyticsController extends StateNotifier<FocusAnalyticsState> {
       dailyAverageMinutes: dailyAvg,
       bestDayLabel: bestStr,
       bars: bars,
+    );
+  }
+
+  /// Whole days between two calendar dates (UTC, so a DST change never makes a day 23 h).
+  static int _daysBetween(DateTime from, DateTime to) =>
+      DateTime.utc(to.year, to.month, to.day).difference(DateTime.utc(from.year, from.month, from.day)).inDays;
+
+  /// Twelve month bars plus the minutes of every day for the heatmap.
+  static FocusAnalyticsState _computeYearState(
+    DateTime selectedDate,
+    DateTime today,
+    List<TimerSession> allSessions,
+  ) {
+    final year = selectedDate.year;
+    final startOfYear = DateTime(year, 1, 1);
+    final endOfYear = DateTime(year + 1, 1, 1);
+    final yearSessions = allSessions.where((s) => s.startedAt.year == year).toList();
+
+    final daySeconds = List<int>.filled(_daysBetween(startOfYear, endOfYear), 0);
+    final monthSeconds = List<int>.filled(12, 0);
+    for (final s in yearSessions) {
+      daySeconds[_daysBetween(startOfYear, s.startedAt)] += s.elapsedSeconds;
+      monthSeconds[s.startedAt.month - 1] += s.elapsedSeconds;
+    }
+    final dayMinutes = [for (final secs in daySeconds) (secs / 60).round()];
+    final monthMinutes = [for (final secs in monthSeconds) (secs / 60).round()];
+
+    final (totalMins, completed, totalCount) = _totals(yearSessions);
+    final elapsed = _elapsedDays(startOfYear, endOfYear, today);
+
+    var bestDay = -1;
+    for (var i = 0; i < dayMinutes.length; i++) {
+      if (dayMinutes[i] > 0 && (bestDay < 0 || dayMinutes[i] > dayMinutes[bestDay])) bestDay = i;
+    }
+    final bestDate = _shiftDays(startOfYear, bestDay);
+    var bestMonth = -1;
+    for (var i = 0; i < 12; i++) {
+      if (monthMinutes[i] > 0 && (bestMonth < 0 || monthMinutes[i] > monthMinutes[bestMonth])) bestMonth = i;
+    }
+    final isThisYear = today.year == year;
+
+    return FocusAnalyticsState(
+      period: FocusAnalyticsPeriod.year,
+      selectedDate: selectedDate,
+      dateRangeLabel: '$year',
+      totalMinutes: totalMins,
+      completedSessions: completed,
+      totalSessions: totalCount,
+      completionRate: totalCount > 0 ? completed / totalCount : 0.0,
+      dailyAverageMinutes: elapsed > 0 ? totalMins / elapsed : 0.0,
+      bestDayLabel: bestDay < 0 ? '—' : '${bestDate.day} ${_monthNames[bestDate.month - 1]} · ${dayMinutes[bestDay]}m',
+      bars: [
+        for (var i = 0; i < 12; i++)
+          FocusBarData(
+            label: _monthNames[i],
+            valueMinutes: monthMinutes[i],
+            isHighlighted: i == bestMonth,
+            isToday: isThisYear && today.month == i + 1,
+          ),
+      ],
+      heatmapMinutes: dayMinutes,
+      heatmapTodayIndex: isThisYear ? _daysBetween(startOfYear, today) : -1,
     );
   }
 }

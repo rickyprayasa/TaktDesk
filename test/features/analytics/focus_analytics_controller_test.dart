@@ -74,6 +74,46 @@ void main() {
     expect(state.bars[1].valueMinutes, 10); // Tuesday
   });
 
+  test('YEAR: twelve month bars, every day of the year for the heatmap, paging by year', () async {
+    final notifier = container.read(focusAnalyticsControllerProvider.notifier);
+    final now = DateTime.now();
+    final y = now.year;
+    int dayIndex(int month, int day) => DateTime.utc(y, month, day).difference(DateTime.utc(y)).inDays;
+    await db.recordTimerSession(targetMinutes: 25, durationSeconds: 1500, completed: true, startedAt: DateTime(y, 1, 1, 9));
+    await db.recordTimerSession(targetMinutes: 50, durationSeconds: 3000, completed: true, startedAt: DateTime(y, 3, 1, 10));
+    await db.recordTimerSession(
+        targetMinutes: 25, durationSeconds: 1500, completed: true, startedAt: DateTime(y - 1, 12, 31, 22));
+    await pumpEventQueue();
+
+    notifier.setPeriod(FocusAnalyticsPeriod.year);
+    var state = container.read(focusAnalyticsControllerProvider);
+    expect(state.dateRangeLabel, '$y');
+    expect(state.bars.map((b) => b.label),
+        ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']);
+    expect(state.heatmapMinutes, hasLength(DateTime.utc(y + 1).difference(DateTime.utc(y)).inDays));
+    expect(state.heatmapMinutes[0], 25);
+    expect(state.heatmapMinutes[dayIndex(3, 1)], 50);
+    expect(state.heatmapMinutes.fold<int>(0, (a, b) => a + b), 75);
+    expect(state.totalMinutes, 75);
+    expect(state.bars[0].valueMinutes, 25);
+    expect(state.bars[2].valueMinutes, 50);
+    expect(state.bars[2].isHighlighted, isTrue);
+    expect(state.bestDayLabel, '1 MAR · 50m');
+    expect(state.heatmapTodayIndex, dayIndex(now.month, now.day));
+    expect(state.bars[now.month - 1].isToday, isTrue);
+
+    notifier.previousPeriod();
+    state = container.read(focusAnalyticsControllerProvider);
+    expect(state.dateRangeLabel, '${y - 1}');
+    expect(state.totalMinutes, 25);
+    expect(state.heatmapMinutes.last, 25, reason: '31 December is the last cell');
+    expect(state.heatmapTodayIndex, -1);
+    expect(state.bars.every((b) => !b.isToday), isTrue);
+
+    notifier.nextPeriod();
+    expect(container.read(focusAnalyticsControllerProvider).dateRangeLabel, '$y');
+  });
+
   test('FocusAnalyticsController handles day and month period switching and navigation', () async {
     final notifier = container.read(focusAnalyticsControllerProvider.notifier);
 

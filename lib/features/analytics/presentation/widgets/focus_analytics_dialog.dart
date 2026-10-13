@@ -8,7 +8,9 @@ import '../../../../core/haptics/haptic_service.dart';
 import '../../../settings/presentation/settings_controller.dart';
 import '../../domain/focus_analytics_models.dart';
 import '../focus_analytics_controller.dart';
+import '../../../settings/presentation/widgets/studio_pro_dialog.dart';
 import 'focus_bar_chart_widget.dart';
+import 'focus_year_heatmap.dart';
 
 /// Modal dialog presenting Dieter Rams modernist focus analytics & reports.
 class FocusAnalyticsDialog extends ConsumerWidget {
@@ -39,6 +41,7 @@ class FocusAnalyticsDialog extends ConsumerWidget {
     final state = ref.watch(focusAnalyticsControllerProvider);
     final notifier = ref.read(focusAnalyticsControllerProvider.notifier);
     final dailyGoal = ref.watch(deskPreferencesControllerProvider.select((p) => p.dailyGoalCycles));
+    final isPro = ref.watch(deskPreferencesControllerProvider.select((p) => p.isProSimulated));
 
     final bgColor = isDark ? TaktColors.basaltSlate : const Color(0xFFEDEAE2);
     final panelBg = isDark ? const Color(0xFF16191D) : const Color(0xFFE2DFD6);
@@ -114,9 +117,7 @@ class FocusAnalyticsDialog extends ConsumerWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 6),
                           decoration: BoxDecoration(
-                            color: isSelected
-                                ? (isDark ? TaktColors.slateBorder : Colors.white)
-                                : Colors.transparent,
+                            color: isSelected ? (isDark ? TaktColors.slateBorder : Colors.white) : Colors.transparent,
                             borderRadius: BorderRadius.circular(4.0),
                             border: isSelected
                                 ? Border.all(
@@ -199,31 +200,38 @@ class FocusAnalyticsDialog extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'TOTAL FOCUS TIME',
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 8.0,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.8,
-                            color: secondaryTextColor,
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'TOTAL FOCUS TIME',
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 8.0,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.8,
+                              color: secondaryTextColor,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _formatTotalTime(state.totalMinutes),
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 20.0,
-                            fontWeight: FontWeight.w800,
-                            color: TaktColors.amberText(isDark),
+                          const SizedBox(height: 2),
+                          // A year can run to "1234h 56m"; it shrinks rather than overflow.
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              _formatTotalTime(state.totalMinutes),
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 20.0,
+                                fontWeight: FontWeight.w800,
+                                color: TaktColors.amberText(isDark),
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -276,6 +284,37 @@ class FocusAnalyticsDialog extends ConsumerWidget {
                 secondaryTextColor: secondaryTextColor,
                 height: 135.0,
               ),
+              // YEAR: every day of the year on one grid (Studio PRO; a dimmed sample with an unlock otherwise).
+              if (state.period == FocusAnalyticsPeriod.year) ...[
+                const SizedBox(height: 8),
+                if (isPro)
+                  FocusYearHeatmap(
+                    year: state.selectedDate.year,
+                    minutes: state.heatmapMinutes,
+                    todayIndex: state.heatmapTodayIndex,
+                    isDark: isDark,
+                    primaryTextColor: primaryTextColor,
+                    secondaryTextColor: secondaryTextColor,
+                  )
+                else
+                  _LockedYearHeatmap(
+                    year: state.selectedDate.year,
+                    isDark: isDark,
+                    primaryTextColor: primaryTextColor,
+                    secondaryTextColor: secondaryTextColor,
+                    onUnlock: () {
+                      HapticService.selectionClick();
+                      showStudioProDialog(
+                        context,
+                        ref,
+                        feature: 'year heatmap',
+                        isDark: isDark,
+                        primaryTextColor: primaryTextColor,
+                        secondaryTextColor: secondaryTextColor,
+                      );
+                    },
+                  ),
+              ],
               const SizedBox(height: 12),
 
               // 4-Card Industrial Metrics Grid
@@ -338,6 +377,92 @@ class FocusAnalyticsDialog extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The heatmap for non-PRO owners: a dimmed made-up year (not their data) under an unlock plate.
+class _LockedYearHeatmap extends StatelessWidget {
+  final int year;
+  final bool isDark;
+  final Color primaryTextColor;
+  final Color secondaryTextColor;
+  final VoidCallback onUnlock;
+
+  const _LockedYearHeatmap({
+    required this.year,
+    required this.isDark,
+    required this.primaryTextColor,
+    required this.secondaryTextColor,
+    required this.onUnlock,
+  });
+
+  /// A fixed pseudo-random sample, the same on every phone.
+  static final List<int> _sample = () {
+    var seed = 7;
+    return List<int>.generate(366, (_) {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      return const [0, 0, 0, 15, 30, 60, 120][seed % 7];
+    });
+  }();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        ExcludeSemantics(
+          child: Opacity(
+            opacity: 0.3,
+            child: FocusYearHeatmap(
+              year: year,
+              minutes: _sample,
+              todayIndex: -1,
+              isDark: isDark,
+              primaryTextColor: primaryTextColor,
+              secondaryTextColor: secondaryTextColor,
+              interactive: false,
+            ),
+          ),
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'YEAR HEATMAP · STUDIO PRO',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 9.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.8,
+                color: primaryTextColor,
+              ),
+            ),
+            const SizedBox(height: 6),
+            OutlinedButton.icon(
+              key: const ValueKey('analytics_heatmap_unlock'),
+              onPressed: onUnlock,
+              icon: Icon(Icons.lock_outline, size: 14, color: TaktColors.amberText(isDark)),
+              label: Text(
+                'UNLOCK',
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
+                  color: TaktColors.amberText(isDark),
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(48, 40),
+                backgroundColor: isDark ? const Color(0xE616191D) : const Color(0xE6EDEAE2),
+                side: BorderSide(color: TaktColors.filamentAmber.withValues(alpha: 0.6), width: 0.8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
