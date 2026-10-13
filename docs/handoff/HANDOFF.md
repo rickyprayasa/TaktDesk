@@ -28,6 +28,15 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-13 — Lockdown muted the vinyl  (status: committed; Kotlin compiles; NOT built; needs a device check)
+
+Owner: with Monastic Lockdown on, the vinyl soundscape is silent. Cause: `enableFocusLock` set DND to
+`INTERRUPTION_FILTER_NONE` ("Total silence"), which mutes media too (also the foley and the end-of-session alarm
+chime). Now `INTERRUPTION_FILTER_ALARMS` ("Alarms only"): calls and notifications stay blocked, media and alarms play.
+Only applies when DND access is granted (without it there was no DND, so audio already played). Restore on unlock is
+unchanged (previous filter). Device check: grant DND access, play a record, start lockdown → music keeps playing, a
+test call is silenced, the session-end chime rings.
+
 ## 2026-10-12 (e) — Website: Search Console "Duplicate without user-selected canonical" / "Page with redirect"  (status: website pushed `b823196`, verified live)
 
 Search Console mail (Oct 12): Duplicate without user-selected canonical (2), Page with redirect (2), Crawled – not
