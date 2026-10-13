@@ -28,7 +28,7 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
-## 2026-10-13 (e) — Play rating prompt, TOP SLIPS, website copy  (status: app committed `bbbcb41`, `b917fcb`, tests 544 green; website committed `4901da5` NOT pushed; NOT built)
+## 2026-10-13 (e) — Play rating prompt, TOP SLIPS, website copy  (status: app committed `bbbcb41`, `b917fcb`, version 1.0.6+7 `7964859`, tests 544 green; dev-pro APK built 10:37 (67.2 MB); website committed `4901da5` NOT pushed; AAB not built yet)
 
 - `bbbcb41` **Play In-App Review** (`in_app_review` 2.0.12 → Play `review` 2.0.2 + `play-services-base`): requested once per
   install, 3 s after a focus phase runs to its end, once 10 cycles are done (`completedCycleCount()`), app on screen and
@@ -41,6 +41,8 @@
 - Website (`zykl.app` `4901da5`, **not pushed — push = production**): Terms + FAQ say focus analytics is free and Studio
   PRO adds the year heatmap; new FAQ_05 (analytics); Privacy: the one-time rating card, backup exclusions, export;
   HonestSpecs rows Analytics + Your history; changelog highlights; Terms/Privacy dated 13 Oct 2026. `next build` OK.
+- Build note: Flutter warns that `in_app_review` 2.0.12 applies the Kotlin Gradle Plugin; a future Flutter may refuse
+  to build until the plugin moves to Built-in Kotlin (check its changelog before upgrading Flutter).
 - Open: About page says "NO STREAKS, NO BADGES" but the app shows a FOCUS STREAK (pre-existing; owner to decide wording).
   FAQ "download under 20 MB": re-check the Play download size after the 1.0.6 AAB (Play services base added).
   Play Console Data safety: no change expected (Play's own review flow), owner to confirm.
