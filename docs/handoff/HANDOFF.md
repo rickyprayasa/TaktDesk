@@ -9,7 +9,7 @@
 - Website repo (separate): `/home/tuneeca/RSQUARE/Android/zykl.app` (Next.js on Cloudflare Worker).
 - Native Android code: `android/app/src/main/kotlin/com/zykl/app/` (MainActivity = audio/focus/widget channels,
   TimerForegroundService = background countdown + completion, MediaNotificationService = vinyl notification).
-- Verify with: `flutter analyze` → 0 issues; `flutter test -j 1` → all pass (416+ at last full run);
+- Verify with: `flutter analyze` → 0 issues; `flutter test -j 1` → all pass (536 at last full run);
   Kotlin: `cd android && ./gradlew :app:compileDebugKotlin --offline -q`.
 - Run heavy jobs (build/render/test) one at a time with `nice`. Do NOT build APK/AAB unless the user asks —
   the user reviews on the Linux emulator first. Release outputs go to `build_outputs/` (git-ignored).
@@ -27,6 +27,51 @@
 - **Do not build APK/AAB unless the owner asks in that message** (owner reviews code changes on Linux first).
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
+
+## 2026-10-13 (d) — P2 / P3 from review (b) + the suggestions  (status: committed `052e3ab`..`ef8adef`; analyze 0, tests 536 green, Kotlin compiles; NOT built; needs a device check)
+
+**P2 / P3** (all of review (b) is now done):
+- `052e3ab` audio: vinyl resumes after a call; refused focus lifts the needle; headphones unplugged pause it
+  (`AUDIO_BECOMING_NOISY`); Android 7–11 back-exit stops the media service; MASTER VOLUME applies to foley; no
+  foley/haptics while hidden (`core/app_visibility.dart`); record drawer reopens on the right drawer (10 per drawer).
+- `637c82e` "today" rolls over at midnight (`currentDayProvider`); widget counters carry `KEY_STATS_DAY`; no phantom
+  countdown in widgets / tile after a reboot or force-stop (`liveStatus()`).
+- `0cef1f2` new slips go to the end (`nextTaskSortOrder()`); RESTORE reloads the dispenser.
+- `5cafdc3` desk clock: any touch anywhere wakes it; no dimming while another route is on top.
+- `45b9269` "Start focus" shortcut starts focus and doesn't re-fire from Recents; silent alert channel
+  (`zykl_session_alerts`); "CYCLE n"; custom change while paused ends the session; dial shows the real paused value.
+- `7f0ed25` analytics: calendar-day bounds (DST); bars round per bar so they add up to the total.
+- `c993bea` readable accents on light editions (`TaktColors.readableAccent`), bigger targets + semantics, reduce motion
+  everywhere (`app/motion.dart`), tear drag no longer rebuilds the dispenser, volume writes on drag end, no 0-byte backups.
+- "PRO chime kept after refund": moot — no chime is PRO-only (`AlarmChimes.all` has none with `isPro`).
+
+**Suggestions**
+- Session token (P1, (c)); Dart clock 30 s while hidden `4e4c426`; RepaintBoundary under the tilt + platter rests
+  while dimmed `145e49e`; billing "No Studio PRO purchase found…" + quiet recheck on resume `fcc29f1`.
+- `74bf54d` **schema v12**: Settings → DAY STARTS AT (00:00–06:00, stepper keys `day_start_*`) and WEEK STARTS ON
+  SUNDAY (`week_starts_sunday_switch`). `logicalDay()` / `dayStartOf()` in `core/time/current_day.dart` drive analytics,
+  streaks, today's stats, the desk slip and the midnight ticker. `timer_sessions.taskId`: a focus session records its
+  slip; CSV gains a quoted `task` column; the JSON backup carries `task: {title, createdAt}` per session and a restore
+  inserts slips first, then links sessions to the new ids (backup `format` stays 1; older apps ignore the field).
+- `4221a88` **YEAR view** in Focus Analytics: 12 month bars, totals, best day; **Studio PRO** month×day heatmap
+  (`widgets/focus_year_heatmap.dart`, levels <25 / 25 / 50 / 100+ min, today ringed, tap a day → read-out). Without PRO:
+  a dimmed made-up sample + UNLOCK → `showStudioProDialog(feature: 'year heatmap')`.
+- `74a8304` explicit backup rules (`res/xml/data_extraction_rules.xml`, `backup_rules.xml`): Auto Backup / phone
+  transfer no longer copy `takt_widget_prefs`, `zykl_lockdown`, `zykl_permissions` (the new phone never asked for the
+  notification permission), `zykl_shortcuts`. The database still moves.
+- `ef8adef` widgets roll "today" over at DAY STARTS AT too (`KEY_DAY_START_HOUR`, same rule as `logicalDay`).
+- Not done: moving the soundscape player / focus / noisy receiver fully into `MediaNotificationService` — targeted fixes
+  in `052e3ab` instead; a full move is a large native refactor with device-only testing.
+
+**Owner decisions / follow-ups**
+- Website copy (Terms, FAQ, HonestSpecs, Studio PRO dialog sync note) says PRO = editions + soundscapes. If the YEAR
+  heatmap ships as PRO, the site should mention it — not changed (website push = production deploy, ask first).
+- Release **1.0.6** recommended: P1-1 (chime cut off) is in the shipped 1.0.4/1.0.5. Schema 12 migrates from 11 on
+  first launch (tested in `database_test`).
+- **Device checks**: DAY STARTS AT 03:00 → a 01:30 session counts for yesterday (analytics, streak, desk slip, widget
+  counter until 03:00); WEEK STARTS ON SUNDAY; YEAR tab with and without PRO (heatmap tap); export CSV → `task` column;
+  backup → restore on a clean install keeps session↔slip links; vinyl + phone call; unplug headphones; desk clock in
+  Settings; "Start focus" shortcut on a break.
 
 ## 2026-10-13 (c) — Priority 1 fixes from review (b)  (status: committed `2d349ed`, `324b4e6`, `60ac46c` + lockdown `83270ee`; analyze 0, tests 510; NOT built)
 
@@ -49,7 +94,7 @@
   cancel the Play sheet → BUY usable again; lockdown with DND access → unpin + swipe away → reopen: DND back to before.
 - Next: release 1.0.6 (P1-1 is in shipped builds), then P2 from review (b).
 
-## 2026-10-13 (b) — Second app review (4 parallel read-only audits)  (status: review; P1 fixed in (c), P2/P3 open)
+## 2026-10-13 (b) — Second app review (4 parallel read-only audits)  (status: review; P1 fixed in (c), P2/P3 + suggestions in (d))
 
 Verified by hand: P1-1, P1-2, P1-3, P2 vinyl-resume, P2 drawer index, P2 sortOrder. The rest are traced by the audits.
 
