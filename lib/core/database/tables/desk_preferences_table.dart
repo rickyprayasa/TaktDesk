@@ -28,4 +28,7 @@ class DeskPreferences extends Table {
 
   /// Analytics weeks run Sunday..Saturday instead of Monday..Sunday (schema v12).
   BoolColumn get weekStartsOnSunday => boolean().withDefault(const Constant(false))();
+
+  /// When the Play in-app review was requested (once per install, see ReviewPrompter; schema v13).
+  DateTimeColumn get reviewAskedAt => dateTime().nullable()();
 }

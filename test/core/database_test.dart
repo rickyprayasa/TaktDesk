@@ -205,6 +205,19 @@ void main() {
     expect(row.taskId, 7);
   });
 
+  test('schema v13: review asked once; completed cycles leave out abandoned and lockdown-only', () async {
+    expect(await db.reviewAskedAt(), isNull);
+    final at = DateTime(2026, 10, 13, 20);
+    await db.markReviewAsked(at);
+    expect(await db.reviewAskedAt(), at);
+
+    await db.recordTimerSession(targetMinutes: 25, elapsedSeconds: 1500, isFinished: true, startedAt: at);
+    await db.recordTimerSession(targetMinutes: 25, elapsedSeconds: 600, isFinished: false, startedAt: at);
+    await db.recordTimerSession(
+        targetMinutes: 25, elapsedSeconds: 1500, isFinished: true, isLockdownOnly: true, startedAt: at);
+    expect(await db.completedCycleCount(), 1);
+  });
+
   test('can persist and update selectedEdition and isProSimulated in preferences', () async {
     await db.into(db.deskPreferences).insert(
       const DeskPreferencesCompanion(),

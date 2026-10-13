@@ -5,6 +5,7 @@ import 'package:sensors_plus/sensors_plus.dart';
 import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/takt_typography.dart';
 import '../../../app/theme/theme_controller.dart';
+import '../../../core/review/review_prompter.dart';
 import '../../../core/audio/audio_service.dart';
 import '../../../core/audio/sound_effect.dart';
 import '../../../core/billing/pro_purchase_controller.dart';
@@ -377,6 +378,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
     ref.watch(appWidgetSyncProvider);
     ref.watch(pausedTimerNotificationSyncProvider);
     ref.watch(widgetThemeSyncProvider);
+    ref.watch(reviewPromptSyncProvider);
 
     ref.listen<bool>(
       deskPreferencesControllerProvider.select((p) => p.parallaxEnabled),

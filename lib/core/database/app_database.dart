@@ -36,7 +36,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -74,6 +74,9 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(deskPreferences, deskPreferences.dayStartHour);
             await m.addColumn(deskPreferences, deskPreferences.weekStartsOnSunday);
             await m.addColumn(timerSessions, timerSessions.taskId);
+          }
+          if (from < 13) {
+            await m.addColumn(deskPreferences, deskPreferences.reviewAskedAt);
           }
         },
       );
@@ -275,6 +278,30 @@ class AppDatabase extends _$AppDatabase {
         weekStartsOnSunday: weekStartsOnSunday != null ? Value(weekStartsOnSunday) : const Value.absent(),
       );
 
+      if (existing == null) {
+        await into(deskPreferences).insert(companion);
+      } else {
+        await (update(deskPreferences)..where((t) => t.id.equals(existing.id))).write(companion);
+      }
+    });
+  }
+
+  /// Completed focus cycles ever (FocusSessionRules.isCompletedCycle: a timer session that ran to the end).
+  Future<int> completedCycleCount() async {
+    final count = timerSessions.id.count();
+    final query = selectOnly(timerSessions)
+      ..addColumns([count])
+      ..where(timerSessions.isFinished.equals(true) & timerSessions.isLockdownOnly.equals(false));
+    return (await query.getSingle()).read(count) ?? 0;
+  }
+
+  Future<DateTime?> reviewAskedAt() async =>
+      (await (select(deskPreferences)..limit(1)).getSingleOrNull())?.reviewAskedAt;
+
+  Future<void> markReviewAsked(DateTime at) {
+    return transaction(() async {
+      final existing = await (select(deskPreferences)..limit(1)).getSingleOrNull();
+      final companion = DeskPreferencesCompanion(reviewAskedAt: Value(at));
       if (existing == null) {
         await into(deskPreferences).insert(companion);
       } else {

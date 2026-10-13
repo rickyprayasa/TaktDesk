@@ -30,6 +30,10 @@ class ChronoDialController extends StateNotifier<TimerState> {
   /// "phase finished" about a previous phase is never applied to the one running now.
   int? _nativeSessionId;
 
+  /// Fires when a focus phase runs to its end (not on a skip or reset): the moment for things like the review prompt.
+  final StreamController<void> _focusCompleted = StreamController<void>.broadcast();
+  Stream<void> get focusCompleted => _focusCompleted.stream;
+
   /// The countdown is driven here, not by the dial widget, so it keeps running
   /// while the dial is off screen (portrait TASKS/VINYL tabs, home screen
   /// widget). Wall-clock deltas also catch up after the app was suspended.
@@ -460,6 +464,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
   @override
   void dispose() {
     _stopClock();
+    _focusCompleted.close();
     super.dispose();
   }
 
@@ -523,6 +528,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
           _sessionStartedAt ?? DateTime.now().subtract(Duration(minutes: state.targetMinutes));
       final targetMins = state.targetMinutes;
       final elapsed = targetMins * 60;
+      final finishedFocus = state.phase == PomodoroPhase.focus;
 
       if (state.phase == PomodoroPhase.focus && _database != null) {
         _recordFocus(
@@ -579,6 +585,7 @@ class ChronoDialController extends StateNotifier<TimerState> {
         remainingSeconds: nextMins * 60,
         cycleCount: nextCycle,
       );
+      if (finishedFocus) _focusCompleted.add(null);
     } else {
       state = state.copyWith(
         remainingSeconds: nextRemaining,
