@@ -44,4 +44,21 @@ void main() {
     expect(sessions.single.elapsedSeconds, 600);
     expect(sessions.single.isFinished, isFalse);
   });
+
+  testWidgets('hidden: the clock ticks every 30 s, keeps the elapsed time, and is 250 ms again when visible',
+      (tester) async {
+    final c = ChronoDialController();
+    c.start();
+    c.setAppHidden(true);
+    await tester.pump(const Duration(seconds: 29));
+    expect(c.state.remainingSeconds, 25 * 60, reason: 'no 4×/s ticking while hidden');
+    await tester.pump(const Duration(seconds: 1));
+    expect(c.state.remainingSeconds, closeTo(25 * 60 - 30, 0.5));
+
+    c.setAppHidden(false);
+    await tester.pump(const Duration(seconds: 1));
+    expect(c.state.remainingSeconds, closeTo(25 * 60 - 31, 0.5), reason: 'per-second again, nothing lost');
+    c.pause();
+    c.dispose();
+  });
 }

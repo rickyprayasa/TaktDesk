@@ -88,8 +88,14 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
       },
       // No tilt while nobody can see the desk: the foreground timer service keeps the process alive, and
       // the gyro + accelerometer used to keep streaming ~30 events/s in the background.
-      onHide: () => _setSensorsActive(false),
-      onShow: _syncSensors,
+      onHide: () {
+        _setSensorsActive(false);
+        ref.read(chronoDialProvider.notifier).setAppHidden(true);
+      },
+      onShow: () {
+        ref.read(chronoDialProvider.notifier).setAppHidden(false);
+        _syncSensors();
+      },
     );
   }
 

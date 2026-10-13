@@ -375,11 +375,29 @@ class ChronoDialController extends StateNotifier<TimerState> {
     });
   }
 
+  /// The app is hidden: the native service owns the phase end (alarm, chime, auto-start hand-off), so the Dart clock
+  /// only needs to keep the minute-level telemetry roughly current.
+  bool _appHidden = false;
+
+  static const Duration _visibleTick = Duration(milliseconds: 250);
+  static const Duration _hiddenTick = Duration(seconds: 30);
+
   void _startClock() {
     _clock?.cancel();
     _clockLastAt = clock.now();
     _clockPending = 0.0;
-    _clock = Timer.periodic(const Duration(milliseconds: 250), (_) => _onClock());
+    _clock = Timer.periodic(_appHidden ? _hiddenTick : _visibleTick, (_) => _onClock());
+  }
+
+  /// Desk lifecycle: hidden → tick every 30 s instead of 4×/s (120× fewer wake-ups for a 25-min session in the
+  /// background); visible again → back to 250 ms. Elapsed time is kept across the switch (wall clock), and the resume
+  /// resync with the native deadline corrects whatever the slow clock missed.
+  void setAppHidden(bool hidden) {
+    if (hidden == _appHidden) return;
+    _appHidden = hidden;
+    if (!state.isRunning || _clock == null) return;
+    _clock?.cancel();
+    _clock = Timer.periodic(hidden ? _hiddenTick : _visibleTick, (_) => _onClock());
   }
 
   void _stopClock() {
