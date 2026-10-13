@@ -28,7 +28,23 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
-## 2026-10-13 (e) — Play rating prompt, TOP SLIPS, website copy  (status: app committed `bbbcb41`, `b917fcb`, version 1.0.6+7 `7964859`, tests 544 green; dev-pro APK built 10:37 (67.2 MB); website committed `4901da5` NOT pushed; AAB not built yet)
+## 2026-10-13 (f) — v1.0.6 (versionCode 7) AAB built; website pushed  (status: built + tagged `v1.0.6`; owner uploads to Play; website `4901da5` live)
+
+Owner approved the 1.0.6 dev APK. Built 11:06 with the standard 4.5 GB cap (3.6 GB free, Chrome open):
+`build_outputs/zykl-playstore-release.aab` (66.1 MB), `com.zykl.app`, 1.0.6 / vc 7, jarsigner verified, upload key
+`27:5B:8E:D7…` (CN=RSQUARE, OU=ZYKL), backup rules in the manifest, native debug symbols in BUNDLE-METADATA. The 1.0.5
+AAB is archived in `build_outputs/previous/2026-10-12-v1.0.5/`. Includes (c), (d) and (e): first release with the
+P1 chime fix. Schema 11 → 13 migrates on first launch.
+
+Website `4901da5` pushed to production and verified live (Terms, Privacy dated 13 Oct; FAQ_05; specs rows).
+
+Release notes (en-US):
+> Focus analytics now has a YEAR view, with a day-by-day heatmap in Studio PRO, and TOP SLIPS shows which tasks took
+> your time. Night owl? Let the day start as late as 6 am, and start weeks on Sunday. Exports now name the task of each
+> session. Plus fixes: the finish chime plays to the end, music resumes after a call and pauses when headphones are
+> unplugged, and a Studio PRO edition is kept after a restart.
+
+## 2026-10-13 (e) — Play rating prompt, TOP SLIPS, website copy  (status: app committed `bbbcb41`, `b917fcb`, version 1.0.6+7 `7964859`, tests 544 green; dev-pro APK built 10:37 (67.2 MB); website `4901da5` pushed in (f); AAB in (f))
 
 - `bbbcb41` **Play In-App Review** (`in_app_review` 2.0.12 → Play `review` 2.0.2 + `play-services-base`): requested once per
   install, 3 s after a focus phase runs to its end, once 10 cycles are done (`completedCycleCount()`), app on screen and
@@ -38,7 +54,7 @@
 - `b917fcb` **TOP SLIPS** in Focus Analytics (every period): top 3 slips by focus time with their share of the period;
   sessions of deleted slips pooled as "DELETED SLIPS"; titles reload when the dialog opens. `_periodRange()` now shared
   by day/week bounds and TOP SLIPS.
-- Website (`zykl.app` `4901da5`, **not pushed — push = production**): Terms + FAQ say focus analytics is free and Studio
+- Website (`zykl.app` `4901da5`, pushed and live, see (f)): Terms + FAQ say focus analytics is free and Studio
   PRO adds the year heatmap; new FAQ_05 (analytics); Privacy: the one-time rating card, backup exclusions, export;
   HonestSpecs rows Analytics + Your history; changelog highlights; Terms/Privacy dated 13 Oct 2026. `next build` OK.
 - Build note: Flutter warns that `in_app_review` 2.0.12 applies the Kotlin Gradle Plugin; a future Flutter may refuse
