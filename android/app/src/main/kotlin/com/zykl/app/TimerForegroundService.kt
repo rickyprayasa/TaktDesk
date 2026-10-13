@@ -425,8 +425,11 @@ class TimerForegroundService : Service() {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .build()
 
-        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(ALERT_NOTIFICATION_ID, alertNotif)
+        // On screen the app itself shows the finish; a heads-up over it would only cover the dial.
+        if (!MainActivity.isInForeground) {
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.notify(ALERT_NOTIFICATION_ID, alertNotif)
+        }
 
         // 4. Dismiss ongoing countdown chronometer from notification shade. With a hand-off it stays until Flutter's
         //    START replaces it: a backgrounded app may not bring a stopped foreground service back.

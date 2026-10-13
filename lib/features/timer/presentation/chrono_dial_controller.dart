@@ -224,6 +224,9 @@ class ChronoDialController extends StateNotifier<TimerState> {
     );
 
     if (activate || state.profile.type == PomodoroProfileType.custom) {
+      // The phase restarts at the new length: the paused session (its start time and slip) ends here, or the next
+      // start would continue it on the wrong day with the focus done so far dropped.
+      _discardSession();
       final int currentPhaseMinutes;
       switch (state.phase) {
         case PomodoroPhase.focus:
@@ -257,6 +260,14 @@ class ChronoDialController extends StateNotifier<TimerState> {
     updateCustomDurations(longBreakInterval: next, activate: true);
     HapticService.selectionClick();
     _audioService?.playFoley(SoundEffect.dialClick);
+  }
+
+  /// "Start focus" (launcher shortcut): a focus session, also when the dial stands on a break. Running timers and the
+  /// custom set are left alone.
+  void startFocus() {
+    if (state.isRunning || state.setupStage.isActive) return;
+    if (state.phase != PomodoroPhase.focus) setPhase(PomodoroPhase.focus);
+    start();
   }
 
   /// [auto]: started by "auto-start next phase" at the end of a phase, so no button press sound (the chime plays).

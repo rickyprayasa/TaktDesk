@@ -222,9 +222,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
       } else if (initialAction == AppWidgetService.startFocusAction) {
         // Launcher shortcut "Start focus" on a cold start (a warm start arrives on the action stream).
         _selectInstrument(0);
-        if (!ref.read(chronoDialControllerProvider).isRunning) {
-          ref.read(chronoDialControllerProvider.notifier).start();
-        }
+        ref.read(chronoDialControllerProvider.notifier).startFocus();
       }
       _widgetActionSubscription = widgetService.onWidgetAction.listen((action) {
         if (!mounted) return;

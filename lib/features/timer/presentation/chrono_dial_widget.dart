@@ -100,7 +100,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget> {
           ? 90
           : (state.setupStage == ChronoSetupStage.shortBreak ? 30 : 45);
       final rawMinutes = rawValue.clamp(1, maxMins);
-      _remainingSecondsNotifier.value = rawMinutes * 60.0;
+      // The hand follows the controller (ref.listen above); writing it here showed a value the state never took.
       ref.read(chronoDialProvider.notifier).setTargetMinutes(rawMinutes);
       return;
     }
@@ -109,7 +109,7 @@ class _ChronoDialWidgetState extends ConsumerState<ChronoDialWidget> {
     if (minutes == 0) minutes = 60;
     minutes = minutes.clamp(1, 90);
 
-    _remainingSecondsNotifier.value = minutes * 60.0;
+    // Touching the current minute while paused at 12:34 used to show 25:00, then jump back on start.
     if (minutes != state.targetMinutes) {
       ref.read(chronoDialProvider.notifier).setTargetMinutes(minutes);
     }

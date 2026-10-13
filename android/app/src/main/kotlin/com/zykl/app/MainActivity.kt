@@ -34,6 +34,11 @@ class MainActivity : FlutterActivity() {
         @Volatile
         var lastAlarmTimestamp: Long = 0L
 
+        /** The activity is on screen (resumed). */
+        @Volatile
+        var isInForeground: Boolean = false
+            private set
+
         @Volatile
         var activeInstance: MainActivity? = null
 
@@ -124,6 +129,7 @@ class MainActivity : FlutterActivity() {
     private var soundscapePlayer: MediaPlayer? = null
     private var masterVolume: Float = 0.8f
     private var alarmPlayer: MediaPlayer? = null
+    private var launchedAgain = false
     private val effectPlayer: EffectSoundPlayer by lazy { EffectSoundPlayer(this) }
     private val screenWakeHandler = Handler(Looper.getMainLooper())
 
@@ -203,6 +209,10 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Recreated after a process kill, or reopened from Recents: the launch intent is the original one, so its
+        // shortcut / widget action ("Start focus") must not run a second time.
+        launchedAgain = savedInstanceState != null ||
+            (intent?.flags ?: 0) and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
         super.onCreate(savedInstanceState)
         // A fresh activity has no lockdown: undo DND left on by one that ended with the app killed or swiped away.
         restoreLockdownDnd()
@@ -214,14 +224,20 @@ class MainActivity : FlutterActivity() {
     override fun onResume() {
         super.onResume()
         activeInstance = this
+        isInForeground = true
         notifyAllWidgets()
+    }
+
+    override fun onPause() {
+        isInForeground = false
+        super.onPause()
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         effectPlayer.preload(FOLEY_ASSETS.values.toSet() + FOLEY_VARIANTS.values.flatten() + ALARM_ASSETS.values)
         super.configureFlutterEngine(flutterEngine)
         if (initialWidgetAction == null) {
-            initialWidgetAction = externalFeature(intent) ?: AppShortcuts.action(this, intent)
+            initialWidgetAction = if (launchedAgain) null else externalFeature(intent) ?: AppShortcuts.action(this, intent)
         }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, FOCUS_CHANNEL).setMethodCallHandler { call, result ->
@@ -834,7 +850,8 @@ class MainActivity : FlutterActivity() {
         widgetChannel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "getInitialAction" -> {
-                    val action = initialWidgetAction ?: externalFeature(intent) ?: AppShortcuts.action(this, intent)
+                    val action = initialWidgetAction
+                        ?: if (launchedAgain) null else externalFeature(intent) ?: AppShortcuts.action(this, intent)
                     initialWidgetAction = null
                     intent?.removeExtra("open_feature")
                     AppShortcuts.clear(intent)

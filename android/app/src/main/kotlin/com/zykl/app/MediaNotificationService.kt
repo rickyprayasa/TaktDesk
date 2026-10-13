@@ -441,7 +441,7 @@ class MediaNotificationService : Service() {
         // chronometer, so this one is re-posted once a minute instead of every second.
         val totalSecs = remainingSeconds.toInt().coerceAtLeast(0)
         val timeStr = "${(totalSecs + 59) / 60} MIN"
-        val cycleStr = "CYCLE ${cycleCount.coerceIn(1, 4)}/4"
+        val cycleStr = "CYCLE ${cycleCount.coerceAtLeast(1)}"
         return "ZYKL TP-01 // $phaseLabel $timeStr · $cycleStr"
     }
 

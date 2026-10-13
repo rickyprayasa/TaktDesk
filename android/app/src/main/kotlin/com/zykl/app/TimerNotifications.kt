@@ -20,7 +20,10 @@ object TimerNotifications {
     // channel's importance, hence a new ID; the old LOW channel is deleted.
     const val CHANNEL_TIMER_ID = "zykl_timer_countdown"
     private const val LEGACY_TIMER_CHANNEL_ID = "takt_desk_timer_channel"
-    const val CHANNEL_ALERT_ID = "takt_desk_alert_channel"
+    /** Silent: the finish already rings the chosen chime (USAGE_ALARM) and buzzes the mechanical haptic; the old
+     *  channel's default sound and vibration came on top of both. Channels can't be changed, hence a new id. */
+    const val CHANNEL_ALERT_ID = "zykl_session_alerts"
+    private const val LEGACY_ALERT_CHANNEL_ID = "takt_desk_alert_channel"
 
     const val PAUSED_NOTIFICATION_ID = 1003
 
@@ -58,11 +61,13 @@ object TimerNotifications {
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
             description = "Pomodoro focus and break interval completion alarms"
-            enableVibration(true)
+            setSound(null, null)
+            enableVibration(false)
             lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         }
 
         manager.deleteNotificationChannel(LEGACY_TIMER_CHANNEL_ID)
+        manager.deleteNotificationChannel(LEGACY_ALERT_CHANNEL_ID)
         manager.createNotificationChannel(timerChannel)
         manager.createNotificationChannel(alertChannel)
     }
@@ -78,7 +83,8 @@ object TimerNotifications {
     fun title(phase: String, cycleCount: Int): String = when (phase) {
         "shortBreak" -> "ZYKL · SHORT BRK"
         "longBreak" -> "ZYKL · LONG BRK"
-        else -> "ZYKL · FOCUS (CYCLE $cycleCount/4)"
+        // No "/4": the cycles before a long break are 2..8 ("CYCLE 5/4" with a custom interval).
+        else -> "ZYKL · FOCUS (CYCLE $cycleCount)"
     }
 
     fun openAppIntent(context: Context, requestCode: Int): PendingIntent {

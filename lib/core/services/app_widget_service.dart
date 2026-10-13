@@ -74,8 +74,10 @@ final appWidgetSyncProvider = Provider.autoDispose<void>((ref) {
         running ? timer.pause() : timer.start();
       case 'pauseTimer':
         if (running) timer.pause();
-      case 'resumeTimer' || AppWidgetService.startFocusAction:
+      case 'resumeTimer':
         if (!running) timer.start();
+      case AppWidgetService.startFocusAction:
+        timer.startFocus();
       case 'stopTimer':
         timer.reset();
       case 'nativePhaseFinished':
