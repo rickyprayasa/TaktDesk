@@ -87,6 +87,7 @@ void main() {
       profileName: 'MONASTIC 50/10',
       alarmChimeId: 'zenGong',
       cycleCount: 2,
+      dayStartHour: 4,
     );
 
     expect(result, isTrue);
@@ -105,6 +106,8 @@ void main() {
       'profileName': 'MONASTIC 50/10',
       'alarmChimeId': 'zenGong',
       'cycleCount': 2,
+      // native rolls the widget's "today" over at DAY STARTS AT, like the app
+      'dayStartHour': 4,
     }));
   });
 

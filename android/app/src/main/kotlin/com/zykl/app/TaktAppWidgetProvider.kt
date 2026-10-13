@@ -39,19 +39,26 @@ class TaktAppWidgetProvider : AppWidgetProvider() {
         const val KEY_END_ELAPSED = "end_elapsed_realtime"
         /** Local day (yyyyMMdd) the daily counters were written for; other days read as 0. */
         const val KEY_STATS_DAY = "stats_day"
+        /** Settings → DAY STARTS AT (0..6): before this hour it is still the previous day, as in the app. */
+        const val KEY_DAY_START_HOUR = "day_start_hour"
 
-        fun todayKey(): Int {
+        /** Today as the app counts days (Dart `logicalDay`): before [dayStartHour] o'clock, yesterday's date. */
+        fun todayKey(dayStartHour: Int = 0): Int {
             val c = java.util.Calendar.getInstance()
+            if (c.get(java.util.Calendar.HOUR_OF_DAY) < dayStartHour) c.add(java.util.Calendar.DAY_OF_MONTH, -1)
             return c.get(java.util.Calendar.YEAR) * 10000 + (c.get(java.util.Calendar.MONTH) + 1) * 100 +
                 c.get(java.util.Calendar.DAY_OF_MONTH)
         }
 
-        /** Today's completed cycles: 0 once the counters belong to an earlier day (app not opened since midnight). */
+        private fun statsAreToday(prefs: android.content.SharedPreferences): Boolean =
+            prefs.getInt(KEY_STATS_DAY, 0) == todayKey(prefs.getInt(KEY_DAY_START_HOUR, 0))
+
+        /** Today's completed cycles: 0 once the counters belong to an earlier day (app not opened since the day began). */
         fun cyclesToday(prefs: android.content.SharedPreferences): Int =
-            if (prefs.getInt(KEY_STATS_DAY, 0) == todayKey()) prefs.getInt(KEY_CYCLES_COMPLETED, 0) else 0
+            if (statsAreToday(prefs)) prefs.getInt(KEY_CYCLES_COMPLETED, 0) else 0
 
         fun minutesToday(prefs: android.content.SharedPreferences): Int =
-            if (prefs.getInt(KEY_STATS_DAY, 0) == todayKey()) prefs.getInt(KEY_MINUTES_FOCUSED, 0) else 0
+            if (statsAreToday(prefs)) prefs.getInt(KEY_MINUTES_FOCUSED, 0) else 0
 
         /**
          * The status to show. FOCUS / BREAK only while the countdown service really runs in this process: after a

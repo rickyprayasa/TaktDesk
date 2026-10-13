@@ -51,6 +51,7 @@ final appWidgetSyncProvider = Provider.autoDispose<void>((ref) {
         profileName: state.profile.label,
         alarmChimeId: prefs.alarmChimeId,
         cycleCount: state.cycleCount,
+        dayStartHour: prefs.dayStartHour,
       );
     });
   }
@@ -184,6 +185,7 @@ class AppWidgetService {
     String profileName = 'CLASSIC 25/5',
     String alarmChimeId = 'braunBell',
     int cycleCount = 1,
+    int dayStartHour = 0,
   }) async {
     try {
       final res = await channel.invokeMethod<bool>('updateAllWidgetData', {
@@ -198,6 +200,7 @@ class AppWidgetService {
         'profileName': profileName,
         'alarmChimeId': alarmChimeId,
         'cycleCount': cycleCount,
+        'dayStartHour': dayStartHour,
       });
       return res ?? false;
     } on PlatformException catch (_) {

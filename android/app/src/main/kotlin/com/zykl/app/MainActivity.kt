@@ -865,11 +865,14 @@ class MainActivity : FlutterActivity() {
                         val status = call.argument<String>("status") ?: "STANDBY"
 
                         val prefs = getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
+                        val dayStartHour = (call.argument<Number>("dayStartHour"))?.toInt()
+                            ?: prefs.getInt(TaktAppWidgetProvider.KEY_DAY_START_HOUR, 0)
                         prefs.edit()
                             .putInt(TaktAppWidgetProvider.KEY_CYCLES_COMPLETED, cycles)
                             .putInt(TaktAppWidgetProvider.KEY_CYCLES_TARGET, target)
                             .putInt(TaktAppWidgetProvider.KEY_MINUTES_FOCUSED, minutes)
-                            .putInt(TaktAppWidgetProvider.KEY_STATS_DAY, TaktAppWidgetProvider.todayKey())
+                            .putInt(TaktAppWidgetProvider.KEY_DAY_START_HOUR, dayStartHour)
+                            .putInt(TaktAppWidgetProvider.KEY_STATS_DAY, TaktAppWidgetProvider.todayKey(dayStartHour))
                             .putString(TaktAppWidgetProvider.KEY_STATUS, status)
                             .apply()
 
@@ -895,6 +898,9 @@ class MainActivity : FlutterActivity() {
                         val cycleCount = (call.argument<Number>("cycleCount"))?.toInt() ?: 1
 
                         val prefs = getSharedPreferences(TaktAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
+                        // The counters are for the app's "today", which starts at DAY STARTS AT.
+                        val dayStartHour = (call.argument<Number>("dayStartHour"))?.toInt()
+                            ?: prefs.getInt(TaktAppWidgetProvider.KEY_DAY_START_HOUR, 0)
                         prefs.edit()
                             .putString(TaktAppWidgetProvider.KEY_PROFILE_NAME, profileName)
                             .putString(TaktAppWidgetProvider.KEY_ALARM_CHIME_ID, alarmChimeId)
@@ -902,7 +908,8 @@ class MainActivity : FlutterActivity() {
                             .putInt(TaktAppWidgetProvider.KEY_CYCLES_COMPLETED, cycles)
                             .putInt(TaktAppWidgetProvider.KEY_CYCLES_TARGET, target)
                             .putInt(TaktAppWidgetProvider.KEY_MINUTES_FOCUSED, minutes)
-                            .putInt(TaktAppWidgetProvider.KEY_STATS_DAY, TaktAppWidgetProvider.todayKey())
+                            .putInt(TaktAppWidgetProvider.KEY_DAY_START_HOUR, dayStartHour)
+                            .putInt(TaktAppWidgetProvider.KEY_STATS_DAY, TaktAppWidgetProvider.todayKey(dayStartHour))
                             .putString(TaktAppWidgetProvider.KEY_STATUS, status)
                             .putInt(TaktAppWidgetProvider.KEY_REMAINING_SECONDS, remainingSeconds)
                             .putInt(TaktAppWidgetProvider.KEY_TARGET_MINUTES, targetMinutes)

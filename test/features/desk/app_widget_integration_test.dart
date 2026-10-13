@@ -124,6 +124,7 @@ void main() {
       'profileName': 'CLASSIC 25/5',
       'alarmChimeId': 'braunBell',
       'cycleCount': 1,
+      'dayStartHour': 0,
     }));
 
     await tester.pumpWidget(const SizedBox());
@@ -177,6 +178,7 @@ void main() {
       'profileName': 'CLASSIC 25/5',
       'alarmChimeId': 'braunBell',
       'cycleCount': 1,
+      'dayStartHour': 0,
     }));
 
     await tester.pumpWidget(const SizedBox());
