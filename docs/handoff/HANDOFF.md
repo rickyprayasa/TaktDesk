@@ -28,6 +28,45 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-13 (b) — Second app review (4 parallel read-only audits)  (status: review; nothing fixed yet)
+
+Verified by hand: P1-1, P1-2, P1-3, P2 vinyl-resume, P2 drawer index, P2 sortOrder. The rest are traced by the audits.
+
+**P1 (fix first; P1-1 is in the shipped 1.0.4/1.0.5 AABs)**
+1. Finish chime cut off when the app is alive in the background and auto-start is off: `TimerForegroundService`
+   always sends `nativePhaseFinished` (added in 7e2d320) → Dart `resyncWithNative` → `tick(ringAlarm:false)` →
+   `_backgroundService.stop()` → `stopCountdown()` → `stopSelf()` → `onDestroy` releases `bellPlayer` mid-ring.
+2. Release builds: a PRO user's edition resets to Braun Classic on every cold start, and the reset is saved
+   (`settings_controller.init` refuses the premium edition while PRO is still false; `setProSimulated(true)` then
+   saves the theme's current edition).
+3. Cancelling the Play sheet leaves billing stuck in `purchasing` (BUY/RESTORE disabled): the plugin reports cancel /
+   error / already-owned with `productID: ''`, and `_onPurchases` skips it.
+4. Auto-start race: `resyncWithNative` trusts the kept `deadlineElapsed` of the previous phase → a phase can be
+   skipped or a phantom focus session recorded. Related: a stale `ACTION_COMPLETE` can cancel the next phase's alarm.
+5. Lockdown DND stays on ("Alarms only") if the app is unpinned and swiped away (`previousInterruptionFilter` in memory).
+
+**P2**
+- Vinyl never resumes after a call (`resumeOnFocusGain` cleared by the echoed pause); soundscape plays even if audio
+  focus is refused; no `AUDIO_BECOMING_NOISY` (unplugging headphones); Android 7–11 back-exit leaves a dead "playing"
+  media notification; master volume not applied to foley; record drawer assumes 6 discs per drawer (there are 10).
+- "Today" stats and widgets go stale after midnight (streams fixed at creation; widgets store no date).
+- Restore doesn't reload the dispenser (new slip can be lost); new slips get `sortOrder = active count` so focus credit
+  can go to a slip other than the one marked NOW.
+- Desk clock dims while the user is in Settings / task sheet / dialogs (wake listener only on the desk route).
+- After a reboot / force-stop mid-session, widgets and the tile show a phantom countdown (stale `KEY_END_ELAPSED`).
+
+**P3**: "Start focus" shortcut can start a break and can re-fire after the process is recreated from Recents;
+"CYCLE 5/4" with a custom interval; double sound + vibration on native finish (alert channel has default sound);
+paused custom-duration change keeps the old session; dial shows 25:00 when touched while paused; DST day/week ranges;
+totals vs bars rounding; SAF picker result lost after process death (empty file); PRO chime kept after refund;
+low-contrast labels on light editions; small/unlabelled touch targets; tear-drag rebuilds the whole dispenser per frame;
+volume slider writes the DB on every step; a few animations ignore reduce-motion.
+
+**Suggestions**: session token between Dart and native; native owns the phase end while hidden (pause the Dart clock);
+`MediaNotificationService` owns the soundscape player/focus/noisy receiver; midnight ticker + "day starts at" + week
+start; `task_id` on sessions; retry PRO restore on resume and "No purchase found"; RepaintBoundary under the tilt
+Transform; stop the platter while the desk clock is dimmed; 48 dp targets and semantics; explicit backup rules.
+
 ## 2026-10-13 — Lockdown muted the vinyl  (status: committed; Kotlin compiles; NOT built; needs a device check)
 
 Owner: with Monastic Lockdown on, the vinyl soundscape is silent. Cause: `enableFocusLock` set DND to
