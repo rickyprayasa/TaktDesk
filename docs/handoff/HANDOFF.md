@@ -59,7 +59,7 @@ Release notes (en-US):
   HonestSpecs rows Analytics + Your history; changelog highlights; Terms/Privacy dated 13 Oct 2026. `next build` OK.
 - Build note: Flutter warns that `in_app_review` 2.0.12 applies the Kotlin Gradle Plugin; a future Flutter may refuse
   to build until the plugin moves to Built-in Kotlin (check its changelog before upgrading Flutter).
-- Open: About page says "NO STREAKS, NO BADGES" but the app shows a FOCUS STREAK (pre-existing; owner to decide wording).
+- About page "NO STREAKS, NO BADGES" → "NO BADGES, NO LEADERBOARDS" (owner, website `1eb373c`, live): the app shows a FOCUS STREAK.
   FAQ "download under 20 MB": re-check the Play download size after the 1.0.6 AAB (Play services base added).
   Play Console Data safety: no change expected (Play's own review flow), owner to confirm.
 
