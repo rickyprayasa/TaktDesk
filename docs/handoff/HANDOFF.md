@@ -28,6 +28,23 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-14 — Reverse-engineering hardening for 1.0.7  (status: committed `892a9e5`, `9d19568`; billing tests 20 green, Kotlin compiles; NOT built; version still 1.0.6+7)
+
+Owner asked how safe ZYKL is from reverse engineering. Baseline was already sound: no secrets or API keys in the app,
+Kotlin minified by R8, release builds ignore the stored PRO flag and ask Play on every launch (refunds lose PRO).
+Play Console → Protected with Play → **Automatic protection is on** (1 of 1); Play Integrity API not used (needs a server).
+- `892a9e5` purchases unlock PRO only when Google Play's signature checks out (`PlayPurchaseVerifier.kt`, channel
+  `com.zykl.app/billing`, Licensing public key from Play Console, RSA 2048) and the signed JSON is `com.zykl.app` /
+  `studio_pro_lifetime`. A failed check is still acknowledged (no refund of a real purchase), unlocks nothing, and
+  says "Google Play could not confirm this purchase…". Algorithm verified with a JDK harness.
+- `9d19568` `scripts/build_test_apks.sh` builds with `--obfuscate --split-debug-info=build_outputs/symbols/<version>-<target>`.
+  Keep those folders: they are the only way to read Dart crash stack traces (`flutter symbolize`).
+- **Device check before 1.0.7 ships**: the first obfuscated build must be tested end to end (dev APK), and on a Play
+  build (internal testing / license tester) PRO must still restore after reinstall. If a real buyer reports "could not
+  confirm", check the Licensing key in `PlayPurchaseVerifier.kt` first.
+- Accepted risks: soundscape OGGs can be unzipped from the APK (some are public previews on the website anyway); a
+  determined attacker can still patch the binary.
+
 ## 2026-10-13 (f) — v1.0.6 (versionCode 7) AAB built; website pushed  (status: built + tagged `v1.0.6`; owner uploads to Play; website `4901da5` live)
 
 Owner approved the 1.0.6 dev APK. Built 11:06 with the standard 4.5 GB cap (3.6 GB free, Chrome open):
