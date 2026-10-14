@@ -16,14 +16,20 @@ capped() { # 4.5 GB RAM + 512 MB swap, 2 of 4 cores, lowest priority
     nice -n 19 "$@"
 }
 
+# Dart obfuscation: class and function names in libapp.so become meaningless, so the Studio PRO check is much harder
+# to find with Flutter decompilers. The symbol maps stay here (git-ignored) to read crash stack traces:
+#   flutter symbolize -i <stack.txt> -d build_outputs/symbols/<version>-<target>/app.android-arm64.symbols
+VERSION=$(sed -n 's/^version: //p' pubspec.yaml)
+obf() { echo "--obfuscate --split-debug-info=$OUT/symbols/$VERSION-$1"; }
+
 for t in "${targets[@]}"; do
   echo "=== $(date +%T) building $t"
   case $t in
-    developer-pro) capped flutter build apk --release --dart-define=ENABLE_PRO_SIMULATION=true
+    developer-pro) capped flutter build apk --release --dart-define=ENABLE_PRO_SIMULATION=true $(obf $t)
                    cp build/app/outputs/flutter-apk/app-release.apk "$OUT/zykl-developer-pro-universal.apk" ;;
-    user-testing)  capped flutter build apk --release
+    user-testing)  capped flutter build apk --release $(obf $t)
                    cp build/app/outputs/flutter-apk/app-release.apk "$OUT/zykl-user-testing-universal.apk" ;;
-    aab)           capped flutter build appbundle --release
+    aab)           capped flutter build appbundle --release $(obf $t)
                    cp build/app/outputs/bundle/release/app-release.aab "$OUT/zykl-playstore-release.aab" ;;
     *) echo "unknown target $t"; exit 1 ;;
   esac
