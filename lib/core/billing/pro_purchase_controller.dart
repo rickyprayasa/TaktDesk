@@ -191,8 +191,20 @@ class ProPurchaseController extends StateNotifier<ProPurchaseState> {
             if (mounted) state = state.copyWith(status: ProPurchaseStatus.pending, clearMessage: true);
             continue;
           }
-          if (mounted) state = state.copyWith(status: ProPurchaseStatus.owned, clearMessage: true);
-          await _onEntitlement(true);
+          if (!await _isGenuine(p)) {
+            // Not signed by Google Play (a faked purchase): no PRO. Still acknowledged below, which a fake can't
+            // pass, while a real purchase that failed the check for another reason is not refunded by Google.
+            debugPrint('ZYKL billing: purchase signature not verified');
+            if (mounted && !state.isOwned) {
+              state = state.copyWith(
+                status: ProPurchaseStatus.idle,
+                message: 'Google Play could not confirm this purchase. Try RESTORE, or write to support@zykl.app.',
+              );
+            }
+          } else {
+            if (mounted) state = state.copyWith(status: ProPurchaseStatus.owned, clearMessage: true);
+            await _onEntitlement(true);
+          }
         case PurchaseStatus.pending:
           if (mounted) state = state.copyWith(status: ProPurchaseStatus.pending, clearMessage: true);
         case PurchaseStatus.error:
@@ -211,6 +223,14 @@ class ProPurchaseController extends StateNotifier<ProPurchaseState> {
           debugPrint('ZYKL billing: completePurchase failed: $e');
         }
       }
+    }
+  }
+
+  Future<bool> _isGenuine(PurchaseDetails p) async {
+    try {
+      return await _store?.verify(p) ?? false;
+    } catch (_) {
+      return false;
     }
   }
 

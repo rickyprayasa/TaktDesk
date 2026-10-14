@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:in_app_purchase_android/billing_client_wrappers.dart';
@@ -28,6 +29,7 @@ class _FakeStore implements ProStore {
   final controller = StreamController<List<PurchaseDetails>>.broadcast();
   bool available = true;
   bool ownedOnRestore = false;
+  bool genuine = true;
   int buys = 0;
   final completed = <String>[];
 
@@ -69,6 +71,9 @@ class _FakeStore implements ProStore {
 
   @override
   Future<void> complete(PurchaseDetails purchase) async => completed.add(purchase.status.name);
+
+  @override
+  Future<bool> verify(PurchaseDetails purchase) async => genuine;
 }
 
 Future<void> _settle() => Future<void>.delayed(Duration.zero);
@@ -111,6 +116,74 @@ void main() {
     expect(controller.state.isOwned, isTrue);
     expect(entitlements, [true]);
     expect(store.completed, ['purchased']);
+  });
+
+  test('a purchase Google Play did not sign does not unlock (still acknowledged)', () async {
+    store.genuine = false;
+    await controller.init();
+    await controller.buy();
+    store.controller.add([store.purchase(PurchaseStatus.purchased)]);
+    await _settle();
+    expect(controller.state.isOwned, isFalse);
+    expect(controller.state.message, contains('could not confirm'));
+    expect(entitlements, isEmpty);
+    expect(store.completed, ['purchased'], reason: 'a real purchase that failed the check must not be refunded');
+  });
+
+  group('verifyPlayPurchase', () {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    const channel = MethodChannel('test/billing');
+    final calls = <MethodCall>[];
+    bool nativeAnswer = true;
+    setUp(() {
+      calls.clear();
+      nativeAnswer = true;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (c) async {
+        calls.add(c);
+        return nativeAnswer;
+      });
+    });
+
+    GooglePlayPurchaseDetails signed(String json) => GooglePlayPurchaseDetails.fromPurchase(PurchaseWrapper(
+          orderId: 'GPA.3',
+          packageName: 'com.zykl.app',
+          purchaseTime: 0,
+          purchaseToken: 'token',
+          signature: 'c2ln',
+          products: const [kStudioProProductId],
+          isAutoRenewing: false,
+          originalJson: json,
+          isAcknowledged: true,
+          purchaseState: PurchaseStateWrapper.purchased,
+        )).single;
+
+    const proJson = '{"packageName":"com.zykl.app","productId":"studio_pro_lifetime","purchaseState":0}';
+
+    test('asks native to check the signature of the signed JSON', () async {
+      expect(await verifyPlayPurchase(signed(proJson), channel: channel), isTrue);
+      expect(calls.single.arguments, {'signedData': proJson, 'signature': 'c2ln'});
+      nativeAnswer = false;
+      expect(await verifyPlayPurchase(signed(proJson), channel: channel), isFalse);
+    });
+
+    test('a signed purchase of another app or product never counts', () async {
+      expect(await verifyPlayPurchase(signed('{"packageName":"com.other","productId":"studio_pro_lifetime"}'), channel: channel),
+          isFalse);
+      expect(await verifyPlayPurchase(signed('{"packageName":"com.zykl.app","productId":"coins"}'), channel: channel), isFalse);
+      expect(await verifyPlayPurchase(signed('not json'), channel: channel), isFalse);
+      expect(calls, isEmpty);
+      expect(isStudioProPurchaseJson('{"packageName":"com.zykl.app","productIds":["studio_pro_lifetime"]}'), isTrue);
+    });
+
+    test('a purchase that is not from Google Play is not trusted', () async {
+      final fake = PurchaseDetails(
+        productID: kStudioProProductId,
+        verificationData: PurchaseVerificationData(localVerificationData: '', serverVerificationData: '', source: 'x'),
+        transactionDate: '0',
+        status: PurchaseStatus.purchased,
+      );
+      expect(await verifyPlayPurchase(fake, channel: channel), isFalse);
+    });
   });
 
   test('pending cash payment does not unlock until confirmed', () async {
