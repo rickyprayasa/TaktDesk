@@ -28,6 +28,19 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-14 (b) — v1.0.7 (versionCode 8) AAB built  (status: built + tagged `v1.0.7`; owner uploads to Play)
+
+Owner approved the obfuscated 1.0.7 dev APK. Built 10:30: `build_outputs/zykl-playstore-release.aab` (62.6 MB, smaller
+than 1.0.6's 66.1 MB thanks to obfuscation), `com.zykl.app`, 1.0.7 / vc 8, jarsigner verified, upload key `27:5B:8E:D7…`.
+No Dart class names in libapp.so. Dart symbols: `build_outputs/symbols/1.0.7+8-aab/` (keep: only way to read Play crash
+stacks). 1.0.6 AAB archived in `build_outputs/previous/2026-10-13-v1.0.6/`.
+**After upload**: install from Play (internal testing / license tester), uninstall + reinstall, PRO must come back
+(first real test of the signature check).
+
+Release notes (en-US):
+> Under-the-hood security update: Studio PRO purchases are now verified with Google Play's signature, and the app is
+> harder to tamper with.
+
 ## 2026-10-14 — Reverse-engineering hardening for 1.0.7  (status: committed `892a9e5`, `9d19568`; version 1.0.7+8; obfuscated dev-pro APK built 10:22 (63.7 MB), symbols in `build_outputs/symbols/1.0.7+8-developer-pro`; AAB not built)
 
 Owner asked how safe ZYKL is from reverse engineering. Baseline was already sound: no secrets or API keys in the app,
