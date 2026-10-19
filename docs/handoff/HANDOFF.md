@@ -28,7 +28,7 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
-## 2026-10-19 — REA reverse-engineering simulation; purchase check moved to Dart  (status: committed `78bd5ba`; tests 551 green, Kotlin compiles; NOT built; version still 1.0.7+8, next release 1.0.8+9)
+## 2026-10-19 — REA reverse-engineering simulation; purchase check moved to Dart  (status: committed `78bd5ba`; tests 551 green; version 1.0.8+9; dev-pro APK built 2026-10-19 08:29 — no `MIIBIjAN` / `SHA1withRSA` / `verifyPurchase` left in libapp.so or classes.dex; AAB not built)
 
 Owner approved running REA (`rea-agents` 6.7.0, npm, MIT) and JADX 1.5.6 against ZYKL; both installed only in the
 session scratchpad (not global, no `rea setup`). Targets: 1.0.7 dev APK (manifest, Kotlin) and the 1.0.7 release AAB's
