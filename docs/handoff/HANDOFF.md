@@ -28,7 +28,18 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
-## 2026-10-19 — REA reverse-engineering simulation; purchase check moved to Dart  (status: committed `78bd5ba`; tests 551 green; version 1.0.8+9; dev-pro APK built 2026-10-19 08:29 — no `MIIBIjAN` / `SHA1withRSA` / `verifyPurchase` left in libapp.so or classes.dex; AAB not built)
+## 2026-10-19 (b) — v1.0.8 (versionCode 9) AAB built  (status: built + tagged `v1.0.8`; owner uploads to Play)
+
+Owner approved the 1.0.8 dev APK. Built 08:37: `build_outputs/zykl-playstore-release.aab` (62.7 MB), `com.zykl.app`,
+1.0.8 / vc 9, jarsigner verified, upload key `27:5B:8E:D7…`. No `MIIBIjAN` / `SHA1withRSA` / `verifyPurchase` /
+`com.zykl.app/billing` in `libapp.so` or `classes.dex`. Dart symbols: `build_outputs/symbols/1.0.8+9-aab/`. 1.0.7 AAB
+archived in `build_outputs/previous/2026-10-14-v1.0.7/`.
+**After upload**: license tester → buy or restore PRO → uninstall → install from Play → PRO must come back.
+
+Release notes (en-US):
+> Security update: Studio PRO purchases are checked more strictly against Google Play.
+
+## 2026-10-19 — REA reverse-engineering simulation; purchase check moved to Dart  (status: committed `78bd5ba`; tests 551 green; version 1.0.8+9; dev-pro APK built 2026-10-19 08:29 — no `MIIBIjAN` / `SHA1withRSA` / `verifyPurchase` left in libapp.so or classes.dex; AAB in (b))
 
 Owner approved running REA (`rea-agents` 6.7.0, npm, MIT) and JADX 1.5.6 against ZYKL; both installed only in the
 session scratchpad (not global, no `rea setup`). Targets: 1.0.7 dev APK (manifest, Kotlin) and the 1.0.7 release AAB's
