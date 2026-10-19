@@ -9,7 +9,7 @@
 - Website repo (separate): `/home/tuneeca/RSQUARE/Android/zykl.app` (Next.js on Cloudflare Worker).
 - Native Android code: `android/app/src/main/kotlin/com/zykl/app/` (MainActivity = audio/focus/widget channels,
   TimerForegroundService = background countdown + completion, MediaNotificationService = vinyl notification).
-- Verify with: `flutter analyze` → 0 issues; `flutter test -j 1` → all pass (544 at last full run);
+- Verify with: `flutter analyze` → 0 issues; `flutter test -j 1` → all pass (551 at last full run);
   Kotlin: `cd android && ./gradlew :app:compileDebugKotlin --offline -q`.
 - Run heavy jobs (build/render/test) one at a time with `nice`. Do NOT build APK/AAB unless the user asks —
   the user reviews on the Linux emulator first. Release outputs go to `build_outputs/` (git-ignored).
@@ -27,6 +27,26 @@
 - **Do not build APK/AAB unless the owner asks in that message** (owner reviews code changes on Linux first).
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
+
+## 2026-10-19 — REA reverse-engineering simulation; purchase check moved to Dart  (status: committed `78bd5ba`; tests 551 green, Kotlin compiles; NOT built; version still 1.0.7+8, next release 1.0.8+9)
+
+Owner approved running REA (`rea-agents` 6.7.0, npm, MIT) and JADX 1.5.6 against ZYKL; both installed only in the
+session scratchpad (not global, no `rea setup`). Targets: 1.0.7 dev APK (manifest, Kotlin) and the 1.0.7 release AAB's
+arm64 `libapp.so`. REA's `inspect-android-package` / decompile need a `jadx-headless-mcp` JAR (not downloaded), so the
+Kotlin was read with the JADX CLI.
+- Good: Dart obfuscation works (`inspect-dart-aot`: complete string pool, 1,737 class-like tokens, none of our class
+  names); R8 renamed the Kotlin classes; no secrets; exported components are only launcher, widgets, tile (with
+  `BIND_QUICK_SETTINGS_TILE`).
+- Main hole: the Kotlin purchase verifier was found by grepping "SHA1withRSA" / "verifyPurchase"; JADX showed one line
+  `zVerify = signature.verify(...)`, a one-line smali patch.
+- `78bd5ba` fixes it: `lib/core/billing/play_signature.dart` verifies RSASSA-PKCS1-v1_5/SHA-1 in Dart (BigInt.modPow +
+  `crypto`), key stored as masked bytes (no `MIIBIjAN…` string); Kotlin verifier and `com.zykl.app/billing` removed.
+  Tests use JDK-made vectors (`test/core/billing/signature_vectors.dart`) and check the built-in key equals the Play
+  Console key.
+- Left as is (low value): readable string literals such as `isProSimulated`, `studio_pro_lifetime`, widget keys.
+- **Before 1.0.8 ships**: same Play test as 1.0.7 (license tester: buy or restore → PRO; reinstall → PRO back). If a
+  real buyer sees "Google Play could not confirm this purchase", suspect `PlaySignature` first.
+- Next optional step: blutter (Dart AOT decompiler) to see how far the obfuscated logic can be read.
 
 ## 2026-10-14 (b) — v1.0.7 (versionCode 8) AAB built  (status: built + tagged `v1.0.7`; owner uploads to Play)
 
