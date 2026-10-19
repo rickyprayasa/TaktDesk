@@ -1,9 +1,10 @@
 import 'dart:convert';
 
-import 'package:flutter/services.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:in_app_purchase_android/billing_client_wrappers.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
+
+import 'play_signature.dart';
 
 /// Google Play one-time product for Studio PRO. Must match the Product ID
 /// created in Play Console (Monetize with Play > Products > One-time products).
@@ -40,9 +41,6 @@ abstract class ProStore {
   Future<bool> verify(PurchaseDetails purchase);
 }
 
-/// Google Play signs each purchase's JSON with the app's key; the check runs natively (PlayPurchaseVerifier.kt).
-const MethodChannel kBillingChannel = MethodChannel('com.zykl.app/billing');
-
 /// The signed JSON must also be about this app and Studio PRO (a signature alone says nothing about which product).
 bool isStudioProPurchaseJson(String json) {
   try {
@@ -55,16 +53,13 @@ bool isStudioProPurchaseJson(String json) {
   }
 }
 
-Future<bool> verifyPlayPurchase(PurchaseDetails purchase, {MethodChannel channel = kBillingChannel}) async {
+/// Google Play signed [purchase] with ZYKL's key (checked in Dart, see [PlaySignature]) and it is Studio PRO.
+bool verifyPlayPurchase(PurchaseDetails purchase, {PlaySignature? key}) {
   if (purchase is! GooglePlayPurchaseDetails) return false;
   final signed = purchase.billingClientPurchase;
   if (!isStudioProPurchaseJson(signed.originalJson)) return false;
   try {
-    return await channel.invokeMethod<bool>('verifyPurchase', {
-          'signedData': signed.originalJson,
-          'signature': signed.signature,
-        }) ??
-        false;
+    return (key ?? PlaySignature.zykl).verify(signed.originalJson, signed.signature);
   } catch (_) {
     return false;
   }
@@ -98,5 +93,5 @@ class PlayProStore implements ProStore {
   Future<void> complete(PurchaseDetails purchase) => _iap.completePurchase(purchase);
 
   @override
-  Future<bool> verify(PurchaseDetails purchase) => verifyPlayPurchase(purchase);
+  Future<bool> verify(PurchaseDetails purchase) async => verifyPlayPurchase(purchase);
 }

@@ -116,7 +116,6 @@ class MainActivity : FlutterActivity() {
     private val FOCUS_CHANNEL = "com.takt.desk/focus_lock"
     private val DISPLAY_CHANNEL = "com.zykl.app/display"
     private val BACKUP_CHANNEL = "com.zykl.app/backup"
-    private val BILLING_CHANNEL = "com.zykl.app/billing"
     private val WIDGET_THEME_CHANNEL = "com.zykl.app/widget_theme"
 
     /** Waiting system file picker (backup export / restore) and what to write once a file is chosen. */
@@ -688,20 +687,6 @@ class MainActivity : FlutterActivity() {
                     result.success(true)
                 }
                 else -> result.notImplemented()
-            }
-        }
-
-        // Studio PRO: is this purchase really signed by Google Play? (PlayPurchaseVerifier)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, BILLING_CHANNEL).setMethodCallHandler { call, result ->
-            if (call.method == "verifyPurchase") {
-                result.success(
-                    PlayPurchaseVerifier.verify(
-                        call.argument<String>("signedData") ?: "",
-                        call.argument<String>("signature") ?: ""
-                    )
-                )
-            } else {
-                result.notImplemented()
             }
         }
 

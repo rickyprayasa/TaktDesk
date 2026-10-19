@@ -1,11 +1,14 @@
 import 'dart:async';
-import 'package:flutter/services.dart';
+import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:in_app_purchase_android/billing_client_wrappers.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:takt_desk/core/billing/pro_purchase_controller.dart';
+import 'package:takt_desk/core/billing/play_signature.dart';
 import 'package:takt_desk/core/billing/pro_store.dart';
+
+import 'signature_vectors.dart' as vectors;
 
 /// What Play's restorePurchases delivers: status `restored` whatever the real
 /// purchase state is.
@@ -131,25 +134,15 @@ void main() {
   });
 
   group('verifyPlayPurchase', () {
-    TestWidgetsFlutterBinding.ensureInitialized();
-    const channel = MethodChannel('test/billing');
-    final calls = <MethodCall>[];
-    bool nativeAnswer = true;
-    setUp(() {
-      calls.clear();
-      nativeAnswer = true;
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (c) async {
-        calls.add(c);
-        return nativeAnswer;
-      });
-    });
+    final testKey = PlaySignature.fromSubjectPublicKeyInfo(base64.decode(vectors.testKey));
 
-    GooglePlayPurchaseDetails signed(String json) => GooglePlayPurchaseDetails.fromPurchase(PurchaseWrapper(
+    GooglePlayPurchaseDetails signed(String json, String signature) =>
+        GooglePlayPurchaseDetails.fromPurchase(PurchaseWrapper(
           orderId: 'GPA.3',
           packageName: 'com.zykl.app',
           purchaseTime: 0,
           purchaseToken: 'token',
-          signature: 'c2ln',
+          signature: signature,
           products: const [kStudioProProductId],
           isAutoRenewing: false,
           originalJson: json,
@@ -157,32 +150,28 @@ void main() {
           purchaseState: PurchaseStateWrapper.purchased,
         )).single;
 
-    const proJson = '{"packageName":"com.zykl.app","productId":"studio_pro_lifetime","purchaseState":0}';
-
-    test('asks native to check the signature of the signed JSON', () async {
-      expect(await verifyPlayPurchase(signed(proJson), channel: channel), isTrue);
-      expect(calls.single.arguments, {'signedData': proJson, 'signature': 'c2ln'});
-      nativeAnswer = false;
-      expect(await verifyPlayPurchase(signed(proJson), channel: channel), isFalse);
+    test('a Studio PRO purchase signed with the key passes; another signature does not', () {
+      expect(verifyPlayPurchase(signed(vectors.signedJson, vectors.genuineSignature), key: testKey), isTrue);
+      expect(verifyPlayPurchase(signed(vectors.signedJson, vectors.signatureByAnotherKey), key: testKey), isFalse);
+      expect(verifyPlayPurchase(signed(vectors.signedJson, vectors.genuineSignature)), isFalse,
+          reason: 'the built-in key is Play\'s, not the test key');
     });
 
-    test('a signed purchase of another app or product never counts', () async {
-      expect(await verifyPlayPurchase(signed('{"packageName":"com.other","productId":"studio_pro_lifetime"}'), channel: channel),
-          isFalse);
-      expect(await verifyPlayPurchase(signed('{"packageName":"com.zykl.app","productId":"coins"}'), channel: channel), isFalse);
-      expect(await verifyPlayPurchase(signed('not json'), channel: channel), isFalse);
-      expect(calls, isEmpty);
+    test('a signed purchase of another app or product never counts', () {
+      expect(isStudioProPurchaseJson('{"packageName":"com.other","productId":"studio_pro_lifetime"}'), isFalse);
+      expect(isStudioProPurchaseJson('{"packageName":"com.zykl.app","productId":"coins"}'), isFalse);
+      expect(isStudioProPurchaseJson('not json'), isFalse);
       expect(isStudioProPurchaseJson('{"packageName":"com.zykl.app","productIds":["studio_pro_lifetime"]}'), isTrue);
     });
 
-    test('a purchase that is not from Google Play is not trusted', () async {
+    test('a purchase that is not from Google Play is not trusted', () {
       final fake = PurchaseDetails(
         productID: kStudioProProductId,
         verificationData: PurchaseVerificationData(localVerificationData: '', serverVerificationData: '', source: 'x'),
         transactionDate: '0',
         status: PurchaseStatus.purchased,
       );
-      expect(await verifyPlayPurchase(fake, channel: channel), isFalse);
+      expect(verifyPlayPurchase(fake, key: testKey), isFalse);
     });
   });
 
@@ -232,9 +221,8 @@ void main() {
       verificationData: PurchaseVerificationData(localVerificationData: '', serverVerificationData: '', source: 'test'),
       transactionDate: null,
       status: status,
-    )..error = errorMessage == null
-        ? null
-        : IAPError(source: 'google_play', code: 'purchase_error', message: errorMessage);
+    )..error =
+        errorMessage == null ? null : IAPError(source: 'google_play', code: 'purchase_error', message: errorMessage);
   }
 
   test('a cancel reported without a product (real Play) returns to idle', () async {
