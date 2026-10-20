@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:takt_desk/app/scaled_layout.dart';
 import 'package:takt_desk/app/theme/hardware_edition.dart';
 import 'package:takt_desk/app/theme/takt_colors.dart';
 import 'package:takt_desk/app/theme/theme_controller.dart';
@@ -290,6 +291,34 @@ void main() {
     expectDisplay(tester, 15, 0);
 
     // Clean up
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('the rotary pan still reads the right minute when a tablet draws the dial bigger', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: Center(child: ScaledLayout(scale: 1.6, child: ChronoDialWidget())),
+          ),
+        ),
+      ),
+    );
+    expectDisplay(tester, 25, 0);
+
+    // 6 o'clock on the enlarged face = 30 MIN (screen offsets are 1.6x the design ones).
+    final dialCenter = tester.getCenter(dialFinder);
+    final gesture = await tester.startGesture(dialCenter + const Offset(0, 80));
+    await tester.pump();
+    await gesture.moveBy(const Offset(0, 40));
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+    expectDisplay(tester, 30, 0);
+
     await tester.pumpWidget(const SizedBox());
   });
 

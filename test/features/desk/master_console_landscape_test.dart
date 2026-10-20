@@ -3,6 +3,7 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:takt_desk/app/scaled_layout.dart';
 import 'package:takt_desk/core/database/app_database.dart';
 import 'package:takt_desk/core/focus/focus_lock_service.dart';
 import 'package:takt_desk/features/desk/presentation/desk_canvas_screen.dart';
@@ -138,6 +139,42 @@ void main() {
       expect(find.byType(MasterConsoleLandscapeLayout), findsNothing);
 
       await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('a big tablet draws the instruments bigger; a tall one stacks the dial above the module', (tester) async {
+      Future<void> open(Size size) async {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1.0;
+        await tester.pumpWidget(
+          ProviderScope(overrides: deskTestOverrides(testDb), child: const MaterialApp(home: DeskCanvasScreen())),
+        );
+        await tester.pumpAndSettle();
+      }
+
+      addTearDown(tester.view.resetPhysicalSize);
+      double scaleOf(Finder f) => tester
+          .renderObject<RenderScaledLayout>(find.ancestor(of: f, matching: find.byType(ScaledLayout)).first)
+          .scale;
+
+      await open(const Size(1280, 800));
+      expect(find.byKey(const ValueKey('stacked_console_rack')), findsNothing);
+      expect(scaleOf(find.byType(ChronoDialWidget)), greaterThan(1.3));
+      expect(scaleOf(find.byType(ReceiptRunnerWidget)), scaleOf(find.byType(ChronoDialWidget)), reason: 'one device');
+      await tester.tap(find.text('VINYL'));
+      await tester.pumpAndSettle();
+      expect(find.byType(VinylPlayerWidget), findsOneWidget, reason: 'the scaled tabs still take taps');
+
+      await open(const Size(800, 1280));
+      expect(find.byKey(const ValueKey('stacked_console_rack')), findsOneWidget);
+      expect(tester.getCenter(find.byType(ChronoDialWidget)).dy, lessThan(tester.getCenter(find.text('DISPENSER')).dy));
+      expect(scaleOf(find.byType(ChronoDialWidget)), greaterThan(1.1));
+
+      await open(const Size(400, 850));
+      expect(find.byType(MasterConsoleLandscapeLayout), findsNothing);
+      expect(scaleOf(find.byType(ChronoDialWidget)), 1, reason: 'phones keep their layout');
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(milliseconds: 100));
     });
   });
 }

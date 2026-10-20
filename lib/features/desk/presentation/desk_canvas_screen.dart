@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import '../../../app/scaled_layout.dart';
 import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/takt_typography.dart';
 import '../../../app/theme/theme_controller.dart';
@@ -299,38 +300,37 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
             selected: isSelected,
             button: true,
             child: InkWell(
-            onTap: () => _selectInstrument(index),
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? (theme.isDarkMode ? TaktColors.chassisObsidian : Colors.white)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: isSelected
-                    ? const [
-                        BoxShadow(
-                          color: Color(0x33000000),
-                          offset: Offset(0, 1),
-                          blurRadius: 2,
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Text(
-                labels[index],
-                style: TaktTypography.controlLabel.copyWith(
-                  fontSize: 10.5,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected
-                      ? (theme.isDarkMode ? TaktColors.filamentAmber : const Color(0xFF141517))
-                      : (theme.isDarkMode ? Colors.white54 : const Color(0xFF374151)),
-                  letterSpacing: 1.0,
+              onTap: () => _selectInstrument(index),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color:
+                      isSelected ? (theme.isDarkMode ? TaktColors.chassisObsidian : Colors.white) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: isSelected
+                      ? const [
+                          BoxShadow(
+                            color: Color(0x33000000),
+                            offset: Offset(0, 1),
+                            blurRadius: 2,
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Text(
+                  labels[index],
+                  style: TaktTypography.controlLabel.copyWith(
+                    fontSize: 10.5,
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                    color: isSelected
+                        ? (theme.isDarkMode ? TaktColors.filamentAmber : const Color(0xFF141517))
+                        : (theme.isDarkMode ? Colors.white54 : const Color(0xFF374151)),
+                    letterSpacing: 1.0,
+                  ),
                 ),
               ),
             ),
-          ),
           );
         }),
       ),
@@ -428,122 +428,134 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
               child: IsometricDeskLayout(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape ||
-                        constraints.maxWidth >= 720;
+                    final isLandscape =
+                        MediaQuery.of(context).orientation == Orientation.landscape || constraints.maxWidth >= 720;
                     if (isLandscape) {
                       return const MasterConsoleLandscapeLayout();
                     }
+                    // A 7-8" tablet in portrait (560-719 wide) gets the phone column drawn bigger instead of a
+                    // 440-wide strip with empty margins; phones stay at 1.
+                    final columnScale = constraints.maxWidth >= 560
+                        ? instrumentScale(
+                            Size(constraints.maxWidth * 0.92, constraints.maxHeight),
+                            const Size(440, 760),
+                            maxScale: 1.4,
+                          )
+                        : 1.0;
                     return Align(
                       alignment: Alignment.topCenter,
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 440),
-                        child: LayoutBuilder(
-                          builder: (context, viewportConstraints) {
-                            return SingleChildScrollView(
-                              physics: const BouncingScrollPhysics(),
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  minHeight: viewportConstraints.maxHeight,
-                                  minWidth: viewportConstraints.maxWidth,
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                                    children: [
-                                      // Top Section: Header + Segmented Instrument Navigation (Swipe Enabled on Empty Header/Tabs)
-                                      _buildSwipeZone(
-                                        key: const ValueKey('desk_header_swipe_zone'),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                                          children: [
-                                            // Row 1: Header - Branding and Chassis Hardware Controls (Monastic + Theme Switch)
-                                            Padding(
-                                              padding: const EdgeInsets.only(bottom: 14.0),
-                                              child: Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                crossAxisAlignment: CrossAxisAlignment.center,
-                                                children: [
-                                                  Row(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      const TimerStatusLed(),
-                                                      Text(
-                                                        'ZYKL',
-                                                        style: TaktTypography.controlLabel.copyWith(
-                                                          color: theme.hasDarkChassis
-                                                              ? TaktColors.warmBone.withValues(alpha: 0.85)
-                                                              : const Color(0xFF2C3038),
-                                                          letterSpacing: 2.0,
-                                                          fontSize: 12.0,
-                                                          fontWeight: FontWeight.w800,
+                        constraints: BoxConstraints(maxWidth: 440 * columnScale),
+                        child: ScaledLayout(
+                          scale: columnScale,
+                          child: LayoutBuilder(
+                            builder: (context, viewportConstraints) {
+                              return SingleChildScrollView(
+                                physics: const BouncingScrollPhysics(),
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    minHeight: viewportConstraints.maxHeight,
+                                    minWidth: viewportConstraints.maxWidth,
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      children: [
+                                        // Top Section: Header + Segmented Instrument Navigation (Swipe Enabled on Empty Header/Tabs)
+                                        _buildSwipeZone(
+                                          key: const ValueKey('desk_header_swipe_zone'),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                                            children: [
+                                              // Row 1: Header - Branding and Chassis Hardware Controls (Monastic + Theme Switch)
+                                              Padding(
+                                                padding: const EdgeInsets.only(bottom: 14.0),
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                                  children: [
+                                                    Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        const TimerStatusLed(),
+                                                        Text(
+                                                          'ZYKL',
+                                                          style: TaktTypography.controlLabel.copyWith(
+                                                            color: theme.hasDarkChassis
+                                                                ? TaktColors.warmBone.withValues(alpha: 0.85)
+                                                                : const Color(0xFF2C3038),
+                                                            letterSpacing: 2.0,
+                                                            fontSize: 12.0,
+                                                            fontWeight: FontWeight.w800,
+                                                          ),
                                                         ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  const Row(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      SettingsRivetButton(),
-                                                      SizedBox(width: 8),
-                                                      ChassisThemeSwitch(),
-                                                    ],
-                                                  ),
-                                                ],
+                                                      ],
+                                                    ),
+                                                    const Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        SettingsRivetButton(),
+                                                        SizedBox(width: 8),
+                                                        ChassisThemeSwitch(),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
-                                            ),
-                                            // Row 2: Dedicated Segmented Instrument Navigation
-                                            Center(
-                                              child: _buildInstrumentSelector(theme),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      // Middle Section: Active Instrument Console (Direct Hardware UI - NO Swipe Interception)
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 24.0),
-                                        child: AnimatedSwitcher(
-                                          duration: _reduceMotion ? Duration.zero : const Duration(milliseconds: 260),
-                                          switchInCurve: Curves.easeOutCubic,
-                                          switchOutCurve: Curves.easeInCubic,
-                                          transitionBuilder: (child, animation) {
-                                            return FadeTransition(
-                                              opacity: animation,
-                                              child: SlideTransition(
-                                                position: Tween<Offset>(
-                                                  begin: Offset(_lastSlideDirection * 0.08, 0.0),
-                                                  end: Offset.zero,
-                                                ).animate(animation),
-                                                child: child,
+                                              // Row 2: Dedicated Segmented Instrument Navigation
+                                              Center(
+                                                child: _buildInstrumentSelector(theme),
                                               ),
-                                            );
-                                          },
-                                          child: _buildActiveInstrument(_selectedInstrumentIndex),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                      // Bottom Dock: Emergency Unlatch (pinned at bottom when locked) + Desk Spec Plate (Swipe Enabled)
-                                      _buildSwipeZone(
-                                        key: const ValueKey('desk_dock_swipe_zone'),
-                                        child: const Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                                          children: [
-                                            EmergencyUnlatchWidget(),
-                                            Padding(
-                                              padding: EdgeInsets.only(top: 8.0),
-                                              child: DeskSpecPlateWidget(),
-                                            ),
-                                          ],
+                                        // Middle Section: Active Instrument Console (Direct Hardware UI - NO Swipe Interception)
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 24.0),
+                                          child: AnimatedSwitcher(
+                                            duration: _reduceMotion ? Duration.zero : const Duration(milliseconds: 260),
+                                            switchInCurve: Curves.easeOutCubic,
+                                            switchOutCurve: Curves.easeInCubic,
+                                            transitionBuilder: (child, animation) {
+                                              return FadeTransition(
+                                                opacity: animation,
+                                                child: SlideTransition(
+                                                  position: Tween<Offset>(
+                                                    begin: Offset(_lastSlideDirection * 0.08, 0.0),
+                                                    end: Offset.zero,
+                                                  ).animate(animation),
+                                                  child: child,
+                                                ),
+                                              );
+                                            },
+                                            child: _buildActiveInstrument(_selectedInstrumentIndex),
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                        // Bottom Dock: Emergency Unlatch (pinned at bottom when locked) + Desk Spec Plate (Swipe Enabled)
+                                        _buildSwipeZone(
+                                          key: const ValueKey('desk_dock_swipe_zone'),
+                                          child: const Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                                            children: [
+                                              EmergencyUnlatchWidget(),
+                                              Padding(
+                                                padding: EdgeInsets.only(top: 8.0),
+                                                child: DeskSpecPlateWidget(),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
                       ),
                     );
