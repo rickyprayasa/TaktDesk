@@ -9,7 +9,7 @@
 - Website repo (separate): `/home/tuneeca/RSQUARE/Android/zykl.app` (Next.js on Cloudflare Worker).
 - Native Android code: `android/app/src/main/kotlin/com/zykl/app/` (MainActivity = audio/focus/widget channels,
   TimerForegroundService = background countdown + completion, MediaNotificationService = vinyl notification).
-- Verify with: `flutter analyze` → 0 issues; `flutter test -j 1` → all pass (551 at last full run);
+- Verify with: `flutter analyze` → 0 issues; `flutter test -j 1` → all pass (556 at last full run);
   Kotlin: `cd android && ./gradlew :app:compileDebugKotlin --offline -q`.
 - Run heavy jobs (build/render/test) one at a time with `nice`. Do NOT build APK/AAB unless the user asks —
   the user reviews on the Linux emulator first. Release outputs go to `build_outputs/` (git-ignored).
@@ -27,6 +27,21 @@
 - **Do not build APK/AAB unless the owner asks in that message** (owner reviews code changes on Linux first).
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
+
+## 2026-10-20 — Tablet layout: bigger instruments, stacked portrait console  (status: committed `27deabf`; tests 556 green; NOT built; version 1.0.8+9 → next release 1.0.9+10)
+
+Render check (widget-test goldens, Ahem font) at phone 411x891 / 891x411, 7" 600x960 / 960x600, foldable 720x840,
+10" 800x1280 / 1280x800, 13" 1024x1366 / 1366x1024 + Vinyl tab, Settings, Analytics: no overflow or errors, but the
+instruments kept phone size on big tablets and portrait tablets (>= 720 wide) got thin side-by-side columns.
+- `lib/app/scaled_layout.dart`: `ScaledLayout` (real layout scale: hit tests, scrolling, rotary pan follow) and
+  `instrumentScale()` (never < 1, so phones are unchanged).
+- `MasterConsoleLandscapeLayout`: one scale for dial and module (cap 1.7); height ≥ 1.25 × width → stacked rack
+  (`stacked_console_rack`: dial, unlatch, DISPENSER/VINYL tabs, module; cap 1.8).
+- `DeskCanvasScreen` phone column: 560–719 wide → up to 1.4× (7" portrait).
+- Measured scales: 600x960 1.25, 800x1280 1.25, 1024x1366 1.34, 1280x800 1.45, 1366x1024 1.67; 960x600, 720x840 and
+  phones 1.00.
+- Not covered by renders: real foldable hinge, keyboard/mouse, split-screen resizing — check on a device if possible.
+- Play Console: after release, add 7" and 10" tablet screenshots to the store listing.
 
 ## 2026-10-19 (b) — v1.0.8 (versionCode 9) AAB built  (status: built + tagged `v1.0.8`; owner uploads to Play)
 
