@@ -28,7 +28,19 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
-## 2026-10-21 — Console pane fits opened drawers  (status: committed; tests 557 green; NOT built — 1.0.9 AAB build was stopped to include this)
+## 2026-10-21 (b) — v1.0.9 (versionCode 10) AAB built  (status: built + tagged `v1.0.9`; owner uploads to Play)
+
+Owner approved the tablet layout on Linux. Built 08:02: `build_outputs/zykl-playstore-release.aab` (62.7 MB),
+`com.zykl.app`, 1.0.9 / vc 10, jarsigner verified, upload key `27:5B:8E:D7…`, obfuscated (no purchase-check anchors).
+Dart symbols: `build_outputs/symbols/1.0.9+10-aab/`. 1.0.8 AAB archived in `build_outputs/previous/2026-10-19-v1.0.8/`.
+After upload: check Test and release → Pre-launch report (Play runs it on real devices, tablets included), then add
+7" and 10" tablet screenshots to the listing.
+
+Release notes (en-US):
+> Made for tablets: the dial, dispenser and record player now fill large screens, and tall tablets stack the dial
+> above the tasks. Opened drawers always fit on screen.
+
+## 2026-10-21 — Console pane fits opened drawers  (status: committed; tests 557 green; shipped in the 1.0.9 AAB, see (b))
 
 Owner reviewed the tablet layout as a Linux desktop window (`flutter run -d linux`, resized): with the record drawer
 (vinyl) or the archive (dispenser) open, the module ran past the pane and looked cut off (it scrolled silently).
