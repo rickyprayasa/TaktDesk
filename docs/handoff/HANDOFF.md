@@ -9,7 +9,7 @@
 - Website repo (separate): `/home/tuneeca/RSQUARE/Android/zykl.app` (Next.js on Cloudflare Worker).
 - Native Android code: `android/app/src/main/kotlin/com/zykl/app/` (MainActivity = audio/focus/widget channels,
   TimerForegroundService = background countdown + completion, MediaNotificationService = vinyl notification).
-- Verify with: `flutter analyze` → 0 issues; `flutter test -j 1` → all pass (556 at last full run);
+- Verify with: `flutter analyze` → 0 issues; `flutter test -j 1` → all pass (557 at last full run);
   Kotlin: `cd android && ./gradlew :app:compileDebugKotlin --offline -q`.
 - Run heavy jobs (build/render/test) one at a time with `nice`. Do NOT build APK/AAB unless the user asks —
   the user reviews on the Linux emulator first. Release outputs go to `build_outputs/` (git-ignored).
@@ -27,6 +27,17 @@
 - **Do not build APK/AAB unless the owner asks in that message** (owner reviews code changes on Linux first).
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
+
+## 2026-10-21 — Console pane fits opened drawers  (status: committed; tests 557 green; NOT built — 1.0.9 AAB build was stopped to include this)
+
+Owner reviewed the tablet layout as a Linux desktop window (`flutter run -d linux`, resized): with the record drawer
+(vinyl) or the archive (dispenser) open, the module ran past the pane and looked cut off (it scrolled silently).
+`FitScaledLayout` (in `lib/app/scaled_layout.dart`) keeps the console scale while the module fits and shrinks it down
+to 0.8 as it grows; past that the pane scrolls with a bottom fade (`_FitPane` in `master_console_landscape_layout.dart`).
+Measured: 1209x691 vinyl+drawer 1.06 (fits), 5 slips + archive 0.80 (+34 px scroll); 800x1280 fits; phone landscape
+891x411 0.80 + small scroll. Version is already 1.0.9+10 (`6210645`); next step: owner re-checks on Linux, then AAB.
+Review commands for the owner: `flutter run -d linux` (resize the window for tablet sizes; Android-only features
+don't run there) or emulator `wllte` + `flutter run --dart-define=ENABLE_PRO_SIMULATION=true`.
 
 ## 2026-10-20 — Tablet layout: bigger instruments, stacked portrait console  (status: committed `27deabf`; tests 556 green; NOT built; version 1.0.8+9 → next release 1.0.9+10)
 
