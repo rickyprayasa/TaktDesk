@@ -61,32 +61,24 @@ class _MasterConsoleLandscapeLayoutState extends ConsumerState<MasterConsoleLand
     );
   }
 
-  /// Tall tablet: dial, then the module tabs and the module, all at one scale; scrolls if it doesn't fit.
+  /// Tall tablet: dial, then the module tabs and the module, all at one scale; shrinks a little when an opened
+  /// drawer or archive makes it too tall, then scrolls.
   Widget _buildStackedRack(ChassisThemeState theme, double scale) {
-    return LayoutBuilder(
-      builder: (context, viewport) => SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: viewport.maxHeight, minWidth: viewport.maxWidth),
-          child: Center(
-            child: ScaledLayout(
-              scale: scale,
-              child: Column(
-                key: const ValueKey('stacked_console_rack'),
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const ChronoDialWidget(),
-                  const SizedBox(height: 10),
-                  const EmergencyUnlatchWidget(),
-                  const SizedBox(height: 18),
-                  _buildRightModuleSelector(theme),
-                  const SizedBox(height: 16),
-                  _buildModule(),
-                ],
-              ),
-            ),
-          ),
-        ),
+    return _FitPane(
+      scale: scale,
+      fadeColor: theme.canvasColor,
+      child: Column(
+        key: const ValueKey('stacked_console_rack'),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const ChronoDialWidget(),
+          const SizedBox(height: 10),
+          const EmergencyUnlatchWidget(),
+          const SizedBox(height: 18),
+          _buildRightModuleSelector(theme),
+          const SizedBox(height: 16),
+          _buildModule(),
+        ],
       ),
     );
   }
@@ -287,17 +279,9 @@ class _MasterConsoleLandscapeLayoutState extends ConsumerState<MasterConsoleLand
                                 child: ScaledLayout(scale: scale, child: _buildRightModuleSelector(theme)),
                               ),
                             ),
-                            // 2. Hardware UI module centered in scroll container
+                            // 2. Hardware UI module: fits the pane (an opened drawer shrinks it a little), then scrolls
                             Expanded(
-                              child: Center(
-                                child: SingleChildScrollView(
-                                  physics: const BouncingScrollPhysics(),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    child: ScaledLayout(scale: scale, child: _buildModule()),
-                                  ),
-                                ),
-                              ),
+                              child: _FitPane(scale: scale, fadeColor: theme.canvasColor, child: _buildModule()),
                             ),
                           ],
                         ),
@@ -317,6 +301,100 @@ class _MasterConsoleLandscapeLayoutState extends ConsumerState<MasterConsoleLand
           ),
         );
       },
+    );
+  }
+}
+
+/// A pane that draws [child] at [scale], shrinks it (to 0.8) when it grows taller than the pane, and scrolls past
+/// that, with a fade at the bottom while there is more below, so a long module never just looks cut off.
+class _FitPane extends StatefulWidget {
+  final double scale;
+  final Color fadeColor;
+  final Widget child;
+
+  const _FitPane({required this.scale, required this.fadeColor, required this.child});
+
+  @override
+  State<_FitPane> createState() => _FitPaneState();
+}
+
+class _FitPaneState extends State<_FitPane> {
+  static const double _padding = 4;
+  final ScrollController _controller = ScrollController();
+  bool _moreBelow = false;
+
+  void _check() {
+    if (!mounted || !_controller.hasClients) return;
+    final more = _controller.position.extentAfter > 1;
+    if (more != _moreBelow) setState(() => _moreBelow = more);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _check());
+    return LayoutBuilder(
+      builder: (context, viewport) => NotificationListener<ScrollMetricsNotification>(
+        onNotification: (_) {
+          _check();
+          return false;
+        },
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (_) {
+            _check();
+            return false;
+          },
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                key: const ValueKey('console_fit_pane'),
+                controller: _controller,
+                physics: const BouncingScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: viewport.maxHeight, minWidth: viewport.maxWidth),
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: _padding),
+                      child: FitScaledLayout(
+                        scale: widget.scale,
+                        availableHeight: viewport.maxHeight - 2 * _padding,
+                        child: widget.child,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: 32,
+                child: IgnorePointer(
+                  child: AnimatedOpacity(
+                    key: const ValueKey('console_more_below'),
+                    opacity: _moreBelow ? 1 : 0,
+                    duration: motion(context, const Duration(milliseconds: 200)),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [widget.fadeColor.withValues(alpha: 0), widget.fadeColor],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

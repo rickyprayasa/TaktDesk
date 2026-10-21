@@ -153,7 +153,9 @@ void main() {
 
       addTearDown(tester.view.resetPhysicalSize);
       double scaleOf(Finder f) => tester
-          .renderObject<RenderScaledLayout>(find.ancestor(of: f, matching: find.byType(ScaledLayout)).first)
+          .renderObject<RenderScaledLayout>(find
+              .ancestor(of: f, matching: find.byWidgetPredicate((w) => w is ScaledLayout || w is FitScaledLayout))
+              .first)
           .scale;
 
       await open(const Size(1280, 800));

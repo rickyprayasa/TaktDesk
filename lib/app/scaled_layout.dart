@@ -110,3 +110,97 @@ double instrumentScale(Size available, Size design, {double maxScale = 1.7}) {
   final fit = math.min(available.width / design.width, available.height / design.height);
   return fit.clamp(1.0, maxScale).toDouble();
 }
+
+/// [ScaledLayout] that also shrinks to keep its child within [availableHeight]: at [scale] while the child fits, then
+/// smaller as it grows (an opened record drawer or archive), down to [minScale]; past that the caller scrolls.
+/// The child's own expand animations make the change smooth.
+class FitScaledLayout extends SingleChildRenderObjectWidget {
+  final double scale;
+  final double minScale;
+  final double availableHeight;
+
+  const FitScaledLayout({
+    super.key,
+    required this.scale,
+    required this.availableHeight,
+    this.minScale = 0.8,
+    super.child,
+  });
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      RenderFitScaledLayout(scale: scale, minScale: minScale, availableHeight: availableHeight);
+
+  @override
+  void updateRenderObject(BuildContext context, RenderFitScaledLayout renderObject) {
+    renderObject
+      ..maxScale = scale
+      ..minScale = minScale
+      ..availableHeight = availableHeight;
+  }
+}
+
+class RenderFitScaledLayout extends RenderScaledLayout {
+  RenderFitScaledLayout({required double scale, required double minScale, required double availableHeight})
+      : _maxScale = scale,
+        _minScale = minScale,
+        _availableHeight = availableHeight,
+        super(scale);
+
+  double _maxScale;
+  set maxScale(double v) {
+    if (v == _maxScale) return;
+    _maxScale = v;
+    markNeedsLayout();
+  }
+
+  double _minScale;
+  set minScale(double v) {
+    if (v == _minScale) return;
+    _minScale = v;
+    markNeedsLayout();
+  }
+
+  double _availableHeight;
+  set availableHeight(double v) {
+    if (v == _availableHeight) return;
+    _availableHeight = v;
+    markNeedsLayout();
+  }
+
+  double _fit(Size natural) {
+    final floor = math.min(_minScale, _maxScale);
+    if (natural.height <= 0 || !_availableHeight.isFinite || _availableHeight <= 0) return _maxScale;
+    return (_availableHeight / natural.height).clamp(floor, _maxScale).toDouble();
+  }
+
+  BoxConstraints _at(BoxConstraints c, double s) => BoxConstraints(
+        minWidth: RenderScaledLayout._div(c.minWidth, s),
+        maxWidth: RenderScaledLayout._div(c.maxWidth, s),
+        minHeight: RenderScaledLayout._div(c.minHeight, s),
+        maxHeight: RenderScaledLayout._div(c.maxHeight, s),
+      );
+
+  @override
+  Size computeDryLayout(BoxConstraints constraints) {
+    final c = child;
+    if (c == null) return constraints.smallest;
+    final s = _fit(c.getDryLayout(_at(constraints, _maxScale)));
+    return constraints.constrain(c.getDryLayout(_at(constraints, s)) * s);
+  }
+
+  @override
+  void performLayout() {
+    final c = child;
+    if (c == null) {
+      size = constraints.smallest;
+      return;
+    }
+    c.layout(_at(constraints, _maxScale), parentUsesSize: true);
+    final s = _fit(c.size);
+    if (s != _maxScale) c.layout(_at(constraints, s), parentUsesSize: true);
+    // Set the field directly: the setter would ask for another layout.
+    _scale = s;
+    size = constraints.constrain(c.size * s);
+  }
+}

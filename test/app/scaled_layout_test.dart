@@ -41,6 +41,32 @@ void main() {
     expect(tester.getSize(find.byKey(const ValueKey('fill'))), const Size(200, 80));
   });
 
+  testWidgets('FitScaledLayout keeps the scale while the child fits, shrinks as it grows, stops at minScale',
+      (tester) async {
+    Future<double> scaleFor(double childHeight) async {
+      await tester.pumpWidget(Directionality(
+        textDirection: TextDirection.ltr,
+        // As in the console: inside a scroll view, so the height is unbounded.
+        child: SingleChildScrollView(
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: FitScaledLayout(
+              scale: 1.5,
+              availableHeight: 600,
+              child: SizedBox(width: 100, height: childHeight),
+            ),
+          ),
+        ),
+      ));
+      return tester.renderObject<RenderFitScaledLayout>(find.byType(FitScaledLayout)).scale;
+    }
+
+    expect(await scaleFor(300), 1.5, reason: '300 x 1.5 = 450 fits');
+    expect(await scaleFor(500), closeTo(1.2, 1e-9), reason: 'an opened drawer: 600 / 500');
+    expect(await scaleFor(1000), 0.8, reason: 'never below minScale; the pane scrolls');
+    expect(tester.getSize(find.byType(FitScaledLayout)), const Size(80, 800));
+  });
+
   test('instrumentScale: phones stay at 1, big screens grow up to the cap', () {
     const design = Size(340, 420);
     expect(instrumentScale(const Size(300, 600), design), 1);
