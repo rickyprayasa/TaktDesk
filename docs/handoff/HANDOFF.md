@@ -28,6 +28,16 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-22 — Website security update (PHP2Shell / Node.js October release)  (status: website `4c6eeb4` pushed and live)
+
+Owner asked after the 21 Oct attacks (PHP2Shell CVE-2026-109618/109619; Node.js security release of 21 Oct). zykl.app
+has no PHP and no Node server at runtime (static export on a Cloudflare Worker; the worker only proxies assets and
+answers /get), so neither was reachable. Updated anyway: local Node 24.21.0 → 24.22.1 (nvm default), `.node-version`
+24.22.1 for Cloudflare Workers Builds, next 15.2.1 → 15.5.28, react/react-dom 19.0.0 → 19.0.9, `npm audit fix`
+(sharp, source-map-js). Left: PostCSS inside Next and Tailwind 3's watcher (build-time only; fix needs Next 16 /
+Tailwind 4). First Cloudflare build failed at "Initializing build environment" (Cloudflare internal error, before
+cloning); owner's Retry build succeeded, live chunks match the local build.
+
 ## 2026-10-21 (b) — v1.0.9 (versionCode 10) AAB built  (status: built + tagged `v1.0.9`; owner uploads to Play)
 
 Owner approved the tablet layout on Linux. Built 08:02: `build_outputs/zykl-playstore-release.aab` (62.7 MB),
