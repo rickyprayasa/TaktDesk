@@ -28,6 +28,25 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-26 — Production access granted; launch prep; new 35 s film  (status: 1.0.9 in Production review; website 2 commits LOCAL, push on launch day)
+
+- Play: production access granted; Production release 10 (1.0.9), 178 countries, full rollout, managed publishing off
+  (goes live by itself after review). "Edge-to-edge may not display" recommendation comes from the Flutter engine's
+  legacy window calls (our UI uses SafeArea); revisit with the Flutter upgrade. Open testing: skipped for now.
+- Flutter security check (2026-10-26): pub.dev malware case (`universal_file_viewer`) not used; Dart advisory
+  GHSA-frr6-h895-5pxp (eMudhra CAs, dart:io TLS) needs Flutter 3.47.8 — ZYKL's Dart code makes no network calls, so
+  not reachable; **upgrade Flutter 3.44.1 → 3.47.8 in 1.0.10** (watch the in_app_review KGP warning).
+- Website (`zykl.app`, NOT pushed, owner wants one push after the Play listing is live):
+  - `23334f8` new 35 s film (owner's re-render; "Pull the lever" subtitle on two lines), 720p H.264 CRF 26 veryslow,
+    2.0–2.5 MB per cut, posters ~37 KB, FILM_VERSION 2026-10-26, labels "35 SECONDS". The motion2code skill was not
+    used: it is for flat motion design, not 3D renders.
+  - `739a08f` launch: changelog v1.0.9 (build 10) "FIRST PUBLIC RELEASE // NOW ON GOOGLE PLAY", branch STABLE,
+    corrected audio (Ogg Vorbis) and security lines; worker forwards /coming-soon to Play once live (tested with a
+    Node harness); PLAY_STORE_LIVE = true.
+  - **Launch day**: set `date` in `src/data/changelog.ts` to the go-live day (amend `739a08f`), build, push, then check
+    zykl.app/get and /coming-soon redirect to Play, /changelog shows v1.0.9.
+- After launch: ask testers for Play reviews; add 7"/10" tablet screenshots from the Pre-launch report.
+
 ## 2026-10-22 — Website security update (PHP2Shell / Node.js October release)  (status: website `4c6eeb4` pushed and live)
 
 Owner asked after the 21 Oct attacks (PHP2Shell CVE-2026-109618/109619; Node.js security release of 21 Oct). zykl.app
