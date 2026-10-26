@@ -28,7 +28,7 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
-## 2026-10-26 — Production access granted; launch prep; new 35 s film  (status: 1.0.9 in Production review; website 2 commits LOCAL, push on launch day)
+## 2026-10-26 — Production access granted; launch prep; new 35 s film  (status: 1.0.9 in Production review; website 3 commits LOCAL, push on launch day)
 
 - Play: production access granted; Production release 10 (1.0.9), 178 countries, full rollout, managed publishing off
   (goes live by itself after review). "Edge-to-edge may not display" recommendation comes from the Flutter engine's
@@ -43,6 +43,9 @@
   - `739a08f` launch: changelog v1.0.9 (build 10) "FIRST PUBLIC RELEASE // NOW ON GOOGLE PLAY", branch STABLE,
     corrected audio (Ogg Vorbis) and security lines; worker forwards /coming-soon to Play once live (tested with a
     Node harness); PLAY_STORE_LIVE = true.
+  - `52ee5b2` price in one place: `PRO_PRICE_USD` / `PRO_PRICE_IDR` in `src/data/app.ts` feed Terms, FAQ, specs and
+    JSON-LD (changelog keeps the per-release price). Owner's plan: keep US$4.99 / Rp 69.000 as the launch price;
+    raise for new buyers only with real new content, announced ahead, no fake discounts.
   - **Launch day**: set `date` in `src/data/changelog.ts` to the go-live day (amend `739a08f`), build, push, then check
     zykl.app/get and /coming-soon redirect to Play, /changelog shows v1.0.9.
 - After launch: ask testers for Play reviews; add 7"/10" tablet screenshots from the Pre-launch report.
