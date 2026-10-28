@@ -116,6 +116,10 @@ class MainActivity : FlutterActivity() {
     private val FOCUS_CHANNEL = "com.takt.desk/focus_lock"
     private val DISPLAY_CHANNEL = "com.zykl.app/display"
     private val BACKUP_CHANNEL = "com.zykl.app/backup"
+    private val PERMISSION_CHANNEL = "com.zykl.app/permissions"
+
+    /** First-run walkthrough waiting for the POST_NOTIFICATIONS answer. */
+    private var pendingNotificationResult: MethodChannel.Result? = null
     private val WIDGET_THEME_CHANNEL = "com.zykl.app/widget_theme"
 
     /** Waiting system file picker (backup export / restore) and what to write once a file is chosen. */
@@ -598,7 +602,7 @@ class MainActivity : FlutterActivity() {
                         val targetMinutes = (call.argument<Number>("targetMinutes"))?.toInt() ?: 25
                         val phase = call.argument<String>("phase") ?: "focus"
                         val cycleCount = (call.argument<Number>("cycleCount"))?.toInt() ?: 1
-                        val profileName = call.argument<String>("profileName") ?: "CLASSIC 25/5"
+                        val profileName = call.argument<String>("profileName") ?: "DAILY FOCUS 25/5"
                         val alarmChimeId = call.argument<String>("alarmChimeId") ?: "braunBell"
                         val autoStartNext = call.argument<Boolean>("autoStartNext") == true
 
@@ -651,7 +655,7 @@ class MainActivity : FlutterActivity() {
                         (call.argument<Number>("targetMinutes"))?.toInt() ?: 25,
                         call.argument<String>("phase") ?: "focus",
                         (call.argument<Number>("cycleCount"))?.toInt() ?: 1,
-                        call.argument<String>("profileName") ?: "CLASSIC 25/5",
+                        call.argument<String>("profileName") ?: "DAILY FOCUS 25/5",
                         call.argument<String>("alarmChimeId") ?: "braunBell"
                     )
                     result.success(true)
@@ -685,6 +689,38 @@ class MainActivity : FlutterActivity() {
                 "setDimmed" -> {
                     setDimmed(call.argument<Boolean>("dimmed") == true)
                     result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        // First-run walkthrough: ask for notifications in context and report the answer back to Flutter.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, PERMISSION_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "notificationStatus" -> result.success(notificationStatus())
+                "requestNotifications" -> {
+                    if (notificationStatus() != "denied") {
+                        result.success(notificationStatus() == "granted" || notificationStatus() == "notRequired")
+                    } else if (pendingNotificationResult != null) {
+                        result.error("BUSY", "A permission request is already open", null)
+                    } else {
+                        // Counts as the one in-context ask, so the first timer start doesn't ask again.
+                        getSharedPreferences(PERMISSION_PREFS, Context.MODE_PRIVATE).edit()
+                            .putBoolean(KEY_NOTIFICATION_ASKED, true).apply()
+                        pendingNotificationResult = result
+                        requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_POST_NOTIFICATIONS)
+                    }
+                }
+                "openNotificationSettings" -> {
+                    try {
+                        startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                            putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        })
+                        result.success(true)
+                    } catch (_: Exception) {
+                        result.success(false)
+                    }
                 }
                 else -> result.notImplemented()
             }
@@ -893,7 +929,7 @@ class MainActivity : FlutterActivity() {
                         val tasksList = call.argument<List<Map<String, Any>>>("tasks") ?: emptyList()
                         val tasksJson = org.json.JSONArray(tasksList).toString()
                         val isPro = call.argument<Boolean>("isPro") ?: false
-                        val profileName = call.argument<String>("profileName") ?: "CLASSIC 25/5"
+                        val profileName = call.argument<String>("profileName") ?: "DAILY FOCUS 25/5"
                         val alarmChimeId = call.argument<String>("alarmChimeId") ?: "braunBell"
                         val cycleCount = (call.argument<Number>("cycleCount"))?.toInt() ?: 1
 
@@ -942,8 +978,19 @@ class MainActivity : FlutterActivity() {
         requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_POST_NOTIFICATIONS)
     }
 
+    /** "granted", "denied", or "notRequired" (before Android 13 notifications need no runtime permission). */
+    private fun notificationStatus(): String = when {
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU -> "notRequired"
+        checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED -> "granted"
+        else -> "denied"
+    }
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_POST_NOTIFICATIONS) {
+            pendingNotificationResult?.success(grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED)
+            pendingNotificationResult = null
+        }
         if (requestCode == REQUEST_POST_NOTIFICATIONS &&
             grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED &&
             TimerForegroundService.isCountingDown

@@ -31,4 +31,8 @@ class DeskPreferences extends Table {
 
   /// When the Play in-app review was requested (once per install, see ReviewPrompter; schema v13).
   DateTimeColumn get reviewAskedAt => dateTime().nullable()();
+
+  /// The first-run walkthrough (rhythm + permissions) was finished or skipped (schema v14). Installs that already had
+  /// data when v14 arrived are marked done by the migration, so only new users see it.
+  BoolColumn get onboardingDone => boolean().withDefault(const Constant(false))();
 }

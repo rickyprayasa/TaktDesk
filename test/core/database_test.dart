@@ -205,6 +205,17 @@ void main() {
     expect(row.taskId, 7);
   });
 
+  test('schema v14: a new install has not seen the walkthrough; finishing it is remembered', () async {
+    expect(await db.isOnboardingDone(), isFalse);
+    await db.markOnboardingDone();
+    expect(await db.isOnboardingDone(), isTrue);
+    // The migration's statement for installs from before v14 targets this column.
+    await db.customStatement('UPDATE desk_preferences SET onboarding_done = 0');
+    expect(await db.isOnboardingDone(), isFalse);
+    await db.customStatement('UPDATE desk_preferences SET onboarding_done = 1');
+    expect(await db.isOnboardingDone(), isTrue);
+  });
+
   test('schema v13: review asked once; completed cycles leave out abandoned and lockdown-only', () async {
     expect(await db.reviewAskedAt(), isNull);
     final at = DateTime(2026, 10, 13, 20);

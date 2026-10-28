@@ -1040,6 +1040,16 @@ class $DeskPreferencesTable extends DeskPreferences
   late final GeneratedColumn<DateTime> reviewAskedAt =
       GeneratedColumn<DateTime>('review_asked_at', aliasedName, true,
           type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _onboardingDoneMeta =
+      const VerificationMeta('onboardingDone');
+  @override
+  late final GeneratedColumn<bool> onboardingDone = GeneratedColumn<bool>(
+      'onboarding_done', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("onboarding_done" IN (0, 1))'),
+      defaultValue: const Constant(false));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -1058,7 +1068,8 @@ class $DeskPreferencesTable extends DeskPreferences
         autoStartNextPhase,
         dayStartHour,
         weekStartsOnSunday,
-        reviewAskedAt
+        reviewAskedAt,
+        onboardingDone
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1170,6 +1181,12 @@ class $DeskPreferencesTable extends DeskPreferences
           reviewAskedAt.isAcceptableOrUnknown(
               data['review_asked_at']!, _reviewAskedAtMeta));
     }
+    if (data.containsKey('onboarding_done')) {
+      context.handle(
+          _onboardingDoneMeta,
+          onboardingDone.isAcceptableOrUnknown(
+              data['onboarding_done']!, _onboardingDoneMeta));
+    }
     return context;
   }
 
@@ -1214,6 +1231,8 @@ class $DeskPreferencesTable extends DeskPreferences
           DriftSqlType.bool, data['${effectivePrefix}week_starts_on_sunday'])!,
       reviewAskedAt: attachedDatabase.typeMapping.read(
           DriftSqlType.dateTime, data['${effectivePrefix}review_asked_at']),
+      onboardingDone: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}onboarding_done'])!,
     );
   }
 
@@ -1254,6 +1273,10 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
 
   /// When the Play in-app review was requested (once per install, see ReviewPrompter; schema v13).
   final DateTime? reviewAskedAt;
+
+  /// The first-run walkthrough (rhythm + permissions) was finished or skipped (schema v14). Installs that already had
+  /// data when v14 arrived are marked done by the migration, so only new users see it.
+  final bool onboardingDone;
   const DeskPreference(
       {required this.id,
       required this.soundVolume,
@@ -1271,7 +1294,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       required this.autoStartNextPhase,
       required this.dayStartHour,
       required this.weekStartsOnSunday,
-      this.reviewAskedAt});
+      this.reviewAskedAt,
+      required this.onboardingDone});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1294,6 +1318,7 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
     if (!nullToAbsent || reviewAskedAt != null) {
       map['review_asked_at'] = Variable<DateTime>(reviewAskedAt);
     }
+    map['onboarding_done'] = Variable<bool>(onboardingDone);
     return map;
   }
 
@@ -1318,6 +1343,7 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       reviewAskedAt: reviewAskedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(reviewAskedAt),
+      onboardingDone: Value(onboardingDone),
     );
   }
 
@@ -1343,6 +1369,7 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       dayStartHour: serializer.fromJson<int>(json['dayStartHour']),
       weekStartsOnSunday: serializer.fromJson<bool>(json['weekStartsOnSunday']),
       reviewAskedAt: serializer.fromJson<DateTime?>(json['reviewAskedAt']),
+      onboardingDone: serializer.fromJson<bool>(json['onboardingDone']),
     );
   }
   @override
@@ -1367,6 +1394,7 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       'dayStartHour': serializer.toJson<int>(dayStartHour),
       'weekStartsOnSunday': serializer.toJson<bool>(weekStartsOnSunday),
       'reviewAskedAt': serializer.toJson<DateTime?>(reviewAskedAt),
+      'onboardingDone': serializer.toJson<bool>(onboardingDone),
     };
   }
 
@@ -1387,7 +1415,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           bool? autoStartNextPhase,
           int? dayStartHour,
           bool? weekStartsOnSunday,
-          Value<DateTime?> reviewAskedAt = const Value.absent()}) =>
+          Value<DateTime?> reviewAskedAt = const Value.absent(),
+          bool? onboardingDone}) =>
       DeskPreference(
         id: id ?? this.id,
         soundVolume: soundVolume ?? this.soundVolume,
@@ -1408,6 +1437,7 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
         weekStartsOnSunday: weekStartsOnSunday ?? this.weekStartsOnSunday,
         reviewAskedAt:
             reviewAskedAt.present ? reviewAskedAt.value : this.reviewAskedAt,
+        onboardingDone: onboardingDone ?? this.onboardingDone,
       );
   DeskPreference copyWithCompanion(DeskPreferencesCompanion data) {
     return DeskPreference(
@@ -1458,6 +1488,9 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       reviewAskedAt: data.reviewAskedAt.present
           ? data.reviewAskedAt.value
           : this.reviewAskedAt,
+      onboardingDone: data.onboardingDone.present
+          ? data.onboardingDone.value
+          : this.onboardingDone,
     );
   }
 
@@ -1480,7 +1513,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           ..write('autoStartNextPhase: $autoStartNextPhase, ')
           ..write('dayStartHour: $dayStartHour, ')
           ..write('weekStartsOnSunday: $weekStartsOnSunday, ')
-          ..write('reviewAskedAt: $reviewAskedAt')
+          ..write('reviewAskedAt: $reviewAskedAt, ')
+          ..write('onboardingDone: $onboardingDone')
           ..write(')'))
         .toString();
   }
@@ -1503,7 +1537,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
       autoStartNextPhase,
       dayStartHour,
       weekStartsOnSunday,
-      reviewAskedAt);
+      reviewAskedAt,
+      onboardingDone);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1524,7 +1559,8 @@ class DeskPreference extends DataClass implements Insertable<DeskPreference> {
           other.autoStartNextPhase == this.autoStartNextPhase &&
           other.dayStartHour == this.dayStartHour &&
           other.weekStartsOnSunday == this.weekStartsOnSunday &&
-          other.reviewAskedAt == this.reviewAskedAt);
+          other.reviewAskedAt == this.reviewAskedAt &&
+          other.onboardingDone == this.onboardingDone);
 }
 
 class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
@@ -1545,6 +1581,7 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
   final Value<int> dayStartHour;
   final Value<bool> weekStartsOnSunday;
   final Value<DateTime?> reviewAskedAt;
+  final Value<bool> onboardingDone;
   const DeskPreferencesCompanion({
     this.id = const Value.absent(),
     this.soundVolume = const Value.absent(),
@@ -1563,6 +1600,7 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     this.dayStartHour = const Value.absent(),
     this.weekStartsOnSunday = const Value.absent(),
     this.reviewAskedAt = const Value.absent(),
+    this.onboardingDone = const Value.absent(),
   });
   DeskPreferencesCompanion.insert({
     this.id = const Value.absent(),
@@ -1582,6 +1620,7 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     this.dayStartHour = const Value.absent(),
     this.weekStartsOnSunday = const Value.absent(),
     this.reviewAskedAt = const Value.absent(),
+    this.onboardingDone = const Value.absent(),
   });
   static Insertable<DeskPreference> custom({
     Expression<int>? id,
@@ -1601,6 +1640,7 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     Expression<int>? dayStartHour,
     Expression<bool>? weekStartsOnSunday,
     Expression<DateTime>? reviewAskedAt,
+    Expression<bool>? onboardingDone,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1624,6 +1664,7 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       if (weekStartsOnSunday != null)
         'week_starts_on_sunday': weekStartsOnSunday,
       if (reviewAskedAt != null) 'review_asked_at': reviewAskedAt,
+      if (onboardingDone != null) 'onboarding_done': onboardingDone,
     });
   }
 
@@ -1644,7 +1685,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       Value<bool>? autoStartNextPhase,
       Value<int>? dayStartHour,
       Value<bool>? weekStartsOnSunday,
-      Value<DateTime?>? reviewAskedAt}) {
+      Value<DateTime?>? reviewAskedAt,
+      Value<bool>? onboardingDone}) {
     return DeskPreferencesCompanion(
       id: id ?? this.id,
       soundVolume: soundVolume ?? this.soundVolume,
@@ -1664,6 +1706,7 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
       dayStartHour: dayStartHour ?? this.dayStartHour,
       weekStartsOnSunday: weekStartsOnSunday ?? this.weekStartsOnSunday,
       reviewAskedAt: reviewAskedAt ?? this.reviewAskedAt,
+      onboardingDone: onboardingDone ?? this.onboardingDone,
     );
   }
 
@@ -1722,6 +1765,9 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
     if (reviewAskedAt.present) {
       map['review_asked_at'] = Variable<DateTime>(reviewAskedAt.value);
     }
+    if (onboardingDone.present) {
+      map['onboarding_done'] = Variable<bool>(onboardingDone.value);
+    }
     return map;
   }
 
@@ -1744,7 +1790,8 @@ class DeskPreferencesCompanion extends UpdateCompanion<DeskPreference> {
           ..write('autoStartNextPhase: $autoStartNextPhase, ')
           ..write('dayStartHour: $dayStartHour, ')
           ..write('weekStartsOnSunday: $weekStartsOnSunday, ')
-          ..write('reviewAskedAt: $reviewAskedAt')
+          ..write('reviewAskedAt: $reviewAskedAt, ')
+          ..write('onboardingDone: $onboardingDone')
           ..write(')'))
         .toString();
   }
@@ -2213,6 +2260,7 @@ typedef $$DeskPreferencesTableCreateCompanionBuilder = DeskPreferencesCompanion
   Value<int> dayStartHour,
   Value<bool> weekStartsOnSunday,
   Value<DateTime?> reviewAskedAt,
+  Value<bool> onboardingDone,
 });
 typedef $$DeskPreferencesTableUpdateCompanionBuilder = DeskPreferencesCompanion
     Function({
@@ -2233,6 +2281,7 @@ typedef $$DeskPreferencesTableUpdateCompanionBuilder = DeskPreferencesCompanion
   Value<int> dayStartHour,
   Value<bool> weekStartsOnSunday,
   Value<DateTime?> reviewAskedAt,
+  Value<bool> onboardingDone,
 });
 
 class $$DeskPreferencesTableFilterComposer
@@ -2303,6 +2352,10 @@ class $$DeskPreferencesTableFilterComposer
 
   ColumnFilters<DateTime> get reviewAskedAt => $composableBuilder(
       column: $table.reviewAskedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get onboardingDone => $composableBuilder(
+      column: $table.onboardingDone,
+      builder: (column) => ColumnFilters(column));
 }
 
 class $$DeskPreferencesTableOrderingComposer
@@ -2378,6 +2431,10 @@ class $$DeskPreferencesTableOrderingComposer
   ColumnOrderings<DateTime> get reviewAskedAt => $composableBuilder(
       column: $table.reviewAskedAt,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get onboardingDone => $composableBuilder(
+      column: $table.onboardingDone,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$DeskPreferencesTableAnnotationComposer
@@ -2439,6 +2496,9 @@ class $$DeskPreferencesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get reviewAskedAt => $composableBuilder(
       column: $table.reviewAskedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get onboardingDone => $composableBuilder(
+      column: $table.onboardingDone, builder: (column) => column);
 }
 
 class $$DeskPreferencesTableTableManager extends RootTableManager<
@@ -2485,6 +2545,7 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             Value<int> dayStartHour = const Value.absent(),
             Value<bool> weekStartsOnSunday = const Value.absent(),
             Value<DateTime?> reviewAskedAt = const Value.absent(),
+            Value<bool> onboardingDone = const Value.absent(),
           }) =>
               DeskPreferencesCompanion(
             id: id,
@@ -2504,6 +2565,7 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             dayStartHour: dayStartHour,
             weekStartsOnSunday: weekStartsOnSunday,
             reviewAskedAt: reviewAskedAt,
+            onboardingDone: onboardingDone,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -2523,6 +2585,7 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             Value<int> dayStartHour = const Value.absent(),
             Value<bool> weekStartsOnSunday = const Value.absent(),
             Value<DateTime?> reviewAskedAt = const Value.absent(),
+            Value<bool> onboardingDone = const Value.absent(),
           }) =>
               DeskPreferencesCompanion.insert(
             id: id,
@@ -2542,6 +2605,7 @@ class $$DeskPreferencesTableTableManager extends RootTableManager<
             dayStartHour: dayStartHour,
             weekStartsOnSunday: weekStartsOnSunday,
             reviewAskedAt: reviewAskedAt,
+            onboardingDone: onboardingDone,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (

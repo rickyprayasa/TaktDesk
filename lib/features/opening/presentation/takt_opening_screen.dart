@@ -9,6 +9,7 @@ import '../../../../core/audio/sound_effect.dart';
 import '../../../../core/haptics/haptic_service.dart';
 import '../../desk/presentation/desk_canvas_screen.dart';
 import '../../desk/presentation/desk_clock_host.dart';
+import '../../onboarding/presentation/onboarding_screen.dart';
 import '../../settings/presentation/settings_controller.dart';
 
 /// 4.2 s cinematic boot of the instrument (owner asked for a calmer opening
@@ -169,6 +170,8 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
     widget.onComplete?.call();
 
     if (widget.autoNavigate && mounted) {
+      // First run (read with the preferences this screen already waits for): the walkthrough before the desk.
+      final onboarding = ref.read(deskPreferencesControllerProvider).needsOnboarding;
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
           // Reduce motion: cut straight to the desk instead of the 900 ms fade + scale.
@@ -176,7 +179,7 @@ class _TaktOpeningScreenState extends ConsumerState<TaktOpeningScreen>
               ? Duration.zero
               : const Duration(milliseconds: 900),
           pageBuilder: (context, animation, secondaryAnimation) =>
-              const DeskClockHost(child: DeskCanvasScreen()),
+              onboarding ? const OnboardingScreen() : const DeskClockHost(child: DeskCanvasScreen()),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             final curved = CurvedAnimation(parent: animation, curve: Curves.easeInOutCubic);
             // The desk settles in as if the camera pulls back from the dial

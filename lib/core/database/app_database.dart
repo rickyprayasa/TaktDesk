@@ -36,7 +36,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -77,6 +77,17 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 13) {
             await m.addColumn(deskPreferences, deskPreferences.reviewAskedAt);
+          }
+          if (from < 14) {
+            await m.addColumn(deskPreferences, deskPreferences.onboardingDone);
+            // Anyone updating already knows the app: no walkthrough for them.
+            await customStatement('UPDATE desk_preferences SET onboarding_done = 1');
+            final hasPrefs = await (select(deskPreferences)..limit(1)).getSingleOrNull() != null;
+            final hasHistory = await (select(timerSessions)..limit(1)).getSingleOrNull() != null ||
+                await (select(tasks)..limit(1)).getSingleOrNull() != null;
+            if (!hasPrefs && hasHistory) {
+              await into(deskPreferences).insert(const DeskPreferencesCompanion(onboardingDone: Value(true)));
+            }
           }
         },
       );
@@ -293,6 +304,22 @@ class AppDatabase extends _$AppDatabase {
       ..addColumns([count])
       ..where(timerSessions.isFinished.equals(true) & timerSessions.isLockdownOnly.equals(false));
     return (await query.getSingle()).read(count) ?? 0;
+  }
+
+  /// Whether the first-run walkthrough is behind us (finished, skipped, or an install from before v14).
+  Future<bool> isOnboardingDone() async =>
+      (await (select(deskPreferences)..limit(1)).getSingleOrNull())?.onboardingDone ?? false;
+
+  Future<void> markOnboardingDone() {
+    return transaction(() async {
+      final existing = await (select(deskPreferences)..limit(1)).getSingleOrNull();
+      const companion = DeskPreferencesCompanion(onboardingDone: Value(true));
+      if (existing == null) {
+        await into(deskPreferences).insert(companion);
+      } else {
+        await (update(deskPreferences)..where((t) => t.id.equals(existing.id))).write(companion);
+      }
+    });
   }
 
   Future<DateTime?> reviewAskedAt() async =>

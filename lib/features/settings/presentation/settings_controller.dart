@@ -87,6 +87,10 @@ class DeskPreferencesState {
   /// Analytics weeks start on Sunday instead of Monday.
   final bool weekStartsOnSunday;
 
+  /// First run: the walkthrough is still to come (no preferences yet, or not finished). False until loaded, so a
+  /// database problem never blocks the way to the desk.
+  final bool needsOnboarding;
+
   const DeskPreferencesState({
     this.soundVolume = 0.8,
     this.foleyEnabled = true,
@@ -101,6 +105,7 @@ class DeskPreferencesState {
     this.autoStartNextPhase = false,
     this.dayStartHour = 0,
     this.weekStartsOnSunday = false,
+    this.needsOnboarding = false,
   });
 
   DeskPreferencesState copyWith({
@@ -117,6 +122,7 @@ class DeskPreferencesState {
     bool? autoStartNextPhase,
     int? dayStartHour,
     bool? weekStartsOnSunday,
+    bool? needsOnboarding,
   }) {
     return DeskPreferencesState(
       soundVolume: soundVolume ?? this.soundVolume,
@@ -132,6 +138,7 @@ class DeskPreferencesState {
       autoStartNextPhase: autoStartNextPhase ?? this.autoStartNextPhase,
       dayStartHour: dayStartHour ?? this.dayStartHour,
       weekStartsOnSunday: weekStartsOnSunday ?? this.weekStartsOnSunday,
+      needsOnboarding: needsOnboarding ?? this.needsOnboarding,
     );
   }
 
@@ -152,7 +159,8 @@ class DeskPreferencesState {
           deskClockMode == other.deskClockMode &&
           autoStartNextPhase == other.autoStartNextPhase &&
           dayStartHour == other.dayStartHour &&
-          weekStartsOnSunday == other.weekStartsOnSunday;
+          weekStartsOnSunday == other.weekStartsOnSunday &&
+          needsOnboarding == other.needsOnboarding;
 
   @override
   int get hashCode =>
@@ -168,7 +176,8 @@ class DeskPreferencesState {
       deskClockMode.hashCode ^
       autoStartNextPhase.hashCode ^
       dayStartHour.hashCode ^
-      weekStartsOnSunday.hashCode;
+      weekStartsOnSunday.hashCode ^
+      needsOnboarding.hashCode;
 }
 
 class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
@@ -231,15 +240,23 @@ class DeskPreferencesController extends StateNotifier<DeskPreferencesState> {
         autoStartNextPhase: pref.autoStartNextPhase,
         dayStartHour: pref.dayStartHour,
         weekStartsOnSunday: pref.weekStartsOnSunday,
+        needsOnboarding: !pref.onboardingDone,
       );
       _audioService?.setVolume(pref.soundVolume);
       _audioService?.setFoleyEnabled(pref.foleyEnabled);
       HapticService.enabled = pref.hapticsEnabled;
     } else {
+      state = state.copyWith(needsOnboarding: true);
       _audioService?.setVolume(state.soundVolume);
       _audioService?.setFoleyEnabled(state.foleyEnabled);
       HapticService.enabled = state.hapticsEnabled;
     }
+  }
+
+  /// The first-run walkthrough was finished or skipped.
+  Future<void> markOnboardingDone() async {
+    state = state.copyWith(needsOnboarding: false);
+    await _database?.markOnboardingDone();
   }
 
   /// [persist] false while the slider is being dragged: the sound follows every step, the database write waits for

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:drift/native.dart';
+import 'package:takt_desk/core/database/app_database.dart';
+import 'package:takt_desk/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:takt_desk/features/desk/presentation/desk_canvas_screen.dart';
 import 'package:takt_desk/features/opening/presentation/takt_opening_screen.dart';
 
@@ -128,5 +131,33 @@ void main() {
     await tester.pump(const Duration(milliseconds: 700));
     await tester.pump(const Duration(milliseconds: 2400));
     expect(completed, isTrue);
+  });
+
+  testWidgets('a new install goes from the opening to the walkthrough; afterwards straight to the desk', (tester) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    Future<void> launch() async {
+      await tester.pumpWidget(ProviderScope(
+        overrides: [appDatabaseProvider.overrideWithValue(db)],
+        child: const MaterialApp(home: TaktOpeningScreen()),
+      ));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.tap(find.byType(TaktOpeningScreen));
+      await tester.pumpAndSettle();
+    }
+
+    await launch();
+    expect(find.byType(OnboardingScreen), findsOneWidget);
+    expect(find.byType(DeskCanvasScreen), findsNothing);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(milliseconds: 100));
+    await db.markOnboardingDone();
+    await launch();
+    expect(find.byType(OnboardingScreen), findsNothing);
+    expect(find.byType(DeskCanvasScreen), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(milliseconds: 100));
+    await db.close();
   });
 }
