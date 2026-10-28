@@ -871,7 +871,7 @@ void main() {
 
       // Verify section header and active profile label
       expect(find.text('POMODORO INTERVAL ENGINE'), findsOneWidget);
-      expect(find.text('CLASSIC 25/5'), findsOneWidget);
+      expect(find.text('DAILY FOCUS 25/5'), findsOneWidget);
 
       // Verify default custom stepper values
       expect(find.byKey(const ValueKey('custom_focus_value')), findsOneWidget);
@@ -916,9 +916,9 @@ void main() {
       expect(container.read(chronoDialProvider).customProfile.longBreakInterval, equals(5));
 
       // Switch to Monastic preset and verify durations update automatically
-      await tester.ensureVisible(find.text('50/10 MON'));
+      await tester.ensureVisible(find.text('50/10 DEEP'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('50/10 MON'));
+      await tester.tap(find.text('50/10 DEEP'));
       await tester.pumpAndSettle();
       expect(container.read(chronoDialProvider).profile.type, equals(PomodoroProfileType.monastic));
       expect(find.text('50 MIN'), findsOneWidget);

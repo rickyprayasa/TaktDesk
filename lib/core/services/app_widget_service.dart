@@ -182,7 +182,7 @@ class AppWidgetService {
     required int targetMinutes,
     required List<Map<String, dynamic>> tasks,
     required bool isPro,
-    String profileName = 'CLASSIC 25/5',
+    String profileName = 'DAILY FOCUS 25/5',
     String alarmChimeId = 'braunBell',
     int cycleCount = 1,
     int dayStartHour = 0,

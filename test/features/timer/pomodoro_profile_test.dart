@@ -44,13 +44,18 @@ void main() {
     });
 
     test('PomodoroProfileType exposes correct human-readable labels', () {
-      expect(PomodoroProfileType.classic.label, equals('CLASSIC 25/5'));
-      expect(PomodoroProfileType.monastic.label, equals('MONASTIC 50/10'));
-      expect(PomodoroProfileType.sprint.label, equals('SPRINT 15/3'));
+      expect(PomodoroProfileType.classic.label, equals('DAILY FOCUS 25/5'));
+      expect(PomodoroProfileType.monastic.label, equals('DEEP WORK 50/10'));
+      expect(PomodoroProfileType.sprint.label, equals('QUICK START 15/3'));
       expect(PomodoroProfileType.custom.label, equals('CUSTOM'));
-      expect(PomodoroProfile.classic.label, equals('CLASSIC 25/5'));
-      expect(PomodoroProfile.monastic.label, equals('MONASTIC 50/10'));
-      expect(PomodoroProfile.sprint.label, equals('SPRINT 15/3'));
+      expect(PomodoroProfile.classic.label, equals('DAILY FOCUS 25/5'));
+      expect(PomodoroProfile.monastic.label, equals('DEEP WORK 50/10'));
+      expect(PomodoroProfile.sprint.label, equals('QUICK START 15/3'));
+      expect(PomodoroProfileType.monastic.keyLabel, equals('50/10 DEEP'));
+      for (final t in PomodoroProfileType.values) {
+        expect(t.purpose, isNotEmpty, reason: '${t.name} says what it is for');
+        expect(t.keyLabel.length, lessThanOrEqualTo(10), reason: 'four keys share the console width');
+      }
     });
 
     test('PomodoroProfile supports copyWith and value equality', () {

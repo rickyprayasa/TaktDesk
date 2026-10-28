@@ -103,7 +103,7 @@ class TimerForegroundService : Service() {
     private var activeTargetMinutes: Int = 25
     private var activePhase: String = "focus"
     private var activeCycleCount: Int = 1
-    private var activeProfileName: String = "CLASSIC 25/5"
+    private var activeProfileName: String = "DAILY FOCUS 25/5"
     private var activeAutoStartNext: Boolean = false
     /** End-time (epoch ms) of the last session already completed; makes completion idempotent. */
     private var lastCompletedEndAt: Long = 0L
@@ -198,7 +198,7 @@ class TimerForegroundService : Service() {
                 val targetMinutes = intent.getIntExtra(EXTRA_TARGET_MINUTES, 25)
                 val phase = intent.getStringExtra(EXTRA_PHASE) ?: "focus"
                 val cycleCount = intent.getIntExtra(EXTRA_CYCLE_COUNT, 1)
-                val profileName = intent.getStringExtra(EXTRA_PROFILE_NAME) ?: "CLASSIC 25/5"
+                val profileName = intent.getStringExtra(EXTRA_PROFILE_NAME) ?: "DAILY FOCUS 25/5"
                 val alarmChimeId = intent.getStringExtra(EXTRA_ALARM_CHIME_ID) ?: "braunBell"
                 activeAutoStartNext = intent.getBooleanExtra(EXTRA_AUTO_START_NEXT, false)
                 activeSessionId = intent.getLongExtra(EXTRA_SESSION_ID, 0L)

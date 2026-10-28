@@ -78,9 +78,9 @@ void main() {
     expect(find.byType(MechanicalCounterDisplay, skipOffstage: false), findsOneWidget);
     expectDisplay(tester, 25, 0);
     expect(find.byType(ChronoProfileSelectorWidget), findsOneWidget);
-    expect(find.text('25/5 CLS'), findsOneWidget);
-    expect(find.text('50/10 MON'), findsOneWidget);
-    expect(find.text('15/3 SPR'), findsOneWidget);
+    expect(find.text('25/5 DAILY'), findsOneWidget);
+    expect(find.text('50/10 DEEP'), findsOneWidget);
+    expect(find.text('15/3 QUICK'), findsOneWidget);
     expect(find.text('CUSTOM'), findsOneWidget);
 
     // Verify CustomPaint with ChronoDialPainter is rendered
@@ -103,18 +103,18 @@ void main() {
       ),
     );
 
-    // Tap 50/10 MON segment
-    await tester.tap(find.text('50/10 MON'));
+    // Tap 50/10 DEEP segment
+    await tester.tap(find.text('50/10 DEEP'));
     await tester.pump();
     expectDisplay(tester, 50, 0);
 
-    // Tap 15/3 SPR segment
-    await tester.tap(find.text('15/3 SPR'));
+    // Tap 15/3 QUICK segment
+    await tester.tap(find.text('15/3 QUICK'));
     await tester.pump();
     expectDisplay(tester, 15, 0);
 
-    // Tap 25/5 CLS segment
-    await tester.tap(find.text('25/5 CLS'));
+    // Tap 25/5 DAILY segment
+    await tester.tap(find.text('25/5 DAILY'));
     await tester.pump();
     expectDisplay(tester, 25, 0);
 
@@ -201,7 +201,7 @@ void main() {
       ),
     );
 
-    // Initial state: 25/5 CLS
+    // Initial state: 25/5 DAILY
     expectDisplay(tester, 25, 0);
 
     // Start timer
@@ -209,7 +209,7 @@ void main() {
     await tester.pump();
 
     // While running: tapping another segment has no effect
-    await tester.tap(find.text('50/10 MON'));
+    await tester.tap(find.text('50/10 DEEP'));
     await tester.pump();
     expectDisplay(tester, 25, 0);
 
@@ -217,8 +217,8 @@ void main() {
     await tester.tap(dialFinder);
     await tester.pump();
 
-    // Paused: tapping 50/10 MON switches profile
-    await tester.tap(find.text('50/10 MON'));
+    // Paused: tapping 50/10 DEEP switches profile
+    await tester.tap(find.text('50/10 DEEP'));
     await tester.pump();
     expectDisplay(tester, 50, 0);
 
@@ -240,7 +240,7 @@ void main() {
     );
 
     // Select Sprint profile (15m focus / 3m break)
-    await tester.tap(find.text('15/3 SPR'));
+    await tester.tap(find.text('15/3 QUICK'));
     await tester.pump();
     expectDisplay(tester, 15, 0);
 
@@ -467,11 +467,11 @@ void main() {
     expect(themeState.chassisTextColor, equals(const Color(0xFF1B1E23)));
 
     // Stopped state: Inactive cassette segment text uses chassisTextColor with alpha, active uses filamentColor
-    final inactiveSegmentText = tester.widget<Text>(find.text('50/10 MON'));
+    final inactiveSegmentText = tester.widget<Text>(find.text('50/10 DEEP'));
     expect(inactiveSegmentText.style?.color, equals(const Color(0xFF1B1E23).withValues(alpha: 0.70)));
 
     // Light chassis: the filament darkened to a readable ink of the same hue.
-    final activeSegmentText = tester.widget<Text>(find.text('25/5 CLS'));
+    final activeSegmentText = tester.widget<Text>(find.text('25/5 DAILY'));
     expect(activeSegmentText.style?.color, equals(TaktColors.readableAccent(themeState.filamentColor, onDark: false)));
 
     // ChronoDialPainter receives textureType matching active edition (braunClassic -> matteAbsGrain)
@@ -483,7 +483,7 @@ void main() {
     await tester.tap(dialFinder);
     await tester.pump();
 
-    final runningInactiveText = tester.widget<Text>(find.text('50/10 MON'));
+    final runningInactiveText = tester.widget<Text>(find.text('50/10 DEEP'));
     expect(runningInactiveText.style?.color, equals(themeState.chassisTextColor.withValues(alpha: 0.35)));
 
     // Pause timer
@@ -732,7 +732,7 @@ void main() {
     expect(startCall.arguments['targetMinutes'], equals(25));
     expect(startCall.arguments['phase'], equals('focus'));
     expect(startCall.arguments['cycleCount'], equals(1));
-    expect(startCall.arguments['profileName'], equals('CLASSIC 25/5'));
+    expect(startCall.arguments['profileName'], equals('DAILY FOCUS 25/5'));
 
     // Tap dial to pause -> triggers stopService
     await tester.tap(dialFinder);

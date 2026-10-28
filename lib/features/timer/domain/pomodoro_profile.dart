@@ -4,16 +4,45 @@ enum PomodoroProfileType {
   sprint,
   custom;
 
+  /// Named for what the rhythm is for; shown on the notification, widgets and in Settings.
   String get label {
     switch (this) {
       case PomodoroProfileType.classic:
-        return 'CLASSIC 25/5';
+        return 'DAILY FOCUS 25/5';
       case PomodoroProfileType.monastic:
-        return 'MONASTIC 50/10';
+        return 'DEEP WORK 50/10';
       case PomodoroProfileType.sprint:
-        return 'SPRINT 15/3';
+        return 'QUICK START 15/3';
       case PomodoroProfileType.custom:
         return 'CUSTOM';
+    }
+  }
+
+  /// Key on the dial's preset cassette (four keys share the console width).
+  String get keyLabel {
+    switch (this) {
+      case PomodoroProfileType.classic:
+        return '25/5 DAILY';
+      case PomodoroProfileType.monastic:
+        return '50/10 DEEP';
+      case PomodoroProfileType.sprint:
+        return '15/3 QUICK';
+      case PomodoroProfileType.custom:
+        return 'CUSTOM';
+    }
+  }
+
+  /// One line on when to pick it.
+  String get purpose {
+    switch (this) {
+      case PomodoroProfileType.classic:
+        return 'Everyday work and study. The classic Pomodoro rhythm.';
+      case PomodoroProfileType.monastic:
+        return 'Long, absorbing work: writing, coding, design.';
+      case PomodoroProfileType.sprint:
+        return 'When starting is the hard part: chores, inbox, a first step.';
+      case PomodoroProfileType.custom:
+        return 'Your own rhythm, set with the crown.';
     }
   }
 }

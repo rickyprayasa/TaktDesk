@@ -31,13 +31,13 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('25/5 CLS'), findsOneWidget);
-    expect(find.text('50/10 MON'), findsOneWidget);
-    expect(find.text('15/3 SPR'), findsOneWidget);
+    expect(find.text('25/5 DAILY'), findsOneWidget);
+    expect(find.text('50/10 DEEP'), findsOneWidget);
+    expect(find.text('15/3 QUICK'), findsOneWidget);
     expect(find.text('CUSTOM'), findsOneWidget);
 
-    // Tap 50/10 MON
-    await tester.tap(find.text('50/10 MON'));
+    // Tap 50/10 DEEP
+    await tester.tap(find.text('50/10 DEEP'));
     await tester.pump();
 
     final state = container.read(chronoDialProvider);
@@ -67,8 +67,8 @@ void main() {
     container.read(chronoDialProvider.notifier).start();
     await tester.pump();
 
-    // Tap 15/3 SPR while running
-    await tester.tap(find.text('15/3 SPR'));
+    // Tap 15/3 QUICK while running
+    await tester.tap(find.text('15/3 QUICK'));
     await tester.pump();
 
     // Should remain classic
@@ -117,7 +117,7 @@ void main() {
     expect(state.profile.longBreakMinutes, equals(22));
 
     // Switch to Classic
-    await tester.tap(find.text('25/5 CLS'));
+    await tester.tap(find.text('25/5 DAILY'));
     await tester.pump();
 
     state = container.read(chronoDialProvider);
@@ -328,8 +328,8 @@ void main() {
     await tester.pump();
     expect(find.text('PULL CROWN // SET'), findsOneWidget);
 
-    // Switch back to 25/5 CLS: plaque returns to STANDBY // READY and textColor reverts
-    await tester.tap(find.text('25/5 CLS'));
+    // Switch back to 25/5 DAILY: plaque returns to STANDBY // READY and textColor reverts
+    await tester.tap(find.text('25/5 DAILY'));
     await tester.pump();
     expect(find.text('STANDBY // READY'), findsOneWidget);
     readyText = tester.widget<Text>(find.text('STANDBY // READY'));

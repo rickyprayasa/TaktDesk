@@ -14,7 +14,7 @@ import '../../../../app/theme/theme_controller.dart';
 /// 1. Upper Telemetry Row: Phase status with glowing micro-LED (tappable to advance phase),
 ///    recessed Mechanical MM:SS Counter Display, and cycle count indicator.
 /// 2. Hairline Separator.
-/// 3. Lower Preset Cassette Row: 4 tactile keys [ 25/5 CLS ] [ 50/10 MON ] [ 15/3 SPR ] [ CUSTOM ].
+/// 3. Lower Preset Cassette Row: 4 tactile keys [ 25/5 DAILY ] [ 50/10 DEEP ] [ 15/3 QUICK ] [ CUSTOM ].
 class ChronoProfileSelectorWidget extends ConsumerWidget {
   final int? remainingMinutes;
   final int? seconds;
@@ -28,17 +28,17 @@ class ChronoProfileSelectorWidget extends ConsumerWidget {
   static const List<({PomodoroProfileType type, String label, PomodoroProfile profile})> _segments = [
     (
       type: PomodoroProfileType.classic,
-      label: '25/5 CLS',
+      label: '25/5 DAILY',
       profile: PomodoroProfile.classic,
     ),
     (
       type: PomodoroProfileType.monastic,
-      label: '50/10 MON',
+      label: '50/10 DEEP',
       profile: PomodoroProfile.monastic,
     ),
     (
       type: PomodoroProfileType.sprint,
-      label: '15/3 SPR',
+      label: '15/3 QUICK',
       profile: PomodoroProfile.sprint,
     ),
     (

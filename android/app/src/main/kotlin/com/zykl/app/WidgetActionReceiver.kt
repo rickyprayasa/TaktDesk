@@ -58,7 +58,7 @@ class WidgetActionReceiver : BroadcastReceiver() {
                 putExtra(TimerForegroundService.EXTRA_PHASE, "focus")
                 putExtra(TimerForegroundService.EXTRA_CYCLE_COUNT, prefs.getInt(TaktAppWidgetProvider.KEY_CYCLE_COUNT, 1))
                 putExtra(TimerForegroundService.EXTRA_PROFILE_NAME,
-                    prefs.getString(TaktAppWidgetProvider.KEY_PROFILE_NAME, "CLASSIC 25/5") ?: "CLASSIC 25/5")
+                    prefs.getString(TaktAppWidgetProvider.KEY_PROFILE_NAME, "DAILY FOCUS 25/5") ?: "DAILY FOCUS 25/5")
                 putExtra(TimerForegroundService.EXTRA_ALARM_CHIME_ID,
                     prefs.getString(TaktAppWidgetProvider.KEY_ALARM_CHIME_ID, "braunBell") ?: "braunBell")
             }

@@ -75,13 +75,20 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 4),
+              // What the rhythm is for
+              Text(
+                activeProfile.type.purpose,
+                key: const ValueKey('active_profile_purpose'),
+                style: TextStyle(fontSize: 11.5, height: 1.3, color: secondaryTextColor),
+              ),
               const SizedBox(height: 10),
 
               // Quick preset selector cassette keys
               Row(
                 children: [
                   _buildPresetButton(
-                    label: '25/5 CLS',
+                    label: PomodoroProfileType.classic.keyLabel,
                     type: PomodoroProfileType.classic,
                     isSelected: activeProfile.type == PomodoroProfileType.classic,
                     isRunning: isRunning,
@@ -91,7 +98,7 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
                   ),
                   const SizedBox(width: 6),
                   _buildPresetButton(
-                    label: '50/10 MON',
+                    label: PomodoroProfileType.monastic.keyLabel,
                     type: PomodoroProfileType.monastic,
                     isSelected: activeProfile.type == PomodoroProfileType.monastic,
                     isRunning: isRunning,
@@ -101,7 +108,7 @@ class _PomodoroIntervalEngineSection extends ConsumerWidget {
                   ),
                   const SizedBox(width: 6),
                   _buildPresetButton(
-                    label: '15/3 SPR',
+                    label: PomodoroProfileType.sprint.keyLabel,
                     type: PomodoroProfileType.sprint,
                     isSelected: activeProfile.type == PomodoroProfileType.sprint,
                     isRunning: isRunning,
