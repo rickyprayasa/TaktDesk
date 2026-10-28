@@ -28,6 +28,17 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-10-28 (c) — Flutter 3.47.8 upgrade; 1.0.10 dev APK  (status: committed `100cdbf`; tests 563 green; dev-pro APK built 09:58; AAB not built)
+
+- Flutter 3.44.1 → **3.47.8 / Dart 3.13.7** (Dart TLS advisory GHSA-frr6-h895-5pxp). `flutter upgrade` hit the 10-min
+  tool limit after the git step; `flutter --version` finished the artifacts. The SDK checkout's "ahead 37" commits
+  were official 3.44 release-branch commits, not local edits. `flutter clean` freed 5.8 GB (disk was 99% full).
+- Version **1.0.10+11**: named presets, onboarding, Flutter upgrade. Cold build 577 s (close to the 10-min tool
+  limit: run builds with the output in a log file and expect a retry after `flutter clean`).
+- New 3.47 build warning "ELF library contains unobfuscated DWARF": only the intermediate libapp.so; the APK's
+  libapp.so has no .debug sections (stripped by AGP) and no class names. `in_app_review` KGP warning still shown,
+  builds fine.
+
 ## 2026-10-28 (b) — Named presets + first-run walkthrough (ideas from Opal)  (status: committed `efa4bce`, `322fb38`; tests 563 green, Kotlin compiles; NOT built; next release 1.0.10+11)
 
 Owner shared Opal (`com.withopal.opal`) as a reference (screen recording + APK; the APK was only identified with
