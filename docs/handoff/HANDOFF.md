@@ -28,7 +28,20 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
-## 2026-10-28 (c) — Flutter 3.47.8 upgrade; 1.0.10 dev APK  (status: committed `100cdbf`; tests 563 green; dev-pro APK built 09:58; AAB not built)
+## 2026-10-28 (d) — v1.0.10 (versionCode 11) AAB built  (status: built + tagged `v1.0.10`; owner uploads to Play)
+
+Built 10:31 from `54dcd1f`: `build_outputs/zykl-playstore-release.aab` (63.4 MB), `com.zykl.app`, 1.0.10 / vc 11,
+jarsigner verified, upload key `27:5B:8E:D7…`, obfuscated; Dart symbols `build_outputs/symbols/1.0.10+11-aab/`.
+1.0.9 AAB archived in `build_outputs/previous/2026-10-21-v1.0.9/`. Contents: Flutter 3.47.8 / Dart 3.13.7, named
+presets, first-run onboarding, and `54dcd1f` "Rate ZYKL on Google Play" always opens com.zykl.app (the dev build used
+its own id com.zykl.app.devpro, which has no Play page; the Play build was already right).
+**When it is live**: add a v1.0.10 entry to the website changelog (`src/data/changelog.ts`, newest first) and push.
+
+Release notes (en-US):
+> Each rhythm now says what it is for: Daily Focus, Deep Work and Quick Start. New installs get a short setup that
+> explains why ZYKL asks for notifications and Do Not Disturb. Security update to the latest Flutter.
+
+## 2026-10-28 (c) — Flutter 3.47.8 upgrade; 1.0.10 dev APK  (status: committed `100cdbf`; tests 563 green; dev-pro APK built 09:58; AAB in (d))
 
 - Flutter 3.44.1 → **3.47.8 / Dart 3.13.7** (Dart TLS advisory GHSA-frr6-h895-5pxp). `flutter upgrade` hit the 10-min
   tool limit after the git step; `flutter --version` finished the artifacts. The SDK checkout's "ahead 37" commits
