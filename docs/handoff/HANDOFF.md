@@ -35,7 +35,7 @@ jarsigner verified, upload key `27:5B:8E:D7…`, obfuscated; Dart symbols `build
 1.0.9 AAB archived in `build_outputs/previous/2026-10-21-v1.0.9/`. Contents: Flutter 3.47.8 / Dart 3.13.7, named
 presets, first-run onboarding, and `54dcd1f` "Rate ZYKL on Google Play" always opens com.zykl.app (the dev build used
 its own id com.zykl.app.devpro, which has no Play page; the Play build was already right).
-**When it is live**: add a v1.0.10 entry to the website changelog (`src/data/changelog.ts`, newest first) and push.
+Website changelog v1.0.10 pushed (`fd06898`, live; v1.0.9 badge now "FIRST PUBLIC RELEASE"). Each future release: add an entry the same way.
 
 Release notes (en-US):
 > Each rhythm now says what it is for: Daily Focus, Deep Work and Quick Start. New installs get a short setup that
