@@ -28,7 +28,16 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
-## 2026-10-26 — Production access granted; launch prep; new 35 s film  (status: 1.0.9 in Production review; website 3 commits LOCAL, push on launch day)
+## 2026-10-28 — ZYKL is live on Google Play  (status: website launch push `ef7999f` live and verified)
+
+1.0.9 (vc 10) published to Production on 2026-10-27 (~17:30 WIB): https://play.google.com/store/apps/details?id=com.zykl.app
+Website pushed the three waiting commits (film, launch, price constant) with the changelog date set to 2026-10-27.
+Verified live: /get and /coming-soon 302 to Play; /changelog shows v1.0.9 "NOW ON GOOGLE PLAY", BRANCH: STABLE; the
+35 s film (?v=2026-10-26) serves; Terms price text unchanged.
+Next: ask testers for Play reviews; add 7"/10" tablet screenshots (Pre-launch report); 1.0.10 = Flutter 3.47.8
+upgrade (Dart TLS advisory) + recheck the edge-to-edge recommendation. New releases: add a changelog entry each time.
+
+## 2026-10-26 — Production access granted; launch prep; new 35 s film  (status: done — launched 2026-10-27, see 2026-10-28)
 
 - Play: production access granted; Production release 10 (1.0.9), 178 countries, full rollout, managed publishing off
   (goes live by itself after review). "Edge-to-edge may not display" recommendation comes from the Flutter engine's
