@@ -52,6 +52,8 @@ class MainActivity : FlutterActivity() {
             }
         }
 
+        /** The Google Play listing ("Rate ZYKL"), the same for every build flavour. */
+        const val PLAY_LISTING_ID = "com.zykl.app"
         private const val PERMISSION_PREFS = "zykl_permissions"
         private const val KEY_NOTIFICATION_ASKED = "post_notifications_asked"
         private const val REQUEST_POST_NOTIFICATIONS = 3001
@@ -434,8 +436,9 @@ class MainActivity : FlutterActivity() {
                     }
                 }
                 "openPlayStore" -> {
+                    // Always the public listing: the dev build's own id (com.zykl.app.devpro) has no Play page.
+                    val pkg = PLAY_LISTING_ID
                     try {
-                        val pkg = packageName
                         val marketUri = android.net.Uri.parse("market://details?id=$pkg")
                         val marketIntent = Intent(Intent.ACTION_VIEW, marketUri).apply {
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY)
@@ -444,7 +447,6 @@ class MainActivity : FlutterActivity() {
                         result.success(true)
                     } catch (_: Exception) {
                         try {
-                            val pkg = packageName
                             val webUri = android.net.Uri.parse("https://play.google.com/store/apps/details?id=$pkg")
                             val webIntent = Intent(Intent.ACTION_VIEW, webUri).apply {
                                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
