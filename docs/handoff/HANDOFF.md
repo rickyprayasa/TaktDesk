@@ -9,7 +9,7 @@
 - Website repo (separate): `/home/tuneeca/RSQUARE/Android/zykl.app` (Next.js on Cloudflare Worker).
 - Native Android code: `android/app/src/main/kotlin/com/zykl/app/` (MainActivity = audio/focus/widget channels,
   TimerForegroundService = background countdown + completion, MediaNotificationService = vinyl notification).
-- Verify with: `flutter analyze` → 0 issues; `flutter test -j 1` → all pass (557 at last full run);
+- Verify with: `flutter analyze` → 0 issues; `flutter test -j 1` → all pass (563 at last full run);
   Kotlin: `cd android && ./gradlew :app:compileDebugKotlin --offline -q`.
 - Run heavy jobs (build/render/test) one at a time with `nice`. Do NOT build APK/AAB unless the user asks —
   the user reviews on the Linux emulator first. Release outputs go to `build_outputs/` (git-ignored).
@@ -27,6 +27,21 @@
 - **Do not build APK/AAB unless the owner asks in that message** (owner reviews code changes on Linux first).
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
+
+## 2026-10-28 (b) — Named presets + first-run walkthrough (ideas from Opal)  (status: committed `efa4bce`, `322fb38`; tests 563 green, Kotlin compiles; NOT built; next release 1.0.10+11)
+
+Owner shared Opal (`com.withopal.opal`) as a reference (screen recording + APK; the APK was only identified with
+aapt, not decompiled). Adopted only what fits ZYKL (offline, no account, one-time PRO): named presets and permission
+priming. Rejected: accounts, trial/discount paywall, scores, screen-time tracking overlays. Per-app blocking during
+Lockdown is a possible 1.1 feature (needs Usage Access/Accessibility and a Play declaration).
+- `efa4bce` presets: DAILY FOCUS 25/5, DEEP WORK 50/10, QUICK START 15/3 (+ CUSTOM); dial keys `25/5 DAILY`,
+  `50/10 DEEP`, `15/3 QUICK`; `PomodoroProfileType.keyLabel` / `.purpose`; Settings shows the purpose line.
+- `322fb38` onboarding (`lib/features/onboarding/`): welcome → rhythm → notifications (only if Android 13+ and not
+  allowed) → Do Not Disturb access → ready; SKIP everywhere. Native channel `com.zykl.app/permissions`
+  (`notificationStatus`, `requestNotifications` waits for the answer, `openNotificationSettings`). Schema v14
+  `onboardingDone`; migration marks existing installs done. `DeskPreferencesState.needsOnboarding` drives the opening.
+- **Device check**: fresh install (or clear app data) → walkthrough; allow / refuse notifications; DND settings round
+  trip shows the tick; update from 1.0.9 → no walkthrough.
 
 ## 2026-10-28 — ZYKL is live on Google Play  (status: website launch push `ef7999f` live and verified)
 
