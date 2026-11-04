@@ -36,7 +36,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -88,6 +88,11 @@ class AppDatabase extends _$AppDatabase {
             if (!hasPrefs && hasHistory) {
               await into(deskPreferences).insert(const DeskPreferencesCompanion(onboardingDone: Value(true)));
             }
+          }
+          if (from < 15) {
+            await m.addColumn(deskPreferences, deskPreferences.proSeenAt);
+            await m.addColumn(deskPreferences, deskPreferences.proSurveyAskedAt);
+            await m.addColumn(deskPreferences, deskPreferences.freeSurveyAskedAt);
           }
         },
       );
@@ -225,16 +230,13 @@ class AppDatabase extends _$AppDatabase {
     final startOfDay = DateTime(d.year, d.month, d.day, dayStartHour);
     final endOfDay = DateTime(d.year, d.month, d.day + 1, dayStartHour);
     return (select(timerSessions)
-          ..where((t) =>
-              t.startedAt.isBiggerOrEqualValue(startOfDay) &
-              t.startedAt.isSmallerThanValue(endOfDay))
+          ..where((t) => t.startedAt.isBiggerOrEqualValue(startOfDay) & t.startedAt.isSmallerThanValue(endOfDay))
           ..orderBy([(t) => OrderingTerm(expression: t.startedAt, mode: OrderingMode.asc)]))
         .watch();
   }
 
   Stream<List<TimerSession>> watchAllTimerSessions() {
-    return (select(timerSessions)
-          ..orderBy([(t) => OrderingTerm(expression: t.startedAt, mode: OrderingMode.desc)]))
+    return (select(timerSessions)..orderBy([(t) => OrderingTerm(expression: t.startedAt, mode: OrderingMode.desc)]))
         .watch();
   }
 
@@ -279,8 +281,7 @@ class AppDatabase extends _$AppDatabase {
         selectedEdition: selectedEdition != null ? Value(selectedEdition) : const Value.absent(),
         isProSimulated: isProSimulated != null ? Value(isProSimulated) : const Value.absent(),
         alarmChimeId: alarmChimeId != null ? Value(alarmChimeId) : const Value.absent(),
-        autoUnlockMonastic:
-            autoUnlockMonastic != null ? Value(autoUnlockMonastic) : const Value.absent(),
+        autoUnlockMonastic: autoUnlockMonastic != null ? Value(autoUnlockMonastic) : const Value.absent(),
         isDarkMode: isDarkMode != null ? Value(isDarkMode) : const Value.absent(),
         dailyGoalCycles: dailyGoalCycles != null ? Value(dailyGoalCycles) : const Value.absent(),
         deskClockMode: deskClockMode != null ? Value(deskClockMode) : const Value.absent(),
@@ -336,6 +337,45 @@ class AppDatabase extends _$AppDatabase {
       }
     });
   }
+
+  /// Completed focus cycles that started at or after [since].
+  Future<int> completedCycleCountSince(DateTime since) async {
+    final count = timerSessions.id.count();
+    final query = selectOnly(timerSessions)
+      ..addColumns([count])
+      ..where(timerSessions.isFinished.equals(true) &
+          timerSessions.isLockdownOnly.equals(false) &
+          timerSessions.startedAt.isBiggerOrEqualValue(since));
+    return (await query.getSingle()).read(count) ?? 0;
+  }
+
+  Future<DeskPreference?> _prefsRow() => (select(deskPreferences)..limit(1)).getSingleOrNull();
+
+  Future<void> _writePrefs(DeskPreferencesCompanion companion) {
+    return transaction(() async {
+      final existing = await _prefsRow();
+      if (existing == null) {
+        await into(deskPreferences).insert(companion);
+      } else {
+        await (update(deskPreferences)..where((t) => t.id.equals(existing.id))).write(companion);
+      }
+    });
+  }
+
+  Future<DateTime?> proSeenAt() async => (await _prefsRow())?.proSeenAt;
+
+  /// Keeps the first time only.
+  Future<void> markProSeen(DateTime at) async {
+    if (await proSeenAt() == null) await _writePrefs(DeskPreferencesCompanion(proSeenAt: Value(at)));
+  }
+
+  Future<DateTime?> proSurveyAskedAt() async => (await _prefsRow())?.proSurveyAskedAt;
+
+  Future<void> markProSurveyAsked(DateTime at) => _writePrefs(DeskPreferencesCompanion(proSurveyAskedAt: Value(at)));
+
+  Future<DateTime?> freeSurveyAskedAt() async => (await _prefsRow())?.freeSurveyAskedAt;
+
+  Future<void> markFreeSurveyAsked(DateTime at) => _writePrefs(DeskPreferencesCompanion(freeSurveyAskedAt: Value(at)));
 
   Future<void> updatePreferences({
     double? soundVolume,

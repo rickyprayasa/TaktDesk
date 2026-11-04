@@ -9,7 +9,7 @@
 - Website repo (separate): `/home/tuneeca/RSQUARE/Android/zykl.app` (Next.js on Cloudflare Worker).
 - Native Android code: `android/app/src/main/kotlin/com/zykl/app/` (MainActivity = audio/focus/widget channels,
   TimerForegroundService = background countdown + completion, MediaNotificationService = vinyl notification).
-- Verify with: `flutter analyze` → 0 issues; `flutter test -j 1` → all pass (563 at last full run);
+- Verify with: `flutter analyze` → 0 issues; `flutter test -j 1` → all pass (571 at last full run);
   Kotlin: `cd android && ./gradlew :app:compileDebugKotlin --offline -q`.
 - Run heavy jobs (build/render/test) one at a time with `nice`. Do NOT build APK/AAB unless the user asks —
   the user reviews on the Linux emulator first. Release outputs go to `build_outputs/` (git-ignored).
@@ -27,6 +27,24 @@
 - **Do not build APK/AAB unless the owner asks in that message** (owner reviews code changes on Linux first).
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
+
+## 2026-11-04 — One-time "why PRO / why free" survey by email  (status: committed; tests 571 green; NOT built; ships in 1.0.11+12)
+
+Owner wants to know why people buy Studio PRO (work, study, ...) and asked for it by email only (no Apps Script /
+server; Play has no API for private feedback, and its review sheet can't be customised). Free users are asked too.
+- `lib/core/review/survey_prompter.dart`: `SurveyPrompter` + `surveyPromptSyncProvider` (watched by the desk, like
+  the review prompt). After a focus that ran to its end, app visible, not in lockdown, never within 24 h of Play's
+  review request: **PRO** survey on the 3rd cycle completed since PRO switched on (`proSeenAt`, marked when
+  `isProSimulated` turns true: purchase or launch restore); **free** survey at 15 completed cycles. Each once per
+  install (marked when shown, SKIP included). A free user who answered and later buys also gets the PRO survey.
+- `focus_survey_dialog.dart`: "TWO QUICK QUESTIONS": what you focus on (work / study / creative / habit / else) +
+  PRO "what made it worth it" (editions / soundscapes / pay once / indie maker / else) or free "what keeps you on the
+  free desk" (enough / not sure what PRO adds / price / still trying / else). SEND opens the mail app via the existing
+  `sendFeedbackEmail` to support@zykl.app, subject `[ZYKL Survey] Studio PRO|Free desk`, body = answers + app version +
+  Android version (no device model). The user still presses send in their mail app.
+- Schema **v15**: `desk_preferences.pro_seen_at`, `pro_survey_asked_at`, `free_survey_asked_at` (nullable, addColumn).
+- Data safety: unchanged (nothing leaves the phone unless the user sends an email themselves).
+- Tests: `test/core/survey_prompter_test.dart` (8). Next: bump to 1.0.11+12 when the owner asks for a build.
 
 ## 2026-10-28 (d) — v1.0.10 (versionCode 11) AAB built  (status: built + tagged `v1.0.10`; owner uploads to Play)
 

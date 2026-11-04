@@ -35,4 +35,11 @@ class DeskPreferences extends Table {
   /// The first-run walkthrough (rhythm + permissions) was finished or skipped (schema v14). Installs that already had
   /// data when v14 arrived are marked done by the migration, so only new users see it.
   BoolColumn get onboardingDone => boolean().withDefault(const Constant(false))();
+
+  /// When this install first finished a focus session with Studio PRO (schema v15): the PRO survey counts from here.
+  DateTimeColumn get proSeenAt => dateTime().nullable()();
+
+  /// When the one-time "why Studio PRO" / "why the free desk" surveys were shown (SurveyPrompter; schema v15).
+  DateTimeColumn get proSurveyAskedAt => dateTime().nullable()();
+  DateTimeColumn get freeSurveyAskedAt => dateTime().nullable()();
 }

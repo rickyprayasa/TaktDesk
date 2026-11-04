@@ -7,6 +7,7 @@ import '../../../app/theme/takt_colors.dart';
 import '../../../app/theme/takt_typography.dart';
 import '../../../app/theme/theme_controller.dart';
 import '../../../core/review/review_prompter.dart';
+import '../../../core/review/survey_prompter.dart';
 import '../../../core/audio/audio_service.dart';
 import '../../../core/audio/sound_effect.dart';
 import '../../../core/billing/pro_purchase_controller.dart';
@@ -17,6 +18,7 @@ import '../../../core/services/app_widget_service.dart';
 import '../../../core/services/widget_theme_sync.dart';
 import '../../analytics/presentation/widgets/focus_analytics_dialog.dart';
 import '../../settings/presentation/settings_controller.dart';
+import '../../settings/presentation/widgets/focus_survey_dialog.dart';
 import '../../settings/presentation/widgets/studio_pro_dialog.dart';
 import '../../tasks/presentation/receipt_runner_widget.dart';
 import '../../timer/presentation/chrono_dial_controller.dart';
@@ -50,6 +52,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
   StreamSubscription<GyroscopeEvent>? _gyroscopeSubscription;
   StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
   StreamSubscription<String>? _widgetActionSubscription;
+  StreamSubscription<SurveyKind>? _surveySubscription;
   int _selectedInstrumentIndex = 0; // 0: Dial, 1: Tasks, 2: Vinyl
   double _lastSlideDirection = 1.0;
   double _dragDistance = 0.0;
@@ -82,6 +85,10 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
     // Starts the Google Play ownership check (no-op in simulation builds).
     ref.read(proPurchaseProvider);
     ref.read(chronoDialProvider.notifier).importPendingNativeSessions();
+    _surveySubscription = ref.read(surveyPrompterProvider).prompts.listen((kind) {
+      if (!mounted) return;
+      showFocusSurveyDialog(context, kind: kind, isDark: ref.read(chassisThemeProvider).isDarkMode);
+    });
     _lifecycleListener = AppLifecycleListener(
       onResume: () {
         final chrono = ref.read(chronoDialProvider.notifier);
@@ -251,6 +258,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
   void dispose() {
     _lifecycleListener?.dispose();
     _widgetActionSubscription?.cancel();
+    _surveySubscription?.cancel();
     _gyroscopeSubscription?.cancel();
     _accelerometerSubscription?.cancel();
     super.dispose();
@@ -379,6 +387,7 @@ class _DeskCanvasScreenState extends ConsumerState<DeskCanvasScreen> {
     ref.watch(pausedTimerNotificationSyncProvider);
     ref.watch(widgetThemeSyncProvider);
     ref.watch(reviewPromptSyncProvider);
+    ref.watch(surveyPromptSyncProvider);
 
     ref.listen<bool>(
       deskPreferencesControllerProvider.select((p) => p.parallaxEnabled),
