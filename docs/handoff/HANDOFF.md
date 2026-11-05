@@ -28,6 +28,14 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
+## 2026-11-05 — Product Hunt launch prep + badge on zykl.app  (status: website commit `b0cb97a` local, NOT pushed)
+
+Product Hunt post `zykl` (post_id 1305000) scheduled for **2026-11-15** (goes live 00:01 PT = 15:01 WIB), Hypership
+declined. Website: `ProductHuntBadge` (plain link + PH's featured.svg image, light/dark per site theme, no script)
+next to the Google Play badge in the hero and in Get ZYKL; hidden until `PRODUCT_HUNT_BADGE_FROM`
+(2026-11-14 00:00 WIB), checked in the browser. Constants in website `src/data/app.ts`. CSP already allows https
+images. After launch: swap to the "Product of the Day" badge if earned, else move to the footer or remove.
+
 ## 2026-11-04 — One-time "why PRO / why free" survey by email  (status: committed; tests 571 green; NOT built; ships in 1.0.11+12)
 
 Owner wants to know why people buy Studio PRO (work, study, ...) and asked for it by email only (no Apps Script /
