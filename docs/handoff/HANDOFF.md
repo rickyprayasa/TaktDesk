@@ -28,7 +28,7 @@
 - Never print/commit the upload keystore (`../keystores/zykl-upload.jks`, `android/key.properties`).
 - Brand: keep "Quiet Time. Physical Intent."; avoid the word "Braun" in user-facing text.
 
-## 2026-11-05 — Product Hunt launch prep + badge on zykl.app  (status: website commit `b0cb97a` local, NOT pushed)
+## 2026-11-05 — Product Hunt launch prep + badge on zykl.app  (status: website `b0cb97a` pushed 2026-11-05)
 
 Product Hunt post `zykl` (post_id 1305000) scheduled for **2026-11-15** (goes live 00:01 PT = 15:01 WIB), Hypership
 declined. Website: `ProductHuntBadge` (plain link + PH's featured.svg image, light/dark per site theme, no script)
